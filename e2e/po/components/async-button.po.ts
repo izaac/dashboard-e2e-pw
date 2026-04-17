@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
@@ -8,11 +8,11 @@ export default class AsyncButtonPo extends ComponentPo {
   }
 
   async expectToBeDisabled(): Promise<void> {
-    await expect(this.self()).toHaveAttribute('disabled', 'disabled');
+    await expect(this.self()).toBeDisabled();
   }
 
   async expectToBeEnabled(): Promise<void> {
-    await expect(this.self()).not.toHaveAttribute('disabled');
+    await expect(this.self()).toBeEnabled();
   }
 
   async waitForDisabledAppearanceToDisappear(): Promise<void> {
