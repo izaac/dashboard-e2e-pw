@@ -26,4 +26,14 @@ export default class CruResourcePo extends ComponentPo {
   selectSubTypeByIndex(index: number): Locator {
     return this.self().locator('.subtypes-container > div').nth(index);
   }
+
+  async saveAndWaitForRequests(method: string, endpoint: string): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes(endpoint) && resp.request().method() === method,
+      { timeout: 10000 },
+    );
+
+    await this.saveOrCreate().click();
+    await responsePromise;
+  }
 }

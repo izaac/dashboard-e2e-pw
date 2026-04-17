@@ -223,4 +223,37 @@ export default class SortableTablePo extends ComponentPo {
   async checkVisible(): Promise<void> {
     await expect(this.self()).toBeVisible();
   }
+
+  groupElementsWithName(name: string): Locator {
+    return this.self().locator('tr.group-row').filter({ hasText: name });
+  }
+
+  tableHeaderRow(): Locator {
+    return this.self().locator('thead tr');
+  }
+
+  sort(index: number): Locator {
+    return this.self().locator('thead tr').locator('th').nth(index).locator('.sort');
+  }
+
+  async deleteItemWithUI(name: string): Promise<void> {
+    const actionMenu = await this.rowActionMenuOpen(name);
+
+    await actionMenu.getMenuItem('Delete').click();
+
+    // Click the remove/confirm button on the prompt
+    await this.page.locator('[data-testid="prompt-remove-confirm"]').click();
+  }
+
+  pagination(): Locator {
+    return this.page.locator('div.paging');
+  }
+
+  async waitForListItemRemoval(rowNameSelector: string, name: string): Promise<void> {
+    const rows = await this.rowNames(rowNameSelector);
+
+    if (rows.includes(name)) {
+      await expect(this.self().locator(rowNameSelector).filter({ hasText: name })).not.toBeAttached({ timeout: 30000 });
+    }
+  }
 }

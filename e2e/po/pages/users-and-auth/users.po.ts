@@ -15,12 +15,26 @@ export default class UsersPo extends ClusterPagePo {
     this.clusterId = clusterId;
   }
 
+  async waitForRequests(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.status() === 200,
+      { timeout: 15000 },
+    );
+
+    await this.goTo();
+    await responsePromise;
+  }
+
   list(): UsersListPo {
     return new UsersListPo(this.page);
   }
 
-  createEdit(): MgmtUserEditPo {
-    return new MgmtUserEditPo(this.page, this.clusterId);
+  createEdit(userId?: string): MgmtUserEditPo {
+    return new MgmtUserEditPo(this.page, this.clusterId, userId);
+  }
+
+  detail(userId: string): Locator {
+    return this.page.locator(`[data-testid="user-detail-${userId}"]`);
   }
 
   userRetentionLink(): Locator {

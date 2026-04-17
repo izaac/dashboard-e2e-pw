@@ -338,19 +338,12 @@ test.describe('Home Page', () => {
       const version = await rancherApi.getRancherVersion();
 
       // Stub window.open so clicking the button doesn't actually open a tab
-      await page.evaluate(() => {
-        (window as any).__openCalls = [];
-        window.open = (...args: any[]) => {
-          (window as any).__openCalls.push(args);
-
-          return null;
-        };
-      });
+      await homePage.stubWindowOpen();
 
       await item.primaryActionButton().click();
 
       // Retrieve the captured window.open call and assert the URL
-      const openCalls = await page.evaluate(() => (window as any).__openCalls);
+      const openCalls = await homePage.getCapturedOpenCalls();
 
       expect(openCalls.length).toBeGreaterThanOrEqual(1);
 

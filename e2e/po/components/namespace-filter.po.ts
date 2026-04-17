@@ -16,7 +16,9 @@ export class NamespaceFilterPo extends ComponentPo {
   }
 
   async clickOptionByLabel(label: string): Promise<void> {
-    await this.getOptions().getByText(new RegExp(` ${label} `)).click();
+    await this.getOptions()
+      .getByText(new RegExp(` ${label} `))
+      .click();
   }
 
   async searchByName(label: string): Promise<void> {
@@ -62,7 +64,16 @@ export class NamespaceFilterPo extends ComponentPo {
     await this.namespaceDropdown().locator('.icon-chevron-up').click();
   }
 
-  private namespaceDropdown(): Locator {
+  async clickOptionByLabelAndWaitForRequest(label: string): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+    );
+
+    await this.clickOptionByLabel(label);
+    await responsePromise;
+  }
+
+  namespaceDropdown(): Locator {
     return this.page.getByTestId('namespaces-dropdown');
   }
 }

@@ -1,12 +1,18 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
+import BannersPo from '@/e2e/po/components/banners.po';
 
 export default class ClusterManagerCreatePagePo extends PagePo {
   private static createPath(clusterId: string, queryParams?: string) {
     const base = `/c/${clusterId}/manager/provisioning.cattle.io.cluster/create`;
 
     return queryParams ? `${base}?${queryParams}` : base;
+  }
+
+  static url(clusterId: string): string {
+    return `/c/${clusterId}/manager/provisioning.cattle.io.cluster/create`;
   }
 
   constructor(page: Page, clusterId = '_', queryParams?: string) {
@@ -21,10 +27,48 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
   }
 
+  async gridElementExistanceByName(
+    name: string,
+    assertion: 'toBeVisible' | 'not.toBeVisible' = 'toBeVisible',
+  ): Promise<void> {
+    const el = this.self().locator('.grid .name').filter({ hasText: name });
+
+    if (assertion === 'toBeVisible') {
+      await expect(el).toBeVisible({ timeout: 10000 });
+    } else {
+      await expect(el).not.toBeVisible({ timeout: 10000 });
+    }
+  }
+
+  gridElementGroupTitles(): Locator {
+    return this.self().locator('.subtypes-container > div > h4');
+  }
+
+  async selectKubeProvider(index: number): Promise<void> {
+    await this.resourceDetail().cruResource().selectSubType(0, index).click();
+  }
+
   async selectCreate(index: number): Promise<void> {
-    await this.resourceDetail().cruResource().self()
-      .locator('.subtypes-container > div').nth(1)
-      .locator('.item').nth(index)
-      .click();
+    await this.resourceDetail().cruResource().selectSubType(1, index).click();
+  }
+
+  async selectCustom(index: number): Promise<void> {
+    await this.resourceDetail().cruResource().selectSubType(2, index).click();
+  }
+
+  commandFromCustomClusterUI(): Locator {
+    return this.self().locator('code').filter({ hasText: '--insecure' });
+  }
+
+  activateInsecureRegistrationCommandFromUI(): Locator {
+    return this.self().locator('.checkbox-label').filter({ hasText: 'Insecure:' });
+  }
+
+  credentialsBanner(): BannersPo {
+    return new BannersPo(this.page, '.banner:has-text("Ok, Let\'s create a new credential")');
+  }
+
+  errorsBanner(): BannersPo {
+    return new BannersPo(this.page, '.banner.error', this.self());
   }
 }

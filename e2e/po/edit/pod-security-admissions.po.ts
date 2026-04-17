@@ -1,6 +1,10 @@
 import type { Page } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import AsyncButtonPo from '@/e2e/po/components/async-button.po';
+import CodeMirrorPo from '@/e2e/po/components/code-mirror.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 
 export default class PodSecurityAdmissionsCreateEditPo extends PagePo {
@@ -20,5 +24,47 @@ export default class PodSecurityAdmissionsCreateEditPo extends PagePo {
 
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
+  }
+
+  async psaControlLevel(itemRow: number, optionIndex: number): Promise<void> {
+    const selectMode = new LabeledSelectPo(
+      this.page,
+      `[data-testid="pod-security-admission--psaControl-${itemRow}-level"]`,
+      this.self(),
+    );
+
+    await selectMode.toggle();
+    await selectMode.clickOption(optionIndex);
+  }
+
+  async psaControlVersion(itemRow: number, text: string): Promise<void> {
+    const input = this.page.locator(`[data-testid="pod-security-admission--psaControl-${itemRow}-version"] input`);
+
+    await input.fill(text);
+  }
+
+  async setExemptionsCheckbox(optionIndex: number): Promise<void> {
+    const checkbox = new CheckboxInputPo(
+      this.page,
+      `[data-testid="pod-security-admission--psaExemptionsControl-${optionIndex}-active"]`,
+    );
+
+    await checkbox.set();
+  }
+
+  async setExemptionsInput(optionIndex: number, text: string): Promise<void> {
+    const input = this.page.locator(
+      `[data-testid="pod-security-admission--psaExemptionsControl-${optionIndex}-value"] input`,
+    );
+
+    await input.fill(text);
+  }
+
+  editAsYaml(): AsyncButtonPo {
+    return new AsyncButtonPo(this.page, '[data-testid="form-yaml"]', this.self());
+  }
+
+  yamlEditor(): CodeMirrorPo {
+    return CodeMirrorPo.bySelector(this.page, this.self(), '[data-testid="yaml-editor-code-mirror"]');
   }
 }

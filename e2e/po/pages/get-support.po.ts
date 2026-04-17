@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 
 /**
@@ -21,8 +22,41 @@ export default class SupportPagePo extends PagePo {
     return this.page.locator('.external .support-link > a').nth(index);
   }
 
+  externalSupportLinks(index: number): Locator {
+    return this.page.locator('.external .support-link > a').nth(index);
+  }
+
   /** Get the SCC link */
   sccLink(): Locator {
     return this.page.locator('a[href="https://scc.suse.com"]');
+  }
+
+  async clickSupportLink(index: number, isNewTab?: boolean): Promise<void> {
+    const link = this.supportLinks().nth(index);
+
+    if (isNewTab) {
+      await expect(link).toHaveAttribute('target');
+      await link.evaluate((el) => el.removeAttribute('target'));
+      await link.click();
+    } else {
+      await expect(link).not.toHaveAttribute('target');
+      await link.click();
+    }
+  }
+
+  async clickExternalSupportLinks(index: number): Promise<void> {
+    const link = this.externalSupportLinks(index);
+
+    await expect(link).toHaveAttribute('target');
+    await link.evaluate((el) => el.removeAttribute('target'));
+    await link.click();
+  }
+
+  async clickSccLink(): Promise<void> {
+    const link = this.sccLink();
+
+    await expect(link).toHaveAttribute('target');
+    await link.evaluate((el) => el.removeAttribute('target'));
+    await link.click();
   }
 }

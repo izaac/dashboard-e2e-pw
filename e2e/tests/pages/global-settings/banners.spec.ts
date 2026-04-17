@@ -409,8 +409,8 @@ test.describe('Banners', () => {
         await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
 
         // Verify HTML content is rendered and sanitized (XSS onload stripped)
-        await expect(banner.locator('p')).toContainText("SUSE's Terms and Conditions");
-        const imgHtml = await banner.locator('img').evaluate((el) => el.outerHTML);
+        await expect(bannersPage.bannerParagraph(banner)).toContainText("SUSE's Terms and Conditions");
+        const imgHtml = await bannersPage.bannerImgOuterHtml(banner);
 
         expect(imgHtml).not.toContain('onload');
 
@@ -466,8 +466,8 @@ test.describe('Banners', () => {
         await expect(dialog).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
 
         // Verify sanitized HTML in dialog
-        await expect(dialog.locator('p')).toContainText("SUSE's Terms and Conditions");
-        const dialogImgHtml = await dialog.locator('img').evaluate((el) => el.outerHTML);
+        await expect(bannersPage.bannerParagraph(dialog)).toContainText("SUSE's Terms and Conditions");
+        const dialogImgHtml = await bannersPage.bannerImgOuterHtml(dialog);
 
         expect(dialogImgHtml).not.toContain('onload');
 

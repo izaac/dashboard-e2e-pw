@@ -136,7 +136,7 @@ export class BannersPagePo extends RootClusterPage {
   // --- Color pickers ---
 
   textColorPicker(index: number): ColorInputPo {
-    return new ColorInputPo(this.page.getByTestId('color-input-color-input').nth(index));
+    return new ColorInputPo(this.page, `[data-testid="color-input-color-input"] >> nth=${index}`);
   }
 
   // --- Content type ---
@@ -214,5 +214,15 @@ export class BannersPagePo extends RootClusterPage {
 
   loginConfirmationDialog(): Locator {
     return this.page.locator('#banner-consent .banner-dialog-frame');
+  }
+
+  /** Get the outer HTML of an <img> inside a banner locator (for XSS sanitisation checks) */
+  async bannerImgOuterHtml(banner: Locator): Promise<string> {
+    return banner.locator('img').evaluate((el) => el.outerHTML);
+  }
+
+  /** Paragraph text inside a banner locator */
+  bannerParagraph(banner: Locator): Locator {
+    return banner.locator('p');
   }
 }

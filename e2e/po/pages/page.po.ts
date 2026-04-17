@@ -142,10 +142,18 @@ export default class PagePo extends ComponentPo {
 
   /** Check if the fail-whale error page is visible */
   async isFailWhaleVisible(): Promise<boolean> {
-    return this.page
+    // Some Rancher versions use '.fail-whale', others use '.main-layout.error' or a URL path
+    const failWhale = await this.page
       .locator('.fail-whale')
       .isVisible()
       .catch(() => false);
+    const errorPage = await this.page
+      .locator('.main-layout.error')
+      .isVisible()
+      .catch(() => false);
+    const urlHasFailWhale = this.page.url().includes('fail-whale');
+
+    return failWhale || errorPage || urlHasFailWhale;
   }
 
   /** Scroll the main content area to the bottom */
@@ -153,6 +161,16 @@ export default class PagePo extends ComponentPo {
     await this.page
       .locator('.main-layout > .outlet > .outer-container')
       .evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  }
+
+  /** Click away from any open menus/dropdowns by clicking the dashboard root */
+  async clickAway(position = { x: 300, y: 300 }): Promise<void> {
+    await this.self().click({ position });
+  }
+
+  /** Return a locator for <body> (useful for page-wide text assertions) */
+  body(): Locator {
+    return this.page.locator('body');
   }
 
   /** Wait for the dashboard root element to be present */

@@ -8,12 +8,14 @@
  *   - Key public methods (async methods, self(), goTo(), etc.)
  *   - Constructor selector (if visible in source)
  *
- * This index is cheap to read (~2-3KB) and saves agents from scanning 100+ PO files.
+ * With --diff flag, also scans upstream Cypress POs and generates UPSTREAM-DIFF.md
+ * showing missing methods and unported POs.
  *
  * Usage:
- *   npx tsx scripts/generate-po-index.ts
+ *   npx tsx scripts/generate-po-index.ts          # Index only (pre-commit)
+ *   npx tsx scripts/generate-po-index.ts --diff    # Index + upstream diff
  *
- * Runs automatically via pre-commit hook.
+ * Runs automatically via pre-commit hook (index only).
  */
 
 import * as fs from 'fs';
@@ -21,6 +23,8 @@ import * as path from 'path';
 
 const PO_ROOT = path.resolve('e2e/po');
 const OUTPUT = path.join(PO_ROOT, 'INDEX.md');
+const UPSTREAM_PO_ROOT = path.resolve('../dashboard/cypress/e2e/po');
+const DIFF_OUTPUT = path.join(PO_ROOT, 'UPSTREAM-DIFF.md');
 
 interface PoEntry {
   filePath: string;
@@ -44,9 +48,9 @@ function extractPoInfo(filePath: string, relativePath: string): PoEntry | null {
   const className = classMatch[1];
   const extendsClass = classMatch[2] || null;
 
-  // Extract constructor selector — super(page, 'selector') or this.selector = 'x'
+  // Extract constructor selector — super(page, 'selector') or super('selector') or this.selector = 'x'
   let selector: string | null = null;
-  const superMatch = src.match(/super\(\s*page\s*,\s*['"`]([^'"`]+)['"`]/);
+  const superMatch = src.match(/super\(\s*(?:page\s*,\s*)?['"`]([^'"`]+)['"`]/);
 
   if (superMatch) {
     selector = superMatch[1];
@@ -58,7 +62,7 @@ function extractPoInfo(filePath: string, relativePath: string): PoEntry | null {
     }
   }
 
-  // Extract public async methods + key non-async methods
+  // Extract public methods
   const methods: string[] = [];
   const methodRegex = /^\s+(?:async\s+)?(\w+)\s*\([^)]*\)/gm;
   let m;
@@ -66,7 +70,6 @@ function extractPoInfo(filePath: string, relativePath: string): PoEntry | null {
   while ((m = methodRegex.exec(src)) !== null) {
     const name = m[1];
 
-    // Skip constructor, private-convention, and inherited base methods
     if (name === 'constructor') {
       continue;
     }
@@ -77,7 +80,18 @@ function extractPoInfo(filePath: string, relativePath: string): PoEntry | null {
     methods.push(name);
   }
 
-  // Deduplicate
+  // Also capture static methods
+  const staticRegex = /^\s+static\s+(?:async\s+)?(\w+)\s*\([^)]*\)/gm;
+
+  while ((m = staticRegex.exec(src)) !== null) {
+    const name = m[1];
+
+    if (name === 'constructor') {
+      continue;
+    }
+    methods.push(name);
+  }
+
   const uniqueMethods = [...new Set(methods)];
 
   return {
@@ -90,7 +104,11 @@ function extractPoInfo(filePath: string, relativePath: string): PoEntry | null {
   };
 }
 
-function collectPoFiles(dir: string, root: string): string[] {
+function collectPoFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) {
+    return [];
+  }
+
   const results: string[] = [];
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -98,7 +116,7 @@ function collectPoFiles(dir: string, root: string): string[] {
     const full = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      results.push(...collectPoFiles(full, root));
+      results.push(...collectPoFiles(full));
     } else if (entry.name.endsWith('.po.ts')) {
       results.push(full);
     }
@@ -152,8 +170,167 @@ function formatIndex(entries: PoEntry[]): string {
   return lines.join('\n');
 }
 
+// --- Upstream Diff ---
+
+/** Methods that are Cypress-specific and should NOT be flagged as missing */
+const CYPRESS_ONLY_METHODS = new Set([
+  'goTo',
+  'goToAndWaitForGet',
+  'navTo', // static Cypress nav patterns we replace
+]);
+
+/** Methods that are Playwright-only additions (acceptable divergences) */
+const PW_ONLY_ACCEPTABLE = new Set([
+  'computedBackground',
+  'showBtnComputedColor', // evaluate() wrappers
+  'stubWindowOpen',
+  'getCapturedOpenCalls', // window.open stub pattern
+  'setDownloadAttribute', // download attribute helper
+  'clickAway',
+  'body', // Playwright-specific navigation helpers
+]);
+
+interface DiffEntry {
+  className: string;
+  pwFile: string;
+  upstreamFile: string;
+  missingMethods: string[];
+  extraMethods: string[];
+}
+
+function generateDiff(pwEntries: PoEntry[], upstreamEntries: PoEntry[]): string {
+  // Build lookup by class name
+  const pwByClass = new Map<string, PoEntry>();
+  const upstreamByClass = new Map<string, PoEntry>();
+
+  for (const e of pwEntries) {
+    pwByClass.set(e.className, e);
+  }
+  for (const e of upstreamEntries) {
+    upstreamByClass.set(e.className, e);
+  }
+
+  const diffs: DiffEntry[] = [];
+  const unportedClasses: { className: string; file: string; methodCount: number }[] = [];
+
+  // Compare matched POs
+  for (const [className, upstream] of upstreamByClass) {
+    const pw = pwByClass.get(className);
+
+    if (!pw) {
+      unportedClasses.push({
+        className,
+        file: upstream.relativePath,
+        methodCount: upstream.methods.length,
+      });
+      continue;
+    }
+
+    const pwMethodSet = new Set(pw.methods);
+    const upstreamMethodSet = new Set(upstream.methods);
+
+    const missing = upstream.methods.filter((m) => !pwMethodSet.has(m) && !CYPRESS_ONLY_METHODS.has(m));
+    const extra = pw.methods.filter((m) => !upstreamMethodSet.has(m) && !PW_ONLY_ACCEPTABLE.has(m));
+
+    if (missing.length > 0 || extra.length > 0) {
+      diffs.push({
+        className,
+        pwFile: pw.relativePath,
+        upstreamFile: upstream.relativePath,
+        missingMethods: missing,
+        extraMethods: extra,
+      });
+    }
+  }
+
+  // Format output
+  const lines: string[] = [
+    '<!-- AUTO-GENERATED by scripts/generate-po-index.ts --diff -->',
+    '# Upstream PO Diff',
+    '',
+    `Generated: ${new Date().toISOString().split('T')[0]}`,
+    '',
+    `Playwright POs: ${pwEntries.length} | Upstream Cypress POs: ${upstreamEntries.length} | Unported: ${unportedClasses.length}`,
+    '',
+  ];
+
+  // Section 1: Method gaps in existing POs
+  const withMissing = diffs.filter((d) => d.missingMethods.length > 0);
+
+  if (withMissing.length > 0) {
+    lines.push('## Missing Methods (upstream has, Playwright lacks)');
+    lines.push('');
+    lines.push('| Class | PW File | Missing Methods |');
+    lines.push('|-------|---------|-----------------|');
+
+    for (const d of withMissing.sort((a, b) => b.missingMethods.length - a.missingMethods.length)) {
+      const methods =
+        d.missingMethods.slice(0, 10).join(', ') +
+        (d.missingMethods.length > 10 ? ` (+${d.missingMethods.length - 10})` : '');
+
+      lines.push(`| ${d.className} | ${d.pwFile} | ${methods} |`);
+    }
+
+    lines.push('');
+  } else {
+    lines.push('## Missing Methods');
+    lines.push('');
+    lines.push('None — all ported POs have full method coverage.');
+    lines.push('');
+  }
+
+  // Section 2: Extra methods (Playwright-only, non-acceptable)
+  const withExtra = diffs.filter((d) => d.extraMethods.length > 0);
+
+  if (withExtra.length > 0) {
+    lines.push('## Extra Methods (Playwright-only, not in upstream)');
+    lines.push('');
+    lines.push('These may be valid Playwright-specific helpers or may indicate naming divergence.');
+    lines.push('');
+    lines.push('| Class | PW File | Extra Methods |');
+    lines.push('|-------|---------|---------------|');
+
+    for (const d of withExtra) {
+      lines.push(`| ${d.className} | ${d.pwFile} | ${d.extraMethods.join(', ')} |`);
+    }
+
+    lines.push('');
+  }
+
+  // Section 3: Unported POs
+  if (unportedClasses.length > 0) {
+    lines.push('## Unported POs (upstream only)');
+    lines.push('');
+    lines.push(`${unportedClasses.length} upstream POs have no Playwright equivalent yet.`);
+    lines.push('');
+    lines.push('| Class | Upstream File | Methods |');
+    lines.push('|-------|---------------|---------|');
+
+    for (const u of unportedClasses.sort((a, b) => b.methodCount - a.methodCount)) {
+      lines.push(`| ${u.className} | ${u.file} | ${u.methodCount} |`);
+    }
+
+    lines.push('');
+  }
+
+  // Summary
+  lines.push('## Summary');
+  lines.push('');
+  const matchedCount = [...upstreamByClass.keys()].filter((c) => pwByClass.has(c)).length;
+
+  lines.push(`- **Matched POs:** ${matchedCount} with upstream equivalents`);
+  lines.push(`- **Method gaps:** ${withMissing.length} POs missing methods`);
+  lines.push(`- **Total missing methods:** ${withMissing.reduce((sum, d) => sum + d.missingMethods.length, 0)}`);
+  lines.push(`- **Unported POs:** ${unportedClasses.length}`);
+  lines.push('');
+
+  return lines.join('\n');
+}
+
 // --- Main ---
-const poFiles = collectPoFiles(PO_ROOT, PO_ROOT);
+const doDiff = process.argv.includes('--diff');
+
+const poFiles = collectPoFiles(PO_ROOT);
 const entries: PoEntry[] = [];
 
 for (const file of poFiles) {
@@ -165,15 +342,39 @@ for (const file of poFiles) {
   }
 }
 
+// Write INDEX.md
 const output = formatIndex(entries);
-
-// Check if content changed before writing (avoids dirty git state in pre-commit)
 const existing = fs.existsSync(OUTPUT) ? fs.readFileSync(OUTPUT, 'utf-8') : '';
 
 if (existing === output) {
   console.log('PO index is up to date.');
-  process.exit(0);
+} else {
+  fs.writeFileSync(OUTPUT, output);
+  console.log(`PO index updated: ${entries.length} entries written to ${OUTPUT}`);
 }
 
-fs.writeFileSync(OUTPUT, output);
-console.log(`PO index updated: ${entries.length} entries written to ${OUTPUT}`);
+// Write UPSTREAM-DIFF.md if --diff
+if (doDiff) {
+  if (!fs.existsSync(UPSTREAM_PO_ROOT)) {
+    console.error(`Upstream PO root not found: ${UPSTREAM_PO_ROOT}`);
+    console.error('Ensure ../dashboard/cypress/e2e/po/ exists.');
+    process.exit(1);
+  }
+
+  const upstreamFiles = collectPoFiles(UPSTREAM_PO_ROOT);
+  const upstreamEntries: PoEntry[] = [];
+
+  for (const file of upstreamFiles) {
+    const rel = path.relative(UPSTREAM_PO_ROOT, file);
+    const entry = extractPoInfo(file, rel);
+
+    if (entry) {
+      upstreamEntries.push(entry);
+    }
+  }
+
+  const diffOutput = generateDiff(entries, upstreamEntries);
+
+  fs.writeFileSync(DIFF_OUTPUT, diffOutput);
+  console.log(`Upstream diff: ${upstreamEntries.length} upstream POs compared → ${DIFF_OUTPUT}`);
+}

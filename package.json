@@ -27,6 +27,7 @@
     "typecheck": "tsc --noEmit",
     "summarize-failures": "npx tsx scripts/summarize-failures.ts",
     "po-index": "npx tsx scripts/generate-po-index.ts",
+    "po-diff": "npx tsx scripts/generate-po-index.ts --diff",
     "prepare": "husky"
   },
   "dependencies": {

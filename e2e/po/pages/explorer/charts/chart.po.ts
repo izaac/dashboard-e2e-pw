@@ -63,4 +63,48 @@ export class ChartPage extends PagePo {
     await expect(btn).toBeVisible({ timeout: 15000 });
     await btn.click();
   }
+
+  deprecationAndExperimentalWarning(): Locator {
+    return this.self().locator('[data-testid="deprecation-and-experimental-banner"]');
+  }
+
+  async selectVersion(version: string): Promise<void> {
+    await this.self().locator('[data-testid="chart-version-link"]').filter({ hasText: version }).click();
+  }
+
+  checkSelectedVersion(version: string): Locator {
+    return this.self().locator('.chart-body__info-section--versions .current-version').filter({ hasText: version });
+  }
+
+  versions(): Locator {
+    return this.self().locator('[data-testid="chart-versions"]');
+  }
+
+  versionLinks(): Locator {
+    return this.versions().locator('[data-testid="chart-version-link"]');
+  }
+
+  showMoreVersions(): Locator {
+    return this.self().locator('[data-testid="chart-show-more-versions"]');
+  }
+
+  repoLink(): Locator {
+    return this.self().locator('[data-testid="chart-repo-link"]');
+  }
+
+  keywords(): Locator {
+    return this.self().locator('[data-testid="chart-keyword-link"]');
+  }
+
+  async getVersions(): Promise<string[]> {
+    const elements = this.self().locator('.chart-body__info-section--versions b');
+    const count = await elements.count();
+    const versions: string[] = [];
+
+    for (let i = 0; i < count; i++) {
+      versions.push(await elements.nth(i).innerText());
+    }
+
+    return versions;
+  }
 }

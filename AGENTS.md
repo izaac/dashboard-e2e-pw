@@ -47,6 +47,7 @@
 - **One spec at a time** — run `-g "test name"` to isolate failures, not the whole suite.
 - **Page Objects are the docs** — read the PO, not the Playwright API docs, for selector patterns.
 - **Check existing POs first** — read `e2e/po/INDEX.md` before creating. It lists every PO with class, selector, and methods. Don't `find` or `grep` for POs unless the index is missing.
+- **Check upstream parity first** — run `npm run po-diff` and read `e2e/po/UPSTREAM-DIFF.md` before manually comparing POs. It shows missing methods, extra methods, and unported POs.
 - **Read Cypress PO first, then write Playwright PO** — don't read the Playwright base classes again, the pattern is the same every time.
 - **Batch spec conversions** — read all specs in a folder, then write all at once. Don't round-trip per file.
 - **Skip upstream comments** — don't copy eslint-disable, TODO, or commented-out Cypress code.
@@ -161,13 +162,30 @@ Tests must produce the **same result** regardless of how many times they run or 
 
 ---
 
+## MANDATORY PROJECT TOOLS
+
+Use these tools instead of doing things manually. No exceptions.
+
+| Task | Tool | Command |
+|------|------|---------|
+| Find a PO by class/method | PO Index | Read `e2e/po/INDEX.md` — do NOT grep/find PO files manually |
+| Check PO parity with upstream | PO Diff | `npm run po-diff` → read `e2e/po/UPSTREAM-DIFF.md` — do NOT compare POs manually |
+| Diagnose test failures | Failure Summarizer | `npm run summarize-failures` → read `test-results/FAILURE-SUMMARY.md` — do NOT read raw artifacts first |
+| Regenerate PO index | PO Index Generator | `npm run po-index` — runs automatically on pre-commit too |
+| Lint changed files | ESLint | `npx eslint --fix <files>` — runs automatically on pre-commit via lint-staged |
+
+**Why:** These tools exist to save tokens and prevent agents from doing expensive manual work that the tools already automate. An agent grepping 100+ PO files costs 10x what reading INDEX.md costs. An agent reading 5 failure artifacts costs 5x what reading FAILURE-SUMMARY.md costs.
+
+---
+
 ## AGENT BOUNDARIES
 
 ### Always
 
 - **Use Git for reverts:** `git checkout <file>` or `git restore`. No manual overwriting.
 - **Run tests before committing:** `npx playwright test <spec> --reporter=line`
-- **Check existing POs** before creating new ones: `find e2e/po -name '*.po.ts'`
+- **Check existing POs via `e2e/po/INDEX.md`** before creating new ones — do NOT `find` or `grep` for POs.
+- **Check upstream parity via `npm run po-diff`** before manually comparing POs — do NOT read upstream files one by one.
 - **Follow upstream Cypress PO structure** — same class names, same method names, same selectors.
 - Write idiomatic TypeScript (strict mode, no `any` unless unavoidable).
 

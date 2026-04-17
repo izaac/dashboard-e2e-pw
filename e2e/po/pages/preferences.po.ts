@@ -1,6 +1,9 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ButtonGroupPo from '@/e2e/po/components/button-group.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 
 export default class PreferencesPagePo extends PagePo {
   static url = '/prefs';
@@ -22,6 +25,53 @@ export default class PreferencesPagePo extends PagePo {
   /** Theme button group (Light / Dark) */
   themeButtons(): ButtonGroupPo {
     return new ButtonGroupPo(this.page, '[data-testid="prefs__themeOptions"]');
+  }
+
+  languageDropdownMenu(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="prefs__languageSelector"]');
+  }
+
+  dateFormateDropdownMenu(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="prefs__displaySetting__dateFormat"]');
+  }
+
+  timeFormateDropdownMenu(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="prefs__displaySetting__timeFormat"]');
+  }
+
+  perPageDropdownMenu(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="prefs__displaySetting__perPage"]');
+  }
+
+  clustersDropdownMenu(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="prefs__displaySetting__menuMaxClusters"]');
+  }
+
+  keymapButtons(): ButtonGroupPo {
+    return new ButtonGroupPo(this.page, '[data-testid="prefs__keymapOptions"]');
+  }
+
+  helmButtons(): ButtonGroupPo {
+    return new ButtonGroupPo(this.page, '[data-testid="prefs__helmOptions"]');
+  }
+
+  hideDescriptionsCheckbox(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="prefs__hideDescriptions"]');
+  }
+
+  async verifyHideDescriptionsCheckboxLabel(): Promise<void> {
+    const label = await this.hideDescriptionsCheckbox().getCheckboxLabel();
+    const { expect } = await import('@playwright/test');
+
+    expect(label).toBe('Hide Type Description banners above resource lists ');
+  }
+
+  landingPageRadioBtn(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '[data-testid="prefs__landingPagePreference"]');
+  }
+
+  customPageOptionsDropdown(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '.custom-page-options');
   }
 
   /** Date format select dropdown */

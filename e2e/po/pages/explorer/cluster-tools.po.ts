@@ -15,7 +15,7 @@ export default class ClusterToolsPagePo extends PagePo {
     return this.page.locator('[data-testid="tools-app-chart-cards"]').locator('[data-testid*="item-card-"]');
   }
 
-  private getCardByName(chartName: string): Locator {
+  getCardByName(chartName: string): Locator {
     // Find the title element first, then navigate up to the card container.
     // Using hasText on item-card-* matches child elements too (strict mode violation).
     return this.page
@@ -46,5 +46,9 @@ export default class ClusterToolsPagePo extends PagePo {
 
   async editChart(chartName: string): Promise<void> {
     await this.clickAction(chartName, 'Edit current version');
+  }
+
+  getChartVersion(name: string): Locator {
+    return this.getCardByName(name).locator('[data-testid="app-chart-card-sub-header-item"]').first();
   }
 }

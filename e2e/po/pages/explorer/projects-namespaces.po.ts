@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
+import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 
 export class ProjectsNamespacesListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -38,6 +39,50 @@ export class ProjectCreateEditPagePo extends PagePo {
 
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
+  }
+
+  tabResourceQuotas(): Locator {
+    return this.self().locator('[data-testid="btn-resource-quotas"]');
+  }
+
+  btnAddResource(): Locator {
+    return this.self().locator('[data-testid="btn-add-resource"]');
+  }
+
+  inputProjectLimit(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="projectrow-project-quota-input"]');
+  }
+
+  inputNamespaceDefaultLimit(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="projectrow-namespace-quota-input"]');
+  }
+
+  tabContainerDefaultResourceLimit(): Locator {
+    return this.self().locator('[data-testid="btn-container-default-resource-limit"]');
+  }
+
+  inputCpuReservation(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="cpu-reservation"]');
+  }
+
+  inputMemoryReservation(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="memory-reservation"]');
+  }
+
+  inputCpuLimit(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="cpu-limit"]');
+  }
+
+  inputMemoryLimit(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="memory-limit"]');
+  }
+
+  selectResourceType(): Locator {
+    return this.page.locator('[data-testid="projectrow-type-input"]');
+  }
+
+  bannerError(n: number): Locator {
+    return this.self().locator(`[data-testid="error-banner${n}"]`);
   }
 
   addProjectMemberButton(): Locator {

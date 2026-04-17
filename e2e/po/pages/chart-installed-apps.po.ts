@@ -12,6 +12,10 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     this.terminal = new KubectlPo(page);
   }
 
+  async filter(key: string): Promise<void> {
+    await this.self().locator('.input-sm.search-box').fill(key);
+  }
+
   appsList(): ResourceTablePo {
     return new ResourceTablePo(this.page, '[data-testid="installed-app-catalog-list"]');
   }
@@ -21,7 +25,7 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
    */
   async waitForInstallCloseTerminal(
     installResponse: Promise<import('@playwright/test').Response>,
-    installableParts: string[]
+    installableParts: string[],
   ): Promise<void> {
     const response = await installResponse;
 
@@ -32,7 +36,7 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {
-      await expect(this.appsList().resourceTableDetails(item, 1)).toContainText('Deployed');
+      await expect(this.appsList().resourceTableDetails(item, 1)).toContainText('Deployed', { timeout: 30000 });
     }
 
     // Additional wait for everything to be set up

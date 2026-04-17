@@ -42,4 +42,60 @@ export class ChartsPage extends PagePo {
   headerTitle(): Locator {
     return this.page.getByTestId('charts-header-title');
   }
+
+  emptyState(): Locator {
+    return this.self().locator('[data-testid="charts-empty-state"]');
+  }
+
+  emptyStateTitle(): Locator {
+    return this.self().locator('[data-testid="charts-empty-state-title"]');
+  }
+
+  emptyStateResetFilters(): Locator {
+    return this.self().locator('[data-testid="charts-empty-state-reset-filters"]');
+  }
+
+  async totalChartsCount(): Promise<number> {
+    const text = await this.self().locator('[data-testid="charts-total-message"]').innerText();
+
+    return parseInt(text.match(/\d+/)?.[0] || '0', 10);
+  }
+
+  async checkChartGenericIcon(name: string, isGeneric = true): Promise<void> {
+    await this.chartsSearchFilterInput().fill(name);
+    await expect(this.page).toHaveURL((url) => {
+      const params = new URL(url).searchParams;
+
+      return params.get('q') === name;
+    });
+    await expect(this.chartCards().first()).toBeAttached();
+
+    const card = this.getChartByName(name);
+    const src = await card.locator('img').getAttribute('src');
+
+    if (isGeneric) {
+      expect(src).toContain('generic-catalog');
+    } else {
+      expect(src).not.toContain('generic-catalog');
+    }
+
+    await this.chartsSearchFilterInput().clear();
+    await expect(this.page).toHaveURL((url) => {
+      const params = new URL(url).searchParams;
+
+      return params.get('q') === null;
+    });
+  }
+
+  async resetAllFilters(): Promise<void> {
+    await this.chartsSearchFilterInput().clear();
+  }
+
+  getFilterOptionByName(name: string): Locator {
+    return this.self().locator('.filter-panel .filter-group .filter').filter({ hasText: name });
+  }
+
+  getAllOptionsByGroupName(name: string): Locator {
+    return this.self().locator('.filter-panel .filter-group').filter({ hasText: name }).locator('.filter');
+  }
 }

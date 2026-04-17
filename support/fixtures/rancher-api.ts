@@ -32,7 +32,7 @@ export class RancherApi {
     // Step 1: Native fetch for login — avoids CSRF cookie conflicts from Playwright's cookie jar
     const resp = await fetch(`${this.apiUrl}/v3-public/localProviders/local?action=login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ username, password, responseType: 'json' }),
     });
 
@@ -48,7 +48,7 @@ export class RancherApi {
 
     // Step 2: Make a GET via the Playwright request context to pick up the CSRF cookie
     await this.request.get(`${this.apiUrl}/v3/settings/server-version`, {
-      headers: { 'Authorization': `Bearer ${this.csrfToken}`, 'Accept': 'application/json' },
+      headers: { Authorization: `Bearer ${this.csrfToken}`, Accept: 'application/json' },
       ignoreHTTPSErrors: true,
     });
 
@@ -61,7 +61,7 @@ export class RancherApi {
   }
 
   private headers() {
-    const h: Record<string, string> = { 'Accept': 'application/json' };
+    const h: Record<string, string> = { Accept: 'application/json' };
 
     if (this.csrfToken) {
       h['Authorization'] = `Bearer ${this.csrfToken}`;
@@ -84,7 +84,9 @@ export class RancherApi {
   }
 
   createE2EResourceName(context: string, options?: CreateResourceNameOptions): string {
-    if (options?.onlyContext) return context;
+    if (options?.onlyContext) {
+      return context;
+    }
 
     const root = this.rootE2EResourceName();
 
@@ -95,7 +97,9 @@ export class RancherApi {
   async getRancherResource(prefix: string, resourceType: string, resourceId?: string, expectedStatusCode = 200) {
     let url = `${this.apiUrl}/${prefix}/${resourceType}`;
 
-    if (resourceId) url += `/${resourceId}`;
+    if (resourceId) {
+      url += `/${resourceId}`;
+    }
 
     let method: 'GET' | 'POST' = 'GET';
     let body: any;
@@ -115,7 +119,9 @@ export class RancherApi {
       expect(resp.status()).toBe(expectedStatusCode);
     }
 
-    return { status: resp.status(), body: await resp.json() };
+    const json = await resp.json().catch(() => ({}));
+
+    return { status: resp.status(), body: json };
   }
 
   async createRancherResource(prefix: string, resourceType: string, body: any, failOnStatusCode = true) {
@@ -163,7 +169,9 @@ export class RancherApi {
       try {
         const result = await this.getRancherResource(prefix, resourceType, resourceId, 0);
 
-        if (testFn(result)) return true;
+        if (testFn(result)) {
+          return true;
+        }
       } catch {
         // ignore fetch errors during polling
       }
@@ -187,19 +195,31 @@ export class RancherApi {
   }
 
   async waitForRepositoryDownload(prefix: string, resourceType: string, resourceId: string, retries = 20) {
-    return this.waitForRancherResource(prefix, resourceType, resourceId, (resp) => {
-      const conditions = resp.body.status?.conditions || [];
+    return this.waitForRancherResource(
+      prefix,
+      resourceType,
+      resourceId,
+      (resp) => {
+        const conditions = resp.body.status?.conditions || [];
 
-      return conditions.some((c: any) => c.type === 'Downloaded' && c.status === 'True');
-    }, retries);
+        return conditions.some((c: any) => c.type === 'Downloaded' && c.status === 'True');
+      },
+      retries,
+    );
   }
 
   async waitForResourceState(prefix: string, resourceType: string, resourceId: string, state = 'active', retries = 20) {
-    return this.waitForRancherResource(prefix, resourceType, resourceId, (resp) => {
-      const s = resp.body.metadata?.state;
+    return this.waitForRancherResource(
+      prefix,
+      resourceType,
+      resourceId,
+      (resp) => {
+        const s = resp.body.metadata?.state;
 
-      return s && s.transitioning === false && s.name === state;
-    }, retries);
+        return s && s.transitioning === false && s.name === state;
+      },
+      retries,
+    );
   }
 
   /** User management */
@@ -213,6 +233,7 @@ export class RancherApi {
       mustChangePassword: false,
       username: e2eName,
     });
+
     expect(userResp.status).toBe(201);
 
     await new Promise((r) => setTimeout(r, 200));
@@ -229,7 +250,12 @@ export class RancherApi {
       await this.setClusterRoleBinding(clusterRole.clusterId, userPrincipalId, clusterRole.role);
     }
     if (projectRole) {
-      await this.setProjectRoleBinding(projectRole.clusterId, userPrincipalId, projectRole.projectName, projectRole.role);
+      await this.setProjectRoleBinding(
+        projectRole.clusterId,
+        userPrincipalId,
+        projectRole.projectName,
+        projectRole.role,
+      );
     }
 
     return userResp;
@@ -288,10 +314,9 @@ export class RancherApi {
   }
 
   async getProjectByName(clusterId: string, projectName: string) {
-    const resp = await this.request.get(
-      `${this.apiUrl}/v3/projects?name=${projectName}&clusterId=${clusterId}`,
-      { headers: this.headers() },
-    );
+    const resp = await this.request.get(`${this.apiUrl}/v3/projects?name=${projectName}&clusterId=${clusterId}`, {
+      headers: this.headers(),
+    });
 
     expect(resp.status()).toBe(200);
     const body = await resp.json();
@@ -314,31 +339,43 @@ export class RancherApi {
   }
 
   async createPod(nsName: string, podName: string, image: string, failOnStatusCode = true) {
-    return this.createRancherResource('v1', 'pods', {
-      type: 'pod',
-      metadata: {
-        namespace: nsName,
-        labels: { 'workload.user.cattle.io/workloadselector': podName },
-        name: podName,
+    return this.createRancherResource(
+      'v1',
+      'pods',
+      {
+        type: 'pod',
+        metadata: {
+          namespace: nsName,
+          labels: { 'workload.user.cattle.io/workloadselector': podName },
+          name: podName,
+        },
+        spec: {
+          containers: [
+            {
+              imagePullPolicy: 'Always',
+              name: 'container-0',
+              image,
+            },
+          ],
+        },
       },
-      spec: {
-        containers: [{
-          imagePullPolicy: 'Always',
-          name: 'container-0',
-          image,
-        }],
-      },
-    }, failOnStatusCode);
+      failOnStatusCode,
+    );
   }
 
   async createToken(description: string, ttl = 3600000, failOnStatusCode = true, clusterId?: string) {
-    return this.createRancherResource('v3', 'tokens', {
-      type: 'token',
-      metadata: {},
-      description,
-      clusterId,
-      ttl,
-    }, failOnStatusCode);
+    return this.createRancherResource(
+      'v3',
+      'tokens',
+      {
+        type: 'token',
+        metadata: {},
+        description,
+        clusterId,
+        ttl,
+      },
+      failOnStatusCode,
+    );
   }
 
   async deleteNamespace(namespaces: string[]) {
@@ -352,7 +389,9 @@ export class RancherApi {
     const result = await this.getRancherResource('v3', 'clusters');
     const cluster = result.body.data.find((item: any) => item.name === clusterName);
 
-    if (!cluster) throw new Error(`Cluster '${clusterName}' not found`);
+    if (!cluster) {
+      throw new Error(`Cluster '${clusterName}' not found`);
+    }
 
     return cluster.id;
   }
@@ -415,7 +454,11 @@ export class RancherApi {
     });
   }
 
-  async createService(namespace: string, name: string, options: { type?: string; ports?: any[]; spec?: any; metadata?: any } = {}) {
+  async createService(
+    namespace: string,
+    name: string,
+    options: { type?: string; ports?: any[]; spec?: any; metadata?: any } = {},
+  ) {
     const defaultSpec = {
       ports: options.ports || [{ name: 'myport', port: 8080, protocol: 'TCP', targetPort: 80 }],
       sessionAffinity: 'None',
@@ -438,7 +481,9 @@ export class RancherApi {
   async isVaiCacheEnabled(): Promise<boolean> {
     const result = await this.getRancherResource('v1', 'management.cattle.io.features', 'ui-sql-cache');
 
-    if (result.body?.status?.lockedValue != null) return result.body.status.lockedValue;
+    if (result.body?.status?.lockedValue != null) {
+      return result.body.status.lockedValue;
+    }
 
     return result.body?.spec?.value ?? result.body?.status?.default;
   }

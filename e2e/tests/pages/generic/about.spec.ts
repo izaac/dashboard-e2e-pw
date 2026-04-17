@@ -141,15 +141,13 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
 
       expect(href).toContain('releases.rancher.com/cli2');
 
-      const link = aboutPage.getCliDownloadLinkByLabel('rancher-darwin');
-
-      await link.evaluate((el) => el.setAttribute('download', ''));
+      await aboutPage.setDownloadAttribute('rancher-darwin');
 
       const downloadPromise = page.waitForResponse(
         (resp) => resp.url().includes('releases.rancher.com/cli2') && resp.url().includes('darwin'),
       );
 
-      await link.click();
+      await aboutPage.getCliDownloadLinkByLabel('rancher-darwin').click();
       const downloadResp = await downloadPromise;
 
       expect(downloadResp.status()).toBe(200);
@@ -167,15 +165,13 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
 
       expect(href).toContain('releases.rancher.com/cli2');
 
-      const link = aboutPage.getCliDownloadLinkByLabel('rancher-linux');
-
-      await link.evaluate((el) => el.setAttribute('download', ''));
+      await aboutPage.setDownloadAttribute('rancher-linux');
 
       const downloadPromise = page.waitForResponse(
         (resp) => resp.url().includes('releases.rancher.com/cli2') && resp.url().includes('linux'),
       );
 
-      await link.click();
+      await aboutPage.getCliDownloadLinkByLabel('rancher-linux').click();
       const downloadResp = await downloadPromise;
 
       expect(downloadResp.status()).toBe(200);
@@ -193,15 +189,13 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
 
       expect(href).toContain('releases.rancher.com/cli2');
 
-      const link = aboutPage.getCliDownloadLinkByLabel('rancher-windows');
-
-      await link.evaluate((el) => el.setAttribute('download', ''));
+      await aboutPage.setDownloadAttribute('rancher-windows');
 
       const downloadPromise = page.waitForResponse(
         (resp) => resp.url().includes('releases.rancher.com/cli2') && resp.url().includes('windows'),
       );
 
-      await link.click();
+      await aboutPage.getCliDownloadLinkByLabel('rancher-windows').click();
       const downloadResp = await downloadPromise;
 
       expect(downloadResp.status()).toBe(200);

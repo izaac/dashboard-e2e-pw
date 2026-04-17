@@ -12,8 +12,16 @@ export class SecretsListPagePo extends PagePo {
     super(page, SecretsListPagePo.createPath(clusterId));
   }
 
+  title(): Locator {
+    return this.self().locator('.title h1');
+  }
+
   createButton(): Locator {
     return this.self().locator('[data-testid="secrets-list-create"]');
+  }
+
+  createButtonTitle(): Locator {
+    return this.createButton();
   }
 
   list(): BaseResourceList {

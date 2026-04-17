@@ -21,8 +21,13 @@ class DashboardPagePo extends PagePo {
     await expect(this.mainTitle()).toContainText('OS Management');
   }
 
+  /** The install operator button locator */
+  chartsInstallButton(): Locator {
+    return this.self().getByTestId('charts-install-button');
+  }
+
   async installOperator(): Promise<void> {
-    await this.self().getByTestId('charts-install-button').click();
+    await this.chartsInstallButton().click();
   }
 
   async createElementalCluster(): Promise<void> {
