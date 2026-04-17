@@ -35,4 +35,8 @@ export default class AuthProviderPo extends PagePo {
   async goToAmazonCognitoCreation(clusterId = '_'): Promise<void> {
     await this.page.goto(`./c/${clusterId}/auth/config/cognito?mode=edit`, { waitUntil: 'domcontentloaded' });
   }
+
+  async goToAmazonCongitoCreation(clusterId = '_'): Promise<void> {
+    return this.goToAmazonCognitoCreation(clusterId);
+  }
 }

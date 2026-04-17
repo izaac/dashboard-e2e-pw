@@ -69,6 +69,44 @@ export default class MgmtUserEditPo extends PagePo {
     return responsePromise;
   }
 
+  async saveCreateWithErrorRetry(attempt = 1): Promise<void> {
+    if (attempt > 3) {
+      return;
+    }
+
+    const userCreationPromise = this.page.waitForResponse(
+      (resp) => resp.url().includes('v1/management.cattle.io.users') && resp.request().method() === 'POST',
+      { timeout: 15000 },
+    );
+
+    await this.resourceDetail().cruResource().saveOrCreate().click();
+
+    const userResp = await userCreationPromise;
+
+    if (userResp.status() !== 201) {
+      await this.page.waitForTimeout(1500);
+      await this.saveCreateWithErrorRetry(attempt + 1);
+
+      return;
+    }
+
+    const userBody = await userResp.json();
+    const userId = userBody?.id;
+
+    const bindingPromise = this.page.waitForResponse(
+      (resp) => resp.url().includes('v3/globalrolebindings') && resp.request().method() === 'POST',
+      { timeout: 15000 },
+    );
+
+    const bindingResp = await bindingPromise;
+
+    if (bindingResp.status() !== 201 && userId) {
+      await this.page.request.delete(`v1/management.cattle.io.users/${userId}`);
+      await this.page.waitForTimeout(2000);
+      await this.saveCreateWithErrorRetry(attempt + 1);
+    }
+  }
+
   globalRoleBindings(): GlobalRoleBindingsPo {
     return new GlobalRoleBindingsPo(this.page);
   }

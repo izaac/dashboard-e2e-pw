@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
@@ -18,6 +19,10 @@ export default class ClusterDashboardPagePo extends PagePo {
 
   urlPath(clusterId = 'local'): string {
     return ClusterDashboardPagePo.createPath(clusterId);
+  }
+
+  customBadge(): Locator {
+    return this.page.locator('[data-testid="custom-badge-dialog"]');
   }
 
   customizeAppearanceButton(): Locator {
@@ -79,5 +84,35 @@ export default class ClusterDashboardPagePo extends PagePo {
 
   controllerManagerStatus(): Locator {
     return this.page.getByTestId('k8s-service-controller-manager');
+  }
+
+  async goToAndConfirmNsValues(
+    cluster: string,
+    opts: {
+      nsProject?: { values: string[] };
+      all?: { is: boolean };
+    },
+  ): Promise<void> {
+    await this.goTo();
+    await this.waitForPage();
+
+    const nsFilter = this.page.getByTestId('namespaces-filter');
+
+    await expect(nsFilter).toBeVisible();
+
+    if (opts.nsProject) {
+      for (const val of opts.nsProject.values) {
+        await expect(nsFilter).toContainText(val);
+      }
+    } else if (opts.all) {
+      await expect(nsFilter).toContainText('All Namespaces');
+    } else {
+      throw new Error('Bad Config');
+    }
+  }
+
+  async goToAndWait(): Promise<void> {
+    await this.goTo();
+    await this.clusterActionsHeader().checkVisible();
   }
 }

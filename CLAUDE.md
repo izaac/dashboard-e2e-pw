@@ -146,21 +146,27 @@ Qase IDs are added manually by QA. **Never generate or guess Qase IDs.** The rep
 ### Failure Summarizer
 After a test run with failures, run:
 ```bash
-npm run summarize-failures
+yarn summarize-failures
 ```
 Reads all artifacts from `test-results/`, classifies each failure (timeout, selector, API error, assertion, crash, navigation), cross-references network errors with the failure type, detects DOM state flags (loading spinners, login page visible, error banners), and outputs a single `test-results/FAILURE-SUMMARY.md`. Agents should read this file FIRST before diving into individual artifacts.
 
 ### PO Index
 ```bash
-npm run po-index
+yarn po-index
 ```
 Generates `e2e/po/INDEX.md` — a table of all Page Objects with class name, parent, selector, and key methods. Updated automatically on pre-commit. Agents MUST read this before searching for POs manually.
 
 ### PO Upstream Diff
 ```bash
-npm run po-diff
+yarn po-diff
 ```
 Generates `e2e/po/UPSTREAM-DIFF.md` — compares all Playwright POs against upstream Cypress POs. Shows missing methods, extra methods, and unported POs. Agents MUST run this instead of manually comparing PO files against upstream.
+
+### Assertion Gap Map
+```bash
+yarn gap-map
+```
+Generates `docs/ASSERTION-GAP-MAP.md` — compares upstream Cypress specs against Playwright specs. Shows per-suite conversion progress, unconverted specs, and test count deltas. Agents MUST run this instead of manually counting tests.
 
 ### Pre-commit Hooks
 Husky + lint-staged runs on every commit:

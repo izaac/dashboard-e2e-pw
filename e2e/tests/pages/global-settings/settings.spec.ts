@@ -49,19 +49,21 @@ test.describe('Settings', () => {
   });
 
   test.afterEach(async ({ rancherApi }) => {
-    // Revert all modified settings
-    for (const s of resetSettings) {
-      try {
-        const resource = settingsOriginal[s];
-        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', s);
+    try {
+      for (const s of resetSettings) {
+        try {
+          const resource = settingsOriginal[s];
+          const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', s);
 
-        resource.metadata.resourceVersion = resp.body.metadata.resourceVersion;
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', s, resource);
-      } catch {
-        // ignore cleanup errors
+          resource.metadata.resourceVersion = resp.body.metadata.resourceVersion;
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', s, resource);
+        } catch {
+          // Setting may already be at default or resource version may have changed
+        }
       }
+    } finally {
+      resetSettings.length = 0;
     }
-    resetSettings.length = 0;
   });
 
   async function navToSettings(page: any) {

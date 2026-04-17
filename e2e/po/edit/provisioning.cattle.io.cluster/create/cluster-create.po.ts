@@ -64,6 +64,10 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     return this.self().locator('.checkbox-label').filter({ hasText: 'Insecure:' });
   }
 
+  customClusterRegistrationCmd(cmd: string, customNodeIp: string): string {
+    return `ssh -i custom_node.key -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" root@${customNodeIp} "nohup ${cmd}"`;
+  }
+
   credentialsBanner(): BannersPo {
     return new BannersPo(this.page, '.banner:has-text("Ok, Let\'s create a new credential")');
   }

@@ -58,6 +58,10 @@ export default class RolesPo extends ClusterPagePo {
     await actionMenu.getMenuItem('Edit YAML').click();
   }
 
+  paginatedTab(tabIdSelector: 'GLOBAL' | 'CLUSTER' | 'NAMESPACE'): Locator {
+    return this.page.locator(`#${tabIdSelector} div.paging`);
+  }
+
   async listCreate(label: string): Promise<void> {
     await this.page
       .locator('.actions-container .actions .btn, .resource-list-masthead .actions .btn')

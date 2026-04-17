@@ -27,7 +27,7 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton, selectedValues (+7) |
@@ -42,7 +42,7 @@
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+41) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, getTab, tabNames (+1) |
-| ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect |
+| ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
 | VersionNumberPo | version-number.po.ts | ComponentPo | — | checkVersion, checkNormalText, checkSmallText |
 
@@ -50,9 +50,9 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| GlobalRoleDetailComponentPo | management.cattle.io.globalrole.po.ts | ResourceDetailPo | — | openMastheadActionMenu, super, detail |
+| GlobalRoleDetailComponentPo | management.cattle.io.globalrole.po.ts | ResourceDetailPo | — | userCreateEditView, openMastheadActionMenu, super, detail |
 | OIDCClientDetailPo | management.cattle.io.oidcclient.po.ts | PagePo | — | super, clientID, clientFullSecretCopy, addNewSecretBtnClick, secretCardActionMenuToggle, secretCardMenu |
-| RoleTemplateDetailComponentPo | management.cattle.io.roletemplate.po.ts | ResourceDetailPo | — | openMastheadActionMenu, super, detail |
+| RoleTemplateDetailComponentPo | management.cattle.io.roletemplate.po.ts | ResourceDetailPo | — | userCreateEditView, openMastheadActionMenu, super, detail |
 | RoleDetailPo | role.po.ts | PagePo | — | super |
 
 ## edit/auth/
@@ -67,12 +67,12 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, ociMinWaitInput, ociMaxWaitInput, authentication (+11) |
+| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, ociMinWaitInput, ociMaxWaitInput, authentication (+15) |
 | DigitalOceanCloudCredentialsCreateEditPo | cloud-credentials-digitalocean.po.ts | PagePo | `/c/${clusterId}/manager/cloudCredential/create` | super, credentialName, accessToken, saveCreateForm |
 | GlobalRoleEditPo | management.cattle.io.globalrole.po.ts | RoleEditPo | — | super, yamlEditor |
 | OidcClientCreateEditPo | management.cattle.io.oidcclient.po.ts | PagePo | — | super, nameNsDescription, callbackUrls, refreshTokenExpiration, tokenExpiration, saveCreateForm |
 | RoleTemplateEditPo | management.cattle.io.roletemplate.po.ts | RoleEditPo | — | super |
-| GlobalRoleBindingsPo | management.cattle.io.user.po.ts | ComponentPo | `.global-permissions` | super, globalOptions, for, name, username, description, newPass, confirmNewPass (+4) |
+| GlobalRoleBindingsPo | management.cattle.io.user.po.ts | ComponentPo | `.global-permissions` | super, globalOptions, for, name, username, description, newPass, confirmNewPass (+6) |
 | PodSecurityAdmissionsCreateEditPo | pod-security-admissions.po.ts | PagePo | — | super, nameNsDescription, resourceDetail, psaControlLevel, psaControlVersion, setExemptionsCheckbox, setExemptionsInput, editAsYaml (+1) |
 | ResourceDetailPo | resource-detail.po.ts | ComponentPo | — | super, cruResource, createEditView, resourceYaml, tabs, tabbedList, title, masthead (+1) |
 | RoleEditPo | role.po.ts | PagePo | — | super, name, description, selectCheckbox, saveCreateForm, saveEditYamlForm, saveAndWaitForRequests, selectVerbs (+3) |
@@ -81,7 +81,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+6) |
+| ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+7) |
 
 ## lists/
 
@@ -116,7 +116,7 @@
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+18) |
-| PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+21) |
+| PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+24) |
 | RancherSetupConfigurePage | rancher-setup-configure.po.ts | PagePo | — | super, goTo, choosePassword, password, confirmPassword, termsAgreement, serverUrl, serverUrlLocalhostWarningBanner (+5) |
 | RancherSetupLoginPagePo | rancher-setup-login.po.ts | PagePo | — | super, goTo, form, bootstrapLogin, expect, hasInfoMessage, password, canSubmit (+1) |
 | RootClusterPage | root-cluster-page.po.ts | PagePo | — | super, getClusterIdFromUrl, if, updatePathWithCurrentCluster, waitForPageWithClusterId |
@@ -134,7 +134,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | ChartPage | chart.po.ts | PagePo | — | super, navTo, waitForChartPage, chartHeader, waitForChartHeader, goToInstall, deprecationAndExperimentalWarning, selectVersion (+8) |
-| ChartsPage | charts.po.ts | PagePo | — | super, chartsSearchFilterInput, getChartByName, clickChart, chartCards, headerTitle, emptyState, emptyStateTitle (+8) |
+| ChartsPage | charts.po.ts | PagePo | — | super, chartsSearchFilterInput, getChartByName, clickChart, chartCards, headerTitle, emptyState, emptyStateTitle (+10) |
 | InstallChartPage | install-charts.po.ts | PagePo | `/c/${clusterId}/apps/charts/install` | super, waitForChartPage, nextPage, installChart, editYaml, editOptions, selectTab, chartName (+6) |
 
 ## pages/explorer/charts/tabs/
@@ -149,11 +149,11 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customizeAppearanceButton, certificates, clickCertificatesTab, eventsRowCountMenuToggle, eventsRowCountMenu, tabs (+9) |
+| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, clickCertificatesTab, eventsRowCountMenuToggle, eventsRowCountMenu (+14) |
 | ClusterProjectMembersPo | cluster-project-members.po.ts | PagePo | — | super, triggerAddClusterOrProjectMemberAction, triggerAddProjectMemberAction, selectClusterOrProjectMember, selectProjectCustomPermission, checkTheseProjectCustomPermissions, for, submitProjectCreateButton (+6) |
 | ClusterToolsPagePo | cluster-tools.po.ts | PagePo | — | super, featureChartCards, getCardByName, deleteChart, goToInstall, editChart, getChartVersion |
 | EventsPageListPo | events.po.ts | PagePo | — | super, list, baseResourceList, resourceDetail |
-| ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, baseResourceList, createNamespaceButton, resourceDetail, tabResourceQuotas, btnAddResource, inputProjectLimit (+9) |
+| ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, baseResourceList, createNamespaceButton, resourceDetail, tabResourceQuotas, btnAddResource, inputProjectLimit (+10) |
 | SecretsListPagePo | secrets.po.ts | PagePo | — | super, title, createButton, createButtonTitle, list, resourceDetail |
 | StorageClassesPagePo | storage-classes.po.ts | PagePo | — | super, urlPath, list, listElementWithName, clickCreate, createStorageClassesForm |
 | UiPluginsPagePo | uiplugins.po.ts | PagePo | — | super, resourceTable, cacheState, goToDetailsPage, clickCreate, createPath |
@@ -185,17 +185,17 @@
 | BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, hasAppropriateWidth, expect (+32) |
 | BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+13) |
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
-| HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+9) |
+| HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+10) |
 | PerformancePagePo | performance.po.ts | RootClusterPage | — | super, saveButton, inactivityCheckbox, inactivityInput, garbageCollectionResourceCount, namespaceFilteringCheckbox, websocketWebWorkerCheckbox, serverSidePaginationCheckbox (+11) |
-| SettingsPagePo | settings.po.ts | RootClusterPage | — | super, advancedSettingRow, actionButtonByLabel, editSettingsButton, settingTitle, settingInput, saveButton, useDefaultButton (+6) |
+| SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+12) |
 
 ## pages/users-and-auth/
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| AuthProviderPo | auth-provider.po.ts | PagePo | — | super, selectionGrid, selectProvider, goToAzureADCreation, goToAmazonCognitoCreation |
+| AuthProviderPo | auth-provider.po.ts | PagePo | — | super, selectionGrid, selectProvider, goToAzureADCreation, goToAmazonCognitoCreation, goToAmazonCongitoCreation |
 | OidcClientsPagePo | oidc-client.po.ts | PagePo | — | super, createOidcClient, list |
-| RolesPo | roles.po.ts | ClusterPagePo | — | super, list, tabs, waitForRequests, createGlobal, detailGlobal, createRole, detailRole (+2) |
+| RolesPo | roles.po.ts | ClusterPagePo | — | super, list, tabs, waitForRequests, createGlobal, detailGlobal, createRole, detailRole (+3) |
 | UserRetentionPo | user.retention.po.ts | PagePo | — | super, saveButton, enableRegistryCheckbox, disableAfterPeriodCheckbox, disableAfterPeriodInput, deleteAfterPeriodCheckbox, deleteAfterPeriodInput, userRetentionCron (+2) |
 | MgmtUserResourceDetailPo | users.po.ts | PagePo | `/c/${clusterId}/auth/management.cattle.io.user/${userId}` | super, waitForRequests, list, createEdit, detail, userRetentionLink, create, refreshGroupMembership (+8) |
 

@@ -98,4 +98,12 @@ export class ChartsPage extends PagePo {
   getAllOptionsByGroupName(name: string): Locator {
     return this.self().locator('.filter-panel .filter-group').filter({ hasText: name }).locator('.filter');
   }
+
+  scrollContainer(): Locator {
+    return this.page.locator('.main-layout');
+  }
+
+  sentinel(): Locator {
+    return this.self().locator('[data-testid="charts-lazy-load-sentinel"]');
+  }
 }

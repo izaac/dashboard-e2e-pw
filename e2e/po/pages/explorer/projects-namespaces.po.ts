@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import GenericPrompt from '@/e2e/po/prompts/genericPrompt.po';
 
 export class ProjectsNamespacesListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -87,6 +88,10 @@ export class ProjectCreateEditPagePo extends PagePo {
 
   addProjectMemberButton(): Locator {
     return this.self().locator('[data-testid="add-item"]');
+  }
+
+  addProjectMemberModal(): GenericPrompt {
+    return new GenericPrompt(this.page);
   }
 }
 

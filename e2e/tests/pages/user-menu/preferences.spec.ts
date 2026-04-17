@@ -3,6 +3,20 @@ import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 
 test.describe('User can update their preferences', () => {
+  let savedPreferences: Record<string, any> | null = null;
+
+  test.beforeEach(async ({ rancherApi }) => {
+    const result = await rancherApi.getRancherResource('v1', 'userpreferences');
+
+    savedPreferences = { ...result.body.data[0].data };
+  });
+
+  test.afterEach(async ({ rancherApi }) => {
+    if (savedPreferences) {
+      await rancherApi.setUserPreference(savedPreferences);
+    }
+  });
+
   test(
     'Can navigate to Preferences Page',
     { tag: ['@userMenu', '@adminUser', '@standardUser', '@flaky'] },

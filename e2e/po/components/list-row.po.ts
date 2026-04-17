@@ -22,4 +22,8 @@ export default class ListRowPo {
   actionBtn(): Locator {
     return this.rowLocator.locator('[data-testid*="action-button"]');
   }
+
+  get(selector: string): Locator {
+    return this.rowLocator.locator(selector);
+  }
 }

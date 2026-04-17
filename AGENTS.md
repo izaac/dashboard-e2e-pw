@@ -43,11 +43,11 @@
 ### Playwright-Specific Token Savings
 
 - **Don't read trace ZIPs** — run `npx playwright show-trace <path>` or read the screenshot instead.
-- **MANDATORY: Run `npm run summarize-failures` first.** Read `test-results/FAILURE-SUMMARY.md` before anything else. It classifies failures, cross-references network errors, and flags DOM state issues. Only dive into individual artifacts if the summary isn't enough.
+- **MANDATORY: Run `yarn summarize-failures` first.** Read `test-results/FAILURE-SUMMARY.md` before anything else. It classifies failures, cross-references network errors, and flags DOM state issues. Only dive into individual artifacts if the summary isn't enough.
 - **One spec at a time** — run `-g "test name"` to isolate failures, not the whole suite.
 - **Page Objects are the docs** — read the PO, not the Playwright API docs, for selector patterns.
 - **Check existing POs first** — read `e2e/po/INDEX.md` before creating. It lists every PO with class, selector, and methods. Don't `find` or `grep` for POs unless the index is missing.
-- **Check upstream parity first** — run `npm run po-diff` and read `e2e/po/UPSTREAM-DIFF.md` before manually comparing POs. It shows missing methods, extra methods, and unported POs.
+- **Check upstream parity first** — run `yarn po-diff` and read `e2e/po/UPSTREAM-DIFF.md` before manually comparing POs. It shows missing methods, extra methods, and unported POs.
 - **Read Cypress PO first, then write Playwright PO** — don't read the Playwright base classes again, the pattern is the same every time.
 - **Batch spec conversions** — read all specs in a folder, then write all at once. Don't round-trip per file.
 - **Skip upstream comments** — don't copy eslint-disable, TODO, or commented-out Cypress code.
@@ -154,7 +154,7 @@ Tests must produce the **same result** regardless of how many times they run or 
 
 ### On Failure
 
-- **MANDATORY:** Run `npm run summarize-failures` immediately after any test failure. Read `test-results/FAILURE-SUMMARY.md` before touching anything else.
+- **MANDATORY:** Run `yarn summarize-failures` immediately after any test failure. Read `test-results/FAILURE-SUMMARY.md` before touching anything else.
 - Do NOT read raw trace ZIPs, screenshots, or individual artifact files until you've read the summary.
 - The summary classifies failures (timeout, selector, API error, assertion, crash, navigation), cross-references network errors, and flags DOM state (loading spinners, login page visible, error banners).
 - Only dive into individual `test-results/<test-dir>/` artifacts if the summary is insufficient.
@@ -169,9 +169,10 @@ Use these tools instead of doing things manually. No exceptions.
 | Task | Tool | Command |
 |------|------|---------|
 | Find a PO by class/method | PO Index | Read `e2e/po/INDEX.md` — do NOT grep/find PO files manually |
-| Check PO parity with upstream | PO Diff | `npm run po-diff` → read `e2e/po/UPSTREAM-DIFF.md` — do NOT compare POs manually |
-| Diagnose test failures | Failure Summarizer | `npm run summarize-failures` → read `test-results/FAILURE-SUMMARY.md` — do NOT read raw artifacts first |
-| Regenerate PO index | PO Index Generator | `npm run po-index` — runs automatically on pre-commit too |
+| Check PO parity with upstream | PO Diff | `yarn po-diff` → read `e2e/po/UPSTREAM-DIFF.md` — do NOT compare POs manually |
+| Diagnose test failures | Failure Summarizer | `yarn summarize-failures` → read `test-results/FAILURE-SUMMARY.md` — do NOT read raw artifacts first |
+| Regenerate PO index | PO Index Generator | `yarn po-index` — runs automatically on pre-commit too |
+| Check conversion progress | Gap Map | `yarn gap-map` → read `docs/ASSERTION-GAP-MAP.md` — do NOT count tests manually |
 | Lint changed files | ESLint | `npx eslint --fix <files>` — runs automatically on pre-commit via lint-staged |
 
 **Why:** These tools exist to save tokens and prevent agents from doing expensive manual work that the tools already automate. An agent grepping 100+ PO files costs 10x what reading INDEX.md costs. An agent reading 5 failure artifacts costs 5x what reading FAILURE-SUMMARY.md costs.
@@ -185,7 +186,7 @@ Use these tools instead of doing things manually. No exceptions.
 - **Use Git for reverts:** `git checkout <file>` or `git restore`. No manual overwriting.
 - **Run tests before committing:** `npx playwright test <spec> --reporter=line`
 - **Check existing POs via `e2e/po/INDEX.md`** before creating new ones — do NOT `find` or `grep` for POs.
-- **Check upstream parity via `npm run po-diff`** before manually comparing POs — do NOT read upstream files one by one.
+- **Check upstream parity via `yarn po-diff`** before manually comparing POs — do NOT read upstream files one by one.
 - **Follow upstream Cypress PO structure** — same class names, same method names, same selectors.
 - Write idiomatic TypeScript (strict mode, no `any` unless unavoidable).
 

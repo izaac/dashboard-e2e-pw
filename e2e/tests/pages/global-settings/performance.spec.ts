@@ -28,7 +28,12 @@ test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-performance');
 
       performanceSettingsOriginal.metadata.resourceVersion = resp.body.metadata.resourceVersion;
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-performance', performanceSettingsOriginal);
+      await rancherApi.setRancherResource(
+        'v1',
+        'management.cattle.io.settings',
+        'ui-performance',
+        performanceSettingsOriginal,
+      );
     }
   });
 
@@ -187,7 +192,7 @@ test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
     const modal = perfPage.confirmationModal();
 
     await expect(modal.getBody()).toContainText(
-      'Required Namespace / Project Filtering is incompatible with Manual Refresh and Incremental Loading'
+      'Required Namespace / Project Filtering is incompatible with Manual Refresh and Incremental Loading',
     );
     await modal.getActionButton().getByText('Continue').click();
 
