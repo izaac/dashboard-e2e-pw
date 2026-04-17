@@ -127,6 +127,39 @@ export default class PagePo extends ComponentPo {
     return new HeaderPo(this.page);
   }
 
+  /** Favicon link element in <head> */
+  faviconLink(): Locator {
+    return this.page.locator('head link[rel="shortcut icon"]');
+  }
+
+  /** Get innerHTML of the first <style> tag in <head> */
+  async headStyleContent(): Promise<string> {
+    return this.page
+      .locator('head style')
+      .first()
+      .evaluate((el) => el.innerHTML);
+  }
+
+  /** Check if the fail-whale error page is visible */
+  async isFailWhaleVisible(): Promise<boolean> {
+    return this.page
+      .locator('.fail-whale')
+      .isVisible()
+      .catch(() => false);
+  }
+
+  /** Scroll the main content area to the bottom */
+  async scrollMainContentToBottom(): Promise<void> {
+    await this.page
+      .locator('.main-layout > .outlet > .outer-container')
+      .evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  }
+
+  /** Wait for the dashboard root element to be present */
+  async waitForDashboardRoot(): Promise<void> {
+    await this.page.locator('.dashboard-root').waitFor();
+  }
+
   /** Get extension script import element by name */
   extensionScriptImport(name: string): Locator {
     return this.self().locator(`[data-purpose="extension"] [id*="${name}"]`);

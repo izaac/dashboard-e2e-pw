@@ -5,6 +5,9 @@ import KubectlPo from '@/e2e/po/components/kubectl.po';
 import ChartInstalledAppsListPagePo from '@/e2e/po/pages/chart-installed-apps.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
+import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
+import PagePo from '@/e2e/po/pages/page.po';
 
 const chartNamespace = 'compliance-operator-system';
 
@@ -16,10 +19,20 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe('Compliance install', () => {
     test.afterEach(async ({ rancherApi }) => {
       // Clean up compliance charts regardless of test outcome
-      await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`, {}, false);
-      await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`, {}, false);
+      await rancherApi.createRancherResource(
+        'v1',
+        `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`,
+        {},
+        false,
+      );
+      await rancherApi.createRancherResource(
+        'v1',
+        `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`,
+        {},
+        false,
+      );
       // Reset namespace filter
-      await rancherApi.setUserPreference({ 'local': JSON.stringify({ local: ['all://user'] }) });
+      await rancherApi.setUserPreference({ local: JSON.stringify({ local: ['all://user'] }) });
     });
 
     test.describe('YAML view', () => {
@@ -53,11 +66,21 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
     test.describe('Compliance Chart setup', () => {
       test('Complete install and a Scan is created', { timeout: 180000 }, async ({ page, rancherApi }) => {
         // Clean up first in case charts exist from a previous failed run
-        await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`, {}, false);
-        await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`, {}, false);
+        await rancherApi.createRancherResource(
+          'v1',
+          `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`,
+          {},
+          false,
+        );
+        await rancherApi.createRancherResource(
+          'v1',
+          `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`,
+          {},
+          false,
+        );
 
         // Reset namespace filter
-        await rancherApi.setUserPreference({ 'local': JSON.stringify({ local: [] }) });
+        await rancherApi.setUserPreference({ local: JSON.stringify({ local: [] }) });
 
         const chartPage = new ChartPage(page);
         const installChartPage = new InstallChartPage(page);
@@ -72,7 +95,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         // Set up intercept right before the action that triggers it
         const installActionPromise = page.waitForResponse(
-          (resp) => resp.url().includes('action=install') && resp.request().method() === 'POST'
+          (resp) => resp.url().includes('action=install') && resp.request().method() === 'POST',
         );
 
         await installChartPage.installChart();
@@ -84,7 +107,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         // Navigate to installed apps page and wait for load
         // Set up response listener before navigation
         const getInstalledAppsPromise = page.waitForResponse(
-          (resp) => resp.url().includes('catalog.cattle.io.app') && resp.ok()
+          (resp) => resp.url().includes('catalog.cattle.io.app') && resp.ok(),
         );
 
         await installedAppsPage.goTo();
@@ -105,29 +128,41 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
 
         // Verify compliance components are present
-        await expect(installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance')).toBeVisible({ timeout: 30000 });
-        await expect(installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance-crd')).toBeVisible({ timeout: 30000 });
+        await expect(installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance')).toBeVisible(
+          { timeout: 30000 },
+        );
+        await expect(
+          installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance-crd'),
+        ).toBeVisible({ timeout: 30000 });
 
-        await page.locator('.dashboard-root').waitFor();
+        const basePage = new PagePo(page, '/c/local/compliance');
+
+        await basePage.waitForDashboardRoot();
         const sideNav = new ProductNavPo(page);
 
         await sideNav.navToSideMenuGroupByLabel('Compliance');
 
         // Open terminal and apply test profile
         await terminal.openTerminal(60000);
-        await terminal.executeCommand('apply -f https://raw.githubusercontent.com/rancher/compliance-operator/refs/heads/main/tests/k3s-bench-test.yaml');
+        await terminal.executeCommand(
+          'apply -f https://raw.githubusercontent.com/rancher/compliance-operator/refs/heads/main/tests/k3s-bench-test.yaml',
+        );
         await terminal.closeTerminal();
 
         // Create scan via API and verify response
         const scanResponsePromise = page.waitForResponse(
-          (resp) => resp.url().includes('v1/compliance.cattle.io.clusterscans') && resp.request().method() === 'POST'
+          (resp) => resp.url().includes('v1/compliance.cattle.io.clusterscans') && resp.request().method() === 'POST',
         );
 
         // Navigate to compliance list and create scan
-        await page.getByTestId('masthead-create').click();
+        const masthead = new ResourceListMastheadPo(page, '.dashboard-root');
 
-        // Save the scan form (one-off form interaction for compliance scan)
-        await page.getByTestId('form-save').click();
+        await masthead.create();
+
+        // Save the scan form
+        const createEditView = new CreateEditViewPo(page, '.dashboard-root');
+
+        await createEditView.formSave().click();
 
         const scanResp = await scanResponsePromise;
         const scanBody = await scanResp.json();

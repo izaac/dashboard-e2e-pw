@@ -53,6 +53,11 @@ export default class LoggingPo extends ComponentPo {
     return this.page.locator('section#match .v-select').nth(2);
   }
 
+  /** Namespace selector in the match section — the last unlabeled-select (after nodes/containers) */
+  matchNamespaceSelector(): Locator {
+    return this.page.locator('section#match .unlabeled-select').last();
+  }
+
   /** Dropdown menu options (visible when a select is open) */
   dropdownOptions(): Locator {
     return this.page.locator('.vs__dropdown-menu > li');
@@ -68,8 +73,11 @@ export default class LoggingPo extends ComponentPo {
     return this.tableRows().filter({ hasText: text });
   }
 
-  /** Flow rule item by index — mirrors upstream ArrayListPo.arrayListItem */
+  /** Flow rule item by index — mirrors upstream ArrayListPo.arrayListItem (matches both create and detail views) */
   flowRuleItem(index: number): Locator {
-    return this.page.locator('.array-list-grouped .array-list-item').nth(index);
+    return this.page
+      .locator('.array-list-grouped')
+      .locator('.array-list-item, [data-testid^="array-list-box"]')
+      .nth(index);
   }
 }

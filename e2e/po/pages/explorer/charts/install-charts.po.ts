@@ -5,6 +5,7 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 
 export class InstallChartPage extends PagePo {
   constructor(page: Page, clusterId = 'local') {
@@ -41,6 +42,20 @@ export class InstallChartPage extends PagePo {
 
   chartName(): Locator {
     return this.self().getByTestId('NameNsDescriptionNameInput');
+  }
+
+  /** NameNsDescription component for chart install */
+  nameNsDescription(): NameNsDescriptionPo {
+    return new NameNsDescriptionPo(this.page, '.dashboard-root');
+  }
+
+  /** Select a namespace option by name in the chart install namespace dropdown */
+  async selectNamespaceOption(name: string): Promise<void> {
+    const nsSelect = this.nameNsDescription().namespace();
+
+    await nsSelect.toggle();
+    await nsSelect.filterByName(name);
+    await this.page.locator('.vs__dropdown-menu > li').getByText(name, { exact: true }).click();
   }
 
   chartVersionSelector(): LabeledSelectPo {

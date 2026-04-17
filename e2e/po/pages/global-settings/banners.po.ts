@@ -207,6 +207,11 @@ export class BannersPagePo extends RootClusterPage {
     return this.page.getByTestId('login-submit');
   }
 
+  /** Find a banner element by its text content */
+  bannerByText(text: string): Locator {
+    return this.page.getByText(text);
+  }
+
   loginConfirmationDialog(): Locator {
     return this.page.locator('#banner-consent .banner-dialog-frame');
   }
