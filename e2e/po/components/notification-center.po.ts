@@ -54,4 +54,18 @@ export default class NotificationsCenterPo extends ComponentPo {
   async checkCount(count: number): Promise<void> {
     await expect(this.self().getByTestId('notifications-center-item')).toHaveCount(count);
   }
+
+  /** Get a notification by ID */
+  getNotification(id: string): NotificationPo {
+    const selector = `[data-testid="notifications-center-item-${id}"]`;
+
+    return new NotificationPo(this.page, selector);
+  }
+
+  /** Get a notification by index */
+  getNotificationByIndex(index: number): NotificationPo {
+    const selector = `[data-testid="notifications-center-item"]:nth-child(${index + 1})`;
+
+    return new NotificationPo(this.page, selector);
+  }
 }

@@ -154,7 +154,13 @@ Reads all artifacts from `test-results/`, classifies each failure (timeout, sele
 ```bash
 npm run po-index
 ```
-Generates `e2e/po/INDEX.md` — a table of all Page Objects with class name, parent, selector, and key methods. Updated automatically on pre-commit. Agents should read this before searching for POs manually.
+Generates `e2e/po/INDEX.md` — a table of all Page Objects with class name, parent, selector, and key methods. Updated automatically on pre-commit. Agents MUST read this before searching for POs manually.
+
+### PO Upstream Diff
+```bash
+npm run po-diff
+```
+Generates `e2e/po/UPSTREAM-DIFF.md` — compares all Playwright POs against upstream Cypress POs. Shows missing methods, extra methods, and unported POs. Agents MUST run this instead of manually comparing PO files against upstream.
 
 ### Pre-commit Hooks
 Husky + lint-staged runs on every commit:

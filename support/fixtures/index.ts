@@ -65,7 +65,9 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
         fs.writeFileSync(domPath, html);
         await testInfo.attach('dom-snapshot', { path: domPath, contentType: 'text/html' });
-      } catch { /* page may have crashed */ }
+      } catch {
+        /* page may have crashed */
+      }
 
       // 4. Error context summary — single text file with everything agents need
       try {
@@ -93,27 +95,32 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
         fs.writeFileSync(contextPath, contextLines.join('\n'));
         await testInfo.attach('error-context', { path: contextPath, contentType: 'text/plain' });
-      } catch { /* best effort */ }
+      } catch {
+        /* best effort */
+      }
     }
   },
 
-  rancherApi: [async ({}, use, workerInfo) => {
-    const meta = workerInfo.project.metadata as TestEnvMetadata;
+  rancherApi: [
+    async ({}, use, workerInfo) => {
+      const meta = workerInfo.project.metadata as TestEnvMetadata;
 
-    const apiContext = await pwRequest.newContext({
-      baseURL: meta.api,
-      ignoreHTTPSErrors: true,
-    });
+      const apiContext = await pwRequest.newContext({
+        baseURL: meta.api,
+        ignoreHTTPSErrors: true,
+      });
 
-    const api = new RancherApi(apiContext, meta.api);
+      const api = new RancherApi(apiContext, meta.api);
 
-    if (meta.password) {
-      await api.login(meta.username, meta.password);
-    }
+      if (meta.password) {
+        await api.login(meta.username, meta.password);
+      }
 
-    await use(api);
-    await apiContext.dispose();
-  }, { scope: 'worker' }],
+      await use(api);
+      await apiContext.dispose();
+    },
+    { scope: 'worker' },
+  ],
 
   envMeta: async ({}, use, testInfo) => {
     await use(testInfo.project.metadata as TestEnvMetadata);
@@ -134,7 +141,17 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         await useLocal.click();
       }
 
-      await page.locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]').last().fill(username);
+      // Dismiss consent banner if present (branding tests may leave one behind)
+      const consentBanner = page.locator('#banner-consent .banner-dialog');
+
+      if (await consentBanner.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await consentBanner.locator('button').click();
+      }
+
+      await page
+        .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+        .last()
+        .fill(username);
       await page.locator('[data-testid="local-login-password"] input').fill(password);
       await page.locator('[data-testid="login-submit"]').click();
 

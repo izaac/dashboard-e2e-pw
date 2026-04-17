@@ -58,7 +58,9 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
     await clusterDashboard.waitForPage();
-    await expect(page.locator('.side-nav .accordion.has-children').first()).toBeAttached({ timeout: 30000 });
+    const productNav = new ProductNavPo(page);
+
+    await expect(productNav.groups().first()).toBeAttached({ timeout: 30000 });
   });
 
   test('Can access to first navigation link on click', async ({ page }) => {

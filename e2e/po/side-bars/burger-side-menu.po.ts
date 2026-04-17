@@ -36,7 +36,9 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Check key combo icon for a cluster by its displayed label */
   async burgerMenuNavClusterKeyComboIconCheckByLabel(label: string): Promise<void> {
     const clusterName = this.burgerMenuGetNavClusterByLabel(label);
-    const selectorEl = clusterName.locator('xpath=ancestor::*[contains(@class,"cluster") and contains(@class,"selector")]').first();
+    const selectorEl = clusterName
+      .locator('xpath=ancestor::*[contains(@class,"cluster") and contains(@class,"selector")]')
+      .first();
     const icon = selectorEl.locator('.cluster-icon-menu i');
 
     await expect(icon).toHaveClass(/icon-keyboard_tab/);
@@ -55,7 +57,8 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Check if Cluster Top Level Menu link is highlighted */
   async checkIfClusterMenuLinkIsHighlighted(name: string, isHighlighted = true): Promise<void> {
     const clusterEl = this.burgerMenuGetNavClusterByLabel(name)
-      .locator('xpath=ancestor::*[contains(@class,"option")]').first();
+      .locator('xpath=ancestor::*[contains(@class,"option")]')
+      .first();
 
     if (isHighlighted) {
       await expect(clusterEl).toHaveClass(/active-menu-link/);
@@ -215,5 +218,20 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Get the header logo image */
   headerBrandLogoImage(): Locator {
     return this.page.getByTestId('header__brand-img');
+  }
+
+  /** Alias matching upstream static method name (lowercase 'by') */
+  async burgerMenuNavToMenubyLabel(label: string): Promise<void> {
+    return this.burgerMenuNavToMenuByLabel(label);
+  }
+
+  /** Alias matching upstream static method name (lowercase 'by') */
+  async burgerMenuNavToClusterbyLabel(label: string): Promise<void> {
+    return this.burgerMenuNavToClusterByLabel(label);
+  }
+
+  /** Alias matching upstream static method name (lowercase 'by') */
+  burgerMenuGetNavMenubyLabel(label: string): Locator {
+    return this.burgerMenuGetNavMenuByLabel(label);
   }
 }

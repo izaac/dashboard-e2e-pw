@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
@@ -20,8 +20,14 @@ export default class KubectlPo extends ComponentPo {
     await this.self().locator(`[aria-label="${name}"] [data-testid="wm-tab-close-button"]`).click();
   }
 
-  async waitForTerminalStatus(status: string, timeout = 60000): Promise<void> {
-    await expect(this.self().locator('.status')).toContainText(status, { timeout });
+  async waitForTerminalStatus(status: string, timeout = 60000, tabName?: string): Promise<void> {
+    if (tabName) {
+      const tab = this.self().locator(`[id*="${tabName}"]`);
+
+      await expect(tab.locator('.status')).toContainText(status, { timeout });
+    } else {
+      await expect(this.self().locator('.status').first()).toContainText(status, { timeout });
+    }
   }
 
   async waitForTerminalToBeVisible(): Promise<void> {

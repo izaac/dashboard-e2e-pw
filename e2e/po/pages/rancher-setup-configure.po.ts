@@ -3,6 +3,9 @@ import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
+import PasswordPo from '@/e2e/po/components/password.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 
 export class RancherSetupConfigurePage extends PagePo {
   static url = '/auth/setup';
@@ -13,6 +16,22 @@ export class RancherSetupConfigurePage extends PagePo {
 
   async goTo(): Promise<void> {
     await super.goTo();
+  }
+
+  choosePassword(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '[data-testid="setup-password-mode"]');
+  }
+
+  password(): PasswordPo {
+    return new PasswordPo(this.page, '[data-testid="setup-password"]');
+  }
+
+  confirmPassword(): PasswordPo {
+    return new PasswordPo(this.page, '[data-testid="setup-password-confirm"]');
+  }
+
+  termsAgreement(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="setup-agreement"]');
   }
 
   serverUrl(): LabeledInputPo {

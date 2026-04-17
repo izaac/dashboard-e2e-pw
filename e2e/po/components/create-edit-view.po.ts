@@ -57,4 +57,13 @@ export default class CreateEditViewPo extends ComponentPo {
   async saveClusterAsYaml(): Promise<void> {
     await new AsyncButtonPo(this.page, '[data-testid="rke2-custom-create-yaml-save"]', this.self()).click();
   }
+
+  async saveAndWaitForRequests(method: string, endpoint: string): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes(endpoint) && resp.request().method() === method,
+    );
+
+    await this.save();
+    await responsePromise;
+  }
 }

@@ -11,8 +11,16 @@ export class StorageClassesPagePo extends PagePo {
     super(page, StorageClassesPagePo.createPath(clusterId));
   }
 
+  urlPath(clusterId = 'local'): string {
+    return StorageClassesPagePo.createPath(clusterId);
+  }
+
   list(): BaseResourceList {
     return new BaseResourceList(this.page, '.dashboard-root');
+  }
+
+  listElementWithName(name: string): import('@playwright/test').Locator {
+    return this.list().resourceTable().sortableTable().rowElementWithName(name);
   }
 
   async clickCreate(): Promise<void> {

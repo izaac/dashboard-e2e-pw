@@ -46,4 +46,18 @@ export default class AboutPagePo extends PagePo {
   rancherPrimeInfo(): Locator {
     return this.page.getByTestId('rancher-prime-about-panel');
   }
+
+  /** Set the download attribute on a CLI download link so clicking triggers a download instead of navigation */
+  async setDownloadAttribute(label: string): Promise<void> {
+    await this.getCliDownloadLinkByLabel(label).evaluate((el) => el.setAttribute('download', ''));
+  }
+
+  async clickVersionLink(value: string): Promise<void> {
+    const link = this.links(value);
+    const { expect } = await import('@playwright/test');
+
+    await expect(link).toHaveAttribute('target');
+    await link.evaluate((el) => el.removeAttribute('target'));
+    await link.click();
+  }
 }

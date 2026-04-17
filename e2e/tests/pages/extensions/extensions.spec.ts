@@ -309,28 +309,29 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     // Fill the create form
     await expect(page).toHaveURL(/create/);
 
-    const nameInput = page.locator('[data-testid="name-ns-description-name"] input');
+    const repoCreateEdit = appRepoList.createEditRepositories();
+    const nameInput = repoCreateEdit.nameInput();
 
     await nameInput.scrollIntoViewIfNeeded();
     await expect(nameInput).toBeVisible();
     await nameInput.fill(repoName);
 
     // Select git repo card
-    await page.locator('[data-testid="item-card-git-repo"]').click();
+    await repoCreateEdit.gitRepoCard().click();
 
     // Fill git repo URL and branch
-    const gitRepoInput = page.getByTestId('clusterrepo-git-repo-input');
+    const gitRepoInput = repoCreateEdit.gitRepoInput();
 
-    await expect(gitRepoInput).toBeVisible();
-    await gitRepoInput.fill(GIT_REPO_URL);
-    await page.getByTestId('clusterrepo-git-branch-input').fill('main');
+    await expect(gitRepoInput.self()).toBeVisible();
+    await gitRepoInput.set(GIT_REPO_URL);
+    await repoCreateEdit.gitBranchInput().set('main');
 
     // Save and wait for the POST response
     const createResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('catalog.cattle.io.clusterrepo') && resp.request().method() === 'POST',
     );
 
-    await page.locator('[data-testid="action-button-async-button"]').click();
+    await repoCreateEdit.saveButton().click();
 
     const createResponse = await createResponsePromise;
 
@@ -676,12 +677,10 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     if (authScriptCount > 0) {
       // Script tag persists in DOM — acceptable behavior in some Rancher versions
-      test
-        .info()
-        .annotations.push({
-          type: 'note',
-          description: 'Auth extension script tag persists after logout (behavioral change)',
-        });
+      test.info().annotations.push({
+        type: 'note',
+        description: 'Auth extension script tag persists after logout (behavioral change)',
+      });
     }
 
     // Make sure both extensions have been imported after logging in again

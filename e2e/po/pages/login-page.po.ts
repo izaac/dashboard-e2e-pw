@@ -18,7 +18,10 @@ export class LoginPagePo extends PagePo {
   }
 
   username(): LabeledInputPo {
-    return new LabeledInputPo(this.page, '[data-testid="local-login-username"] input, [data-testid="local-login-username"]');
+    return new LabeledInputPo(
+      this.page,
+      '[data-testid="local-login-username"] input, [data-testid="local-login-username"]',
+    );
   }
 
   password(): PasswordPo {
@@ -33,11 +36,17 @@ export class LoginPagePo extends PagePo {
     await this.submitButton().click();
   }
 
-  async switchToLocal(): Promise<void> {
-    const useLocal = this.page.locator('[data-testid="login-useLocal"]');
+  useLocal(): Locator {
+    return this.page.locator('[data-testid="login-useLocal"]');
+  }
 
-    if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await useLocal.click();
+  async switchToLocal(): Promise<void> {
+    if (
+      await this.useLocal()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false)
+    ) {
+      await this.useLocal().click();
     }
   }
 

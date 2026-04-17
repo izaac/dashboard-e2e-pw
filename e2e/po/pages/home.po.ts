@@ -94,6 +94,16 @@ export default class HomePagePo extends PagePo {
     }
   }
 
+  async toggleBanner(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+    );
+
+    await this.pageActionsButton().click();
+    await this.page.locator('[data-testid="page-actions-banner-link"]').click();
+    await responsePromise;
+  }
+
   /** Page actions menu button */
   pageActionsButton(): Locator {
     return this.page.getByTestId('page-actions-menu-action-button');
@@ -109,5 +119,22 @@ export default class HomePagePo extends PagePo {
     const link = this.supportLinks().nth(index);
 
     await expect(link).toHaveText(text);
+  }
+
+  /** Stub window.open so clicks don't open new tabs; captured calls retrievable via getCapturedOpenCalls() */
+  async stubWindowOpen(): Promise<void> {
+    await this.page.evaluate(() => {
+      (window as any).__openCalls = [];
+      window.open = (...args: any[]) => {
+        (window as any).__openCalls.push(args);
+
+        return null;
+      };
+    });
+  }
+
+  /** Retrieve the captured window.open calls after stubWindowOpen() */
+  async getCapturedOpenCalls(): Promise<any[][]> {
+    return this.page.evaluate(() => (window as any).__openCalls);
   }
 }

@@ -7,6 +7,10 @@ export default class CodeMirrorPo extends ComponentPo {
     super(page, selector, parent);
   }
 
+  static byLabel(_page: Page, _parent: Locator, _label: string): CodeMirrorPo {
+    throw new Error('Not implemented');
+  }
+
   static bySelector(page: Page, parent: Locator, selector: string): CodeMirrorPo {
     return new CodeMirrorPo(page, `${selector} .CodeMirror`, parent);
   }

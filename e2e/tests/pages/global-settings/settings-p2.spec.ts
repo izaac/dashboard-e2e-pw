@@ -5,14 +5,14 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 
 const settingsData: Record<string, { new: string; new2?: string; new3?: string }> = {
-  'ui-index':                                    { new: 'https://my-custom-ui.example.com/latest/index.html' },
-  'ui-dashboard-index':                          { new: 'https://my-custom-ui.example.com/dashboard/index.html' },
-  'ui-offline-preferred':                        { new: 'Local', new2: 'Remote', new3: 'Dynamic' },
-  'ui-brand':                                    { new: 'suse' },
-  'hide-local-cluster':                          { new: 'true' },
-  'k3s-based-upgrader-uninstall-concurrency':    { new: '3' },
-  'system-agent-upgrader-install-concurrency':   { new: '3' },
-  'system-default-registry':                     { new: 'docker.io' },
+  'ui-index': { new: 'https://my-custom-ui.example.com/latest/index.html' },
+  'ui-dashboard-index': { new: 'https://my-custom-ui.example.com/dashboard/index.html' },
+  'ui-offline-preferred': { new: 'Local', new2: 'Remote', new3: 'Dynamic' },
+  'ui-brand': { new: 'suse' },
+  'hide-local-cluster': { new: 'true' },
+  'k3s-based-upgrader-uninstall-concurrency': { new: '3' },
+  'system-agent-upgrader-install-concurrency': { new: '3' },
+  'system-default-registry': { new: 'docker.io' },
 };
 
 const serverUrlLocalhostCases = [
@@ -32,7 +32,7 @@ const nonUrlCases = ['test', 'https', 'test.com', 'a.test.com'];
 const settingsClusterId = '_';
 
 test.describe('Settings (Part 2)', () => {
-  let settingsOriginal: Record<string, any> = {};
+  const settingsOriginal: Record<string, any> = {};
   const resetSettings: string[] = [];
   let settingsPage: SettingsPagePo;
 
@@ -92,7 +92,7 @@ test.describe('Settings (Part 2)', () => {
 
     // Save without changing the value
     const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes('server-url') && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes('server-url') && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -127,7 +127,9 @@ test.describe('Settings (Part 2)', () => {
 
     // Check showing error banner when the url has trailing forward slash
     await input.fill(urlWithTrailingForwardSlash);
-    await expect(settingsPage.errorBanner().filter({ hasText: 'Server URL should not have a trailing forward slash' })).toBeVisible();
+    await expect(
+      settingsPage.errorBanner().filter({ hasText: 'Server URL should not have a trailing forward slash' }),
+    ).toBeVisible();
 
     // Check showing error banner when the url is not HTTPS
     await input.fill(httpUrl);
@@ -155,7 +157,7 @@ test.describe('Settings (Part 2)', () => {
     await input.fill(settingsData[settingName].new);
 
     const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -172,7 +174,7 @@ test.describe('Settings (Part 2)', () => {
 
     await settingsPage.useDefaultButton().click();
     const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -199,7 +201,7 @@ test.describe('Settings (Part 2)', () => {
     await input.fill(settingsData[settingName].new);
 
     const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -216,7 +218,7 @@ test.describe('Settings (Part 2)', () => {
 
     await settingsPage.useDefaultButton().click();
     const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -244,7 +246,7 @@ test.describe('Settings (Part 2)', () => {
     await select.clickOptionWithLabel('Local');
 
     let saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -263,7 +265,7 @@ test.describe('Settings (Part 2)', () => {
     await select.clickOptionWithLabel('Remote');
 
     saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -282,7 +284,7 @@ test.describe('Settings (Part 2)', () => {
     await select.clickOptionWithLabel('Dynamic');
 
     saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -299,7 +301,7 @@ test.describe('Settings (Part 2)', () => {
 
     await settingsPage.useDefaultButton().click();
     const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -325,7 +327,7 @@ test.describe('Settings (Part 2)', () => {
     await input.fill(settingsData[settingName].new);
 
     const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -344,7 +346,7 @@ test.describe('Settings (Part 2)', () => {
 
     await settingsPage.useDefaultButton().click();
     const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -367,7 +369,7 @@ test.describe('Settings (Part 2)', () => {
     await settingsPage.radioButton(0).click();
 
     const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -380,7 +382,9 @@ test.describe('Settings (Part 2)', () => {
 
     await burgerMenu.toggle();
     await burgerMenu.burgerMenuNavToMenuByLabel('Home');
-    await expect(page.locator('body')).not.toContainText('local');
+    const homePage = new HomePagePo(page);
+
+    await expect(homePage.body()).not.toContainText('local');
 
     // Reset
     await navToSettings(page);
@@ -389,7 +393,7 @@ test.describe('Settings (Part 2)', () => {
     // Set radio button to "false" (second option)
     await settingsPage.radioButton(1).click();
     const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -400,77 +404,85 @@ test.describe('Settings (Part 2)', () => {
     resetSettings.push(settingName);
   });
 
-  test('can update k3s-based-upgrader-uninstall-concurrency', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'k3s-based-upgrader-uninstall-concurrency';
+  test(
+    'can update k3s-based-upgrader-uninstall-concurrency',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page }) => {
+      const settingName = 'k3s-based-upgrader-uninstall-concurrency';
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    const input = settingsPage.settingInput();
+      const input = settingsPage.settingInput();
 
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
+      await input.clear();
+      await input.fill(settingsData[settingName].new);
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
-    );
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
+      await settingsPage.saveButton().click();
+      const saveResp = await saveResponsePromise;
 
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+      expect(saveResp.status()).toBe(200);
+      expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      // Reset
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
-    );
+      await settingsPage.useDefaultButton().click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
+      await settingsPage.saveButton().click();
+      const resetResp = await resetResponsePromise;
 
-    expect(resetResp.status()).toBe(200);
+      expect(resetResp.status()).toBe(200);
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
 
-    resetSettings.push(settingName);
-  });
+      resetSettings.push(settingName);
+    },
+  );
 
-  test('can update system-agent-upgrader-install-concurrency', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'system-agent-upgrader-install-concurrency';
+  test(
+    'can update system-agent-upgrader-install-concurrency',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page }) => {
+      const settingName = 'system-agent-upgrader-install-concurrency';
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    const input = settingsPage.settingInput();
+      const input = settingsPage.settingInput();
 
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
+      await input.clear();
+      await input.fill(settingsData[settingName].new);
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
-    );
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
+      await settingsPage.saveButton().click();
+      const saveResp = await saveResponsePromise;
 
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+      expect(saveResp.status()).toBe(200);
+      expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-    resetSettings.push(settingName);
-  });
+      resetSettings.push(settingName);
+    },
+  );
 
   test('can update system-default-registry', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     const settingName = 'system-default-registry';
@@ -486,7 +498,7 @@ test.describe('Settings (Part 2)', () => {
     await input.fill(settingsData[settingName].new);
 
     const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -500,7 +512,7 @@ test.describe('Settings (Part 2)', () => {
 
     await input.clear();
     const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT'
+      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
     );
 
     await settingsPage.saveButton().click();
@@ -509,14 +521,18 @@ test.describe('Settings (Part 2)', () => {
     resetSettings.push(settingName);
   });
 
-  test('standard user has only read access to Settings page', { tag: ['@globalSettings', '@standardUser'] }, async ({ page, login }) => {
-    test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
-    await login();
-    const homePage = new HomePagePo(page);
+  test(
+    'standard user has only read access to Settings page',
+    { tag: ['@globalSettings', '@standardUser'] },
+    async ({ page, login }) => {
+      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
+      await login();
+      const homePage = new HomePagePo(page);
 
-    await homePage.goTo();
+      await homePage.goTo();
 
-    await navToSettings(page);
-    await expect(settingsPage.actionButtonByLabel('password-min-length')).not.toBeAttached();
-  });
+      await navToSettings(page);
+      await expect(settingsPage.actionButtonByLabel('password-min-length')).not.toBeAttached();
+    },
+  );
 });

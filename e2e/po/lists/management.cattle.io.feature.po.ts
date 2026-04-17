@@ -7,6 +7,14 @@ export default class MgmtFeatureFlagListPo extends BaseResourceList {
     super(page, ':scope', parent);
   }
 
+  elements(): Locator {
+    return this.resourceTable().sortableTable().rowElements();
+  }
+
+  elementWithName(name: string): Locator {
+    return this.resourceTable().sortableTable().rowElementWithName(name);
+  }
+
   details(name: string, index: number): Locator {
     return this.resourceTable().sortableTable().rowWithName(name).column(index);
   }
@@ -15,5 +23,17 @@ export default class MgmtFeatureFlagListPo extends BaseResourceList {
     const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name);
 
     await actionMenu.getMenuItem(itemLabel).click();
+  }
+
+  async getRowActionMenuItem(name: string, itemLabel: string): Promise<Locator> {
+    const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name);
+
+    return actionMenu.getMenuItem(itemLabel);
+  }
+
+  async getRowNoActionMenu(name: string): Promise<Locator> {
+    const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name, true);
+
+    return actionMenu.getMenuItem('No actions available');
   }
 }

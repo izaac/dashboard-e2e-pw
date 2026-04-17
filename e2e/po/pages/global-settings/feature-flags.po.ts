@@ -28,7 +28,7 @@ export class FeatureFlagsPagePo extends RootClusterPage {
   async goToAndWait(): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('v1/management.cattle.io.features') && resp.status() === 200,
-      { timeout: MEDIUM_TIMEOUT }
+      { timeout: MEDIUM_TIMEOUT },
     );
 
     await this.goTo();
@@ -75,7 +75,8 @@ export class FeatureFlagsPagePo extends RootClusterPage {
 
     if (config.waitForRequest) {
       responsePromise = this.page.waitForResponse(
-        (resp) => resp.url().includes(`/v1/management.cattle.io.features/${endpoint}`) && resp.request().method() === 'PUT',
+        (resp) =>
+          resp.url().includes(`/v1/management.cattle.io.features/${endpoint}`) && resp.request().method() === 'PUT',
         { timeout: MEDIUM_TIMEOUT },
       );
     }
@@ -101,5 +102,24 @@ export class FeatureFlagsPagePo extends RootClusterPage {
 
       await expect(card.self()).not.toBeAttached({ timeout: RESTART_TIMEOUT });
     }
+  }
+
+  cardActionError(error: string): Locator {
+    const card = new CardPo(this.page);
+
+    return card.self().locator('.banner.error').filter({ hasText: error });
+  }
+
+  async getFeatureFlag(featureFlag: string): Promise<any> {
+    const response = await this.page.request.get(`v1/management.cattle.io.features/${featureFlag}`);
+
+    return response.json();
+  }
+
+  async setFeatureFlag(featureFlag: string, value: boolean): Promise<void> {
+    const res = await this.getFeatureFlag(featureFlag);
+    const obj = { ...res, spec: { value } };
+
+    await this.page.request.put(`v1/management.cattle.io.features/${featureFlag}`, { data: obj });
   }
 }

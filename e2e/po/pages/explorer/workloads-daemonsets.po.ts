@@ -1,7 +1,10 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
+import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import TabbedPo from '@/e2e/po/components/tabbed.po';
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 
 export class WorkloadsDaemonsetsListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -14,6 +17,10 @@ export class WorkloadsDaemonsetsListPagePo extends PagePo {
 
   baseResourceList(): BaseResourceList {
     return new BaseResourceList(this.page, '.dashboard-root');
+  }
+
+  redeployDialog(): Locator {
+    return this.page.locator('[data-testid="redeploy-dialog"]');
   }
 }
 
@@ -28,5 +35,33 @@ export class WorkLoadsDaemonsetsCreatePagePo extends PagePo {
 
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
+  }
+}
+
+export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
+  private static createPath(daemonsetId: string, clusterId: string, namespaceId: string) {
+    return `/c/${clusterId}/explorer/apps.daemonset/${namespaceId}/${daemonsetId}`;
+  }
+
+  constructor(page: Page, daemonsetId: string, clusterId = 'local', namespaceId = 'default') {
+    super(page, WorkLoadsDaemonsetsEditPagePo.createPath(daemonsetId, clusterId, namespaceId));
+  }
+
+  resourceDetail(): ResourceDetailPo {
+    return new ResourceDetailPo(this.page, ':scope', this.self());
+  }
+
+  containerImageInput(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Container Image');
+  }
+
+  async clickTab(selector: string): Promise<void> {
+    const tabbed = new TabbedPo(this.page);
+
+    await tabbed.clickTabWithSelector(selector);
+  }
+
+  ScalingUpgradePolicyRadioBtn(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '[data-testid="input-policy-strategy"]');
   }
 }

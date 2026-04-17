@@ -28,7 +28,7 @@ test.describe('Page Actions', { tag: ['@navigation', '@adminUser', '@standardUse
     await expect(homePage.pageActionsMenuItem('Set as login page')).toBeVisible();
 
     // Click away to close the menu
-    await page.locator('.dashboard-root').click({ position: { x: 300, y: 300 } });
+    await homePage.self().click({ position: { x: 300, y: 300 } });
     await expect(homePage.pageActionsMenuItem('Set as login page')).toBeHidden();
   });
 });

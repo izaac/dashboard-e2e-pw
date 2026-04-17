@@ -26,7 +26,7 @@ test.describe('Enable OIDC Provider', { tag: ['@jenkins', '@noPrime', '@adminUse
     await featureFlagsPage.list().clickRowActionMenuItem('oidc-provider', 'Activate');
 
     await featureFlagsPage.clickCardActionButtonAndWait('Activate', 'oidc-provider', true, {
-      waitForModal:   true,
+      waitForModal: true,
       waitForRequest: true,
     });
 
