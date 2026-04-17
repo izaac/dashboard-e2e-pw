@@ -16,4 +16,9 @@ export default class PasswordPo extends ComponentPo {
   showBtn(): Locator {
     return this.self().locator('.addon a');
   }
+
+  /** Return the computed `color` CSS property of the show/hide button */
+  async showBtnComputedColor(): Promise<string> {
+    return this.showBtn().evaluate((el) => getComputedStyle(el).color);
+  }
 }

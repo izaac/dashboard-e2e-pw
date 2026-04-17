@@ -6,6 +6,7 @@ import ChartInstalledAppsListPagePo from '@/e2e/po/pages/chart-installed-apps.po
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import PagePo from '@/e2e/po/pages/page.po';
 
@@ -171,6 +172,14 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         expect(scanBody.type).toBe('compliance.cattle.io.clusterscan');
         expect(scanBody.metadata.name).toBeTruthy();
         expect(scanBody.metadata.generateName).toBe('scan-');
+
+        // Navigate back to compliance list and verify row count
+        await expect(page).toHaveURL(/compliance/);
+
+        const complianceResourceTable = new ResourceTablePo(page, '.dashboard-root');
+
+        await complianceResourceTable.checkVisible();
+        await complianceResourceTable.sortableTable().checkRowCount(false, 2);
       });
     });
   });

@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
+import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 
 test.describe('Home Page', () => {
   test(
@@ -37,10 +38,11 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
+      const clusterName = 'local';
       const listContainer = homePage.list();
 
       // Verify 'local' cluster is visible with version info
-      const localRow = listContainer.locator('tr').filter({ hasText: 'local' });
+      const localRow = listContainer.locator('tr').filter({ hasText: clusterName });
 
       await expect(localRow).toBeVisible();
 
@@ -48,6 +50,25 @@ test.describe('Home Page', () => {
       const versionCell = localRow.locator('td').nth(3);
 
       await expect(versionCell).not.toHaveText('—');
+
+      // Extract cluster details from home page (state, name, version, provider)
+      const homeState = (await localRow.locator('td').nth(0).innerText()).trim();
+      const homeName = (await localRow.locator('td').nth(1).innerText()).trim();
+      const homeProvider = (await localRow.locator('td').nth(2).innerText()).trim();
+      const homeVersion = (await localRow.locator('td').nth(3).innerText()).trim();
+
+      // Navigate to Cluster Management page and verify same details
+      const provClusterList = new ClusterManagerListPagePo(page);
+
+      await provClusterList.goTo();
+      await provClusterList.waitForPage();
+
+      const cmRow = provClusterList.list().rowWithName(clusterName);
+
+      await expect(cmRow.column(1)).toContainText(homeState);
+      await expect(cmRow.column(2)).toContainText(homeName);
+      await expect(cmRow.column(3)).toContainText(homeVersion);
+      await expect(cmRow.column(4)).toContainText(homeProvider);
     });
 
     test('Can filter rows in the cluster list', async ({ page, login }) => {
@@ -290,6 +311,57 @@ test.describe('Home Page', () => {
       await item2.toggleRead();
       await item2.checkUnread();
       await nc.checkHasUnread();
+    });
+
+    test('Can navigate to release notes page for latest Rancher version', async ({ page, login, rancherApi }) => {
+      // Reset whatsnew pref so the release-notes notification appears
+      await rancherApi.setUserPreference({ 'read-whatsnew': '' });
+
+      await login();
+
+      const homePage = new HomePagePo(page);
+
+      await homePage.goTo();
+      await homePage.waitForPage();
+
+      const nc = homePage.notificationsCenter();
+
+      await nc.toggle();
+      await nc.checkOpen();
+      await nc.checkExists();
+      await nc.checkVisible();
+
+      const item = nc.getNotificationByName('release-notes');
+
+      await item.checkExists();
+
+      const version = await rancherApi.getRancherVersion();
+
+      // Stub window.open so clicking the button doesn't actually open a tab
+      await page.evaluate(() => {
+        (window as any).__openCalls = [];
+        window.open = (...args: any[]) => {
+          (window as any).__openCalls.push(args);
+
+          return null;
+        };
+      });
+
+      await item.primaryActionButton().click();
+
+      // Retrieve the captured window.open call and assert the URL
+      const openCalls = await page.evaluate(() => (window as any).__openCalls);
+
+      expect(openCalls.length).toBeGreaterThanOrEqual(1);
+
+      const [url, target] = openCalls[0];
+
+      if (version.RancherPrime === 'true') {
+        expect(url).toContain('documentation.suse.com/cloudnative/rancher-manager');
+      } else {
+        expect(url).toContain('github.com/rancher/rancher/releases');
+      }
+      expect(target).toBe('_blank');
     });
 
     test('Can toggle banner graphic', async ({ page, login, rancherApi }) => {

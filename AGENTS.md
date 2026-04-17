@@ -143,6 +143,24 @@ Tests must produce the **same result** regardless of how many times they run or 
 
 ---
 
+## TEST EXECUTION RULES
+
+### Running Tests
+
+- **Command:** `npx playwright test <spec> --reporter=line`
+- Run one spec file at a time when debugging. Use `-g "test name"` to isolate a single test.
+- **Sequential, not parallel:** All specs run against a shared Rancher instance. Specs that mutate global state (branding, settings, extensions, user preferences) affect what other specs see. Run **one agent at a time** when any spec in the batch writes global state. Never run two test agents simultaneously unless both are purely read-only (e.g. login page checks, version display). When in doubt, run sequential.
+
+### On Failure
+
+- **MANDATORY:** Run `npm run summarize-failures` immediately after any test failure. Read `test-results/FAILURE-SUMMARY.md` before touching anything else.
+- Do NOT read raw trace ZIPs, screenshots, or individual artifact files until you've read the summary.
+- The summary classifies failures (timeout, selector, API error, assertion, crash, navigation), cross-references network errors, and flags DOM state (loading spinners, login page visible, error banners).
+- Only dive into individual `test-results/<test-dir>/` artifacts if the summary is insufficient.
+- Fix one failure at a time. Re-run the single failing test after each fix. Do not batch fixes blindly.
+
+---
+
 ## AGENT BOUNDARIES
 
 ### Always

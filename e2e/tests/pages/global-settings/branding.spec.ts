@@ -2,26 +2,69 @@ import { test, expect } from '@/support/fixtures';
 import { BrandingPagePo } from '@/e2e/po/pages/global-settings/branding.po';
 import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
+import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
+import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const settings = {
   privateLabel: {
     original: 'Rancher',
-    new:      'Rancher e2e',
+    new: 'Rancher e2e',
   },
   primaryColor: {
-    original:     '#3d98d3',
-    new:          '#f80dd8',
-    newRGB:       'rgb(248, 13, 216)',
+    original: '#3d98d3',
+    new: '#f80dd8',
+    newRGB: 'rgb(248, 13, 216)',
     validNewRGBs: ['rgb(248, 13, 216)', 'rgb(249, 63, 224)'],
   },
   linkColor: {
     original: '#3d98d3',
-    new:      '#ddd603',
-    newRGB:   'rgb(221, 214, 3)',
+    new: '#ddd603',
+    newRGB: 'rgb(221, 214, 3)',
   },
 };
+
+/** Read an SVG fixture and return its base64 encoding */
+function fixtureBase64(relativePath: string): string {
+  const fullPath = path.resolve(__dirname, '../../../blueprints', relativePath);
+
+  return fs.readFileSync(fullPath).toString('base64');
+}
+
+/** Navigate to branding page via burger menu */
+async function navToBranding(page: any) {
+  const burgerMenu = new BurgerMenuPo(page);
+  const sideNav = new ProductNavPo(page);
+
+  await burgerMenu.toggle();
+  await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+  await sideNav.navToSideMenuEntryByLabel('Branding');
+}
+
+/** Navigate to preferences page */
+async function navToPreferences(page: any) {
+  await page.goto('./prefs', { waitUntil: 'domcontentloaded' });
+}
+
+/** Set theme via preferences page and wait for API confirmation */
+async function setTheme(page: any, theme: 'Dark' | 'Light') {
+  const prefPage = new PreferencesPagePo(page);
+
+  await navToPreferences(page);
+  await prefPage.themeButtons().checkVisible();
+
+  const prefResponsePromise = page.waitForResponse(
+    (resp: any) => resp.url().includes('v1/userpreferences') && resp.request().method() === 'PUT',
+  );
+
+  await prefPage.themeButtons().set(theme);
+  const resp = await prefResponsePromise;
+
+  expect(resp.status()).toBe(200);
+}
 
 test.describe('Branding', () => {
   test.beforeEach(async ({ login, page }) => {
@@ -31,45 +74,40 @@ test.describe('Branding', () => {
     await homePage.goTo();
   });
 
-  async function navToBranding(page: any) {
-    const burgerMenu = new BurgerMenuPo(page);
-    const sideNav = new ProductNavPo(page);
+  test(
+    'Can navigate to Branding Page',
+    { tag: ['@globalSettings', '@adminUser', '@standardUser'] },
+    async ({ page }) => {
+      const burgerMenu = new BurgerMenuPo(page);
+      const sideNav = new ProductNavPo(page);
 
-    await burgerMenu.toggle();
-    await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
-    await sideNav.navToSideMenuEntryByLabel('Branding');
-  }
+      await burgerMenu.toggle();
 
-  test('Can navigate to Branding Page', { tag: ['@globalSettings', '@adminUser', '@standardUser'] }, async ({ page }) => {
-    const burgerMenu = new BurgerMenuPo(page);
-    const sideNav = new ProductNavPo(page);
+      const globalSettingsNavItem = burgerMenu.links().filter({ hasText: 'Global Settings' });
 
-    await burgerMenu.toggle();
+      await expect(globalSettingsNavItem).toBeAttached();
+      await globalSettingsNavItem.click();
 
-    const globalSettingsNavItem = burgerMenu.links().filter({ hasText: 'Global Settings' });
+      const settingsPage = new SettingsPagePo(page, '_');
 
-    await expect(globalSettingsNavItem).toBeAttached();
-    await globalSettingsNavItem.click();
+      await settingsPage.waitForPageWithClusterId();
 
-    const settingsPage = new SettingsPagePo(page, '_');
+      // check if burger menu nav is highlighted correctly for Global Settings
+      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Global Settings');
 
-    await settingsPage.waitForPageWithClusterId();
+      // catching regression https://github.com/rancher/dashboard/issues/10576
+      await burgerMenu.checkIfClusterMenuLinkIsHighlighted('local', false);
 
-    // check if burger menu nav is highlighted correctly for Global Settings
-    await burgerMenu.checkIfMenuItemLinkIsHighlighted('Global Settings');
+      const brandingNavItem = await sideNav.sideMenuEntryByLabel('Branding');
 
-    // catching regression https://github.com/rancher/dashboard/issues/10576
-    await burgerMenu.checkIfClusterMenuLinkIsHighlighted('local', false);
+      await expect(brandingNavItem).toBeAttached();
+      await brandingNavItem.click();
 
-    const brandingNavItem = await sideNav.sideMenuEntryByLabel('Branding');
+      const brandingPage = new BrandingPagePo(page);
 
-    await expect(brandingNavItem).toBeAttached();
-    await brandingNavItem.click();
-
-    const brandingPage = new BrandingPagePo(page);
-
-    await brandingPage.waitForPageWithClusterId();
-  });
+      await brandingPage.waitForPageWithClusterId();
+    },
+  );
 
   test('Private Label', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const brandingPage = new BrandingPagePo(page);
@@ -83,12 +121,7 @@ test.describe('Branding', () => {
     await brandingPage.privateLabel().set(settings.privateLabel.new);
 
     // Apply
-    const applyResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes('ui-pl') && resp.request().method() === 'PUT'
-    );
-
-    await brandingPage.saveButton().click();
-    await applyResponsePromise;
+    await brandingPage.applyAndWait('ui-pl', 200);
 
     // Visit the Home Page
     await burgerMenu.toggle();
@@ -101,18 +134,13 @@ test.describe('Branding', () => {
 
     // Check over reload
     await page.reload();
-    await expect(page).toHaveTitle(new RegExp(`${settings.privateLabel.new}`));
+    await expect(page).toHaveTitle(new RegExp(settings.privateLabel.new));
 
     await navToBranding(page);
 
     // Reset
     await brandingPage.privateLabel().set(settings.privateLabel.original);
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes('ui-pl') && resp.request().method() === 'PUT'
-    );
-
-    await brandingPage.saveButton().click();
-    await resetResponsePromise;
+    await brandingPage.applyAndWait('ui-pl', 200);
 
     await burgerMenu.toggle();
     await burgerMenu.home().click();
@@ -124,7 +152,7 @@ test.describe('Branding', () => {
       const resourceVersion = resp.body.metadata.resourceVersion;
 
       await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-pl', {
-        value:    settings.privateLabel.original.toLowerCase(),
+        value: settings.privateLabel.original.toLowerCase(),
         metadata: { name: 'ui-pl', resourceVersion },
       });
     } catch {
@@ -132,19 +160,433 @@ test.describe('Branding', () => {
     }
   });
 
-  test('standard user has only read access to Branding page', { tag: ['@globalSettings', '@standardUser'] }, async ({ page, login }) => {
-    test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
+  test('Logo', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+    const brandingPage = new BrandingPagePo(page);
+    const burgerMenu = new BurgerMenuPo(page);
+
+    await navToBranding(page);
+    await brandingPage.customLogoCheckbox().set();
+
+    // Regression check: checkbox dimensions — https://github.com/rancher/dashboard/issues/10000
+    await brandingPage.customLogoCheckbox().hasAppropriateWidth();
+    await brandingPage.customLogoCheckbox().hasAppropriateHeight();
+
+    // Upload Light Logo
+    await brandingPage
+      .uploadButton('Upload Light Logo')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/logos/rancher-color.svg'));
+
+    // Upload Dark Logo
+    await brandingPage
+      .uploadButton('Upload Dark Logo')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/logos/rancher-white.svg'));
+
+    // Apply
+    await brandingPage.applyAndWait('ui-logo-light', 200);
+
+    // Logo Preview
+    await brandingPage.logoPreview('dark').scrollIntoViewIfNeeded();
+    await expect(brandingPage.logoPreview('dark')).toBeVisible();
+    await brandingPage.logoPreview('light').scrollIntoViewIfNeeded();
+    await expect(brandingPage.logoPreview('light')).toBeVisible();
+
+    // Set Dark theme and check header logo
+    await setTheme(page, 'Dark');
+
+    const darkLogoBase64 = fixtureBase64('branding/logos/rancher-white.svg');
+
+    await expect(burgerMenu.headerBrandLogoImage()).toBeVisible();
+    await expect(burgerMenu.headerBrandLogoImage()).toHaveAttribute(
+      'src',
+      `data:image/svg+xml;base64,${darkLogoBase64}`,
+    );
+
+    await burgerMenu.toggle();
+    await expect(burgerMenu.brandLogoImage()).toBeVisible();
+    await expect(burgerMenu.brandLogoImage()).toHaveAttribute('src', `data:image/svg+xml;base64,${darkLogoBase64}`);
+    await burgerMenu.toggle();
+
+    // Set Light theme and check header logo
+    await setTheme(page, 'Light');
+
+    const lightLogoBase64 = fixtureBase64('branding/logos/rancher-color.svg');
+
+    await expect(burgerMenu.headerBrandLogoImage()).toBeVisible();
+    await expect(burgerMenu.headerBrandLogoImage()).toHaveAttribute(
+      'src',
+      `data:image/svg+xml;base64,${lightLogoBase64}`,
+    );
+
+    await burgerMenu.toggle();
+    await expect(burgerMenu.brandLogoImage()).toBeVisible();
+    await expect(burgerMenu.brandLogoImage()).toHaveAttribute('src', `data:image/svg+xml;base64,${lightLogoBase64}`);
+
+    // Reset
+    await navToBranding(page);
+    await brandingPage.customLogoCheckbox().set();
+    await brandingPage.applyAndWait('ui-logo-light', 200);
+
+    const homePage = new HomePagePo(page);
+
+    await homePage.goTo();
+    await expect(burgerMenu.headerBrandLogoImage()).toBeVisible();
+    await expect(burgerMenu.headerBrandLogoImage()).toHaveAttribute('src', /\/img\/rancher-logo/);
+
+    await burgerMenu.toggle();
+    await expect(burgerMenu.brandLogoImage()).toBeVisible();
+    await expect(burgerMenu.brandLogoImage()).toHaveAttribute('src', /\/img\/rancher-logo/);
+  });
+
+  test('Banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
+    const brandingPage = new BrandingPagePo(page);
+    const homePage = new HomePagePo(page);
+
+    // Reset banner visibility preferences
+    await rancherApi.setUserPreference({ 'home-page-cards': '{}' });
+
+    await navToBranding(page);
+    await brandingPage.customBannerCheckbox().set();
+    await brandingPage.customBannerCheckbox().hasAppropriateWidth();
+    await brandingPage.customBannerCheckbox().hasAppropriateHeight();
+
+    // Upload Light Banner
+    await brandingPage
+      .uploadButton('Upload Light Banner')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/banners/banner-light.svg'));
+
+    // Upload Dark Banner
+    await brandingPage
+      .uploadButton('Upload Dark Banner')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/banners/banner-dark.svg'));
+
+    // Apply
+    await brandingPage.applyAndWait('ui-banner-light', 200);
+
+    // Banner Preview
+    await brandingPage.bannerPreview('dark').scrollIntoViewIfNeeded();
+    await expect(brandingPage.bannerPreview('dark')).toBeVisible();
+    await brandingPage.bannerPreview('light').scrollIntoViewIfNeeded();
+    await expect(brandingPage.bannerPreview('light')).toBeVisible();
+
+    // Set Dark theme and check home banner
+    await setTheme(page, 'Dark');
+
+    const darkBannerBase64 = fixtureBase64('branding/banners/banner-dark.svg');
+
+    await homePage.goTo();
+    await expect(homePage.getBrandBannerImage()).toBeVisible();
+    await expect(homePage.getBrandBannerImage()).toHaveAttribute(
+      'src',
+      `data:image/svg+xml;base64,${darkBannerBase64}`,
+    );
+
+    // Set Light theme and check home banner
+    await setTheme(page, 'Light');
+
+    const lightBannerBase64 = fixtureBase64('branding/banners/banner-light.svg');
+
+    await homePage.goTo();
+    await expect(homePage.getBrandBannerImage()).toBeVisible();
+    await expect(homePage.getBrandBannerImage()).toHaveAttribute(
+      'src',
+      `data:image/svg+xml;base64,${lightBannerBase64}`,
+    );
+
+    // Reset
+    await navToBranding(page);
+    await brandingPage.customBannerCheckbox().set();
+    await brandingPage.applyAndWait('ui-banner-light', 200);
+
+    await homePage.goTo();
+    await expect(homePage.getBrandBannerImage()).toBeVisible();
+    await expect(homePage.getBrandBannerImage()).toHaveAttribute('src', /\/img\/banner/);
+  });
+
+  test('Login Background (Dark)', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
+    const brandingPage = new BrandingPagePo(page);
+    const loginPage = new LoginPagePo(page);
+
+    await navToBranding(page);
+
+    await brandingPage.customLoginBackgroundCheckbox().set();
+    await brandingPage.customLoginBackgroundCheckbox().hasAppropriateWidth();
+    await brandingPage.customLoginBackgroundCheckbox().hasAppropriateHeight();
+
+    // Upload Dark Background
+    await brandingPage
+      .uploadButton('Upload Dark Background')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/backgrounds/login-landscape-dark.svg'));
+
+    // Apply
+    await brandingPage.applyAndWait('ui-login-background-dark', 200);
+
+    // Only dark preview should be visible
+    await brandingPage.loginBackgroundPreview('dark').scrollIntoViewIfNeeded();
+    await expect(brandingPage.loginBackgroundPreview('dark')).toBeVisible();
+    await expect(brandingPage.loginBackgroundPreview('light')).not.toBeAttached();
+
+    // Set Dark theme and check login page background
+    await setTheme(page, 'Dark');
+
+    const darkBgBase64 = fixtureBase64('branding/backgrounds/login-landscape-dark.svg');
+
+    await loginPage.goTo();
+    await expect(loginPage.loginBackgroundImage()).toBeVisible();
+    await expect(loginPage.loginBackgroundImage()).toHaveAttribute('src', `data:image/svg+xml;base64,${darkBgBase64}`);
+
+    // Re-login to continue
     await login();
     const homePage = new HomePagePo(page);
 
     await homePage.goTo();
 
+    // Reset
+    await navToBranding(page);
+    await brandingPage.customLoginBackgroundCheckbox().set();
+    await brandingPage.applyAndWait('ui-login-background-dark', 200);
+
+    // Set theme back to Light
+    await setTheme(page, 'Light');
+  });
+
+  test('Login Background (Light)', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
     const brandingPage = new BrandingPagePo(page);
+    const loginPage = new LoginPagePo(page);
 
     await navToBranding(page);
 
-    // verify action buttons/checkboxes etc. are disabled/hidden for standard user
-    await expect(brandingPage.privateLabel().self()).toBeDisabled();
-    await expect(brandingPage.saveButton().self()).not.toBeAttached();
+    // Ensure login background is disabled to clear leftover dark config
+    await brandingPage.customLoginBackgroundCheckbox().uncheck();
+    await brandingPage.applyAndWait('ui-login-background-dark', 200);
+
+    await brandingPage.customLoginBackgroundCheckbox().set();
+
+    // Upload Light Background
+    await brandingPage
+      .uploadButton('Upload Light Background')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/backgrounds/login-landscape-light.svg'));
+
+    // Apply
+    await brandingPage.applyAndWait('ui-login-background-light', 200);
+
+    // Only light preview should be visible
+    await brandingPage.loginBackgroundPreview('light').scrollIntoViewIfNeeded();
+    await expect(brandingPage.loginBackgroundPreview('light')).toBeVisible();
+    await expect(brandingPage.loginBackgroundPreview('dark')).not.toBeAttached();
+
+    // Verify login page shows the light background
+    const lightBgBase64 = fixtureBase64('branding/backgrounds/login-landscape-light.svg');
+
+    await loginPage.goTo();
+    await expect(loginPage.loginBackgroundImage()).toBeVisible();
+    await expect(loginPage.loginBackgroundImage()).toHaveAttribute('src', `data:image/svg+xml;base64,${lightBgBase64}`);
+
+    // Re-login to continue
+    await login();
+    const homePage = new HomePagePo(page);
+
+    await homePage.goTo();
+
+    // Reset
+    await navToBranding(page);
+    await brandingPage.customLoginBackgroundCheckbox().set();
+    await brandingPage.applyAndWait('ui-login-background-light', 200);
+
+    await loginPage.goTo();
+    await expect(loginPage.loginBackgroundImage()).toBeVisible();
+    await expect(loginPage.loginBackgroundImage()).toHaveAttribute('src', /\/img\/login-landscape/);
+
+    // Re-login to finish clean
+    await login();
+    const homeFinal = new HomePagePo(page);
+
+    await homeFinal.goTo();
   });
+
+  test('Favicon', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+    const brandingPage = new BrandingPagePo(page);
+
+    await navToBranding(page);
+    await brandingPage.customFaviconCheckbox().set();
+
+    // Upload Favicon
+    await brandingPage
+      .uploadButton('Upload Favicon')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/global/favicons/custom-favicon.svg'));
+
+    const expectedBase64 = fixtureBase64('global/favicons/custom-favicon.svg');
+
+    // Apply and verify response
+    const responsePromise = page.waitForResponse(
+      (resp) => resp.url().includes('ui-favicon') && resp.request().method() === 'PUT',
+    );
+
+    await brandingPage.applyButton().click();
+    const response = await responsePromise;
+
+    expect(response.status()).toBe(200);
+
+    const requestBody = response.request().postDataJSON();
+
+    expect(requestBody.value).toBe(`data:image/svg+xml;base64,${expectedBase64}`);
+
+    const responseBody = await response.json();
+
+    expect(responseBody.value).toBe(`data:image/svg+xml;base64,${expectedBase64}`);
+
+    // Favicon Preview
+    await expect(brandingPage.faviconPreview()).toBeVisible();
+    await expect(brandingPage.faviconPreview()).toHaveAttribute('src', `data:image/svg+xml;base64,${expectedBase64}`);
+
+    // Favicon in header
+    await expect(brandingPage.faviconLink()).toHaveAttribute('href', `data:image/svg+xml;base64,${expectedBase64}`);
+
+    // Reset
+    await brandingPage.customFaviconCheckbox().set();
+    await brandingPage.applyAndWait('ui-favicon', 200);
+    await expect(brandingPage.faviconLink()).toHaveAttribute('href', /\/favicon\.png/);
+  });
+
+  test('Primary Color', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
+    const brandingPage = new BrandingPagePo(page);
+    const loginPage = new LoginPagePo(page);
+
+    await navToBranding(page);
+
+    await brandingPage.primaryColorCheckbox().set();
+    const currentValue = await brandingPage.primaryColorPicker().value();
+
+    expect(currentValue).not.toBe(settings.primaryColor.new);
+
+    await brandingPage.primaryColorPicker().set(settings.primaryColor.new);
+    await brandingPage.applyAndWait('ui-primary-color', 200);
+    await brandingPage.applyButton().waitForDisabledAppearanceToDisappear();
+
+    // Check in session
+    const setValue = await brandingPage.primaryColorPicker().value();
+
+    expect(setValue).toBe(settings.primaryColor.new);
+    const previewColor = await brandingPage.primaryColorPicker().previewColor();
+
+    expect(previewColor).toBe(settings.primaryColor.newRGB);
+
+    const applyBg = await brandingPage.applyButton().computedBackground();
+
+    expect(
+      applyBg.startsWith(settings.primaryColor.validNewRGBs[0]) ||
+        applyBg.startsWith(settings.primaryColor.validNewRGBs[1]),
+    ).toBe(true);
+
+    // Check over reload
+    await page.reload();
+    const reloadValue = await brandingPage.primaryColorPicker().value();
+
+    expect(reloadValue).toBe(settings.primaryColor.new);
+    const reloadPreview = await brandingPage.primaryColorPicker().previewColor();
+
+    expect(reloadPreview).toBe(settings.primaryColor.newRGB);
+
+    // Check login page has new styles — https://github.com/rancher/dashboard/issues/10788
+    await loginPage.goTo();
+    const loginBtnBg = await loginPage.submitButton().computedBackground();
+
+    expect(
+      loginBtnBg.startsWith(settings.primaryColor.validNewRGBs[0]) ||
+        loginBtnBg.startsWith(settings.primaryColor.validNewRGBs[1]),
+    ).toBe(true);
+
+    await page.reload();
+    const loginBtnBgReload = await loginPage.submitButton().computedBackground();
+
+    expect(
+      loginBtnBgReload.startsWith(settings.primaryColor.validNewRGBs[0]) ||
+        loginBtnBgReload.startsWith(settings.primaryColor.validNewRGBs[1]),
+    ).toBe(true);
+
+    // Re-login and reset
+    await login();
+    const homePage = new HomePagePo(page);
+
+    await homePage.goTo();
+    await navToBranding(page);
+
+    await brandingPage.primaryColorPicker().set(settings.primaryColor.original);
+    await brandingPage.primaryColorCheckbox().set();
+    await brandingPage.applyAndWait('ui-primary-color', 200);
+  });
+
+  test('Link Color', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
+    const brandingPage = new BrandingPagePo(page);
+    const loginPage = new LoginPagePo(page);
+
+    await navToBranding(page);
+
+    // Set
+    await brandingPage.linkColorCheckbox().set();
+    const currentValue = await brandingPage.linkColorPicker().value();
+
+    expect(currentValue).not.toBe(settings.linkColor.new);
+
+    await brandingPage.linkColorPicker().set(settings.linkColor.new);
+    await brandingPage.applyAndWait('ui-link-color', 200);
+
+    // Check in session
+    const setValue = await brandingPage.linkColorPicker().value();
+
+    expect(setValue).toBe(settings.linkColor.new);
+    const previewColor = await brandingPage.linkColorPicker().previewColor();
+
+    expect(previewColor).toBe(settings.linkColor.newRGB);
+
+    // Check over reload
+    await page.reload();
+    const reloadValue = await brandingPage.linkColorPicker().value();
+
+    expect(reloadValue).toBe(settings.linkColor.new);
+    const reloadPreview = await brandingPage.linkColorPicker().previewColor();
+
+    expect(reloadPreview).toBe(settings.linkColor.newRGB);
+
+    // Check login page has new link color — https://github.com/rancher/dashboard/issues/10788
+    await loginPage.goTo();
+    const showBtnColor = await loginPage.password().showBtnComputedColor();
+
+    expect(showBtnColor).toBe(settings.linkColor.newRGB);
+
+    await page.reload();
+    const showBtnColorReload = await loginPage.password().showBtnComputedColor();
+
+    expect(showBtnColorReload).toBe(settings.linkColor.newRGB);
+
+    // Re-login and reset
+    await login();
+    const homePage = new HomePagePo(page);
+
+    await homePage.goTo();
+    await navToBranding(page);
+
+    await brandingPage.linkColorPicker().set(settings.linkColor.original);
+    await brandingPage.linkColorCheckbox().set();
+    await brandingPage.applyAndWait('ui-link-color', 200);
+  });
+
+  test(
+    'standard user has only read access to Branding page',
+    { tag: ['@globalSettings', '@standardUser'] },
+    async ({ page }) => {
+      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
+
+      const brandingPage = new BrandingPagePo(page);
+
+      await navToBranding(page);
+
+      // verify action buttons/checkboxes etc. are disabled/hidden for standard user
+      await expect(brandingPage.privateLabel().self()).toBeDisabled();
+      await brandingPage.customLogoCheckbox().checkDisabled();
+      await brandingPage.customFaviconCheckbox().checkDisabled();
+      await brandingPage.primaryColorCheckbox().checkDisabled();
+      await brandingPage.linkColorCheckbox().checkDisabled();
+      await brandingPage.applyButton().checkNotExists();
+    },
+  );
 });

@@ -5,7 +5,8 @@ import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
 test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standardUser'] }, () => {
   test('Confirm correct number of settings requests made', async ({ page, envMeta }) => {
     const loginPage = new LoginPagePo(page);
-    const settingsMatch = (resp: { url: () => string }) => resp.url().includes('management.cattle.io.settings?exclude=metadata.managedFields');
+    const settingsMatch = (resp: { url: () => string }) =>
+      resp.url().includes('management.cattle.io.settings?exclude=metadata.managedFields');
 
     // Start listening BEFORE navigation
     const firstSettingsPromise = page.waitForResponse(settingsMatch);
@@ -72,5 +73,8 @@ test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standa
     const loginResp = await loginPromise;
 
     expect(loginResp.status()).toBe(401);
+
+    // URL should still contain /auth/login after failed login
+    await expect(page).toHaveURL(/\/auth\/login/);
   });
 });
