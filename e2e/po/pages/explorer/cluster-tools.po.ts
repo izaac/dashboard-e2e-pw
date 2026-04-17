@@ -16,7 +16,12 @@ export default class ClusterToolsPagePo extends PagePo {
   }
 
   private getCardByName(chartName: string): Locator {
-    return this.page.locator('[data-testid*="item-card-"]').filter({ hasText: chartName });
+    // Find the title element first, then navigate up to the card container.
+    // Using hasText on item-card-* matches child elements too (strict mode violation).
+    return this.page
+      .locator('[data-testid="item-card-header-title"]')
+      .filter({ hasText: chartName })
+      .locator('xpath=ancestor::div[starts-with(@data-testid, "item-card-cluster/")]');
   }
 
   private async clickAction(chartName: string, actionLabel: string): Promise<void> {
@@ -28,7 +33,7 @@ export default class ClusterToolsPagePo extends PagePo {
     await card.locator('[data-testid="item-card-header-action-menu"]').click();
 
     // Click the menu item by label in the popover/dropdown
-    await this.page.locator('.list-unstyled.menu li').filter({ hasText: actionLabel }).click();
+    await this.page.locator('[dropdown-menu-item]').filter({ hasText: actionLabel }).click();
   }
 
   async deleteChart(chartName: string): Promise<void> {

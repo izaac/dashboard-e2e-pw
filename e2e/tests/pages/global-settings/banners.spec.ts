@@ -368,7 +368,7 @@ test.describe('Banners', () => {
         await loginPage.waitForPage();
         await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
         await loginPage.submitButton().click();
-        await expect(page.getByText(settings.bannerLabel)).toBeVisible();
+        await expect(bannersPage.bannerByText(settings.bannerLabel)).toBeVisible();
 
         // --- Hide ---
         await login();
@@ -383,7 +383,7 @@ test.describe('Banners', () => {
         await userMenu.clickMenuItem('Log Out');
         await loginPage.waitForPage();
         await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
-        await expect(page.getByText(settings.bannerLabel)).not.toBeAttached();
+        await expect(bannersPage.bannerByText(settings.bannerLabel)).not.toBeAttached();
       },
     );
 

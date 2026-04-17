@@ -36,8 +36,12 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await homePage.goTo();
 
         // Set up response listeners before triggering navigation
-        const storageClassesPromise = page.waitForResponse((resp) => resp.url().includes('/v1/storage.k8s.io.storageclasses?') && resp.status() === 200);
-        const persistentVolumesPromise = page.waitForResponse((resp) => resp.url().includes('/v1/persistentvolumes?') && resp.status() === 200);
+        const storageClassesPromise = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/storage.k8s.io.storageclasses?') && resp.status() === 200,
+        );
+        const persistentVolumesPromise = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/persistentvolumes?') && resp.status() === 200,
+        );
 
         const chartPage = new ChartPage(page);
         const installPage = new InstallChartPage(page);
@@ -54,9 +58,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installPage.waitForPage('repo-type=cluster&repo=rancher-charts&chart=rancher-backup');
 
         // Scroll to bottom
-        await page.locator('.main-layout > .outlet > .outer-container').evaluate(
-          (el) => el.scrollTo(0, el.scrollHeight)
-        );
+        await installPage.scrollMainContentToBottom();
 
         // Select 'Use an existing storage class' option
         const storageOptions = new RadioGroupInputPo(page, '[chart="[chart: cluster/rancher-charts/rancher-backup]"]');
@@ -65,9 +67,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await storageOptions.set(2);
 
         // Scroll to bottom again after selection
-        await page.locator('.main-layout > .outlet > .outer-container').evaluate(
-          (el) => el.scrollTo(0, el.scrollHeight)
-        );
+        await installPage.scrollMainContentToBottom();
 
         // Verify the drop-down exists and select default storage class
         const select = new LabeledSelectPo(page, '[data-testid="backup-chart-select-existing-storage-class"]');

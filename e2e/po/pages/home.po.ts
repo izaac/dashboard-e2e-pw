@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import NotificationsCenterPo from '@/e2e/po/components/notification-center.po';
 
 export default class HomePagePo extends PagePo {
   static url = '/home';
@@ -55,7 +56,7 @@ export default class HomePagePo extends PagePo {
 
   /** Get the banner graphic element */
   bannerGraphic(): Locator {
-    return this.page.locator('.banner-graphic');
+    return this.page.getByTestId('home-banner-graphic');
   }
 
   /** Get the changelog banner as a BannersPo */
@@ -73,6 +74,11 @@ export default class HomePagePo extends PagePo {
     return this.page.getByTestId('banner-brand__img');
   }
 
+  /** Get the notifications center */
+  notificationsCenter(): NotificationsCenterPo {
+    return new NotificationsCenterPo(this.page);
+  }
+
   /** Click a support link by index */
   async clickSupportLink(index: number, isNewTab?: boolean): Promise<void> {
     const link = this.supportLinks().nth(index);
@@ -86,6 +92,16 @@ export default class HomePagePo extends PagePo {
       await expect(link).not.toHaveAttribute('target');
       await link.click();
     }
+  }
+
+  /** Page actions menu button */
+  pageActionsButton(): Locator {
+    return this.page.getByTestId('page-actions-menu-action-button');
+  }
+
+  /** Menu item within the page actions dropdown */
+  pageActionsMenuItem(name: string): Locator {
+    return this.page.getByRole('menuitem', { name });
   }
 
   /** Check support link text at given index */

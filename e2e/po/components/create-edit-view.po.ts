@@ -13,6 +13,11 @@ export default class CreateEditViewPo extends ComponentPo {
     return this.self().locator('#cru-errors');
   }
 
+  /** Form save button (by data-testid) */
+  formSave(): AsyncButtonPo {
+    return new AsyncButtonPo(this.page, '[data-testid="form-save"]', this.self());
+  }
+
   createButton(): AsyncButtonPo {
     return new AsyncButtonPo(this.page, '.cru-resource-footer .role-primary', this.self());
   }
