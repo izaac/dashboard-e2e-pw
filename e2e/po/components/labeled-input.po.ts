@@ -42,11 +42,11 @@ export default class LabeledInputPo extends ComponentPo {
   }
 
   async expectToBeDisabled(): Promise<void> {
-    await expect(this.self()).toHaveAttribute('disabled', 'disabled');
+    await expect(this.self()).toBeDisabled();
   }
 
   async expectToBeEnabled(): Promise<void> {
-    await expect(this.self()).not.toHaveAttribute('disabled');
+    await expect(this.self()).toBeEnabled();
   }
 
   private input(): Locator {

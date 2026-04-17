@@ -73,6 +73,10 @@ export default [
         { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
       ],
 
+      // --- Defensive code guards ---
+      'no-empty':                    ['warn', { allowEmptyCatch: false }],
+      'no-useless-catch':            'warn',
+
       // --- TypeScript ---
       '@typescript-eslint/no-unused-vars':          ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any':          'off',

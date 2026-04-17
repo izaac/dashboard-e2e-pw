@@ -200,3 +200,14 @@ Use these tools instead of doing things manually. No exceptions.
 - Put CSS selectors in spec files — they belong in Page Objects.
 - Use `page.evaluate()` when a Locator method exists.
 - Use `page.waitForTimeout()` unless absolutely unavoidable (document why).
+
+### Code Style — Write Human Code
+
+- **No empty catch blocks.** If you catch, handle it or log it. `catch { // ignore }` is not handling it. If cleanup can legitimately fail, use a comment explaining *what* can fail and *why* it's safe to ignore.
+- **No defensive fallbacks on non-nullable values.** Don't write `|| ''`, `|| {}`, `?? []` unless the value can actually be null/undefined. Trust the types.
+- **No unnecessary try/catch.** Playwright assertions auto-retry. Don't wrap `expect()` in try/catch. Only use try/finally for cleanup that MUST run after resource creation.
+- **No narration comments.** Don't write `// Click the button` above `await button.click()`. Comments explain *why*, not *what*. If the code is clear, no comment needed.
+- **No section-divider comments.** Don't add `// ====== SETUP ======` or `// --- Assertions ---`. Use blank lines for visual grouping.
+- **No JSDoc on obvious methods.** `async click()` doesn't need `/** Clicks the button */`. Only document non-obvious behavior, side effects, or workarounds.
+- **Keep functions short.** ESLint warns at 80 lines. If a test is longer, break helpers into the PO or a local function. Don't disable the rule.
+- **One assertion per concern.** Don't chain 5 `expect()` calls testing the same thing differently. Pick the strongest assertion.
