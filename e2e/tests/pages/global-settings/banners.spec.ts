@@ -4,36 +4,43 @@ import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
+import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
+import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 
 const settings = {
-  bannerLabel:          'Rancher e2e',
+  bannerLabel: 'Rancher e2e',
   bannerLabelMultiline: 'Rancher e2e\nTwo',
-  textAlignment:        {
+  textAlignment: {
     original: 'Center',
-    new:      'Right',
+    new: 'Right',
   },
   fontSize: {
     original: '14px',
-    new:      '20px',
+    new: '20px',
   },
-  fontWeight:     '700',
-  fontStyle:      'italic',
+  fontWeight: '700',
+  fontStyle: 'italic',
   textDecoration: 'Underline',
-  height:         {
-    single:    '40px',
+  height: {
+    single: '40px',
     multiline: '80px',
   },
   bannerTextColor: {
     original: '#141419',
-    new:      '#f80dd8',
-    newRGB:   'rgb(248, 13, 216)',
+    new: '#f80dd8',
+    newRGB: 'rgb(248, 13, 216)',
   },
   bannerBackgroundColor: {
     original: '#EEEFF4',
-    new:      '#ddd603',
-    newRGB:   'rgb(221, 214, 3)',
+    new: '#ddd603',
+    newRGB: 'rgb(221, 214, 3)',
   },
 };
+
+const bannerHtml =
+  '<div style="display: flex; align-items: center; padding: 0 10px"><img onload="alert(\'hello\');" src="https://www.rancher.com/assets/img/logos/rancher-logo-horiz-color.svg" height="24" style="margin-right: 10px; padding: 4px 0"/><p>Use of this system implies acceptance of <a target="_blank" href="https://www.suse.com">SUSE\'s Terms and Conditions</a></p></div>';
+
+const acceptButtonText = 'Got it!';
 
 test.describe('Banners', () => {
   let bannersPage: BannersPagePo;
@@ -56,6 +63,10 @@ test.describe('Banners', () => {
       value.showHeader = 'false';
       value.showFooter = 'false';
       value.showConsent = 'false';
+      value.loginError = { showMessage: 'false', message: '' };
+      value.bannerHeader = {};
+      value.bannerFooter = {};
+      value.bannerConsent = {};
       banners.value = JSON.stringify(value);
       await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
@@ -74,47 +85,421 @@ test.describe('Banners', () => {
   });
 
   test.describe('Standard Banner Configuration', () => {
-    test('can navigate to Banners Page', { tag: ['@globalSettings', '@adminUser', '@standardUser'] }, async ({ page }) => {
-      const burgerMenu = new BurgerMenuPo(page);
-      const sideNav = new ProductNavPo(page);
+    test(
+      'can navigate to Banners Page',
+      { tag: ['@globalSettings', '@adminUser', '@standardUser'] },
+      async ({ page }) => {
+        const burgerMenu = new BurgerMenuPo(page);
+        const sideNav = new ProductNavPo(page);
 
-      await burgerMenu.toggle();
+        await burgerMenu.toggle();
 
-      await expect(burgerMenu.categories().filter({ hasText: 'Configuration' })).toBeAttached();
-      const globalSettingsNavItem = burgerMenu.links().filter({ hasText: 'Global Settings' });
+        await expect(burgerMenu.categories().filter({ hasText: 'Configuration' })).toBeAttached();
+        const globalSettingsNavItem = burgerMenu.links().filter({ hasText: 'Global Settings' });
 
-      await expect(globalSettingsNavItem).toBeAttached();
-      await globalSettingsNavItem.click();
+        await expect(globalSettingsNavItem).toBeAttached();
+        await globalSettingsNavItem.click();
 
-      const settingsPage = new SettingsPagePo(page, '_');
+        const settingsPage = new SettingsPagePo(page, '_');
 
-      await settingsPage.waitForPageWithClusterId();
+        await settingsPage.waitForPageWithClusterId();
 
-      const bannersNavItem = await sideNav.sideMenuEntryByLabel('Banners');
+        const bannersNavItem = await sideNav.sideMenuEntryByLabel('Banners');
 
-      await expect(bannersNavItem).toBeAttached();
-      await bannersNavItem.click();
+        await expect(bannersNavItem).toBeAttached();
+        await bannersNavItem.click();
 
+        await bannersPage.waitForPageWithClusterId();
+      },
+    );
+
+    test(
+      'standard user has only read access to Banner page',
+      { tag: ['@globalSettings', '@standardUser'] },
+      async ({ page, login }) => {
+        test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
+        await login();
+        const homePage = new HomePagePo(page);
+
+        await homePage.goTo();
+
+        const burgerMenu = new BurgerMenuPo(page);
+        const sideNav = new ProductNavPo(page);
+
+        await burgerMenu.toggle();
+        await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+        await sideNav.navToSideMenuEntryByLabel('Banners');
+
+        // verify action buttons/checkboxes etc. are disabled/hidden for standard user
+        await expect(bannersPage.headerBannerCheckbox().self()).toBeDisabled();
+        await expect(bannersPage.saveButton().self()).not.toBeAttached();
+      },
+    );
+
+    test('can show and hide Header Banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+      await bannersPage.goTo();
       await bannersPage.waitForPageWithClusterId();
+
+      // Show banner
+      await bannersPage.headerBannerCheckbox().set();
+      await bannersPage.headerBannerCheckbox().hasAppropriateWidth();
+      await bannersPage.headerBannerCheckbox().hasAppropriateHeight();
+      await bannersPage.headerTextArea().fill(settings.bannerLabelMultiline);
+      await bannersPage.textAlignmentRadioGroup('bannerHeader').set(2);
+      await bannersPage.textDecorationCheckbox('bannerHeader', 'Bold').set();
+      await bannersPage.textDecorationCheckbox('bannerHeader', 'Italic').set();
+      await bannersPage.textDecorationCheckbox('bannerHeader', 'Underline').set();
+      await bannersPage.selectFontSizeByValue('bannerHeader', settings.fontSize.new);
+
+      const textColor0 = await bannersPage.textColorPicker(0).value();
+
+      expect(textColor0).not.toBe(settings.bannerTextColor.new.toLowerCase());
+      await bannersPage.textColorPicker(0).set(settings.bannerTextColor.new);
+
+      const bgColor1 = await bannersPage.textColorPicker(1).value();
+
+      expect(bgColor1).not.toBe(settings.bannerBackgroundColor.new.toLowerCase());
+      await bannersPage.textColorPicker(1).set(settings.bannerBackgroundColor.new);
+
+      await bannersPage.applyAndWait('ui-banners', 200);
+
+      // Check banner in session
+      const banner = bannersPage.fixedBanner();
+
+      await expect(banner).toBeVisible();
+      await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+      await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
+
+      const innerDiv = banner.locator('div').first();
+
+      await expect(innerDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
+      await expect(innerDiv).toHaveCSS('font-weight', settings.fontWeight);
+      await expect(innerDiv).toHaveCSS('font-style', settings.fontStyle);
+      await expect(innerDiv).toHaveCSS('font-size', settings.fontSize.new);
+
+      await bannersPage.headerBannerCheckbox().isChecked();
+      await bannersPage.textAlignmentRadioGroup('bannerHeader').isChecked(2);
+      expect(await bannersPage.textColorPicker(0).previewColor()).toBe(settings.bannerTextColor.newRGB);
+      expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+
+      // Check over reload
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await expect(banner).toBeVisible();
+      await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+      await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
+
+      const innerDivReload = banner.locator('div').first();
+
+      await expect(innerDivReload).toHaveCSS('color', settings.bannerTextColor.newRGB);
+      await expect(innerDivReload).toHaveCSS('font-weight', settings.fontWeight);
+      await expect(innerDivReload).toHaveCSS('font-style', settings.fontStyle);
+      await expect(innerDivReload).toHaveCSS('font-size', settings.fontSize.new);
+
+      await bannersPage.headerBannerCheckbox().isChecked();
+      await bannersPage.textAlignmentRadioGroup('bannerHeader').isChecked(2);
+      expect(await bannersPage.textColorPicker(0).previewColor()).toBe(settings.bannerTextColor.newRGB);
+      expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+
+      // Hide banner
+      await bannersPage.headerBannerCheckbox().set();
+      await bannersPage.applyAndWait('ui-banners', 200);
+      await expect(bannersPage.fixedBanner()).not.toBeAttached();
     });
 
-    test('standard user has only read access to Banner page', { tag: ['@globalSettings', '@standardUser'] }, async ({ page, login }) => {
-      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
-      await login();
-      const homePage = new HomePagePo(page);
+    test('can show and hide Footer Banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+      await bannersPage.goTo();
+      await bannersPage.waitForPageWithClusterId();
 
-      await homePage.goTo();
+      // Show banner
+      await bannersPage.footerBannerCheckbox().set();
+      await bannersPage.footerTextArea().fill(settings.bannerLabel);
+      await bannersPage.textAlignmentRadioGroup('bannerFooter').set(2);
+      await bannersPage.textDecorationCheckbox('bannerFooter', 'Bold').set();
+      await bannersPage.textDecorationCheckbox('bannerFooter', 'Italic').set();
+      await bannersPage.textDecorationCheckbox('bannerFooter', 'Underline').set();
+      await bannersPage.selectFontSizeByValue('bannerFooter', settings.fontSize.new);
 
-      const burgerMenu = new BurgerMenuPo(page);
-      const sideNav = new ProductNavPo(page);
+      const textColor2 = await bannersPage.textColorPicker(2).value();
 
-      await burgerMenu.toggle();
-      await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
-      await sideNav.navToSideMenuEntryByLabel('Banners');
+      expect(textColor2).not.toBe(settings.bannerTextColor.new.toLowerCase());
+      await bannersPage.textColorPicker(2).set(settings.bannerTextColor.new);
 
-      // verify action buttons/checkboxes etc. are disabled/hidden for standard user
-      await expect(bannersPage.headerBannerCheckbox().self()).toBeDisabled();
-      await expect(bannersPage.saveButton().self()).not.toBeAttached();
+      const bgColor3 = await bannersPage.textColorPicker(3).value();
+
+      expect(bgColor3).not.toBe(settings.bannerBackgroundColor.new.toLowerCase());
+      await bannersPage.textColorPicker(3).set(settings.bannerBackgroundColor.new);
+
+      await bannersPage.applyAndWait('ui-banners', 200);
+
+      // Check banner in session
+      const banner = bannersPage.fixedBanner();
+
+      await expect(banner).toBeVisible();
+      await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+      await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
+
+      const innerDiv = banner.locator('div').first();
+
+      await expect(innerDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
+      await expect(innerDiv).toHaveCSS('font-weight', settings.fontWeight);
+      await expect(innerDiv).toHaveCSS('font-style', settings.fontStyle);
+      await expect(innerDiv).toHaveCSS('font-size', settings.fontSize.new);
+
+      await bannersPage.footerBannerCheckbox().isChecked();
+      await bannersPage.textAlignmentRadioGroup('bannerFooter').isChecked(2);
+      expect(await bannersPage.textColorPicker(2).previewColor()).toBe(settings.bannerTextColor.newRGB);
+      expect(await bannersPage.textColorPicker(3).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+
+      // Check over reload
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await expect(banner).toBeVisible();
+      await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+      await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
+
+      const innerDivReload = banner.locator('div').first();
+
+      await expect(innerDivReload).toHaveCSS('color', settings.bannerTextColor.newRGB);
+      await expect(innerDivReload).toHaveCSS('font-weight', settings.fontWeight);
+      await expect(innerDivReload).toHaveCSS('font-style', settings.fontStyle);
+      await expect(innerDivReload).toHaveCSS('font-size', settings.fontSize.new);
+
+      await bannersPage.footerBannerCheckbox().isChecked();
+      await bannersPage.textAlignmentRadioGroup('bannerFooter').isChecked(2);
+      expect(await bannersPage.textColorPicker(2).previewColor()).toBe(settings.bannerTextColor.newRGB);
+      expect(await bannersPage.textColorPicker(3).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+
+      // Hide banner
+      await bannersPage.footerBannerCheckbox().set();
+      await bannersPage.applyAndWait('ui-banners', 200);
+      await expect(bannersPage.fixedBanner()).not.toBeAttached();
+    });
+
+    test(
+      'can show and hide Login Screen Banner',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, login }) => {
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+
+        // Show banner
+        await bannersPage.loginScreenBannerCheckbox().checkVisible();
+        await bannersPage.loginScreenBannerCheckbox().set();
+        await bannersPage.loginScreenTextArea().fill(settings.bannerLabel);
+        await bannersPage.textAlignmentRadioGroup('bannerConsent').set(2);
+        await bannersPage.textDecorationCheckbox('bannerConsent', 'Bold').set();
+        await bannersPage.textDecorationCheckbox('bannerConsent', 'Italic').set();
+        await bannersPage.textDecorationCheckbox('bannerConsent', 'Underline').set();
+        await bannersPage.selectFontSizeByValue('bannerConsent', settings.fontSize.new);
+
+        const textColor4 = await bannersPage.textColorPicker(4).value();
+
+        expect(textColor4).not.toBe(settings.bannerTextColor.new.toLowerCase());
+        await bannersPage.textColorPicker(4).set(settings.bannerTextColor.new);
+
+        const bgColor5 = await bannersPage.textColorPicker(5).value();
+
+        expect(bgColor5).not.toBe(settings.bannerBackgroundColor.new.toLowerCase());
+        await bannersPage.textColorPicker(5).set(settings.bannerBackgroundColor.new);
+
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Logout and check login screen
+        const userMenu = new UserMenuPo(page);
+
+        await userMenu.clickMenuItem('Log Out');
+        const loginPage = new LoginPagePo(page);
+
+        await loginPage.waitForPage();
+        await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
+
+        const consentBanner = bannersPage.consentBannerContent();
+
+        await expect(consentBanner).toBeVisible();
+        await expect(consentBanner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+        await expect(consentBanner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
+
+        const consentDiv = consentBanner.locator('div').first();
+
+        await expect(consentDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
+        await expect(consentDiv).toHaveCSS('font-weight', settings.fontWeight);
+        await expect(consentDiv).toHaveCSS('font-style', settings.fontStyle);
+        await expect(consentDiv).toHaveCSS('font-size', settings.fontSize.new);
+
+        // Login again and verify settings persisted
+        await login();
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+        await bannersPage.loginScreenBannerCheckbox().isChecked();
+        await bannersPage.textAlignmentRadioGroup('bannerConsent').isChecked(2);
+        expect(await bannersPage.textColorPicker(4).previewColor()).toBe(settings.bannerTextColor.newRGB);
+        expect(await bannersPage.textColorPicker(5).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+
+        // Hide banner
+        await bannersPage.loginScreenBannerCheckbox().set();
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Logout and verify no banner
+        await userMenu.clickMenuItem('Log Out');
+        await loginPage.waitForPage();
+        await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
+        await expect(bannersPage.consentBanner()).not.toBeAttached();
+      },
+    );
+
+    test(
+      'can show and hide Login Failed Banner',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, login }) => {
+        // --- Show ---
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+
+        await bannersPage.loginErrorCheckbox().checkVisible();
+        await bannersPage.loginErrorCheckbox().set();
+        await bannersPage.loginErrorInput().set(settings.bannerLabel);
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Logout and attempt a failed login
+        const userMenu = new UserMenuPo(page);
+
+        await userMenu.clickMenuItem('Log Out');
+        const loginPage = new LoginPagePo(page);
+
+        await loginPage.waitForPage();
+        await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
+        await loginPage.submitButton().click();
+        await expect(page.getByText(settings.bannerLabel)).toBeVisible();
+
+        // --- Hide ---
+        await login();
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+
+        await bannersPage.loginErrorCheckbox().checkVisible();
+        await bannersPage.loginErrorCheckbox().set();
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Logout and verify no custom error
+        await userMenu.clickMenuItem('Log Out');
+        await loginPage.waitForPage();
+        await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
+        await expect(page.getByText(settings.bannerLabel)).not.toBeAttached();
+      },
+    );
+
+    test.describe('HTML Banners', { tag: ['@globalSettings', '@adminUser'] }, () => {
+      test('can show and hide an HTML Header Banner', async ({ page }) => {
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+
+        // Show banner
+        await bannersPage.headerBannerCheckbox().set();
+        await bannersPage.headerBannerCheckbox().hasAppropriateWidth();
+        await bannersPage.headerBannerCheckbox().hasAppropriateHeight();
+        await bannersPage.contentTypeToggle('bannerHeader').set('HTML');
+        await bannersPage.htmlTextArea('bannerHeader').fill(bannerHtml);
+        await bannersPage.textColorPicker(0).set(settings.bannerTextColor.new);
+        await bannersPage.textColorPicker(1).set(settings.bannerBackgroundColor.new);
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Check banner colors
+        const banner = bannersPage.fixedBanner();
+
+        await expect(banner).toBeVisible();
+        await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+
+        // Verify HTML content is rendered and sanitized (XSS onload stripped)
+        await expect(banner.locator('p')).toContainText("SUSE's Terms and Conditions");
+        const imgHtml = await banner.locator('img').evaluate((el) => el.outerHTML);
+
+        expect(imgHtml).not.toContain('onload');
+
+        await bannersPage.headerBannerCheckbox().isChecked();
+        expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+        await bannersPage.contentTypeToggle('bannerHeader').shouldContainText('HTML');
+        await expect(bannersPage.htmlTextArea('bannerHeader')).toHaveValue(bannerHtml);
+
+        // Check over reload
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await expect(banner).toBeVisible();
+        await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+
+        await bannersPage.headerBannerCheckbox().isChecked();
+        expect(await bannersPage.textColorPicker(0).previewColor()).toBe(settings.bannerTextColor.newRGB);
+        expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+
+        // Hide banner
+        await bannersPage.headerBannerCheckbox().set();
+        await bannersPage.applyAndWait('ui-banners', 200);
+        await expect(bannersPage.fixedBanner()).not.toBeAttached();
+      });
+
+      test('can show HTML banner in the login confirmation dialog', async ({ page, login, envMeta }) => {
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+
+        // Enable consent banner as dialog with HTML content
+        await bannersPage.loginScreenBannerCheckbox().checkVisible();
+        await bannersPage.loginScreenBannerCheckbox().set();
+        await bannersPage.consentBannerShowAsDialogCheckbox().checkVisible();
+        await bannersPage.consentBannerShowAsDialogCheckbox().ensureChecked();
+        await bannersPage.contentTypeToggle('bannerConsent').set('HTML');
+        await bannersPage.htmlTextArea('bannerConsent').fill(bannerHtml);
+        await bannersPage.acceptButtonInput('bannerConsent').fill(acceptButtonText);
+        await bannersPage.textColorPicker(4).set(settings.bannerTextColor.new);
+        await bannersPage.textColorPicker(5).set(settings.bannerBackgroundColor.new);
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Logout and check login screen
+        const userMenu = new UserMenuPo(page);
+
+        await userMenu.clickMenuItem('Log Out');
+        const loginPage = new LoginPagePo(page);
+
+        await loginPage.waitForPage();
+        await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
+
+        // Verify the dialog appears
+        const dialog = bannersPage.loginConfirmationDialog();
+
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
+
+        // Verify sanitized HTML in dialog
+        await expect(dialog.locator('p')).toContainText("SUSE's Terms and Conditions");
+        const dialogImgHtml = await dialog.locator('img').evaluate((el) => el.outerHTML);
+
+        expect(dialogImgHtml).not.toContain('onload');
+
+        // Login by accepting the consent dialog first, then entering credentials
+        await loginPage.confirmationAcceptButton().self().click();
+        await loginPage.switchToLocal();
+        await loginPage.username().set(envMeta.username);
+        await loginPage.password().set(envMeta.password);
+        await loginPage.submitButton().click();
+        await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
+
+        // Verify settings persisted
+        await bannersPage.goTo();
+        await bannersPage.waitForPageWithClusterId();
+        await bannersPage.loginScreenBannerCheckbox().isChecked();
+        expect(await bannersPage.textColorPicker(4).previewColor()).toBe(settings.bannerTextColor.newRGB);
+        expect(await bannersPage.textColorPicker(5).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
+        await bannersPage.consentBannerShowAsDialogCheckbox().isChecked();
+        await bannersPage.contentTypeToggle('bannerConsent').shouldContainText('HTML');
+        await expect(bannersPage.htmlTextArea('bannerConsent')).toHaveValue(bannerHtml);
+        await expect(bannersPage.acceptButtonInput('bannerConsent')).toHaveValue(acceptButtonText);
+
+        // Hide banner
+        await bannersPage.loginScreenBannerCheckbox().set();
+        await bannersPage.applyAndWait('ui-banners', 200);
+
+        // Logout and verify no banner
+        await userMenu.clickMenuItem('Log Out');
+        await loginPage.waitForPage();
+        await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
+        await expect(bannersPage.consentBanner()).not.toBeAttached();
+      });
     });
   });
 
@@ -145,128 +530,140 @@ test.describe('Banners', () => {
       await expect(bannersPage.headerBanner()).not.toBeAttached();
     });
 
-    test('Should use banner from ui-banners setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-      const homePage = new HomePagePo(page);
+    test(
+      'Should use banner from ui-banners setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi }) => {
+        const homePage = new HomePagePo(page);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).not.toBeAttached();
 
-      // Update the ui-banners setting to enable the banner
-      let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      let banners = resp.body;
-      let value = JSON.parse(banners.value || '{}');
+        // Update the ui-banners setting to enable the banner
+        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        let banners = resp.body;
+        let value = JSON.parse(banners.value || '{}');
 
-      value.showHeader = 'true';
-      value.bannerHeader = value.bannerHeader || {};
-      value.bannerHeader.text = 'TEST Banner (ui-banners)';
-      value.bannerHeader.background = '#00ff00';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        value.showHeader = 'true';
+        value.bannerHeader = value.bannerHeader || {};
+        value.bannerHeader.text = 'TEST Banner (ui-banners)';
+        value.bannerHeader.background = '#00ff00';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      await homePage.goTo();
-      const banner = bannersPage.headerBanner();
+        await homePage.goTo();
+        const banner = bannersPage.headerBanner();
 
-      await expect(banner).toBeAttached();
-      await expect(banner).toContainText('TEST Banner (ui-banners)');
+        await expect(banner).toBeAttached();
+        await expect(banner).toContainText('TEST Banner (ui-banners)');
 
-      await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(0, 255, 0)');
+        await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(0, 255, 0)');
 
-      // Turn off the banner
-      resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      banners = resp.body;
-      value = JSON.parse(banners.value || '{}');
-      value.showHeader = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        // Turn off the banner
+        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        banners = resp.body;
+        value = JSON.parse(banners.value || '{}');
+        value.showHeader = 'false';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
-    });
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).not.toBeAttached();
+      },
+    );
 
-    test('Should use banner from individual setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-      const homePage = new HomePagePo(page);
+    test(
+      'Should use banner from individual setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi }) => {
+        const homePage = new HomePagePo(page);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).not.toBeAttached();
 
-      // Set the banner via the individual setting
-      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
-      const banner = resp.body;
+        // Set the banner via the individual setting
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
+        const banner = resp.body;
 
-      banner.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', banner);
+        banner.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', banner);
 
-      await homePage.goTo();
-      const bannerEl = bannersPage.headerBanner();
+        await homePage.goTo();
+        const bannerEl = bannersPage.headerBanner();
 
-      await expect(bannerEl).toBeAttached();
-      await expect(bannerEl).toContainText('Test Banner (individual setting)');
+        await expect(bannerEl).toBeAttached();
+        await expect(bannerEl).toContainText('Test Banner (individual setting)');
 
-      await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+        await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
-      // Unset the individual banner
-      const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
+        // Unset the individual banner
+        const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
 
-      resp2.body.value = '';
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', resp2.body);
+        resp2.body.value = '';
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', resp2.body);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
-    });
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).not.toBeAttached();
+      },
+    );
 
-    test('Should prefer setting from individual setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-      const homePage = new HomePagePo(page);
+    test(
+      'Should prefer setting from individual setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi }) => {
+        const homePage = new HomePagePo(page);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).not.toBeAttached();
 
-      // Update the ui-banners setting to enable the banner
-      let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      let banners = resp.body;
-      let value = JSON.parse(banners.value || '{}');
+        // Update the ui-banners setting to enable the banner
+        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        let banners = resp.body;
+        let value = JSON.parse(banners.value || '{}');
 
-      value.showHeader = 'true';
-      value.bannerHeader = value.bannerHeader || {};
-      value.bannerHeader.text = 'TEST Banner (ui-banners)';
-      value.bannerHeader.background = '#00ff00';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        value.showHeader = 'true';
+        value.bannerHeader = value.bannerHeader || {};
+        value.bannerHeader.text = 'TEST Banner (ui-banners)';
+        value.bannerHeader.background = '#00ff00';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).toContainText('TEST Banner (ui-banners)');
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).toContainText('TEST Banner (ui-banners)');
 
-      // Set the banner via the individual setting
-      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
+        // Set the banner via the individual setting
+        const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
 
-      indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp.body);
+        indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp.body);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).toContainText('Test Banner (individual setting)');
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).toContainText('Test Banner (individual setting)');
 
-      await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+        await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
-      // Turn off the banner via the banners setting
-      resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      banners = resp.body;
-      value = JSON.parse(banners.value || '{}');
-      value.showHeader = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        // Turn off the banner via the banners setting
+        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        banners = resp.body;
+        value = JSON.parse(banners.value || '{}');
+        value.showHeader = 'false';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      // Banner should still exist from the individual setting
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).toContainText('Test Banner (individual setting)');
+        // Banner should still exist from the individual setting
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).toContainText('Test Banner (individual setting)');
 
-      // Unset the individual banner
-      const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
+        // Unset the individual banner
+        const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
 
-      indResp2.body.value = '';
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp2.body);
+        indResp2.body.value = '';
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp2.body);
 
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
-    });
+        await homePage.goTo();
+        await expect(bannersPage.headerBanner()).not.toBeAttached();
+      },
+    );
   });
 
   test.describe('Footer Banner (Individual Setting)', () => {
@@ -295,123 +692,135 @@ test.describe('Banners', () => {
       await expect(bannersPage.footerBanner()).not.toBeAttached();
     });
 
-    test('Should use banner from ui-banners setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-      const homePage = new HomePagePo(page);
+    test(
+      'Should use banner from ui-banners setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi }) => {
+        const homePage = new HomePagePo(page);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).not.toBeAttached();
 
-      let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      let banners = resp.body;
-      let value = JSON.parse(banners.value || '{}');
+        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        let banners = resp.body;
+        let value = JSON.parse(banners.value || '{}');
 
-      value.showFooter = 'true';
-      value.bannerFooter = value.bannerFooter || {};
-      value.bannerFooter.text = 'TEST Banner (ui-banners)';
-      value.bannerFooter.background = '#00ff00';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        value.showFooter = 'true';
+        value.bannerFooter = value.bannerFooter || {};
+        value.bannerFooter.text = 'TEST Banner (ui-banners)';
+        value.bannerFooter.background = '#00ff00';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      await homePage.goTo();
-      const banner = bannersPage.footerBanner();
+        await homePage.goTo();
+        const banner = bannersPage.footerBanner();
 
-      await expect(banner).toBeAttached();
-      await expect(banner).toContainText('TEST Banner (ui-banners)');
+        await expect(banner).toBeAttached();
+        await expect(banner).toContainText('TEST Banner (ui-banners)');
 
-      await expect(bannersPage.footerBannerContent()).toHaveCSS('background-color', 'rgb(0, 255, 0)');
+        await expect(bannersPage.footerBannerContent()).toHaveCSS('background-color', 'rgb(0, 255, 0)');
 
-      // Turn off the banner
-      resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      banners = resp.body;
-      value = JSON.parse(banners.value || '{}');
-      value.showFooter = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        // Turn off the banner
+        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        banners = resp.body;
+        value = JSON.parse(banners.value || '{}');
+        value.showFooter = 'false';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
-    });
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).not.toBeAttached();
+      },
+    );
 
-    test('Should use banner from individual setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-      const homePage = new HomePagePo(page);
+    test(
+      'Should use banner from individual setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi }) => {
+        const homePage = new HomePagePo(page);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).not.toBeAttached();
 
-      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
 
-      resp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', resp.body);
+        resp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', resp.body);
 
-      await homePage.goTo();
-      const banner = bannersPage.footerBanner();
+        await homePage.goTo();
+        const banner = bannersPage.footerBanner();
 
-      await expect(banner).toBeAttached();
-      await expect(banner).toContainText('Test Banner (individual setting)');
+        await expect(banner).toBeAttached();
+        await expect(banner).toContainText('Test Banner (individual setting)');
 
-      await expect(bannersPage.footerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+        await expect(bannersPage.footerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
-      // Unset the individual banner
-      const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
+        // Unset the individual banner
+        const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
 
-      resp2.body.value = '';
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', resp2.body);
+        resp2.body.value = '';
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', resp2.body);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
-    });
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).not.toBeAttached();
+      },
+    );
 
-    test('Should prefer setting from individual setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-      const homePage = new HomePagePo(page);
+    test(
+      'Should prefer setting from individual setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi }) => {
+        const homePage = new HomePagePo(page);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).not.toBeAttached();
 
-      // Enable via ui-banners
-      let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      let banners = resp.body;
-      let value = JSON.parse(banners.value || '{}');
+        // Enable via ui-banners
+        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        let banners = resp.body;
+        let value = JSON.parse(banners.value || '{}');
 
-      value.showFooter = 'true';
-      value.bannerFooter = value.bannerFooter || {};
-      value.bannerFooter.text = 'TEST Banner (ui-banners)';
-      value.bannerFooter.background = '#00ff00';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        value.showFooter = 'true';
+        value.bannerFooter = value.bannerFooter || {};
+        value.bannerFooter.text = 'TEST Banner (ui-banners)';
+        value.bannerFooter.background = '#00ff00';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).toContainText('TEST Banner (ui-banners)');
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).toContainText('TEST Banner (ui-banners)');
 
-      // Set individual setting
-      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
+        // Set individual setting
+        const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
 
-      indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp.body);
+        indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp.body);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).toContainText('Test Banner (individual setting)');
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).toContainText('Test Banner (individual setting)');
 
-      // Turn off via banners setting
-      resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      banners = resp.body;
-      value = JSON.parse(banners.value || '{}');
-      value.showFooter = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        // Turn off via banners setting
+        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        banners = resp.body;
+        value = JSON.parse(banners.value || '{}');
+        value.showFooter = 'false';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      // Banner should still exist from the individual setting
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).toContainText('Test Banner (individual setting)');
+        // Banner should still exist from the individual setting
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).toContainText('Test Banner (individual setting)');
 
-      // Unset the individual banner
-      const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
+        // Unset the individual banner
+        const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
 
-      indResp2.body.value = '';
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp2.body);
+        indResp2.body.value = '';
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp2.body);
 
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
-    });
+        await homePage.goTo();
+        await expect(bannersPage.footerBanner()).not.toBeAttached();
+      },
+    );
   });
 
   test.describe('Login Consent Banner (Individual Setting)', () => {
@@ -425,11 +834,20 @@ test.describe('Banners', () => {
       await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
       // Also clear the individual consent banner setting (may be left over from a prior run)
-      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent');
+      const indResp = await rancherApi.getRancherResource(
+        'v1',
+        'management.cattle.io.settings',
+        'ui-banner-login-consent',
+      );
 
       if (indResp.body.value) {
         indResp.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent', indResp.body);
+        await rancherApi.setRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+          indResp.body,
+        );
       }
     });
 
@@ -440,81 +858,125 @@ test.describe('Banners', () => {
       await expect(bannersPage.consentBanner()).not.toBeAttached();
     });
 
-    test('Should use banner from individual setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi, login }) => {
-      // Set the banner via the individual setting
-      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent');
+    test(
+      'Should use banner from individual setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi, login }) => {
+        // Set the banner via the individual setting
+        const resp = await rancherApi.getRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+        );
 
-      resp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent', resp.body);
+        resp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+        await rancherApi.setRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+          resp.body,
+        );
 
-      await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+        await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
 
-      const banner = bannersPage.consentBanner();
+        const banner = bannersPage.consentBanner();
 
-      await expect(banner).toBeAttached();
-      await expect(banner).toContainText('Test Banner (individual setting)');
+        await expect(banner).toBeAttached();
+        await expect(banner).toContainText('Test Banner (individual setting)');
 
-      await expect(bannersPage.consentBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+        await expect(bannersPage.consentBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
-      // Unset the individual setting
-      await login();
-      const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent');
+        // Unset the individual setting
+        await login();
+        const resp2 = await rancherApi.getRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+        );
 
-      resp2.body.value = '';
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent', resp2.body);
-    });
+        resp2.body.value = '';
+        await rancherApi.setRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+          resp2.body,
+        );
+      },
+    );
 
-    test('Should prefer banner from individual setting', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi, login }) => {
-      // Set the banner via the individual setting
-      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent');
+    test(
+      'Should prefer banner from individual setting',
+      { tag: ['@globalSettings', '@adminUser'] },
+      async ({ page, rancherApi, login }) => {
+        // Set the banner via the individual setting
+        const indResp = await rancherApi.getRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+        );
 
-      indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent', indResp.body);
+        indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+        await rancherApi.setRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+          indResp.body,
+        );
 
-      // Also enable via ui-banners
-      let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      let banners = resp.body;
-      let value = JSON.parse(banners.value || '{}');
+        // Also enable via ui-banners
+        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        let banners = resp.body;
+        let value = JSON.parse(banners.value || '{}');
 
-      value.showConsent = 'true';
-      value.bannerConsent = value.bannerConsent || {};
-      value.bannerConsent.text = 'TEST Banner (ui-banners)';
-      value.bannerConsent.background = '#00ff00';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        value.showConsent = 'true';
+        value.bannerConsent = value.bannerConsent || {};
+        value.bannerConsent.text = 'TEST Banner (ui-banners)';
+        value.bannerConsent.background = '#00ff00';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      // Back to the login screen - check the banner is using the individual setting
-      await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
-      await expect(bannersPage.loginSubmitButton()).toBeVisible();
+        // Back to the login screen - check the banner is using the individual setting
+        await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+        await expect(bannersPage.loginSubmitButton()).toBeVisible();
 
-      const banner = bannersPage.consentBanner();
+        const banner = bannersPage.consentBanner();
 
-      await expect(banner).toBeAttached();
-      await expect(banner).toContainText('Test Banner (individual setting)');
+        await expect(banner).toBeAttached();
+        await expect(banner).toContainText('Test Banner (individual setting)');
 
-      await expect(bannersPage.consentBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+        await expect(bannersPage.consentBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
-      // Login again to clean up
-      await login();
+        // Login again to clean up
+        await login();
 
-      // Unset individual setting
-      const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent');
+        // Unset individual setting
+        const indResp2 = await rancherApi.getRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+        );
 
-      indResp2.body.value = '';
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-login-consent', indResp2.body);
+        indResp2.body.value = '';
+        await rancherApi.setRancherResource(
+          'v1',
+          'management.cattle.io.settings',
+          'ui-banner-login-consent',
+          indResp2.body,
+        );
 
-      // Turn off via banners setting
-      resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      banners = resp.body;
-      value = JSON.parse(banners.value || '{}');
-      value.showConsent = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        // Turn off via banners setting
+        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        banners = resp.body;
+        value = JSON.parse(banners.value || '{}');
+        value.showConsent = 'false';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      // Check no banners on login screen
-      await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
-      await expect(bannersPage.loginSubmitButton()).toBeVisible();
-      await expect(banner).not.toBeAttached();
-    });
+        // Check no banners on login screen
+        await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+        await expect(bannersPage.loginSubmitButton()).toBeVisible();
+        await expect(banner).not.toBeAttached();
+      },
+    );
   });
 });

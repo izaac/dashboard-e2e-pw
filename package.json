@@ -24,7 +24,10 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write '**/*.ts'",
     "format:check": "prettier --check '**/*.ts'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "summarize-failures": "npx tsx scripts/summarize-failures.ts",
+    "po-index": "npx tsx scripts/generate-po-index.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@axe-core/playwright": "4.10.1",
@@ -42,7 +45,16 @@
     "@typescript-eslint/parser": "8.32.0",
     "eslint": "9.26.0",
     "eslint-plugin-playwright": "2.2.0",
-    "prettier": "3.5.3"
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "3.5.3",
+    "tsx": "^4.21.0"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
