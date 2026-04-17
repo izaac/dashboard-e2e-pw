@@ -28,9 +28,9 @@ async function ensureRepoExists(api: RancherApi, repoName: string, gitRepo: stri
   }
 
   await api.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
-    type:     'catalog.cattle.io.clusterrepo',
+    type: 'catalog.cattle.io.clusterrepo',
     metadata: { name: repoName },
-    spec:     { clientSecret: null, gitRepo, gitBranch }
+    spec: { clientSecret: null, gitRepo, gitBranch },
   });
 
   await api.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
@@ -46,13 +46,17 @@ async function uninstallExtensionViaApi(api: RancherApi, extensionName: string):
     'v1',
     `catalog.cattle.io.apps/${UI_PLUGIN_NAMESPACE}/${extensionName}?action=uninstall`,
     {},
-    false
+    false,
   );
 
   // Wait for the app to be removed
   await api.waitForRancherResource(
-    'v1', 'catalog.cattle.io.apps', `${UI_PLUGIN_NAMESPACE}/${extensionName}`,
-    (resp) => resp.status === 404, 30, 2000
+    'v1',
+    'catalog.cattle.io.apps',
+    `${UI_PLUGIN_NAMESPACE}/${extensionName}`,
+    (resp) => resp.status === 404,
+    30,
+    2000,
   );
 }
 
@@ -66,24 +70,38 @@ async function installExtensionViaApi(api: RancherApi, repoName: string, extensi
   }
 
   // Install without specifying version (server picks latest)
-  await api.createRancherResource('v1', `catalog.cattle.io.clusterrepos/${repoName}?action=install`, {
-    charts:    [{ chartName: extensionName, namespace: UI_PLUGIN_NAMESPACE, releaseName: extensionName }],
-    noHooks:   false,
-    timeout:   '600s',
-    wait:      true,
-    namespace: UI_PLUGIN_NAMESPACE,
-    projectId: '',
-  }, false);
+  await api.createRancherResource(
+    'v1',
+    `catalog.cattle.io.clusterrepos/${repoName}?action=install`,
+    {
+      charts: [{ chartName: extensionName, namespace: UI_PLUGIN_NAMESPACE, releaseName: extensionName }],
+      noHooks: false,
+      timeout: '600s',
+      wait: true,
+      namespace: UI_PLUGIN_NAMESPACE,
+      projectId: '',
+    },
+    false,
+  );
 
   // Wait for the app to be deployed
   await api.waitForRancherResource(
-    'v1', 'catalog.cattle.io.apps', `${UI_PLUGIN_NAMESPACE}/${extensionName}`,
-    (resp) => resp.body?.metadata?.state?.name === 'deployed', 40, 3000
+    'v1',
+    'catalog.cattle.io.apps',
+    `${UI_PLUGIN_NAMESPACE}/${extensionName}`,
+    (resp) => resp.body?.metadata?.state?.name === 'deployed',
+    40,
+    3000,
   );
 }
 
 async function isExtensionInstalled(api: RancherApi, extensionName: string): Promise<boolean> {
-  const resp = await api.getRancherResource('v1', 'catalog.cattle.io.apps', `${UI_PLUGIN_NAMESPACE}/${extensionName}`, 0);
+  const resp = await api.getRancherResource(
+    'v1',
+    'catalog.cattle.io.apps',
+    `${UI_PLUGIN_NAMESPACE}/${extensionName}`,
+    0,
+  );
 
   return resp.status === 200;
 }
@@ -153,42 +171,46 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await rancherApi.setUserPreference({ 'plugin-developer': false });
   });
 
-  test('has the correct title for Prime users and should display banner on main extensions screen EVEN IF setting is empty string', { tag: ['@prime'] }, async ({ page, rancherApi }) => {
-    // Ensure setting is empty string
-    const settingResp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
+  test(
+    'has the correct title for Prime users and should display banner on main extensions screen EVEN IF setting is empty string',
+    { tag: ['@prime'] },
+    async ({ page, rancherApi }) => {
+      // Ensure setting is empty string
+      const settingResp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
 
-    if (settingResp.status !== 404 && settingResp.body?.value !== '') {
-      await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
-        ...settingResp.body,
-        value: ''
+      if (settingResp.status !== 404 && settingResp.body?.value !== '') {
+        await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
+          ...settingResp.body,
+          value: '',
+        });
+      }
+
+      // Mock rancher version as Prime
+      await page.route('**/rancherversion', async (route) => {
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({
+            Version: '9bf6631da',
+            GitCommit: '9bf6631da',
+            RancherPrime: 'true',
+          }),
+        });
       });
-    }
 
-    // Mock rancher version as Prime
-    await page.route('**/rancherversion', async (route) => {
-      await route.fulfill({
-        status: 200,
-        body:   JSON.stringify({
-          Version:      '9bf6631da',
-          GitCommit:    '9bf6631da',
-          RancherPrime: 'true'
-        })
-      });
-    });
+      const extensionsPo = new ExtensionsPagePo(page);
 
-    const extensionsPo = new ExtensionsPagePo(page);
+      await extensionsPo.goTo();
+      await extensionsPo.waitForTitle();
 
-    await extensionsPo.goTo();
-    await extensionsPo.waitForTitle();
+      // If rancher prime, title should be "Rancher Prime - Extensions"
+      const version = await rancherApi.getRancherVersion();
+      const expectedTitle = version.RancherPrime === 'true' ? 'Rancher Prime - Extensions' : 'Rancher - Extensions';
 
-    // If rancher prime, title should be "Rancher Prime - Extensions"
-    const version = await rancherApi.getRancherVersion();
-    const expectedTitle = version.RancherPrime === 'true' ? 'Rancher Prime - Extensions' : 'Rancher - Extensions';
+      await expect(page).toHaveTitle(expectedTitle);
 
-    await expect(page).toHaveTitle(expectedTitle);
-
-    await extensionsPo.repoBanner().checkVisible();
-  });
+      await extensionsPo.repoBanner().checkVisible();
+    },
+  );
 
   test('Should check the feature flag', async ({ page }) => {
     const extensionsPo = new ExtensionsPagePo(page);
@@ -199,24 +221,24 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await page.route('**/v1/management.cattle.io.features?*', async (route) => {
       await route.fulfill({
         status: 200,
-        body:   JSON.stringify({
-          type:         'collection',
+        body: JSON.stringify({
+          type: 'collection',
           resourceType: 'management.cattle.io.feature',
-          data:         [
+          data: [
             {
-              id:     'uiextension',
-              type:   'management.cattle.io.feature',
-              kind:   'Feature',
-              spec:   { value: true },
+              id: 'uiextension',
+              type: 'management.cattle.io.feature',
+              kind: 'Feature',
+              spec: { value: true },
               status: {
-                default:     true,
+                default: true,
                 description: 'Enable UI Extensions when starting Rancher',
-                dynamic:     false,
-                lockedValue: null
-              }
-            }
-          ]
-        })
+                dynamic: false,
+                lockedValue: null,
+              },
+            },
+          ],
+        }),
       });
     });
 
@@ -252,20 +274,87 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
     await appRepoList.goTo();
     await appRepoList.waitForPage();
-    await expect(appRepoList.list().resourceTable().sortableTable().rowElementWithPartialName(UI_PLUGINS_PARTNERS_REPO_NAME)).toBeAttached();
+    await expect(
+      appRepoList.list().resourceTable().sortableTable().rowElementWithPartialName(UI_PLUGINS_PARTNERS_REPO_NAME),
+    ).toBeAttached();
 
     // Cleanup: remove the partners repo we just added
     await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
   });
 
-  test('New repos banner should only appear once (after dismiss should NOT appear again)', async ({ page, rancherApi }) => {
+  test('add repository', async ({ page, rancherApi }) => {
+    const repoName = 'rancher-plugin-examples';
+
+    // Idempotent: remove repo if it already exists so the UI create flow runs clean
+    await removeRepoIfExists(rancherApi, repoName);
+
+    const extensionsPo = new ExtensionsPagePo(page);
+
+    await extensionsPo.goTo();
+    await extensionsPo.waitForPage();
+    await extensionsPo.extensionTabAvailableClick();
+
+    // Navigate to manage repos via extensions menu
+    await extensionsPo.extensionMenuToggle();
+    await extensionsPo.manageReposClick();
+
+    // Wait for repos list page
+    const appRepoList = new ChartRepositoriesPagePo(page, cluster, 'apps');
+
+    await appRepoList.waitForPage();
+
+    // Click "Add Repository"
+    await appRepoList.create();
+
+    // Fill the create form
+    await expect(page).toHaveURL(/create/);
+
+    const nameInput = page.locator('[data-testid="name-ns-description-name"] input');
+
+    await nameInput.scrollIntoViewIfNeeded();
+    await expect(nameInput).toBeVisible();
+    await nameInput.fill(repoName);
+
+    // Select git repo card
+    await page.locator('[data-testid="item-card-git-repo"]').click();
+
+    // Fill git repo URL and branch
+    const gitRepoInput = page.getByTestId('clusterrepo-git-repo-input');
+
+    await expect(gitRepoInput).toBeVisible();
+    await gitRepoInput.fill(GIT_REPO_URL);
+    await page.getByTestId('clusterrepo-git-branch-input').fill('main');
+
+    // Save and wait for the POST response
+    const createResponsePromise = page.waitForResponse(
+      (resp) => resp.url().includes('catalog.cattle.io.clusterrepo') && resp.request().method() === 'POST',
+    );
+
+    await page.locator('[data-testid="action-button-async-button"]').click();
+
+    const createResponse = await createResponsePromise;
+
+    expect(createResponse.status()).toBe(201);
+
+    // Wait for repo to be active
+    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
+    await rancherApi.waitForResourceState('v1', 'catalog.cattle.io.clusterrepos', repoName);
+
+    // Cleanup
+    await removeRepoIfExists(rancherApi, repoName);
+  });
+
+  test('New repos banner should only appear once (after dismiss should NOT appear again)', async ({
+    page,
+    rancherApi,
+  }) => {
     // Ensure banner setting is 'true'
     const settingResp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
 
     if (settingResp.status !== 404 && settingResp.body?.value !== 'true') {
       await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
         ...settingResp.body,
-        value: 'true'
+        value: 'true',
       });
     }
 
@@ -337,7 +426,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Close the details on the cross icon X
     await extensionsPo.extensionDetailsCloseClick();
-    await expect(extensionsPo.extensionDetails()).not.toBeVisible();
+    await expect(extensionsPo.extensionDetails()).toBeHidden();
 
     // Show extension details again
     await extensionsPo.extensionCardClick(EXTENSION_NAME);
@@ -345,7 +434,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Clicking outside the details tab should also close it
     await extensionsPo.extensionDetailsBgClick();
-    await expect(extensionsPo.extensionDetails()).not.toBeVisible();
+    await expect(extensionsPo.extensionDetails()).toBeHidden();
   });
 
   test('Should install an extension', async ({ page, rancherApi }) => {
@@ -355,7 +444,9 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     }
 
     const installResponsePromise = page.waitForResponse(
-      (resp) => resp.url().includes(`catalog.cattle.io.clusterrepos/${GIT_REPO_NAME}?action=install`) && resp.request().method() === 'POST'
+      (resp) =>
+        resp.url().includes(`catalog.cattle.io.clusterrepos/${GIT_REPO_NAME}?action=install`) &&
+        resp.request().method() === 'POST',
     );
 
     const extensionsPo = new ExtensionsPagePo(page);
@@ -431,7 +522,9 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Set up response listener right before the action that triggers it
     const upgradeResponsePromise = page.waitForResponse(
-      (resp) => resp.url().includes(`catalog.cattle.io.clusterrepos/${GIT_REPO_NAME}?action=upgrade`) && resp.request().method() === 'POST'
+      (resp) =>
+        resp.url().includes(`catalog.cattle.io.clusterrepos/${GIT_REPO_NAME}?action=upgrade`) &&
+        resp.request().method() === 'POST',
     );
 
     await extensionsPo.installModal().installButton().click();
@@ -478,7 +571,10 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     await expect(extensionsPo.extensionCard(EXTENSION_NAME)).toBeVisible();
   });
 
-  test('An extension larger than 30mb, which will trigger cacheState disabled, should install and work fine', async ({ page, rancherApi }) => {
+  test('An extension larger than 30mb, which will trigger cacheState disabled, should install and work fine', async ({
+    page,
+    rancherApi,
+  }) => {
     // Ensure the extension is NOT installed before we start
     if (await isExtensionInstalled(rancherApi, DISABLED_CACHE_EXTENSION_NAME)) {
       await uninstallExtensionViaApi(rancherApi, DISABLED_CACHE_EXTENSION_NAME);
@@ -503,8 +599,8 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     // Click install
     await extensionsPo.installModal().installButton().click();
 
-    // Check the extension reload banner and reload the page
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible();
+    // Check the extension reload banner and reload the page (large extension needs extra time)
+    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
     await extensionsPo.extensionReloadClick();
 
     // Make sure extension card is in the installed tab
@@ -580,7 +676,12 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     if (authScriptCount > 0) {
       // Script tag persists in DOM — acceptable behavior in some Rancher versions
-      test.info().annotations.push({ type: 'note', description: 'Auth extension script tag persists after logout (behavioral change)' });
+      test
+        .info()
+        .annotations.push({
+          type: 'note',
+          description: 'Auth extension script tag persists after logout (behavioral change)',
+        });
     }
 
     // Make sure both extensions have been imported after logging in again

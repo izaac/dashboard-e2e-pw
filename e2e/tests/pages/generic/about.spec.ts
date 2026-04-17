@@ -129,7 +129,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
   });
 
   test.describe('CLI Downloads', () => {
-    test('macOS CLI download link is valid', async ({ page, login }) => {
+    test('can download macOS CLI', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);
@@ -140,9 +140,22 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       const href = await aboutPage.getLinkDestination('rancher-darwin');
 
       expect(href).toContain('releases.rancher.com/cli2');
+
+      const link = aboutPage.getCliDownloadLinkByLabel('rancher-darwin');
+
+      await link.evaluate((el) => el.setAttribute('download', ''));
+
+      const downloadPromise = page.waitForResponse(
+        (resp) => resp.url().includes('releases.rancher.com/cli2') && resp.url().includes('darwin'),
+      );
+
+      await link.click();
+      const downloadResp = await downloadPromise;
+
+      expect(downloadResp.status()).toBe(200);
     });
 
-    test('Linux CLI download link is valid', async ({ page, login }) => {
+    test('can download Linux CLI', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);
@@ -153,9 +166,22 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       const href = await aboutPage.getLinkDestination('rancher-linux');
 
       expect(href).toContain('releases.rancher.com/cli2');
+
+      const link = aboutPage.getCliDownloadLinkByLabel('rancher-linux');
+
+      await link.evaluate((el) => el.setAttribute('download', ''));
+
+      const downloadPromise = page.waitForResponse(
+        (resp) => resp.url().includes('releases.rancher.com/cli2') && resp.url().includes('linux'),
+      );
+
+      await link.click();
+      const downloadResp = await downloadPromise;
+
+      expect(downloadResp.status()).toBe(200);
     });
 
-    test('Windows CLI download link is valid', async ({ page, login }) => {
+    test('can download Windows CLI', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);
@@ -166,6 +192,19 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       const href = await aboutPage.getLinkDestination('rancher-windows');
 
       expect(href).toContain('releases.rancher.com/cli2');
+
+      const link = aboutPage.getCliDownloadLinkByLabel('rancher-windows');
+
+      await link.evaluate((el) => el.setAttribute('download', ''));
+
+      const downloadPromise = page.waitForResponse(
+        (resp) => resp.url().includes('releases.rancher.com/cli2') && resp.url().includes('windows'),
+      );
+
+      await link.click();
+      const downloadResp = await downloadPromise;
+
+      expect(downloadResp.status()).toBe(200);
     });
   });
 

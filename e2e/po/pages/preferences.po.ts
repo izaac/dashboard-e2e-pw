@@ -1,6 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
-import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import ButtonGroupPo from '@/e2e/po/components/button-group.po';
 
 export default class PreferencesPagePo extends PagePo {
   static url = '/prefs';
@@ -17,6 +17,11 @@ export default class PreferencesPagePo extends PagePo {
   /** Theme options container */
   themeOptions(): Locator {
     return this.page.getByTestId('prefs__themeOptions');
+  }
+
+  /** Theme button group (Light / Dark) */
+  themeButtons(): ButtonGroupPo {
+    return new ButtonGroupPo(this.page, '[data-testid="prefs__themeOptions"]');
   }
 
   /** Date format select dropdown */

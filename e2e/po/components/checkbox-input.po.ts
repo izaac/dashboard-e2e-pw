@@ -8,9 +8,7 @@ export default class CheckboxInputPo extends ComponentPo {
   }
 
   static byLabel(page: Page, parent: Locator, label: string): CheckboxInputPo {
-    const container = parent.locator('.checkbox-outer-container').filter({ hasText: label });
-
-    return new CheckboxInputPo(page, '.checkbox-outer-container', container);
+    return new CheckboxInputPo(page, `.checkbox-outer-container:has(.checkbox-label:has-text("${label}"))`, parent);
   }
 
   async set(): Promise<void> {
@@ -41,13 +39,17 @@ export default class CheckboxInputPo extends ComponentPo {
   }
 
   async hasAppropriateWidth(): Promise<void> {
-    const width = await this.input().locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).width);
+    const width = await this.input()
+      .locator('span.checkbox-custom')
+      .evaluate((el) => getComputedStyle(el).width);
 
     expect(width).toMatch(/14.*px/);
   }
 
   async hasAppropriateHeight(): Promise<void> {
-    const height = await this.input().locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).height);
+    const height = await this.input()
+      .locator('span.checkbox-custom')
+      .evaluate((el) => getComputedStyle(el).height);
 
     expect(height).toMatch(/14.*px/);
   }
@@ -66,7 +68,7 @@ export default class CheckboxInputPo extends ComponentPo {
     return classAttr?.includes('disabled') ?? false;
   }
 
-  async shouldContainText(text: string): Promise<void> {
-    await expect(this.self()).toContainText(text);
+  async checkDisabled(): Promise<void> {
+    await expect(this.input()).toHaveClass(/disabled/);
   }
 }
