@@ -18,7 +18,7 @@ class DashboardPagePo extends PagePo {
   }
 
   async waitForTitle(): Promise<void> {
-    await expect(this.self().locator('h1')).toContainText('OS Management');
+    await expect(this.mainTitle()).toContainText('OS Management');
   }
 
   async installOperator(): Promise<void> {

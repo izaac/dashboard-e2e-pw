@@ -80,9 +80,11 @@ export default class SortableTablePo extends ComponentPo {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const exactRegex = new RegExp(`^\\s*${escaped}\\s*$`);
 
-    return this.self().locator('tbody tr').filter({
-      has: this.page.locator('td').filter({ hasText: exactRegex }),
-    });
+    return this.self()
+      .locator('tbody tr')
+      .filter({
+        has: this.page.locator('td').filter({ hasText: exactRegex }),
+      });
   }
 
   rowElementWithPartialName(name: string): Locator {
@@ -159,7 +161,8 @@ export default class SortableTablePo extends ComponentPo {
         const text = await row.innerText();
 
         expect(
-          text.includes('There are no rows to show.') || text.includes('There are no rows which match your search query.')
+          text.includes('There are no rows to show.') ||
+            text.includes('There are no rows which match your search query.'),
         ).toBe(true);
       }
     }
@@ -178,7 +181,7 @@ export default class SortableTablePo extends ComponentPo {
 
     if (!skipNoActionAvailableCheck) {
       await expect(actionMenu.self()).not.toContainText('No actions available');
-      await expect(actionMenu.self().locator('[dropdown-menu-item]:not([disabled])')).toBeAttached();
+      await expect(actionMenu.self().locator('[dropdown-menu-item]:not([disabled])').first()).toBeAttached();
     }
 
     return actionMenu;

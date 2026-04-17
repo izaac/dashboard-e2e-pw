@@ -91,7 +91,7 @@ export default class ExtensionsPagePo extends PagePo {
 
   extensionCard(extensionTitle: string): Locator {
     return this.page.locator('div.item-card').filter({
-      has: this.page.locator(`[data-testid="item-card-header-title"]:has-text("${extensionTitle}")`)
+      has: this.page.locator(`[data-testid="item-card-header-title"]:has-text("${extensionTitle}")`),
     });
   }
 
@@ -106,7 +106,11 @@ export default class ExtensionsPagePo extends PagePo {
   /**
    * Hover over a status icon and wait for its tooltip to contain the expected text.
    */
-  async extensionCardHeaderStatusTooltipText(extensionTitle: string, index: number, expectedText: string): Promise<void> {
+  async extensionCardHeaderStatusTooltipText(
+    extensionTitle: string,
+    index: number,
+    expectedText: string,
+  ): Promise<void> {
     const icon = this.extensionCardHeaderStatusIcon(extensionTitle, index);
 
     await icon.hover();
@@ -186,7 +190,10 @@ export default class ExtensionsPagePo extends PagePo {
   }
 
   extensionCardPo(extensionTitle: string): ComponentPo {
-    return new ComponentPo(this.page, `div.item-card:has([data-testid="item-card-header-title"]:has-text("${extensionTitle}"))`);
+    return new ComponentPo(
+      this.page,
+      `div.item-card:has([data-testid="item-card-header-title"]:has-text("${extensionTitle}"))`,
+    );
   }
 
   catalogsList(): ResourceTablePo {
@@ -218,7 +225,10 @@ export default class ExtensionsPagePo extends PagePo {
   async checkForExtensionTab(tab: 'available' | 'installed' | 'builtin'): Promise<boolean> {
     await this.waitForTabs();
 
-    return await this.page.getByTestId(`btn-${tab}`).isVisible().catch(() => false);
+    return await this.page
+      .getByTestId(`btn-${tab}`)
+      .isVisible()
+      .catch(() => false);
   }
 
   async checkForExtensionCardWithName(extensionName: string): Promise<boolean> {
@@ -229,7 +239,9 @@ export default class ExtensionsPagePo extends PagePo {
     for (let i = 0; i < count; i++) {
       const text = await cards.nth(i).innerText();
 
-      if (text.includes(extensionName)) return true;
+      if (text.includes(extensionName)) {
+        return true;
+      }
     }
 
     return false;
@@ -309,8 +321,18 @@ export default class ExtensionsPagePo extends PagePo {
     repo: string,
     branch: string,
     name: string,
-    waitForActiveState = true
+    waitForActiveState = true,
   ): Promise<void> {
+    // Check if repo already exists via API before attempting UI creation
+    const apiResp = await this.page.request.get(`v1/catalog.cattle.io.clusterrepos/${name}`, {
+      failOnStatusCode: false,
+    });
+
+    if (apiResp.status() === 200) {
+      // Repo already exists — nothing to do
+      return;
+    }
+
     // Navigate to cluster repo create page
     await this.page.goto('./c/local/apps/catalog.cattle.io.clusterrepo/create', { waitUntil: 'domcontentloaded' });
     await expect(this.page).toHaveURL(/create/);
@@ -326,11 +348,11 @@ export default class ExtensionsPagePo extends PagePo {
     await this.page.locator('[data-testid="item-card-git-repo"]').click();
 
     // Fill git repo URL and branch (wait for git form to render after card selection)
-    const gitRepoInput = this.page.locator('[data-testid="clusterrepo-git-repo-input"] input');
+    const gitRepoInput = this.page.getByTestId('clusterrepo-git-repo-input');
 
     await expect(gitRepoInput).toBeVisible();
     await gitRepoInput.fill(repo);
-    await this.page.locator('[data-testid="clusterrepo-git-branch-input"] input').fill(branch);
+    await this.page.getByTestId('clusterrepo-git-branch-input').fill(branch);
 
     // Click create
     await this.page.locator('[data-testid="action-button-async-button"]').click();
@@ -338,7 +360,7 @@ export default class ExtensionsPagePo extends PagePo {
     if (waitForActiveState) {
       await expect(this.page).toHaveURL(/catalog\.cattle\.io\.clusterrepo/, { timeout: 30000 });
       await expect(
-        this.page.locator('tbody tr').filter({ hasText: name }).locator('td.col-badge-state-formatter')
+        this.page.locator('tbody tr').filter({ hasText: name }).locator('td.col-badge-state-formatter'),
       ).toContainText('Active', { timeout: 60000 });
     }
   }

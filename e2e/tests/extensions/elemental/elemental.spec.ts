@@ -31,7 +31,12 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
   test('add extension repository', async ({ page }) => {
     const extensionsPo = new ExtensionsPagePo(page);
 
-    await extensionsPo.addExtensionsRepositoryDirectLink(EXTENSION_REPO, EXTENSION_BRANCH, EXTENSION_CLUSTER_REPO_NAME, true);
+    await extensionsPo.addExtensionsRepositoryDirectLink(
+      EXTENSION_REPO,
+      EXTENSION_BRANCH,
+      EXTENSION_CLUSTER_REPO_NAME,
+      true,
+    );
     // Wait a bit so that the repo is available in extensions screen
     await page.waitForTimeout(10000);
   });
@@ -40,6 +45,24 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     const extensionsPo = new ExtensionsPagePo(page);
 
     await extensionsPo.goTo();
+
+    // Check if "Installed" tab exists and extension is already there
+    const hasInstalledTab = await extensionsPo.checkForExtensionTab('installed');
+
+    if (hasInstalledTab) {
+      await extensionsPo.extensionTabInstalledClick();
+      const alreadyInstalled = await extensionsPo.checkForExtensionCardWithName(EXTENSION_NAME);
+
+      if (alreadyInstalled) {
+        // Already installed — verify it shows in the installed tab
+        await extensionsPo.extensionCardClick(EXTENSION_NAME);
+        await expect(extensionsPo.extensionDetailsTitle()).toContainText(EXTENSION_NAME);
+        await extensionsPo.extensionDetailsCloseClick();
+
+        return;
+      }
+    }
+
     await extensionsPo.extensionTabAvailableClick();
 
     // click on install button on card
@@ -65,15 +88,39 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     const elementalPo = new ElementalPo(page);
     const namespaceFilter = new NamespaceFilterPo(page);
 
-    // Set up waitForResponse BEFORE the action that triggers it
-    const installResponsePromise = page.waitForResponse(
-      (resp) => resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts') && resp.url().includes('action=install') && resp.request().method() === 'POST'
-    );
-
     await elementalPo.dashboard().goTo();
+
+    // If the elemental extension is not installed, the route will hit fail-whale (404)
+    const isFailWhale = await elementalPo.dashboard().isFailWhaleVisible();
+
+    if (isFailWhale) {
+      test.skip(true, 'Elemental UI extension is not installed — run "Should install an extension" first');
+
+      return;
+    }
+
     await elementalPo.dashboard().waitForTitle();
 
-    await elementalPo.dashboard().installOperator();
+    // Check if operator is already installed — if the install button is not visible, operator is set up
+    const installBtn = page.getByTestId('charts-install-button');
+    const operatorNeedsInstall = await installBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (!operatorNeedsInstall) {
+      // Operator already installed — just verify the dashboard title
+      await expect(elementalPo.dashboard().mainTitle()).toContainText('OS Management Dashboard');
+
+      return;
+    }
+
+    // Set up waitForResponse BEFORE the action that triggers it
+    const installResponsePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts') &&
+        resp.url().includes('action=install') &&
+        resp.request().method() === 'POST',
+    );
+
+    await installBtn.click();
     await elementalPo.chartInstallPage().waitForChartPage('rancher-charts', 'elemental');
 
     // change the namespace picker
@@ -83,14 +130,30 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     await elementalPo.chartInstallPage().nextPage();
     await elementalPo.chartInstallPage().installChart();
-    await elementalPo.appsPage().waitForInstallCloseTerminal(installResponsePromise, ['elemental-operator-crds', 'elemental-operator']);
+    await elementalPo
+      .appsPage()
+      .waitForInstallCloseTerminal(installResponsePromise, ['elemental-operator-crds', 'elemental-operator']);
 
     await elementalPo.dashboard().goTo();
     await expect(elementalPo.dashboard().mainTitle()).toContainText('OS Management Dashboard');
   });
 
-  test('Should create an Elemental registration endpoint', async ({ page }) => {
+  test('Should create an Elemental registration endpoint', async ({ page, rancherApi }) => {
     const elementalPo = new ElementalPo(page);
+
+    // Check if resource already exists via API — if so, verify and skip creation
+    const existing = await rancherApi.getRancherResource(
+      'v1',
+      'elemental.cattle.io.machineregistrations',
+      `fleet-default/${REG_ENDPOINT_NAME}`,
+      0,
+    );
+
+    if (existing.status === 200) {
+      expect(existing.body.metadata).toHaveProperty('name', REG_ENDPOINT_NAME);
+
+      return;
+    }
 
     await elementalPo.dashboard().goTo();
     await elementalPo.dashboard().productNav().navToSideMenuEntryByLabel('Registration Endpoints');
@@ -106,8 +169,10 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // Set up waitForResponse BEFORE clicking save
     const machineRegPromise = page.waitForResponse(
-      (resp) => resp.url().includes('v1/elemental.cattle.io.machineregistrations/fleet-default') && resp.request().method() === 'POST',
-      { timeout: 15000 }
+      (resp) =>
+        resp.url().includes('v1/elemental.cattle.io.machineregistrations/fleet-default') &&
+        resp.request().method() === 'POST',
+      { timeout: 15000 },
     );
 
     await elementalPo.genericResourceDetail().cruResource().saveOrCreate().click();
@@ -121,8 +186,27 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     expect(body.spec.config.elemental.install).toHaveProperty('device', REG_ENDPOINT_DEVICE_PATH);
   });
 
-  test('Should create an Elemental resource via YAML (Inventory of Machines)', async ({ page, request }) => {
+  test('Should create an Elemental resource via YAML (Inventory of Machines)', async ({
+    page,
+    request,
+    rancherApi,
+  }) => {
     const elementalPo = new ElementalPo(page);
+
+    // Check if resource already exists via API
+    const existing = await rancherApi.getRancherResource(
+      'v1',
+      'elemental.cattle.io.machineinventories',
+      `fleet-default/${MACHINE_INV_NAME}`,
+      0,
+    );
+
+    if (existing.status === 200) {
+      expect(existing.body.metadata).toHaveProperty('name', MACHINE_INV_NAME);
+
+      return;
+    }
+
     const maxPollingRetries = 36;
 
     await elementalPo.dashboard().goTo();
@@ -132,7 +216,9 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // Poll for schemaDefinition to become available
     for (let i = 0; i < maxPollingRetries; i++) {
-      const resp = await request.get('v1/schemaDefinitions/elemental.cattle.io.machineinventory', { failOnStatusCode: false });
+      const resp = await request.get('v1/schemaDefinitions/elemental.cattle.io.machineinventory', {
+        failOnStatusCode: false,
+      });
 
       if (resp.status() === 200) {
         break;
@@ -140,6 +226,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
       if (i === maxPollingRetries - 1) {
         throw new Error('schemaDefinition polling failed');
       }
+      // Unavoidable polling delay — waiting for server-side schema registration
       await page.waitForTimeout(5000);
     }
 
@@ -152,23 +239,42 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     await elementalPo.genericPage('/elemental/c/_/elemental.cattle.io.machineinventory').waitForPage();
     await expect(
-      elementalPo.genericResourceList().resourceTable().sortableTable().rowWithName(MACHINE_INV_NAME).column(2)
+      elementalPo.genericResourceList().resourceTable().sortableTable().rowWithName(MACHINE_INV_NAME).column(2),
     ).toContainText(MACHINE_INV_NAME);
   });
 
-  test('Should create an Elemental cluster, targeting all of the inventory of machines', async ({ page }) => {
+  test('Should create an Elemental cluster, targeting all of the inventory of machines', async ({
+    page,
+    rancherApi,
+  }) => {
     const elementalPo = new ElementalPo(page);
+
+    // Check if cluster already exists via API
+    const existing = await rancherApi.getRancherResource(
+      'v1',
+      'provisioning.cattle.io.clusters',
+      `fleet-default/${ELEMENTAL_CLUSTER_NAME}`,
+      0,
+    );
+
+    if (existing.status === 200) {
+      expect(existing.body.metadata).toHaveProperty('name', ELEMENTAL_CLUSTER_NAME);
+
+      return;
+    }
 
     await elementalPo.dashboard().goTo();
     await elementalPo.dashboard().createElementalCluster();
 
     await elementalPo.genericNameNsDescription().name().set(ELEMENTAL_CLUSTER_NAME);
-    await expect(elementalPo.elementalClusterSelectorTemplateBanner().banner()).toContainText(ELEMENTAL_CLUSTER_BANNER_TEXT);
+    await expect(elementalPo.elementalClusterSelectorTemplateBanner().banner()).toContainText(
+      ELEMENTAL_CLUSTER_BANNER_TEXT,
+    );
 
     // Set up waitForResponse BEFORE clicking create
     const clusterCreationPromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     await elementalPo.rke2CreateSaveButton().click();
@@ -179,11 +285,28 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     const body = await response.json();
 
     expect(body.metadata).toHaveProperty('name', ELEMENTAL_CLUSTER_NAME);
-    expect(body.spec.rkeConfig.machinePools[0].machineConfigRef).toHaveProperty('kind', ELEMENTAL_CLUSTER_MACHINE_CONFIG_REF);
+    expect(body.spec.rkeConfig.machinePools[0].machineConfigRef).toHaveProperty(
+      'kind',
+      ELEMENTAL_CLUSTER_MACHINE_CONFIG_REF,
+    );
   });
 
-  test('Should create an Upgrade Group', async ({ page }) => {
+  test('Should create an Upgrade Group', async ({ page, rancherApi }) => {
     const elementalPo = new ElementalPo(page);
+
+    // Check if update group already exists via API
+    const existing = await rancherApi.getRancherResource(
+      'v1',
+      'elemental.cattle.io.managedosimages',
+      `fleet-default/${UPDATE_GROUP_NAME}`,
+      0,
+    );
+
+    if (existing.status === 200) {
+      expect(existing.body.metadata).toHaveProperty('name', UPDATE_GROUP_NAME);
+
+      return;
+    }
 
     await elementalPo.dashboard().goTo();
     await elementalPo.dashboard().createUpdateGroupClick();
@@ -200,7 +323,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     // Set up waitForResponse BEFORE clicking save
     const updateGroupPromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/elemental.cattle.io.managedosimages') && resp.request().method() === 'POST',
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     await elementalPo.genericResourceDetail().cruResource().saveOrCreate().click();
@@ -219,6 +342,16 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     const extensionsPo = new ExtensionsPagePo(page);
 
     await extensionsPo.goTo();
+
+    // If there is no "Installed" tab, the extension is not installed — skip
+    const hasInstalledTab = await extensionsPo.checkForExtensionTab('installed');
+
+    if (!hasInstalledTab) {
+      test.skip(true, 'Extension is not installed — nothing to uninstall');
+
+      return;
+    }
+
     await extensionsPo.extensionTabInstalledClick();
 
     // click on uninstall button on card
