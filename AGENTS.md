@@ -43,16 +43,10 @@
 ### Playwright-Specific Token Savings
 
 - **Don't read trace ZIPs** — run `npx playwright show-trace <path>` or read the screenshot instead.
-- **MANDATORY: Read ALL failure artifacts before fixing.** When a test fails, read these in order before diagnosing:
-  1. `error-context.md` — failure summary
-  2. `dom-snapshot.html` — actual page DOM at failure
-  3. `console-logs.txt` — browser console output
-  4. `network-errors.txt` — failed API calls
-  5. `test-failed-*.png` — screenshot
-  Cross-check all 5. Don't fix from error output alone — you'll miss root cause.
+- **MANDATORY: Run `npm run summarize-failures` first.** Read `test-results/FAILURE-SUMMARY.md` before anything else. It classifies failures, cross-references network errors, and flags DOM state issues. Only dive into individual artifacts if the summary isn't enough.
 - **One spec at a time** — run `-g "test name"` to isolate failures, not the whole suite.
 - **Page Objects are the docs** — read the PO, not the Playwright API docs, for selector patterns.
-- **Check existing POs first** — `find e2e/po -name '*.po.ts' | sort` before creating. Most POs exist already.
+- **Check existing POs first** — read `e2e/po/INDEX.md` before creating. It lists every PO with class, selector, and methods. Don't `find` or `grep` for POs unless the index is missing.
 - **Read Cypress PO first, then write Playwright PO** — don't read the Playwright base classes again, the pattern is the same every time.
 - **Batch spec conversions** — read all specs in a folder, then write all at once. Don't round-trip per file.
 - **Skip upstream comments** — don't copy eslint-disable, TODO, or commented-out Cypress code.
@@ -118,6 +112,34 @@ Some tests require infrastructure or credentials that may not be available in ev
 - Do NOT delete or rewrite tests that need unavailable infra — just skip them with explanation.
 - Do NOT count requirement-skipped tests as "failures to fix". Report them separately.
 - When unsure if a failure is a bug or a missing requirement, check the upstream Cypress spec for `requiredFeature`, `skipIfNoAuth`, environment guards, or similar patterns.
+
+---
+
+## TEST DESIGN PRINCIPLES
+
+### Atomic Tests
+
+Each test must be **self-contained** — it should not depend on the execution order of other tests or on state left by a previous test. Upstream Cypress uses `testIsolation: 'off'` which creates implicit dependencies between tests. **We do not replicate that pattern.** Every Playwright test must:
+
+- Set up its own preconditions (via API or UI)
+- Assert the expected outcome
+- Clean up after itself (restore original state)
+
+### Idempotent Tests
+
+Tests must produce the **same result** regardless of how many times they run or what state the server is in. This means:
+
+- Use `rancherApi` to ensure known starting state before each test (e.g., save → set → test → restore)
+- Never assume default values — query current state, set what you need, restore when done
+- Use unique test data (timestamps, random suffixes) to avoid collisions with parallel runs
+- If a resource might already exist, check first — don't fail on "already exists"
+
+### Upstream Parity
+
+- **Match upstream assertions** — the same behaviors must be validated
+- **Don't clone upstream config** — Cypress `testIsolation: 'off'`, shared state, and ordered execution are anti-patterns we intentionally avoid
+- API-based state setup is the **correct** approach for idempotent tests, even when upstream relies on natural defaults
+- If upstream skips cleanup because "the next test resets it", we still clean up explicitly
 
 ---
 

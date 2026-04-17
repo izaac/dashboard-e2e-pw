@@ -83,6 +83,9 @@ support/
 - Use `rancherApi` fixture for API operations (create/delete resources)
 - `waitForResponse` must be set up BEFORE the action that triggers it
 - URLs use `./path` prefix (relative to baseURL) — never absolute `/path`
+- **Atomic:** Each test is self-contained — no dependency on test execution order
+- **Idempotent:** Tests must pass on first run, Nth run, and after partial failures — use API to set known state, restore originals in cleanup
+- **Don't clone upstream config** — match the assertions, not the test structure. Cypress `testIsolation: 'off'` and shared state are anti-patterns we avoid
 
 ### URL Resolution
 
@@ -137,6 +140,26 @@ Set in `.env` or export:
 ## Qase Integration
 
 Qase IDs are added manually by QA. **Never generate or guess Qase IDs.** The reporter is configured in `playwright.config.jenkins.ts` — specs don't need any Qase-specific code until QA maps them.
+
+## Developer Tooling
+
+### Failure Summarizer
+After a test run with failures, run:
+```bash
+npm run summarize-failures
+```
+Reads all artifacts from `test-results/`, classifies each failure (timeout, selector, API error, assertion, crash, navigation), cross-references network errors with the failure type, detects DOM state flags (loading spinners, login page visible, error banners), and outputs a single `test-results/FAILURE-SUMMARY.md`. Agents should read this file FIRST before diving into individual artifacts.
+
+### PO Index
+```bash
+npm run po-index
+```
+Generates `e2e/po/INDEX.md` — a table of all Page Objects with class name, parent, selector, and key methods. Updated automatically on pre-commit. Agents should read this before searching for POs manually.
+
+### Pre-commit Hooks
+Husky + lint-staged runs on every commit:
+1. ESLint + Prettier on staged `.ts` files
+2. PO index regeneration (auto-stages `INDEX.md` if changed)
 
 ## Claude-Specific Rules
 
