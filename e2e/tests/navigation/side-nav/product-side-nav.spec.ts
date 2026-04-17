@@ -16,22 +16,28 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     if (existing.status !== 200) {
       await rancherApi.createRancherResource('v1', 'apps.deployments', {
         apiVersion: 'apps/v1',
-        kind:       'Deployment',
-        metadata:   {
-          name:      workloadName,
+        kind: 'Deployment',
+        metadata: {
+          name: workloadName,
           namespace,
-          labels:    { 'workload.user.cattle.io/workloadselector': 'apps.deployment-default-test-deployment' },
+          labels: { 'workload.user.cattle.io/workloadselector': 'apps.deployment-default-test-deployment' },
         },
         spec: {
           replicas: 1,
-          selector: { matchLabels: { 'workload.user.cattle.io/workloadselector': 'apps.deployment-default-test-deployment' } },
+          selector: {
+            matchLabels: { 'workload.user.cattle.io/workloadselector': 'apps.deployment-default-test-deployment' },
+          },
           template: {
-            metadata: { labels: { 'workload.user.cattle.io/workloadselector': 'apps.deployment-default-test-deployment' } },
-            spec:     {
-              containers: [{
-                name:  'nginx',
-                image: 'nginx:latest',
-              }],
+            metadata: {
+              labels: { 'workload.user.cattle.io/workloadselector': 'apps.deployment-default-test-deployment' },
+            },
+            spec: {
+              containers: [
+                {
+                  name: 'nginx',
+                  image: 'nginx:latest',
+                },
+              ],
             },
           },
         },
@@ -47,6 +53,12 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     const burgerMenu = new BurgerMenuPo(page);
 
     await burgerMenu.goToCluster('local');
+
+    // Wait for the cluster explorer to load and the product side nav to appear
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+    await clusterDashboard.waitForPage();
+    await expect(page.locator('.side-nav .accordion.has-children').first()).toBeAttached({ timeout: 30000 });
   });
 
   test('Can access to first navigation link on click', async ({ page }) => {
@@ -67,15 +79,31 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
   test('Can open second menu groups on click', async ({ page }) => {
     const productNavPo = new ProductNavPo(page);
 
-    // Find a closed (not expanded) group
-    const closedGroup = productNavPo.closedGroups().first();
+    // Determine which index among all groups is the first closed one
+    const allGroups = productNavPo.groups();
+    const groupCount = await allGroups.count();
+    let closedIdx = -1;
 
-    await expect(closedGroup).toBeVisible();
-    await closedGroup.click();
+    for (let i = 0; i < groupCount; i++) {
+      const cls = (await allGroups.nth(i).getAttribute('class')) ?? '';
 
-    // Verify it has child items now
-    await expect(productNavPo.groupChildList(closedGroup)).toBeAttached();
-    const ulCount = await productNavPo.groupChildList(closedGroup).count();
+      if (!cls.includes('expanded')) {
+        closedIdx = i;
+        break;
+      }
+    }
+
+    expect(closedIdx).toBeGreaterThanOrEqual(0);
+
+    // Use a stable nth-based reference that won't change when class toggles
+    const targetGroup = allGroups.nth(closedIdx);
+
+    await expect(targetGroup).toBeVisible();
+    await targetGroup.click();
+
+    // After click the group is expanded — verify it has child items
+    await expect(productNavPo.groupChildList(targetGroup)).toBeAttached();
+    const ulCount = await productNavPo.groupChildList(targetGroup).count();
 
     expect(ulCount).toBeGreaterThan(0);
   });
@@ -83,11 +111,26 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
   test('Can close first menu groups on click', async ({ page }) => {
     const productNavPo = new ProductNavPo(page);
 
-    // Find a closed group and click it to open
-    const closedGroup = productNavPo.closedGroups().first();
+    // Determine the first closed group by stable index
+    const allGroups = productNavPo.groups();
+    const groupCount = await allGroups.count();
+    let closedIdx = -1;
 
-    await expect(closedGroup).toBeVisible();
-    await closedGroup.click();
+    for (let i = 0; i < groupCount; i++) {
+      const cls = (await allGroups.nth(i).getAttribute('class')) ?? '';
+
+      if (!cls.includes('expanded')) {
+        closedIdx = i;
+        break;
+      }
+    }
+
+    expect(closedIdx).toBeGreaterThanOrEqual(0);
+
+    const targetGroup = allGroups.nth(closedIdx);
+
+    await expect(targetGroup).toBeVisible();
+    await targetGroup.click();
 
     // Now check that the previously open group collapsed
     const expandedCount = await productNavPo.expandedGroup().count();
@@ -99,14 +142,29 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
   test('Should flag second menu group as active on navigation', async ({ page }) => {
     const productNavPo = new ProductNavPo(page);
 
-    // Click a closed group
-    const closedGroup = productNavPo.closedGroups().first();
+    // Determine the first closed group by stable index
+    const allGroups = productNavPo.groups();
+    const groupCount = await allGroups.count();
+    let closedIdx = -1;
 
-    await expect(closedGroup).toBeVisible();
-    await closedGroup.click();
+    for (let i = 0; i < groupCount; i++) {
+      const cls = (await allGroups.nth(i).getAttribute('class')) ?? '';
+
+      if (!cls.includes('expanded')) {
+        closedIdx = i;
+        break;
+      }
+    }
+
+    expect(closedIdx).toBeGreaterThanOrEqual(0);
+
+    const targetGroup = allGroups.nth(closedIdx);
+
+    await expect(targetGroup).toBeVisible();
+    await targetGroup.click();
 
     // Should have an active router link within
-    await expect(productNavPo.activeLinksInGroup(closedGroup)).toBeAttached();
+    await expect(productNavPo.activeLinksInGroup(targetGroup)).toBeAttached();
   });
 
   test('Going into resource detail should keep relevant group active', async ({ page }) => {
@@ -127,7 +185,9 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     await expect(productNavPo.activeLinksInGroup(openGroup)).toBeAttached();
   });
 
-  test('Should access every navigation link provided from the server, including nested cases, without errors', async ({ page }) => {
+  test('Should access every navigation link provided from the server, including nested cases, without errors', async ({
+    page,
+  }) => {
     const productNavPo = new ProductNavPo(page);
 
     const groupCount = await productNavPo.groups().count();
@@ -148,8 +208,8 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
         }
       }
 
-      // Ensure group is expanded with items
-      await expect(productNavPo.groupChildList(group)).toBeAttached();
+      // Ensure group is expanded with items (use .first() — nested sub-groups may have multiple ul)
+      await expect(productNavPo.groupChildList(group).first()).toBeAttached();
 
       // Visit each link and confirm navigation
       const linkCount = await productNavPo.visibleNavTypes().count();
@@ -182,8 +242,10 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     await productNavPo.visibleNavTypes().nth(2).click({ force: true });
 
     // Clicking the first tab header should take us back to cluster dashboard
-    await productNavPo.tabHeaders().first().click({ position: { x: 1, y: 1 } });
+    await productNavPo
+      .tabHeaders()
+      .first()
+      .click({ position: { x: 1, y: 1 } });
     await clusterDashboard.waitForPage();
   });
-
 });

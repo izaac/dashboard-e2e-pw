@@ -11,6 +11,10 @@ import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
  * @adminUserSetup @standardUserSetup @setup
  */
 test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUserSetup'] }, () => {
+  test.beforeEach(async ({ envMeta }) => {
+    test.skip(!envMeta.bootstrapPassword, 'Requires CATTLE_BOOTSTRAP_PASSWORD and a fresh Rancher instance');
+  });
+
   test('Requires initial setup', async ({ page }) => {
     const homePage = new HomePagePo(page);
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
@@ -98,15 +102,18 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     // Login first via API (this spec doesn't use storageState since it's the setup flow)
     await page.goto('/auth/login');
 
-    await rancherApi.createUser({
-      username: 'standard_user',
-      globalRole: { role: 'user' },
-      projectRole: {
-        clusterId: 'local',
-        projectName: 'Default',
-        role: 'project-member',
+    await rancherApi.createUser(
+      {
+        username: 'standard_user',
+        globalRole: { role: 'user' },
+        projectRole: {
+          clusterId: 'local',
+          projectName: 'Default',
+          role: 'project-member',
+        },
+        password: envMeta.password,
       },
-      password: envMeta.password,
-    }, { createNameOptions: { onlyContext: true } });
+      { createNameOptions: { onlyContext: true } },
+    );
   });
 });

@@ -75,11 +75,11 @@ export class HarvesterClusterCreateEditPo extends PagePo {
   }
 
   resourceDetail(): ResourceDetailPo {
-    return new ResourceDetailPo(this.page, '.dashboard-root', this.self());
+    return new ResourceDetailPo(this.page, ':scope', this.self());
   }
 
   masthead() {
-    return new BaseResourceList(this.page, '.dashboard-root', this.self()).masthead();
+    return new BaseResourceList(this.page, ':scope', this.self()).masthead();
   }
 
   title(): Locator {
@@ -87,7 +87,7 @@ export class HarvesterClusterCreateEditPo extends PagePo {
   }
 
   nameNsDescription(): NameNsDescriptionPo {
-    return new NameNsDescriptionPo(this.page, '.dashboard-root', this.self());
+    return new NameNsDescriptionPo(this.page, ':scope', this.self());
   }
 
   tabs(): TabbedPo {
