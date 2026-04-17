@@ -1,0 +1,16 @@
+# Heavy dirs — never load into context
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+browser-logs/
+.auth/
+.git/
+
+# Binary assets
+e2e/blueprints/branding/
+e2e/blueprints/global/favicons/
+
+# Lock files
+yarn.lock
+package-lock.json

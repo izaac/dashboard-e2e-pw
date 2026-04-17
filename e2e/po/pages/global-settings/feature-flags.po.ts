@@ -1,0 +1,105 @@
+import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
+import RootClusterPage from '@/e2e/po/pages/root-cluster-page.po';
+import MgmtFeatureFlagListPo from '@/e2e/po/lists/management.cattle.io.feature.po';
+import CardPo from '@/e2e/po/components/card.po';
+import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import ProductNavPo from '@/e2e/po/components/product-nav.po';
+
+const RESTART_TIMEOUT = 120000;
+const MEDIUM_TIMEOUT = 30000;
+
+export class FeatureFlagsPagePo extends RootClusterPage {
+  private clusterId: string;
+
+  private static createPath(clusterId: string): string {
+    return `/c/${clusterId}/settings/management.cattle.io.feature`;
+  }
+
+  constructor(page: Page, clusterId = '_') {
+    super(page, FeatureFlagsPagePo.createPath(clusterId));
+    this.clusterId = clusterId;
+  }
+
+  async goTo(): Promise<void> {
+    await super.goTo();
+  }
+
+  async goToAndWait(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes('v1/management.cattle.io.features') && resp.status() === 200,
+      { timeout: MEDIUM_TIMEOUT }
+    );
+
+    await this.goTo();
+    await responsePromise;
+  }
+
+  async navTo(): Promise<void> {
+    const burgerMenu = new BurgerMenuPo(this.page);
+    const sideNav = new ProductNavPo(this.page);
+
+    await burgerMenu.toggle();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    await expect(this.page.locator('.side-nav')).toContainText('Feature Flags');
+    await sideNav.navToSideMenuEntryByLabel('Feature Flags');
+  }
+
+  list(): MgmtFeatureFlagListPo {
+    return new MgmtFeatureFlagListPo(this.page, this.self());
+  }
+
+  cardActionButton(label: string): Locator {
+    const card = new CardPo(this.page);
+
+    return card.getActionButton().locator('button', { hasText: label });
+  }
+
+  cardActionBody(label: string): Locator {
+    const card = new CardPo(this.page);
+
+    return card.getBody().locator(':scope', { hasText: label });
+  }
+
+  /**
+   * Click the card action button (Activate/Deactivate) and optionally wait for the API request and modal to close.
+   */
+  async clickCardActionButtonAndWait(
+    label: 'Activate' | 'Deactivate',
+    endpoint: string,
+    value: boolean,
+    config: { waitForModal?: boolean; waitForRequest?: boolean } = { waitForModal: false, waitForRequest: true },
+  ): Promise<void> {
+    // Set up response listener BEFORE the click
+    let responsePromise: Promise<any> | undefined;
+
+    if (config.waitForRequest) {
+      responsePromise = this.page.waitForResponse(
+        (resp) => resp.url().includes(`/v1/management.cattle.io.features/${endpoint}`) && resp.request().method() === 'PUT',
+        { timeout: MEDIUM_TIMEOUT },
+      );
+    }
+
+    await this.cardActionButton(label).click();
+
+    if (responsePromise) {
+      const resp = await responsePromise;
+
+      expect(resp.status()).toBe(200);
+
+      const reqBody = resp.request().postDataJSON();
+
+      expect(reqBody.spec).toHaveProperty('value', value);
+
+      const respBody = await resp.json();
+
+      expect(respBody.spec).toHaveProperty('value', value);
+    }
+
+    if (config.waitForModal) {
+      const card = new CardPo(this.page);
+
+      await expect(card.self()).not.toBeAttached({ timeout: RESTART_TIMEOUT });
+    }
+  }
+}

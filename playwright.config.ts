@@ -1,0 +1,152 @@
+import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+
+require('dotenv').config();
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+/**
+ * Environment Variables (matching Cypress convention)
+ */
+const skipSetup = process.env.TEST_SKIP?.includes('setup');
+// Strip trailing slash for clean display/API derivation, add back for baseURL (Playwright needs it for relative path resolution)
+const rawBaseUrl = (process.env.TEST_BASE_URL || 'https://localhost:8005').replace(/\/+$/, '');
+const baseURL = rawBaseUrl + '/';
+const username = process.env.TEST_USERNAME || 'admin';
+const apiUrl = process.env.API || (rawBaseUrl.endsWith('/dashboard') ? rawBaseUrl.split('/').slice(0, -1).join('/') : rawBaseUrl);
+
+/**
+ * Test directories - mirrors Cypress specPattern
+ */
+const testDirs = ['priority', 'components', 'setup', 'pages', 'navigation', 'global-ui', 'features', 'extensions'];
+
+const getTestMatch = (): string[] => {
+  const only = process.env.TEST_ONLY?.split(',').map((s) => s.trim()).filter(Boolean);
+  const skip = process.env.TEST_SKIP?.split(',').map((s) => s.trim()).filter(Boolean);
+
+  let dirs = testDirs;
+
+  if (only?.length) {
+    dirs = dirs.filter((d) => only.includes(d));
+  } else if (skip?.length) {
+    dirs = dirs.filter((d) => !skip.includes(d));
+  }
+
+  if (process.env.TEST_A11Y) {
+    dirs = ['accessibility'];
+  }
+
+  return dirs.map((d) => `e2e/tests/${d}/**/*.spec.ts`);
+};
+
+/**
+ * Logging (matches Cypress config output)
+ * Guard: Playwright loads config twice (discovery + run), only log once.
+ */
+if (!process.env._PW_CONFIG_LOGGED) {
+  process.env._PW_CONFIG_LOGGED = '1';
+
+console.log('E2E Test Configuration (Playwright)');
+console.log('');
+console.log(`    Username: ${username}`);
+
+if (!process.env.CATTLE_BOOTSTRAP_PASSWORD && !process.env.TEST_PASSWORD) {
+  console.log(' ❌ You must provide either CATTLE_BOOTSTRAP_PASSWORD or TEST_PASSWORD');
+}
+if (process.env.CATTLE_BOOTSTRAP_PASSWORD && process.env.TEST_PASSWORD) {
+  console.log(' ❗ If both CATTLE_BOOTSTRAP_PASSWORD and TEST_PASSWORD are provided, the first will be used');
+}
+if (!skipSetup && !process.env.CATTLE_BOOTSTRAP_PASSWORD) {
+  console.log(' ❌ You must provide CATTLE_BOOTSTRAP_PASSWORD when running setup tests');
+}
+if (skipSetup && !process.env.TEST_PASSWORD) {
+  console.log(' ❌ You must provide TEST_PASSWORD when running the tests without the setup tests');
+}
+
+console.log(`    Setup tests will ${skipSetup ? 'NOT' : ''} be run`);
+console.log(`    Dashboard URL: ${rawBaseUrl}`);
+console.log(`    Rancher API URL: ${apiUrl}`);
+
+if (apiUrl && !rawBaseUrl.startsWith(apiUrl)) {
+  console.log('\n ❗ API variable is different to TEST_BASE_URL - tests may fail due to authentication issues');
+}
+console.log('');
+} // end config log guard
+
+/**
+ * Playwright Configuration
+ * @see https://playwright.dev/docs/test-configuration
+ */
+export default defineConfig({
+  testDir: '.',
+  testMatch: getTestMatch(),
+
+  /* Timeouts */
+  timeout: 60_000,
+  expect: { timeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000 },
+
+  /* Run tests in files in parallel */
+  fullyParallel: false,
+
+  /* Fail the build on CI if you accidentally left test.only in the source code */
+  forbidOnly: !!process.env.CI,
+
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+
+  /* Reporter */
+  reporter: [
+    ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    ['line'],
+  ],
+
+  /* Shared settings for all the projects below */
+  use: {
+    baseURL,
+    ignoreHTTPSErrors: true,
+
+    /* Debugging artifacts — all retained on failure for full post-mortem */
+    screenshot: process.env.TEST_NO_SCREENSHOTS === 'true' ? 'off' : { mode: 'only-on-failure', fullPage: true },
+    video: process.env.TEST_NO_VIDEOS === 'true' ? 'off' : 'retain-on-failure',
+    trace: 'retain-on-failure',
+
+    actionTimeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000,
+    storageState: undefined,
+  },
+
+  /* Metadata exposed to tests via testInfo.project.metadata */
+  metadata: {
+    baseUrl: baseURL,
+    api: apiUrl,
+    username,
+    password: process.env.CATTLE_BOOTSTRAP_PASSWORD || process.env.TEST_PASSWORD,
+    bootstrapPassword: process.env.CATTLE_BOOTSTRAP_PASSWORD,
+    grepTags: process.env.GREP_TAGS,
+    awsAccessKey: process.env.AWS_ACCESS_KEY_ID,
+    awsSecretKey: process.env.AWS_SECRET_ACCESS_KEY,
+    azureSubscriptionId: process.env.AZURE_AKS_SUBSCRIPTION_ID,
+    azureClientId: process.env.AZURE_CLIENT_ID,
+    azureClientSecret: process.env.AZURE_CLIENT_SECRET,
+    customNodeIp: process.env.CUSTOM_NODE_IP,
+    customNodeKey: process.env.CUSTOM_NODE_KEY,
+    accessibility: !!process.env.TEST_A11Y,
+    a11yFolder: path.join('.', 'e2e', 'accessibility'),
+    gkeServiceAccount: process.env.GKE_SERVICE_ACCOUNT,
+  },
+
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+        },
+      },
+    },
+  ],
+
+  /* Output directory for test artifacts */
+  outputDir: 'test-results',
+});
+
+export { baseURL, apiUrl, username };
