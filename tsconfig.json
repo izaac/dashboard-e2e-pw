@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "sourceMap": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "types": ["node"],
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"],
+      "@shell/*": ["../dashboard/shell/*"],
+      "@pkg/*": ["../dashboard/shell/pkg/*"],
+      "@components/*": ["../dashboard/pkg/rancher-components/src/components/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "globals.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

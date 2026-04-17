@@ -1,0 +1,9 @@
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+browser-logs/
+.auth/
+e2e/blueprints/**/*.json
+e2e/blueprints/**/*.yml
+e2e/blueprints/**/*.yaml

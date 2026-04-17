@@ -1,0 +1,142 @@
+import { test, expect } from '@/support/fixtures';
+import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
+import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
+import KubectlPo from '@/e2e/po/components/kubectl.po';
+import ChartInstalledAppsListPagePo from '@/e2e/po/pages/chart-installed-apps.po';
+import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
+
+const chartNamespace = 'compliance-operator-system';
+
+test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
+  test.beforeEach(async ({ login }) => {
+    await login();
+  });
+
+  test.describe('Compliance install', () => {
+    test.afterEach(async ({ rancherApi }) => {
+      // Clean up compliance charts regardless of test outcome
+      await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`, {}, false);
+      await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`, {}, false);
+      // Reset namespace filter
+      await rancherApi.setUserPreference({ 'local': JSON.stringify({ local: ['all://user'] }) });
+    });
+
+    test.describe('YAML view', () => {
+      test('Footer controls should sticky to bottom', async ({ page }) => {
+        const chartPage = new ChartPage(page);
+        const installChartPage = new InstallChartPage(page);
+
+        await chartPage.navTo('Rancher Compliance');
+        await chartPage.waitForChartHeader('Rancher Compliance', 30000);
+        await chartPage.goToInstall();
+        await installChartPage.nextPage();
+        await installChartPage.editYaml();
+
+        const footer = installChartPage.wizardFooter();
+
+        await expect(footer).toBeVisible();
+
+        const footerBox = await footer.boundingBox();
+        const viewportSize = page.viewportSize();
+
+        expect(footerBox).toBeTruthy();
+        expect(viewportSize).toBeTruthy();
+        // Footer bottom should be at or near viewport bottom (within 40px tolerance for banners/margins)
+        const footerBottom = Math.round(footerBox!.y + footerBox!.height);
+
+        expect(footerBottom).toBeGreaterThan(viewportSize!.height - 40);
+        expect(footerBottom).toBeLessThanOrEqual(viewportSize!.height);
+      });
+    });
+
+    test.describe('Compliance Chart setup', () => {
+      test('Complete install and a Scan is created', { timeout: 180000 }, async ({ page, rancherApi }) => {
+        // Clean up first in case charts exist from a previous failed run
+        await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`, {}, false);
+        await rancherApi.createRancherResource('v1', `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`, {}, false);
+
+        // Reset namespace filter
+        await rancherApi.setUserPreference({ 'local': JSON.stringify({ local: [] }) });
+
+        const chartPage = new ChartPage(page);
+        const installChartPage = new InstallChartPage(page);
+        const terminal = new KubectlPo(page);
+        const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
+
+        await chartPage.navTo('Rancher Compliance');
+        await chartPage.waitForChartHeader('Rancher Compliance', 30000);
+        await chartPage.goToInstall();
+
+        await installChartPage.nextPage();
+
+        // Set up intercept right before the action that triggers it
+        const installActionPromise = page.waitForResponse(
+          (resp) => resp.url().includes('action=install') && resp.request().method() === 'POST'
+        );
+
+        await installChartPage.installChart();
+
+        // Wait for terminal to show installation progress and complete
+        await terminal.waitForTerminalStatus('Disconnected', 60000);
+        await terminal.closeTerminal();
+
+        // Navigate to installed apps page and wait for load
+        // Set up response listener before navigation
+        const getInstalledAppsPromise = page.waitForResponse(
+          (resp) => resp.url().includes('catalog.cattle.io.app') && resp.ok()
+        );
+
+        await installedAppsPage.goTo();
+
+        await getInstalledAppsPromise;
+
+        // Set namespace filter to show all namespaces (compliance installs to a system namespace)
+        const namespacePicker = new NamespaceFilterPo(page);
+
+        await namespacePicker.toggle();
+        await namespacePicker.clickOptionByLabel('All Namespaces');
+        await namespacePicker.closeDropdown();
+
+        // Wait for the apps list to be visible
+        await expect(installedAppsPage.appsList().self()).toBeVisible({ timeout: 30000 });
+
+        await installedAppsPage.appsList().checkVisible();
+        await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
+
+        // Verify compliance components are present
+        await expect(installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance')).toBeVisible({ timeout: 30000 });
+        await expect(installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance-crd')).toBeVisible({ timeout: 30000 });
+
+        await page.locator('.dashboard-root').waitFor();
+        const sideNav = new ProductNavPo(page);
+
+        await sideNav.navToSideMenuGroupByLabel('Compliance');
+
+        // Open terminal and apply test profile
+        await terminal.openTerminal(60000);
+        await terminal.executeCommand('apply -f https://raw.githubusercontent.com/rancher/compliance-operator/refs/heads/main/tests/k3s-bench-test.yaml');
+        await terminal.closeTerminal();
+
+        // Create scan via API and verify response
+        const scanResponsePromise = page.waitForResponse(
+          (resp) => resp.url().includes('v1/compliance.cattle.io.clusterscans') && resp.request().method() === 'POST'
+        );
+
+        // Navigate to compliance list and create scan
+        await page.getByTestId('masthead-create').click();
+
+        // Save the scan form (one-off form interaction for compliance scan)
+        await page.getByTestId('form-save').click();
+
+        const scanResp = await scanResponsePromise;
+        const scanBody = await scanResp.json();
+
+        expect(scanResp.status()).toBe(201);
+        expect(scanBody.type).toBe('compliance.cattle.io.clusterscan');
+        expect(scanBody.metadata.name).toBeTruthy();
+        expect(scanBody.metadata.generateName).toBe('scan-');
+      });
+    });
+  });
+});

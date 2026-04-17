@@ -1,0 +1,27 @@
+import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
+import ComponentPo from '@/e2e/po/components/component.po';
+
+export default class ProductNavPo extends ComponentPo {
+  constructor(page: Page) {
+    super(page, '.side-nav');
+  }
+
+  groups(): Locator {
+    return this.self().locator('.accordion.has-children');
+  }
+
+  async navToSideMenuGroupByLabel(label: string): Promise<void> {
+    await expect(this.page.locator('.side-nav')).toBeVisible({ timeout: 60000 });
+    await this.self().locator('.accordion.has-children').filter({ hasText: label }).click();
+  }
+
+  sideMenuEntryByLabel(label: string): Locator {
+    return this.self().locator('.child.nav-type a .label').filter({ hasText: new RegExp(`^${label}$`) });
+  }
+
+  async navToSideMenuEntryByLabel(label: string): Promise<void> {
+    await expect(this.sideMenuEntryByLabel(label)).toBeVisible({ timeout: 60000 });
+    await this.sideMenuEntryByLabel(label).click({ force: true });
+  }
+}
