@@ -66,12 +66,66 @@ async function setTheme(page: any, theme: 'Dark' | 'Light') {
   expect(resp.status()).toBe(200);
 }
 
+const BRANDING_SETTINGS = [
+  'ui-logo-light',
+  'ui-logo-dark',
+  'ui-banner-light',
+  'ui-banner-dark',
+  'ui-login-background-light',
+  'ui-login-background-dark',
+  'ui-primary-color',
+  'ui-link-color',
+  'ui-favicon',
+];
+
 test.describe('Branding', () => {
-  test.beforeEach(async ({ login, page }) => {
+  let savedBrandingValues: Record<string, { value: string; resourceVersion: string }> = {};
+
+  test.beforeEach(async ({ login, page, rancherApi }) => {
+    savedBrandingValues = {};
+
+    for (const setting of BRANDING_SETTINGS) {
+      try {
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', setting, 0);
+
+        if (resp.status === 200) {
+          savedBrandingValues[setting] = {
+            value: resp.body.value || '',
+            resourceVersion: resp.body.metadata.resourceVersion,
+          };
+        }
+      } catch {
+        // Setting may not exist yet — will be created by the test
+      }
+    }
+
     await login();
     const homePage = new HomePagePo(page);
 
     await homePage.goTo();
+  });
+
+  test.afterEach(async ({ rancherApi }) => {
+    for (const setting of BRANDING_SETTINGS) {
+      try {
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', setting, 0);
+
+        if (resp.status !== 200) {
+          continue;
+        }
+
+        const original = savedBrandingValues[setting];
+        const currentValue = resp.body.value || '';
+        const restoreValue = original?.value || '';
+
+        if (currentValue !== restoreValue) {
+          resp.body.value = restoreValue;
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', setting, resp.body);
+        }
+      } catch {
+        // Best-effort: setting may have been deleted or not exist
+      }
+    }
   });
 
   test(

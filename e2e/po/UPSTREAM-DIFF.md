@@ -3,33 +3,22 @@
 
 Generated: 2026-04-17
 
-Playwright POs: 101 | Upstream Cypress POs: 305 | Unported: 212
+Playwright POs: 120 | Upstream Cypress POs: 305 | Unported: 195
 
 ## Missing Methods (upstream has, Playwright lacks)
 
 | Class | PW File | Missing Methods |
 |-------|---------|-----------------|
-| SettingsPagePo | pages/global-settings/settings.po.ts | settingBanner, editSettingsByLabel, editSettings, modifiedLabel, settingsValue, inactivityModalCard |
-| ClusterDashboardPagePo | pages/explorer/cluster-dashboard.po.ts | customBadge, if, for, goToAndConfirmNsValues, goToAndWait |
-| RolesPo | pages/users-and-auth/roles.po.ts | createGlobal, detailGlobal, createRole, detailRole, paginatedTab |
-| ChartRepositoriesCreateEditPo | edit/chart-repositories.po.ts | authSelectOrCreate, clusterRepoAuthSelectOrCreate, refreshIntervalInput, saveAndWaitForRequests |
-| MgmtUserEditPo | edit/management.cattle.io.user.po.ts | saveCreateWithErrorRetry, if, return |
-| PreferencesPagePo | pages/preferences.po.ts | expectThemeOptionSelected, expectClusterOptionExists, checkLangDomElement |
-| ChartsPage | pages/explorer/charts/charts.po.ts | scrollContainer, sentinel |
-| HomeLinksPagePo | pages/global-settings/home-links.po.ts | expect, defaultLinkCheckbox |
 | LabeledInputPo | components/labeled-input.po.ts | if |
 | LabeledSelectPo | components/labeled-select.po.ts | expect |
-| ListRowPo | components/list-row.po.ts | get |
 | SortableTablePo | components/sortable-table.po.ts | return |
 | TabbedPo | components/tabbed.po.ts | return |
-| ToggleSwitchPo | components/toggle-switch.po.ts | get |
-| ClusterManagerCreatePagePo | edit/provisioning.cattle.io.cluster/create/cluster-create.po.ts | customClusterRegistrationCmd |
 | AboutPagePo | pages/about.po.ts | expect |
 | ChartRepositoriesPagePo | pages/chart-repositories.po.ts | if |
 | ChartPage | pages/explorer/charts/chart.po.ts | expect |
-| ProjectsNamespacesListPagePo | pages/explorer/projects-namespaces.po.ts | addProjectMemberModal |
 | WorkloadsDaemonsetsListPagePo | pages/explorer/workloads-daemonsets.po.ts | if |
 | SupportPagePo | pages/get-support.po.ts | expect |
+| HomeLinksPagePo | pages/global-settings/home-links.po.ts | expect |
 | HomePagePo | pages/home.po.ts | expect |
 | PagePo | pages/page.po.ts | for |
 
@@ -40,11 +29,13 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | Class | PW File | Extra Methods |
 |-------|---------|---------------|
 | ResourceListMastheadPo | components/resource-list-masthead.po.ts | super |
+| ArrayListPo | components/array-list.po.ts | super |
 | BannersPo | components/banners.po.ts | super |
 | CheckboxInputPo | components/checkbox-input.po.ts | super, checkDisabled |
 | CodeMirrorPo | components/code-mirror.po.ts | super |
 | ColorInputPo | components/color-input.po.ts | return |
 | ComponentPo | components/component.po.ts | self, testId |
+| CopyToClipboardTextPo | components/copy-to-clipboard-text.po.ts | super |
 | CreateEditViewPo | components/create-edit-view.po.ts | formSave |
 | CruResourcePo | components/cru-resource.po.ts | super |
 | LabeledSelectPo | components/labeled-select.po.ts | super, for |
@@ -56,13 +47,16 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | SortableTablePo | components/sortable-table.po.ts | super, for, checkVisible |
 | TabbedPo | components/tabbed.po.ts | for |
 | ToggleSwitchPo | components/toggle-switch.po.ts | super, return, expect |
+| UnitInputPo | components/unit-input.po.ts | super |
+| GlobalRoleDetailComponentPo | detail/management.cattle.io.globalrole.po.ts | openMastheadActionMenu |
 | ChartRepositoriesCreateEditPo | edit/chart-repositories.po.ts | nameInput, gitRepoCard, gitRepoInput, gitBranchInput, saveButton |
 | DigitalOceanCloudCredentialsCreateEditPo | edit/cloud-credentials-digitalocean.po.ts | super, saveCreateForm |
-| MgmtUserEditPo | edit/management.cattle.io.user.po.ts | resourceDetail |
 | ClusterManagerCreatePagePo | edit/provisioning.cattle.io.cluster/create/cluster-create.po.ts | resourceDetail, if |
 | ResourceDetailPo | edit/resource-detail.po.ts | super |
 | BaseResourceList | lists/base-resource-list.po.ts | super, state |
 | MgmtFeatureFlagListPo | lists/management.cattle.io.feature.po.ts | super |
+| OidcClientsListPo | lists/management.cattle.io.oidcclient-list.po.ts | super |
+| RoleListPo | lists/role-list.po.ts | super |
 | AboutPagePo | pages/about.po.ts | linksContaining, return, versionLink, versionText |
 | ChartInstalledAppsListPagePo | pages/chart-installed-apps.po.ts | expect, for |
 | ChartPage | pages/explorer/charts/chart.po.ts | for |
@@ -87,8 +81,7 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | PreferencesPagePo | pages/preferences.po.ts | themeOptions, expect, dateFormatSelect, timeFormatSelect, perPageSelect, keymapOptions, helmOptions, landingPagePreference, customPageOptions, dropdownOptions, dropdownOptionByIndex |
 | RancherSetupConfigurePage | pages/rancher-setup-configure.po.ts | termsAgreementCheckbox, setTermsAgreement |
 | RancherSetupLoginPagePo | pages/rancher-setup-login.po.ts | expect |
-| RolesPo | pages/users-and-auth/roles.po.ts | checkExists |
-| UsersPo | pages/users-and-auth/users.po.ts | refreshGroupMembership |
+| AuthProviderPo | pages/users-and-auth/auth-provider.po.ts | goToAmazonCognitoCreation |
 | GenericPrompt | prompts/genericPrompt.po.ts | super |
 | InstallExtensionDialog | pages/extensions.po.ts | self, checkVisible, versionLabelSelect, getOptionsAsStrings, for, super, title, waitForTitle, extensionCard, extensionCardVersion, extensionCardHeaderStatusIcon, extensionCardHeaderStatusTooltipText, extensionCardClick, extensionCardInstallClick, extensionCardUpgradeClick, extensionCardDowngradeClick, extensionCardUninstallClick, installModal, extensionUninstallModal, uninstallModalUninstallClick, extensionDetails, extensionDetailsTitle, extensionDetailsVersion, extensionDetailsCloseClick, extensionDetailsBgClick, loading, extensionCardPo, catalogsList, addRepositoriesClick, manageExtensionCatalogsClick, waitForTabs, extensionTabBuiltin, checkForExtensionTab, checkForExtensionCardWithName, extensionTabInstalledClick, extensionTabAvailableClick, extensionTabBuiltinClick, extensionReloadBanner, extensionReloadClick, repoBanner, addReposModal, addReposModalAddClick, extensionScriptImport, extensionMenuToggle, manageReposClick, installExtensionFromCatalog, addExtensionsRepositoryDirectLink |
 | BurgerMenuPo | side-bars/burger-side-menu.po.ts | burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, burgerMenuGetNavMenuByLabel, firstOptionLinkInCategorySection, focusBody |
@@ -96,7 +89,7 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 
 ## Unported POs (upstream only)
 
-212 upstream POs have no Playwright equivalent yet.
+195 upstream POs have no Playwright equivalent yet.
 
 | Class | Upstream File | Methods |
 |-------|---------------|---------|
@@ -106,20 +99,17 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | V2MonitoringPo | other-products/v2-monitoring.po.ts | 27 |
 | AppClusterRepoEditPo | edit/catalog.cattle.io.clusterrepo.po.ts | 26 |
 | FleetApplicationListPagePo | pages/fleet/fleet.cattle.io.application.po.ts | 25 |
-| AzureadPo | edit/auth/azuread.po.ts | 24 |
 | BannersPagePo | pages/global-settings/banners.po.ts | 23 |
 | ClusterManagerCreateEKSPagePo | edit/provisioning.cattle.io.cluster/create/cluster-create-eks.po.ts | 21 |
-| GithubAppPo | edit/auth/githubapp.po.ts | 17 |
 | ClusterManagerEditImportedPagePo | extensions/imported/cluster-edit.po.ts | 17 |
 | ClusterManagerDetailPagePo | detail/provisioning.cattle.io.cluster/cluster-detail.po.ts | 15 |
 | ServicesCreateEditPo | edit/services.po.ts | 15 |
 | ResourcePanelPo | components/fleet/fleet-dashboard-workspace-card.po.ts | 14 |
-| AmazonCognitoPo | edit/auth/cognito.po.ts | 13 |
+| MgmtUserEditPo | edit/management.cattle.io.user.po.ts | 13 |
 | IngressListPagePo | pages/explorer/ingress.po.ts | 13 |
 | AgentConfigurationRke2 | components/agent-configuration-rke2.po.ts | 12 |
 | Kubectl | components/kubectl.po.ts | 12 |
 | ClusterManagerCreateImportPagePo | edit/provisioning.cattle.io.cluster/cluster-create-import.po.ts | 12 |
-| RoleEditPo | edit/role.po.ts | 12 |
 | MachinePoolsListPo | lists/machine-pools-list.po.ts | 12 |
 | ProvClusterListPo | lists/provisioning.cattle.io.cluster.po.ts | 12 |
 | NetworkPolicyListPagePo | pages/explorer/network-policy.po.ts | 12 |
@@ -138,7 +128,6 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | RegistriesTabPo | components/registries-tab.po.ts | 9 |
 | SelectOrCreateAuthPo | components/select-or-create-auth.po.ts | 9 |
 | SelectPo | components/select.po.ts | 9 |
-| RoleListPo | lists/role-list.po.ts | 9 |
 | PodSecurityPoliciesTemplatesPagePo | pages/cluster-manager/pod-security-policy-templates.po.ts | 9 |
 | FleetDashboardListPagePo | pages/fleet/fleet-dashboard.po.ts | 9 |
 | FleetWorkspaceListPagePo | pages/fleet/fleet.cattle.io.fleetworkspace.po.ts | 9 |
@@ -151,10 +140,9 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | CustomResourceDefinitionsPagePo | pages/explorer/custom-resource-definitions.po.ts | 8 |
 | PersistentVolumesPagePo | pages/explorer/persistent-volumes.po.ts | 8 |
 | WorkloadsJobsListPagePo | pages/explorer/workloads-jobs.po.ts | 8 |
+| UsersPo | pages/users-and-auth/users.po.ts | 8 |
 | EmberFormNodePoolsPo | components/ember/ember-form-node-pools.po.ts | 7 |
 | PodContainerResources | components/workloads/pods/pod-container-resources.po.ts | 7 |
-| OIDCClientDetailPo | detail/management.cattle.io.oidcclient.po.ts | 7 |
-| OidcClientCreateEditPo | edit/management.cattle.io.oidcclient.po.ts | 7 |
 | MachinePoolRke2 | edit/provisioning.cattle.io.cluster/tabs/machine-pools-tab-rke2.po.ts | 7 |
 | MachineDeploymentsPagePo | pages/cluster-manager/machine-deployments.po.ts | 7 |
 | MachineSetsPagePo | pages/cluster-manager/machine-sets.po.ts | 7 |
@@ -165,9 +153,7 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | ServicesPagePo | pages/explorer/services.po.ts | 7 |
 | WorkloadsPodsListPagePo | pages/explorer/workloads-pods.po.ts | 7 |
 | FleetBundlesListPagePo | pages/fleet/fleet.cattle.io.bundle.po.ts | 7 |
-| AuthProviderPo | pages/users-and-auth/authProvider.po.ts | 7 |
 | ACE | components/ace.po.ts | 6 |
-| ArrayListPo | components/array-list.po.ts | 6 |
 | EmberAddPodSecurityTemplatePo | components/ember/ember-form-pod-security-template.po.ts | 6 |
 | ModalWithCardPo | components/modal-with-card.po.ts | 6 |
 | ContainerMountPo | components/workloads/container-mount-paths.po.ts | 6 |
@@ -193,7 +179,6 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | BasicsRke2 | edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po.ts | 5 |
 | NetworkRke2 | edit/provisioning.cattle.io.cluster/tabs/networking-tab-rke2.po.ts | 5 |
 | ChartRepositoriesListPo | lists/chart-repositories.po.ts | 5 |
-| OidcClientsListPo | lists/management.cattle.io.oidcclient-list.po.ts | 5 |
 | LoggingClusteroutputListPagePo | other-products/logging/logging-clusteroutput.po.ts | 5 |
 | HostedProvidersPagePo | pages/cluster-manager/hosted-providers.po.ts | 5 |
 | ClusterRoleBindingsPagePo | pages/explorer/cluster-role-bindings.po.ts | 5 |
@@ -204,7 +189,6 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | WorkloadsReplicasetsListPagePo | pages/explorer/workloads-replicasets.po.ts | 5 |
 | WorkloadsDeploymentsDetailsPagePo | pages/explorer/workloads/workloads-deployments.po.ts | 5 |
 | FleetClusterGroupsListPagePo | pages/fleet/fleet.cattle.io.clustergroup.po.ts | 5 |
-| OidcClientsPagePo | pages/users-and-auth/oidc-client.po.ts | 5 |
 | DetailDrawer | side-bars/detail-drawer.po.ts | 5 |
 | ScalerPo | components/Resource/Detail/Card/scaler.po.ts | 4 |
 | AssignToDialogPo | components/assign-to-dialog.po.ts | 4 |
@@ -215,7 +199,6 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | RegistyConfigsPo | components/registry-configs.po.ts | 4 |
 | Shell | components/shell.po.ts | 4 |
 | TooltipPo | components/tooltip.po.ts | 4 |
-| RoleTemplateDetailComponentPo | detail/management.cattle.io.roletemplate.po.ts | 4 |
 | MgmtUserResourceDetailComponentPo | detail/management.cattle.io.user.po.ts | 4 |
 | ClusterManagerDetailSnapshotsPo | detail/provisioning.cattle.io.cluster/cluster-detail-snapshots.po.ts | 4 |
 | AzureCloudCredentialsCreateEditPo | edit/cloud-credentials-azure.po.ts | 4 |
@@ -231,7 +214,6 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | WorkloadsStatefulSetsListPagePo | pages/explorer/workloads-statefulsets.po.ts | 4 |
 | DeactivateDriverDialogPo | prompts/deactivateDriverDialog.po.ts | 4 |
 | BannerGraphicPo | components/banner-graphic.po.ts | 3 |
-| CopyToClipboardTextPo | components/copy-to-clipboard-text.po.ts | 3 |
 | EmberFormMembersPo | components/ember/ember-form-members.po.ts | 3 |
 | EmberInputPo | components/ember/ember-input.po.ts | 3 |
 | EmberModalAddCustomRolePo | components/ember/ember-modal-add-custom-role.po.ts | 3 |
@@ -243,10 +225,8 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | GlobalRoleBindings | components/global-role-binding.po.ts | 3 |
 | RadioInputPo | components/radio-input.po.ts | 3 |
 | ResourceDetailMastheadPo | components/resource-detail-masthead.po.ts | 3 |
-| SelectIconGridPo | components/select-icon-grid.po.ts | 3 |
 | SelectPrincipalPo | components/select-principal.po.ts | 3 |
 | PodContainerGeneral | components/workloads/pods/pod-container-general.po.ts | 3 |
-| GlobalRoleDetailComponentPo | detail/management.cattle.io.globalrole.po.ts | 3 |
 | AmazonCloudCredentialsCreateEditPo | edit/cloud-credentials-amazon.po.ts | 3 |
 | GKECloudCredentialsCreateEditPo | edit/cloud-credentials-gke.po.ts | 3 |
 | CustomResourceDefinitionsCreateEditPo | edit/custom-resource-definitions.po.ts | 3 |
@@ -274,11 +254,8 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | KeyboardMappingIndicatorPo | components/keyboard-mapping-indicator.po.ts | 2 |
 | NetworkTabPo | components/network-tab.po.ts | 2 |
 | SimpleBoxPo | components/simple-box.po.ts | 2 |
-| UnitInputPo | components/unit-input.po.ts | 2 |
 | PodContainer | components/workloads/pods/pod-container.po.ts | 2 |
 | NodeDetailsPo | detail/node.po.ts | 2 |
-| RoleDetailPo | detail/role.po.ts | 2 |
-| GlobalRoleEditPo | edit/management.cattle.io.globalrole.po.ts | 2 |
 | ClusterManagerEditRke2CustomPagePo | edit/provisioning.cattle.io.cluster/edit/cluster-edit-rke2-custom.po.ts | 2 |
 | MachinePoolAzureRke2 | edit/provisioning.cattle.io.cluster/tabs/machine-pools-tab-azure-rke2.po.ts | 2 |
 | ApiKeysListPo | lists/account-api-keys-list.po.ts | 2 |
@@ -298,7 +275,6 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 | YamlEditorPo | components/yaml-editor.po.ts | 1 |
 | ClusterManagerDetailRke2AmazonEc2PagePo | detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po.ts | 1 |
 | ClusterManagerDetailRke2AzurePagePo | detail/provisioning.cattle.io.cluster/cluster-detail-rke2-azure.po.ts | 1 |
-| RoleTemplateEditPo | edit/management.cattle.io.roletemplate.po.ts | 1 |
 | CloudCredentialsListPo | lists/cloud-credentials-list.po.ts | 1 |
 | ClusterConditionsListPo | lists/cluster-conditions-list.po.ts | 1 |
 | ClusterProvisioningLogPo | lists/cluster-provisioning-log.po.ts | 1 |
@@ -315,7 +291,7 @@ These may be valid Playwright-specific helpers or may indicate naming divergence
 
 ## Summary
 
-- **Matched POs:** 90 with upstream equivalents
-- **Method gaps:** 23 POs missing methods
-- **Total missing methods:** 45
-- **Unported POs:** 212
+- **Matched POs:** 107 with upstream equivalents
+- **Method gaps:** 12 POs missing methods
+- **Total missing methods:** 12
+- **Unported POs:** 195

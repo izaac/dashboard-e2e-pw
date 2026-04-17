@@ -82,6 +82,10 @@ export class HomeLinksPagePo extends RootClusterPage {
     await expect(el).toHaveText(text);
   }
 
+  defaultLinkCheckbox(index: number): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, ':scope', this.self().locator('div.link-show-hide-checkbox').nth(index));
+  }
+
   waitForRequests(): void {
     // Placeholder - upstream uses goToAndWaitForGet which is Cypress-specific
   }

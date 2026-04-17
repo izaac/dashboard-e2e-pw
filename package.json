@@ -28,6 +28,7 @@
     "summarize-failures": "npx tsx scripts/summarize-failures.ts",
     "po-index": "npx tsx scripts/generate-po-index.ts",
     "po-diff": "npx tsx scripts/generate-po-index.ts --diff",
+    "gap-map": "npx tsx scripts/generate-gap-map.ts",
     "prepare": "husky"
   },
   "dependencies": {

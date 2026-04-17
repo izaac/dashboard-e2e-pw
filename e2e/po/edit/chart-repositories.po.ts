@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator, Response } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import KeyValuePo from '@/e2e/po/components/key-value.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
@@ -92,5 +92,28 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
   /** Create/Save async button */
   saveButton(): AsyncButtonPo {
     return new AsyncButtonPo(this.page, '[data-testid="action-button-async-button"]', this.self());
+  }
+
+  authSelectOrCreate(selector: string): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, `${selector} [data-testid="auth-secret-select"]`);
+  }
+
+  clusterRepoAuthSelectOrCreate(): LabeledSelectPo {
+    return this.authSelectOrCreate('[data-testid="clusterrepo-auth-secret"]');
+  }
+
+  refreshIntervalInput(): Locator {
+    return this.page.getByTestId('clusterrepo-refresh-interval');
+  }
+
+  async saveAndWaitForRequests(method: string, url: string): Promise<Response> {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.url().includes(url) && resp.request().method() === method,
+      { timeout: 10000 },
+    );
+
+    await this.saveCreateForm().click();
+
+    return responsePromise;
   }
 }

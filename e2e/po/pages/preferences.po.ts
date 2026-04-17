@@ -129,6 +129,25 @@ export default class PreferencesPagePo extends PagePo {
     return this.page.locator('.custom-page-options');
   }
 
+  async expectThemeOptionSelected(theme = 'auto'): Promise<void> {
+    const { expect } = await import('@playwright/test');
+    const btn = this.themeButtons().self().locator(`button:has-text("${theme}")`);
+
+    await expect(btn).toHaveClass(/selected|active/);
+  }
+
+  async expectClusterOptionExists(clusterName = 'local'): Promise<void> {
+    const { expect } = await import('@playwright/test');
+
+    await expect(this.customPageOptionsDropdown().self()).toContainText(clusterName);
+  }
+
+  async checkLangDomElement(label: string): Promise<void> {
+    const { expect } = await import('@playwright/test');
+
+    await expect(this.page.locator(label)).toBeAttached();
+  }
+
   /** Dropdown menu options list (visible when a select is open) */
   dropdownOptions(): Locator {
     return this.page.locator('.vs__dropdown-menu > li');

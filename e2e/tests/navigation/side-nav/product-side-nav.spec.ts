@@ -9,6 +9,10 @@ const workloadName = 'test-deployment-kubectl';
 const namespace = 'default';
 
 test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }, () => {
+  test.afterAll(async ({ rancherApi }) => {
+    await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${workloadName}`, false);
+  });
+
   test.beforeEach(async ({ page, login, rancherApi }) => {
     // Ensure test deployment exists (idempotent: create if missing)
     const existing = await rancherApi.getRancherResource('v1', 'apps.deployments', `${namespace}/${workloadName}`, 0);

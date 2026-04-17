@@ -26,4 +26,8 @@ export default class ToggleSwitchPo extends ComponentPo {
 
     expect(newValue).toEqual(label);
   }
+
+  get(selector: string): Locator {
+    return this.self().locator(selector);
+  }
 }

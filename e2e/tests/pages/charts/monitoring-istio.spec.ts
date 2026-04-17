@@ -34,9 +34,15 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         // Open terminal and apply provisioner
         await terminal.openTerminal(60000);
 
-        await terminal.executeCommand(`apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/${provisionerVersion}/deploy/local-path-storage.yaml`);
-        await terminal.executeCommand('create -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/examples/pvc/pvc.yaml');
-        await terminal.executeCommand('create -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/examples/pod/pod.yaml');
+        await terminal.executeCommand(
+          `apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/${provisionerVersion}/deploy/local-path-storage.yaml`,
+        );
+        await terminal.executeCommand(
+          'apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/examples/pvc/pvc.yaml',
+        );
+        await terminal.executeCommand(
+          'apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/examples/pod/pod.yaml',
+        );
 
         await terminal.closeTerminal();
       });
@@ -55,7 +61,9 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         }
       });
 
-      test('Prometheus and Grafana should have all relevant storage options and Storage Class inputs', async ({ page }) => {
+      test('Prometheus and Grafana should have all relevant storage options and Storage Class inputs', async ({
+        page,
+      }) => {
         const chartPage = new ChartPage(page);
         const installChart = new InstallChartPage(page);
         const tabbedOptions = new TabbedPo(page);
@@ -75,7 +83,12 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await expect(grafana.storageOptions().getAllOptions()).toHaveCount(4);
         await grafana.storageOptions().isChecked(0); // Disabled by default
 
-        const options = ['Disabled', 'Enable With Existing PVC', 'Enable with PVC Template', 'Enable with StatefulSet Template'];
+        const options = [
+          'Disabled',
+          'Enable With Existing PVC',
+          'Enable with PVC Template',
+          'Enable with StatefulSet Template',
+        ];
 
         for (let index = 0; index < options.length; index++) {
           await expect(grafana.storageOptions().getOptionByIndex(index)).toHaveText(options[index]);

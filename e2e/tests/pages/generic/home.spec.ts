@@ -255,8 +255,32 @@ test.describe('Home Page', () => {
   });
 
   test.describe('Home Page Features', { tag: ['@generic', '@adminUser', '@standardUser'] }, () => {
+    let savedWhatsnew: string | undefined;
+    let savedHomePageCards: string | undefined;
+
+    test.beforeEach(async ({ rancherApi }) => {
+      const result = await rancherApi.getRancherResource('v1', 'userpreferences');
+      const data = result.body.data[0]?.data || {};
+
+      savedWhatsnew = data['read-whatsnew'];
+      savedHomePageCards = data['home-page-cards'];
+    });
+
+    test.afterEach(async ({ rancherApi }) => {
+      const restore: Record<string, any> = {};
+
+      if (savedWhatsnew !== undefined) {
+        restore['read-whatsnew'] = savedWhatsnew;
+      }
+      if (savedHomePageCards !== undefined) {
+        restore['home-page-cards'] = savedHomePageCards;
+      }
+      if (Object.keys(restore).length > 0) {
+        await rancherApi.setUserPreference(restore);
+      }
+    });
+
     test('has notification for release notes', async ({ page, login, rancherApi }) => {
-      // Reset the whatsnew preference so notification appears
       await rancherApi.setUserPreference({ 'read-whatsnew': '' });
 
       await login();

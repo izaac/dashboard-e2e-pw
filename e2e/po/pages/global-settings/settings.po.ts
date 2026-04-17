@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import RootClusterPage from '@/e2e/po/pages/root-cluster-page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import BannersPo from '@/e2e/po/components/banners.po';
 
 export class SettingsPagePo extends RootClusterPage {
   private static createPath(clusterId: string) {
@@ -10,6 +11,10 @@ export class SettingsPagePo extends RootClusterPage {
 
   constructor(page: Page, clusterId = '_') {
     super(page, SettingsPagePo.createPath(clusterId));
+  }
+
+  settingBanner(): BannersPo {
+    return new BannersPo(this.page, '[data-testid="global-settings-banner"]', this.self());
   }
 
   advancedSettingRow(label: string): Locator {
@@ -22,6 +27,27 @@ export class SettingsPagePo extends RootClusterPage {
 
   editSettingsButton(): Locator {
     return this.page.locator('[dropdown-menu-item]').filter({ hasText: 'Edit Setting' });
+  }
+
+  async editSettingsByLabel(label: string): Promise<void> {
+    await this.actionButtonByLabel(label).click();
+    await this.editSettingsButton().click();
+  }
+
+  editSettings(clusterId: string, setting: string): string {
+    return `/c/${clusterId}/settings/management.cattle.io.setting/${setting}?mode=edit`;
+  }
+
+  modifiedLabel(label: string): Locator {
+    return this.advancedSettingRow(label).locator(':text("Modified")');
+  }
+
+  settingsValue(label: string): Locator {
+    return this.advancedSettingRow(label).locator('.settings-value');
+  }
+
+  inactivityModalCard(): Locator {
+    return this.page.locator('[data-testid="mvc__card"]');
   }
 
   /** The h1 title on the setting detail/edit page */
