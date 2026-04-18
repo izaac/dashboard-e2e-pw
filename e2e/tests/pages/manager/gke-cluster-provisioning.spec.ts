@@ -49,7 +49,6 @@ test.describe(
       await clusterList.createCluster();
       await createPage.waitForPage();
 
-      // Select Google GKE provider (index 2)
       await createPage.selectKubeProvider(2);
       await expect(page).toHaveURL(/type=gke&rkeType=rke2/);
 
@@ -64,7 +63,6 @@ test.describe(
         expect(credResp.status).toBe(201);
         cloudcredentialId = credResp.body.id?.replace(':', '%3A') ?? '';
 
-        // Intercept GKE versions to validate version selection
         const gkeVersionsResponse = page.waitForResponse(
           (resp) =>
             resp.url().includes('/meta/gkeVersions') &&
@@ -79,10 +77,8 @@ test.describe(
 
         expect(gkeVersion).toBeTruthy();
 
-        // Verify default zone is selected
-        await expect(page.locator('[data-testid="gke-zone-select"]')).toBeVisible();
+        await expect(createPage.gkeZoneSelect()).toBeVisible();
 
-        // Create GKE cluster
         const createClusterResponse = page.waitForResponse(
           (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
         );
@@ -97,8 +93,6 @@ test.describe(
         clusterId = body.id;
 
         await clusterList.waitForPage();
-
-        // Cluster should appear as provisioning
         await expect(clusterList.sortableTable().self()).toBeVisible();
       } finally {
         if (clusterId) {

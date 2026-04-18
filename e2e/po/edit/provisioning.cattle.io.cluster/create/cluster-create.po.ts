@@ -68,6 +68,26 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     return `ssh -i custom_node.key -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" root@${customNodeIp} "nohup ${cmd}"`;
   }
 
+  loadingIndicator(): Locator {
+    return this.page.locator('.loading-indicator');
+  }
+
+  gridProviderByName(name: string): Locator {
+    return this.self().locator('.grid .name').filter({ hasText: name });
+  }
+
+  cloudCredentialSelect(): Locator {
+    return this.page.getByTestId('cloud-credentials-select');
+  }
+
+  dropdownOption(text: string): Locator {
+    return this.page.locator(`.vs__dropdown-menu li:has-text("${text}")`);
+  }
+
+  gkeZoneSelect(): Locator {
+    return this.page.getByTestId('gke-zone-select');
+  }
+
   credentialsBanner(): BannersPo {
     return new BannersPo(this.page, '.banner:has-text("Ok, Let\'s create a new credential")');
   }

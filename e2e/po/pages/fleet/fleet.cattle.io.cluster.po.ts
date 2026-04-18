@@ -28,6 +28,10 @@ export class FleetClusterListPagePo extends PagePo {
     return new SortableTablePo(this.page, '[data-testid="sortable-table-list-container"]');
   }
 
+  mainRows(): Locator {
+    return this.sortableTable().self().locator('tr.main-row');
+  }
+
   async goToDetailsPage(name: string): Promise<void> {
     await this.sortableTable().detailsPageLinkWithName(name).click();
   }
@@ -60,6 +64,10 @@ export class FleetClusterDetailsPo extends PagePo {
 
   clusterLabels(): Locator {
     return this.self().locator('.tag-data');
+  }
+
+  flatListViewButton(): Locator {
+    return this.page.getByTestId('group-by-button-0');
   }
 }
 

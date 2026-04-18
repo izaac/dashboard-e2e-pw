@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
+import ClusterManagerCreateAKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-aks.po';
 
 /**
  * Running this test will delete all Azure cloud credentials from the target cluster.
@@ -18,40 +19,67 @@ test.describe('Create AKS cluster', { tag: ['@manager', '@adminUser', '@jenkins'
     page,
     login,
     rancherApi,
+    envMeta,
   }) => {
     const clusterName = rancherApi.createE2EResourceName('akscluster');
+    const cloudCredentialName = rancherApi.createE2EResourceName('akscloudcredential');
     let clusterId = '';
+    let cloudcredentialId = '';
 
     await login();
 
-    // Clean up any existing Azure cloud credentials
     const creds = await rancherApi.getRancherResource('v3', 'cloudcredentials');
 
     for (const item of creds.body.data ?? []) {
-      if (item.azurecredentialConfig) {
+      if (item.azurecredentialConfig && item.name?.startsWith('e2e-test-')) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
       }
     }
 
+    const credResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
+      type: 'cloudcredential',
+      metadata: { name: cloudCredentialName },
+      azurecredentialConfig: {
+        subscriptionId: envMeta.azureSubscriptionId,
+        clientId: envMeta.azureClientId,
+        clientSecret: envMeta.azureClientSecret,
+      },
+    });
+
+    expect(credResp.status).toBe(201);
+    cloudcredentialId = credResp.body.id ?? '';
+
     const clusterList = new ClusterManagerListPagePo(page);
     const createPage = new ClusterManagerCreatePagePo(page);
-
-    await clusterList.goTo();
-    await clusterList.waitForPage();
-    await clusterList.createCluster();
-    await createPage.waitForPage();
-
-    // Select Azure AKS provider (index 1)
-    await createPage.selectKubeProvider(1);
-    await expect(page).toHaveURL(/type=aks&rkeType=rke2/);
+    const aksCreatePage = new ClusterManagerCreateAKSPagePo(page);
 
     try {
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createPage.waitForPage();
+
+      await createPage.selectKubeProvider(1);
+      await expect(page).toHaveURL(/type=aks&rkeType=rke2/);
+
+      await aksCreatePage.cloudCredentialSelect().selectOption({ label: cloudCredentialName });
+      await aksCreatePage.clusterNameInput().fill(clusterName);
+      await aksCreatePage.clusterResourceGroup().fill('aks-resource-group');
+      await aksCreatePage.dnsPrefixInput().fill('dns-test');
+
       const createClusterResponse = page.waitForResponse(
         (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
       );
 
-      // Fill mandatory fields — cloud credential form, cluster name, resource group, dns prefix
-      // Full form interaction requires AzureCloudCredentialsCreateEditPo which needs Azure creds at runtime
+      await aksCreatePage
+        .resourceDetail()
+        .cruResource()
+        .saveCreateForm()
+        .self()
+        .locator('button[type="submit"], .btn-primary')
+        .first()
+        .click();
+
       const response = await createClusterResponse;
 
       expect(response.status()).toBe(201);
@@ -72,37 +100,48 @@ test.describe('Create AKS cluster', { tag: ['@manager', '@adminUser', '@jenkins'
           false,
         );
       }
-      // Clean up Azure cloud credentials
-      const credsAfter = await rancherApi.getRancherResource('v3', 'cloudcredentials');
-
-      for (const item of credsAfter.body.data ?? []) {
-        if (item.azurecredentialConfig) {
-          await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
-        }
+      if (cloudcredentialId) {
+        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudcredentialId, false);
       }
     }
   });
 
-  test('can create an Azure AKS cluster with default values', async ({ page, login, rancherApi }) => {
+  test('can create an Azure AKS cluster with default values', async ({ page, login, rancherApi, envMeta }) => {
     const clusterName = rancherApi.createE2EResourceName('akscluster2');
+    const cloudCredentialName = rancherApi.createE2EResourceName('akscloudcredential2');
     let clusterId = '';
+    let cloudcredentialId = '';
 
     await login();
 
+    const credResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
+      type: 'cloudcredential',
+      metadata: { name: cloudCredentialName },
+      azurecredentialConfig: {
+        subscriptionId: envMeta.azureSubscriptionId,
+        clientId: envMeta.azureClientId,
+        clientSecret: envMeta.azureClientSecret,
+      },
+    });
+
+    expect(credResp.status).toBe(201);
+    cloudcredentialId = credResp.body.id ?? '';
+
     const clusterList = new ClusterManagerListPagePo(page);
     const createPage = new ClusterManagerCreatePagePo(page);
-
-    await clusterList.goTo();
-    await clusterList.waitForPage();
-    await clusterList.createCluster();
-    await createPage.waitForPage();
-
-    // Select Azure AKS provider (index 1)
-    await createPage.selectKubeProvider(1);
-    await expect(page).toHaveURL(/type=aks&rkeType=rke2/);
+    const aksCreatePage = new ClusterManagerCreateAKSPagePo(page);
 
     try {
-      // Intercept AKS versions to verify default kubernetes version selection
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createPage.waitForPage();
+
+      await createPage.selectKubeProvider(1);
+      await expect(page).toHaveURL(/type=aks&rkeType=rke2/);
+
+      await aksCreatePage.cloudCredentialSelect().selectOption({ label: cloudCredentialName });
+
       const aksVersionsResponse = page.waitForResponse(
         (resp) => resp.url().includes('/meta/aksVersions') && resp.request().method() === 'GET',
       );
@@ -110,9 +149,23 @@ test.describe('Create AKS cluster', { tag: ['@manager', '@adminUser', '@jenkins'
 
       expect(versionsResp.status()).toBe(200);
 
+      await aksCreatePage.clusterNameInput().fill(clusterName);
+      await aksCreatePage.clusterResourceGroup().fill('aks-resource-group');
+      await aksCreatePage.dnsPrefixInput().fill('dns-test');
+
       const createClusterResponse = page.waitForResponse(
         (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
       );
+
+      await aksCreatePage
+        .resourceDetail()
+        .cruResource()
+        .saveCreateForm()
+        .self()
+        .locator('button[type="submit"], .btn-primary')
+        .first()
+        .click();
+
       const response = await createClusterResponse;
 
       expect(response.status()).toBe(201);
@@ -133,12 +186,8 @@ test.describe('Create AKS cluster', { tag: ['@manager', '@adminUser', '@jenkins'
           false,
         );
       }
-      const credsAfter = await rancherApi.getRancherResource('v3', 'cloudcredentials');
-
-      for (const item of credsAfter.body.data ?? []) {
-        if (item.azurecredentialConfig) {
-          await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
-        }
+      if (cloudcredentialId) {
+        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudcredentialId, false);
       }
     }
   });

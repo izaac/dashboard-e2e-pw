@@ -1,8 +1,9 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import ClusterManagerCreateRke2AmazonPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-amazon.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import CloudCredentialsCreateEditPo from '@/e2e/po/edit/cloud-credentials-amazon.po';
 
 export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateRke2AmazonPagePo {
@@ -12,6 +13,24 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
 
   cloudCredentialsForm(): CloudCredentialsCreateEditPo {
     return new CloudCredentialsCreateEditPo(this.page);
+  }
+
+  /** The credential select dropdown (supports both testId variants) */
+  credentialSelect(): Locator {
+    return this.page.locator('[data-testid="eks-credential-select"], [data-testid="cloud-credentials-select"]').first();
+  }
+
+  /** A dropdown list option with matching text (vue-select .vs__dropdown-menu) */
+  dropdownOption(text: string): Locator {
+    return this.page.locator(`.vs__dropdown-menu li:has-text("${text}")`);
+  }
+
+  serviceRoleRadioGroup(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '[data-testid="eks-service-role-radio"]');
+  }
+
+  vpcRadioGroup(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '[aria-label="VPCs and Subnets"]');
   }
 
   getClusterName(): LabeledInputPo {

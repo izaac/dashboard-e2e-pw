@@ -10,7 +10,7 @@ export default class MachinePoolsListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().rowWithPartialName(name).column(index);
   }
 
-  machinePoolReadyofDesiredCount(poolName: string, count: RegExp, options?: { timeout?: number }): Locator {
+  machinePoolReadyofDesiredCount(poolName: string, count: RegExp, _options?: { timeout?: number }): Locator {
     return this.resourceTable()
       .sortableTable()
       .groupElementWithName(poolName)
@@ -52,5 +52,9 @@ export default class MachinePoolsListPo extends BaseResourceList {
       .sortableTable()
       .groupElementWithName(poolName)
       .locator(`.group-header-buttons button .icon-${button}`);
+  }
+
+  scalePoolDownConfirm(): Locator {
+    return this.page.getByTestId('scale-pool-down-confirm');
   }
 }

@@ -33,7 +33,6 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
     await login();
 
-    // Create the git repo via API so the test is self-contained
     await rancherApi.createRancherResource(
       'v1',
       'fleet.cattle.io.gitrepos',
@@ -48,7 +47,6 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       await listPage.waitForPage();
       await header.selectWorkspace(workspace);
 
-      // Check list view table headers
       const expectedHeadersListView = [
         'State',
         'Name',
@@ -65,14 +63,12 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(headerCells.nth(i)).toContainText(expectedHeadersListView[i]);
       }
 
-      // Go to details page
       await listPage.goToDetailsPage(gitRepoName);
 
       const gitRepoDetails = new FleetGitRepoDetailsPo(page, workspace, gitRepoName);
 
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
-      // Check details view table headers
       const expectedHeadersDetailsView = ['State', 'Name', 'Deployments', 'Last Updated', 'Date'];
       const detailHeaderCells = gitRepoDetails.bundlesList().self().locator('.table-header-container .content');
 
@@ -124,6 +120,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   test.describe('Edit', () => {
     test('Can Clone a git repo', async ({ page, login, rancherApi }) => {
       const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      let cloneName = '';
 
       await login();
 
@@ -151,7 +148,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         expect(title.replace(/\s+/g, ' ')).toContain(`App Bundle: Clone from ${editRepoName}`);
 
-        const cloneName = `clone-${editRepoName}`;
+        cloneName = `clone-${editRepoName}`;
 
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().name().set(cloneName);
         await gitRepoEditPage.resourceDetail().createEditView().nextPage();
@@ -161,10 +158,10 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await listPage.waitForPage();
         await expect(listPage.sortableTable().rowElementWithName(cloneName)).toBeVisible();
-
-        // Cleanup clone
-        await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, cloneName, false);
       } finally {
+        if (cloneName) {
+          await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, cloneName, false);
+        }
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }
     });
@@ -223,7 +220,6 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await listPage.list().actionMenu(editRepoName).getMenuItem('Download YAML').click();
 
-        // Verify list is still visible (download was triggered in background)
         await expect(listPage.sortableTable().self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);

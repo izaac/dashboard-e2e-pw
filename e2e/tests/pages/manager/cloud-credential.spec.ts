@@ -9,15 +9,16 @@ import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-man
 import ClusterManagerEditGenericPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/edit/cluster-edit-generic.po';
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
+import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 
 test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
-    // Clean up any orphaned Amazon cloud credentials from previous runs
+    // Clean up test-prefixed Amazon cloud credentials from previous runs
     const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
 
     if (result.body?.pagination?.total > 0) {
       for (const item of result.body.data) {
-        if (item.amazonec2credentialConfig) {
+        if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
         }
       }
@@ -74,7 +75,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterCreate.goTo();
     await clusterCreate.waitForPage();
     await clusterCreate.selectCreate(0);
-    await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+    await expect(clusterCreate.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
     await expect(clusterCreate.rke2PageTitle()).toContainText('Create Amazon EC2');
     await clusterCreate.waitForPage('type=amazonec2&rkeType=rke2');
 
@@ -173,12 +174,10 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
 
       const editClusterPage = new ClusterManagerEditGenericPagePo(page, '_', clusterName);
 
-      // Select the second duplicate credential by ID-qualified label
       const selectOptLabel = `${credsName} (${doCreatedCloudCredsIds[1]})`;
-      const credSelect = page.locator('[data-testid="cloud-credentials-select"]');
 
-      await credSelect.click();
-      await page.locator(`.vs__dropdown-menu li:has-text("${selectOptLabel}")`).click();
+      await editClusterPage.cloudCredentialSelect().click();
+      await editClusterPage.dropdownOption(selectOptLabel).click();
 
       const putResponsePromise = page.waitForResponse(
         (resp) =>
@@ -285,24 +284,21 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
       }
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const azureCreatePage = new ClusterManagerCreateRke2AzurePagePo(page);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
 
-      // Select Azure (index 1 in 2nd group)
-      await page.locator('.grid .name:has-text("Azure")').click();
-      await expect(page.locator('.primaryheader h1, .title-bar h1.title')).toContainText('Create Azure');
+      await azureCreatePage.gridProviderByName('Azure').click();
+      await expect(azureCreatePage.rke2PageTitle()).toContainText('Create Azure');
       await expect(page).toHaveURL(/type=azure&rkeType=rke2/);
 
-      // Select first credential and verify location
-      const credSelect = page.locator('[data-testid="cloud-credentials-select"]');
+      await azureCreatePage.cloudCredentialSelect().click();
+      await azureCreatePage.dropdownOption(cloudCredsToCreate[0].name).click();
 
-      await credSelect.click();
-      await page.locator(`.vs__dropdown-menu li:has-text("${cloudCredsToCreate[0].name}")`).click();
-
-      const locationSelect = page.locator('[data-testid="machineConfig-azure-location"]');
-      const envDisplay = page.locator('[data-testid="machineConfig-azure-environment-value"] span');
+      const locationSelect = azureCreatePage.locationSelect();
+      const envDisplay = azureCreatePage.environmentDisplay();
 
       await expect(locationSelect.locator('.vs__selected-options > span')).toHaveText(
         cloudCredsToCreate[0].body[0].name,
@@ -310,9 +306,8 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
       );
       await expect(envDisplay).toHaveText(cloudCredsToCreate[0].environment);
 
-      // Switch to second credential
-      await credSelect.click();
-      await page.locator(`.vs__dropdown-menu li:has-text("${cloudCredsToCreate[1].name}")`).click();
+      await azureCreatePage.cloudCredentialSelect().click();
+      await azureCreatePage.dropdownOption(cloudCredsToCreate[1].name).click();
 
       await expect(envDisplay).toHaveText(cloudCredsToCreate[1].environment);
       await expect(locationSelect.locator('.vs__selected-options > span')).toHaveText(
@@ -320,9 +315,8 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
         { useInnerText: true },
       );
 
-      // Switch to third credential
-      await credSelect.click();
-      await page.locator(`.vs__dropdown-menu li:has-text("${cloudCredsToCreate[2].name}")`).click();
+      await azureCreatePage.cloudCredentialSelect().click();
+      await azureCreatePage.dropdownOption(cloudCredsToCreate[2].name).click();
 
       await expect(envDisplay).toHaveText(cloudCredsToCreate[2].environment);
       await expect(locationSelect.locator('.vs__selected-options > span')).toHaveText(

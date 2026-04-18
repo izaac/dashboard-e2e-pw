@@ -1,10 +1,11 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import ArrayListPo from '@/e2e/po/components/array-list.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import BasicsRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po';
 
 export default class ClusterManagerEditGenericPagePo extends PagePo {
   private static createPath(clusterId: string, clusterName: string): string {
@@ -35,5 +36,17 @@ export default class ClusterManagerEditGenericPagePo extends PagePo {
 
   nameNsDescription(): NameNsDescriptionPo {
     return new NameNsDescriptionPo(this.page, ':scope', this.self());
+  }
+
+  basicsTab(): BasicsRke2 {
+    return new BasicsRke2(this.page);
+  }
+
+  cloudCredentialSelect(): Locator {
+    return this.page.getByTestId('cloud-credentials-select');
+  }
+
+  dropdownOption(text: string): Locator {
+    return this.page.locator(`.vs__dropdown-menu li:has-text("${text}")`);
   }
 }

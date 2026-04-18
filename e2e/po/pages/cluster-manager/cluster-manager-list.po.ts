@@ -34,6 +34,14 @@ export default class ClusterManagerListPagePo extends PagePo {
     await actionMenu.getMenuItem('Edit Config').click();
   }
 
+  clusterLink(clusterName: string): Locator {
+    return this.sortableTable().rowWithName(clusterName).self().locator('.cluster-link a');
+  }
+
+  async goToDetailsPage(name: string, selector = '.cluster-link a'): Promise<void> {
+    await this.list().resourceTable().goToDetailsPage(name, selector);
+  }
+
   capiWarningSubRow(clusterName: string): Locator {
     return this.list().self().locator(`[data-testid="capi-unsupported-warning-${clusterName}"]`);
   }

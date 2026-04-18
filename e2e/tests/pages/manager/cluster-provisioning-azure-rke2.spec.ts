@@ -1,11 +1,14 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
-import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
+import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
+import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
 import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
 
 /**
  * Running this test will delete all Azure cloud credentials from the target cluster.
  * Requires: AZURE_AKS_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
+ *
+ * Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
  */
 test.describe(
   'Deploy RKE2 cluster using node driver on Azure',
@@ -30,26 +33,23 @@ test.describe(
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
-      const createPage = new ClusterManagerCreatePagePo(page);
+      const createPage = new ClusterManagerCreateRke2AzurePagePo(page);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createPage.waitForPage();
 
-      // Select Azure RKE2 provider (index 1 = "Create" tab)
       await createPage.selectCreate(1);
       await expect(page).toHaveURL(/type=azure&rkeType=rke2/);
 
-      // Fill cloud credential form with invalid values
-      await page.getByTestId('name-ns-description').locator('input[placeholder*="name"]').first().fill(credName);
-      await page.locator('[data-testid="azure-environment"]').click();
-      await page.locator('.vs__dropdown-option').filter({ hasText: 'AzurePublicCloud' }).click();
-      await page.getByTestId('subscriptionId').fill('bad');
-      await page.getByTestId('clientId').fill('bad');
-      await page.getByTestId('clientSecret').fill('bad');
+      await createPage.nameNsDescription().name().set(credName);
+      await createPage.azureEnvironmentSelect().click();
+      await createPage.azureDropdownOption('AzurePublicCloud').click();
+      await createPage.subscriptionIdInput().fill('bad');
+      await createPage.clientIdInput().fill('bad');
+      await createPage.clientSecretInput().fill('bad');
 
-      // Submit and expect credential check to fail
       const credCheckResponse = page.waitForResponse(
         (resp) => resp.url().includes('/meta/aksCheckCredentials') && resp.request().method() === 'POST',
       );
@@ -59,8 +59,7 @@ test.describe(
 
       expect(resp.status()).toBe(400);
 
-      // Error banner must appear; provisioning form must remain hidden
-      await expect(page.locator('.banner.banner-danger')).toBeAttached();
+      await expect(createPage.errorBanner()).toBeAttached();
     });
 
     test('can create a RKE2 cluster using Azure cloud provider', async ({ page, login, rancherApi, envMeta }) => {
@@ -95,7 +94,7 @@ test.describe(
       cloudcredentialId = credResp.body.id;
 
       const clusterList = new ClusterManagerListPagePo(page);
-      const createPage = new ClusterManagerCreatePagePo(page);
+      const createPage = new ClusterManagerCreateRke2AzurePagePo(page);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -106,7 +105,6 @@ test.describe(
       await expect(page).toHaveURL(/type=azure&rkeType=rke2/);
 
       try {
-        // Get latest RKE2 kubernetes version
         const releasesResponse = page.waitForResponse((resp) => resp.url().includes('/v1-rke2-release/releases'));
         const releasesResp = await releasesResponse;
 
@@ -114,32 +112,24 @@ test.describe(
         const releasesBody = await releasesResp.json();
         const k8sVersion: string = releasesBody.data[releasesBody.data.length - 1].id;
 
-        // Fill cluster name and description
-        await page.getByTestId('name-ns-description').locator('input[placeholder*="name"]').first().fill(clusterName);
-        await page
-          .getByTestId('name-ns-description')
-          .locator('input[placeholder*="description"]')
-          .fill(`${clusterName}-description`);
+        await createPage.nameNsDescription().name().set(clusterName);
+        await createPage.nameNsDescription().description().set(`${clusterName}-description`);
 
-        // Validate pool name (required)
-        await page.locator('[data-testid="pool-name-input"]').clear();
+        await createPage.poolNameInput().clear();
         await expect(page.getByRole('button', { name: /create/i })).toBeDisabled();
-        await page.locator('[data-testid="pool-name-input"]').fill('pool1');
+        await createPage.poolNameInput().fill('pool1');
         await expect(page.getByRole('button', { name: /create/i })).toBeEnabled();
 
-        // Validate pool quantity must be positive number
-        await page.locator('[data-testid="pool-quantity-input"]').fill('abc');
+        await createPage.poolQuantityInput().fill('abc');
         await expect(page.getByRole('button', { name: /create/i })).toBeDisabled();
-        await page.locator('[data-testid="pool-quantity-input"]').fill('-1');
+        await createPage.poolQuantityInput().fill('-1');
         await expect(page.getByRole('button', { name: /create/i })).toBeDisabled();
-        await page.locator('[data-testid="pool-quantity-input"]').fill('1');
+        await createPage.poolQuantityInput().fill('1');
         await expect(page.getByRole('button', { name: /create/i })).toBeEnabled();
 
-        // Select kubernetes version
-        await page.locator('[data-testid="kubernetes-version-select"]').click();
-        await page.locator('.vs__dropdown-option').filter({ hasText: k8sVersion }).click();
+        await createPage.kubernetesVersionSelect().click();
+        await createPage.kubernetesVersionOption(k8sVersion).click();
 
-        // Create cluster and verify response
         const createClusterResponse = page.waitForResponse(
           (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
         );
@@ -156,11 +146,7 @@ test.describe(
         clusterId = body.id;
 
         await clusterList.waitForPage();
-
-        // Cluster should appear as reconciling or updating
-        const stateCell = clusterList.sortableTable().self().locator(`text=${clusterName}`).locator('../..');
-
-        await expect(stateCell).toBeVisible();
+        await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible();
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, false);
@@ -181,14 +167,10 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      // Wait for cluster to transition through states
-      await expect(clusterList.sortableTable().self().locator(`text=${clusterName}`)).toBeVisible({ timeout: 300000 });
+      await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible({ timeout: 300000 });
 
-      // Check provider and provider sub-type cells
-      const row = clusterList.sortableTable().self().locator(`tr:has-text("${clusterName}")`);
-
-      await expect(row.locator('[data-label="Provider"]')).toContainText('Azure');
-      await expect(row.locator('[data-label="Provider"]')).toContainText('RKE2');
+      await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('Azure');
+      await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('RKE2');
     });
 
     test('cluster details page', async ({ page, login, rancherApi }) => {
@@ -197,19 +179,16 @@ test.describe(
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-
-      // Navigate to cluster details
-      await clusterList.list().name(clusterName).click();
+      await clusterList.clusterLink(clusterName).click();
       await expect(page).toHaveURL(/machine-pools/);
 
-      // Machine pools tab: pool status
-      await expect(page.locator('[data-testid="tabbed-block"]')).toBeVisible();
+      await expect(clusterDetails.tabbedBlock()).toBeVisible();
 
-      // Events tab
-      await page.locator('[data-testid="btn-events"]').click();
+      await clusterDetails.eventsTab().click();
       await expect(page).toHaveURL(/events/);
     });
 
@@ -219,26 +198,27 @@ test.describe(
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage(clusterName, '.cluster-link a');
+      await clusterList.clusterLink(clusterName).click();
 
       await expect(page).toHaveURL(/machine-pools/);
-      await page.locator('[data-testid="btn-snapshots"]').click();
+      await clusterDetails.snapshotsTab().click();
       await expect(page).toHaveURL(/snapshots/);
 
-      // Snapshot on demand
-      await page.locator('[data-testid="sortable-table-list-container"] [data-testid="snapshot-now-button"]').click();
+      await clusterDetails.snapshotsList().clickOnSnapshotNow();
 
-      // Navigate back and wait for active state, then verify snapshot appears
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage(clusterName, '.cluster-link a');
+      await clusterList.clusterLink(clusterName).click();
 
-      await page.locator('[data-testid="btn-snapshots"]').click();
+      await clusterDetails.snapshotsTab().click();
       await expect(page).toHaveURL(/snapshots/);
-      await expect(page.locator(`text=on-demand-${clusterName}`)).toBeVisible({ timeout: 300000 });
+      await expect(clusterDetails.snapshotsList().checkSnapshotExist(`on-demand-${clusterName}`)).toBeVisible({
+        timeout: 300000,
+      });
     });
 
     test('can delete an Azure RKE2 cluster', async ({ page, login, rancherApi }) => {
@@ -252,14 +232,18 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      await clusterList.list().actionMenu(clusterName).getMenuItem('Delete').click();
-      await promptRemove.confirm(clusterName);
-      await promptRemove.remove();
+      try {
+        await clusterList.list().actionMenu(clusterName).getMenuItem('Delete').click();
+        await promptRemove.confirm(clusterName);
+        await promptRemove.remove();
 
-      await clusterList.waitForPage();
-      await expect(clusterList.sortableTable().self().locator(`text=${clusterName}`)).not.toBeAttached({
-        timeout: 300000,
-      });
+        await clusterList.waitForPage();
+        await expect(clusterList.sortableTable().rowElementWithName(clusterName)).not.toBeAttached({
+          timeout: 300000,
+        });
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterName, false);
+      }
     });
   },
 );
