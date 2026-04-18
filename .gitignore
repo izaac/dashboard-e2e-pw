@@ -13,6 +13,7 @@ browser-logs/
 .env
 .env.local
 .env.*.local
+local.yaml
 
 # Claude Code (user-local settings — not version controlled)
 .claude/settings.local.json

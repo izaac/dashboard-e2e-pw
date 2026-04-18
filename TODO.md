@@ -1,19 +1,25 @@
 # TODO
 
+## Testing
+
+- [ ] Run full suite against fresh Rancher 2.15 — fix remaining failures
+- [ ] Run AWS provisioning specs via ansible pipeline
+- [ ] Test release-2.14 branch against Rancher 2.14.x
+- [ ] Test release-2.13 branch against Rancher 2.13.x
+
 ## Specs to debug
 
-- [ ] `e2e/tests/pages/virtualization-mgmt/harvester.spec.ts` — 0/3 pass. Heavy extension install/uninstall state. Debug after core suites stable.
+- [ ] `e2e/tests/pages/virtualization-mgmt/harvester.spec.ts` — extension install/uninstall state
+- [ ] `e2e/tests/pages/explorer/more-resources/api/custom-resource-definitions.spec.ts` — sequential run causes API server stress
 
-## Specs to convert
+## Remaining test gaps (~10%)
 
-- [ ] `pages/users-and-auth` (8 specs)
-- [ ] `pages/fleet` (10 specs)
-- [ ] `pages/generic` (10 remaining specs)
-- [ ] `pages/explorer` (21 specs)
-- [ ] `pages/explorer2` (23 specs)
-- [ ] `pages/manager` (24 specs)
+- [ ] Skipped tests needing `page.waitForEvent('download')` (5+ tests)
+- [ ] Skipped pagination tests needing `createManyNamespacedResources` helper
+- [ ] Skipped pod shell/exec tests (WebSocket TLS issues)
 
-## Infra
+## CI / Infra
 
 - [ ] Qase IDs — to be mapped manually by QA
-- [ ] CI pipeline integration (Jenkins config)
+- [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
+- [ ] GitHub Actions workflow for PR validation (lint + typecheck)
