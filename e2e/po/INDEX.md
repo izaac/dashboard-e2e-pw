@@ -83,7 +83,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, ociMinWaitInput, ociMaxWaitInput, authentication (+19) |
+| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, helmUrlInput, ociUrlInput, ociCaBundleInput (+25) |
 | DigitalOceanCloudCredentialsCreateEditPo | cloud-credentials-digitalocean.po.ts | PagePo | `/c/${clusterId}/manager/cloudCredential/create` | super, credentialName, accessToken, saveCreateForm |
 | KontainerDriverCreateEditPo | kontainer-driver.po.ts | PagePo | — | super, downloadUrl, customUiUrl, checksum, saveCreateForm |
 | MachineDeploymentsCreateEditPo | machine-deployments.po.ts | PagePo | — | super, saveCreateForm |
@@ -165,24 +165,24 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | APIServicesPagePo | api-services.po.ts | PagePo | — | super, resourcesList, sortableTable, title |
-| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, clickCertificatesTab, eventsRowCountMenuToggle, eventsRowCountMenu (+14) |
+| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, clickCertificatesTab, eventsRowCountMenuToggle, eventsRowCountMenu (+18) |
 | ClusterProjectMembersPo | cluster-project-members.po.ts | PagePo | — | super, triggerAddClusterOrProjectMemberAction, triggerAddProjectMemberAction, selectClusterOrProjectMember, selectProjectCustomPermission, checkTheseProjectCustomPermissions, for, submitProjectCreateButton (+6) |
 | ClusterRoleBindingsPagePo | cluster-role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterRolesPagePo | cluster-roles.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterToolsPagePo | cluster-tools.po.ts | PagePo | — | super, featureChartCards, getCardByName, deleteChart, goToInstall, editChart, getChartVersion |
 | ContentsPagePo | contents.po.ts | PagePo | — | super, list, clickCreate |
-| CustomResourceDefinitionsPagePo | custom-resource-definitions.po.ts | PagePo | — | super, create, crdCreateEditPo, list, sortableTable, yamlEditor |
+| CustomResourceDefinitionsPagePo | custom-resource-definitions.po.ts | PagePo | — | super, create, crdCreateEditPo, list, sortableTable, yamlEditor, saveYamlButton |
 | EventsPageListPo | events.po.ts | PagePo | — | super, list, baseResourceList, resourceDetail |
 | HorizontalPodAutoscalersPagePo | horizontal-pod-autoscalers.po.ts | PagePo | — | super, list, clickCreate, listElementWithName |
 | IngressListPagePo | ingress.po.ts | PagePo | — | super, list, baseResourceList |
-| LeasesPagePo | leases.po.ts | PagePo | — | super, list, clickCreateYaml, listElementWithName |
-| NetworkPolicyListPagePo | network-policy.po.ts | PagePo | — | super, list, baseResourceList, resourceDetail, enableIngressCheckbox, newNetworkPolicyRuleAddBtn, addAllowedTrafficSourceButton, addAllowedPortButton (+4) |
+| LeasesPagePo | leases.po.ts | PagePo | — | super, list, clickCreateYaml, listElementWithName, saveYamlButton |
+| NetworkPolicyListPagePo | network-policy.po.ts | PagePo | — | super, list, baseResourceList, promptRemove, resourceDetail, nameInput, descriptionInput, formSave (+10) |
 | ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, baseResourceList, createNamespaceButton, resourceDetail, tabResourceQuotas, btnAddResource, inputProjectLimit (+10) |
 | RoleBindingsPagePo | role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | RolesPagePo | roles.po.ts | PagePo | — | super, list, clickCreate |
 | SecretsListPagePo | secrets.po.ts | PagePo | — | super, title, createButton, createButtonTitle, list, resourceDetail |
 | ServiceAccountsPagePo | service-accounts.po.ts | PagePo | — | super, list, clickCreate |
-| ServicesPagePo | services.po.ts | PagePo | — | super, list, clickCreate |
+| ServicesPagePo | services.po.ts | PagePo | — | super, list, clickCreate, mastheadTitle, nameInput, descriptionInput, formSave, errorBanner |
 | StorageClassesPagePo | storage-classes.po.ts | PagePo | — | super, urlPath, list, listElementWithName, clickCreate, createStorageClassesForm |
 | UiPluginsPagePo | uiplugins.po.ts | PagePo | — | super, resourceTable, cacheState, goToDetailsPage, clickCreate, createPath |
 | WorkloadsDaemonsetsListPagePo | workloads-daemonsets.po.ts | PagePo | — | super, baseResourceList, redeployDialog, resourceDetail, containerImageInput, clickTab, ScalingUpgradePolicyRadioBtn |

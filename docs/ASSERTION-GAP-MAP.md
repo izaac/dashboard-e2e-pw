@@ -4,7 +4,7 @@
 Generated: 2026-04-18
 
 Upstream Cypress: 128 specs, 760 tests
-Playwright: 72 specs, 408 tests
+Playwright: 117 specs, 594 tests
 
 ## Summary
 
@@ -16,160 +16,36 @@ Playwright: 72 specs, 408 tests
 | navigation | 1 | 0 | 1 | 2 | — |
 | navigation/side-nav | 3 | 19 | 3 | 19 | ✅ |
 | pages/charts | 7 | 15 | 7 | 11 | 73% |
-| pages/explorer/api | 1 | 1 | 0 | 0 | — |
-| pages/explorer/apps | 3 | 13 | 0 | 0 | — |
-| pages/explorer/dashboard | 3 | 23 | 0 | 0 | — |
-| pages/explorer/dashboard/websockets | 1 | 4 | 0 | 0 | — |
-| pages/explorer/manager | 1 | 1 | 0 | 0 | — |
-| pages/explorer/more-resources/api | 1 | 5 | 0 | 0 | — |
-| pages/explorer/more-resources/core | 1 | 3 | 0 | 0 | — |
-| pages/explorer/more-resources/fleet | 1 | 2 | 0 | 0 | — |
-| pages/explorer/more-resources/rbac | 4 | 10 | 0 | 0 | — |
-| pages/explorer/more-resources/yaml | 1 | 1 | 0 | 0 | — |
-| pages/explorer/policy | 1 | 4 | 0 | 0 | — |
-| pages/explorer/service-discovery | 3 | 20 | 0 | 0 | — |
-| pages/explorer2 | 7 | 32 | 0 | 0 | — |
-| pages/explorer2/nodes | 2 | 2 | 0 | 0 | — |
-| pages/explorer2/storage | 6 | 19 | 0 | 0 | — |
-| pages/explorer2/workloads | 8 | 55 | 0 | 0 | — |
+| pages/explorer/api | 1 | 1 | 1 | 1 | ✅ |
+| pages/explorer/apps | 3 | 13 | 3 | 10 | 77% |
+| pages/explorer/dashboard | 3 | 23 | 3 | 18 | 78% |
+| pages/explorer/dashboard/websockets | 1 | 4 | 1 | 1 | 25% |
+| pages/explorer/manager | 1 | 1 | 1 | 1 | ✅ |
+| pages/explorer/more-resources/api | 1 | 5 | 1 | 5 | ✅ |
+| pages/explorer/more-resources/core | 1 | 3 | 1 | 3 | ✅ |
+| pages/explorer/more-resources/fleet | 1 | 2 | 1 | 2 | ✅ |
+| pages/explorer/more-resources/rbac | 4 | 10 | 4 | 10 | ✅ |
+| pages/explorer/more-resources/yaml | 1 | 1 | 1 | 1 | ✅ |
+| pages/explorer/policy | 1 | 4 | 1 | 3 | 75% |
+| pages/explorer/service-discovery | 3 | 20 | 3 | 15 | 75% |
+| pages/explorer2 | 7 | 32 | 7 | 29 | 91% |
+| pages/explorer2/nodes | 2 | 2 | 2 | 2 | ✅ |
+| pages/explorer2/storage | 6 | 19 | 6 | 19 | ✅ |
+| pages/explorer2/workloads | 8 | 55 | 8 | 51 | 93% |
 | pages/extensions | 2 | 22 | 2 | 22 | ✅ |
 | pages/fleet | 5 | 41 | 3 | 16 | 39% |
 | pages/fleet/resources | 5 | 30 | 5 | 19 | 63% |
-| pages/generic | 11 | 68 | 10 | 65 | 96% |
+| pages/generic | 11 | 68 | 11 | 68 | ✅ |
 | pages/global-settings | 8 | 70 | 8 | 73 | 104% |
 | pages/manager | 24 | 155 | 15 | 57 | 37% |
-| pages/user-menu | 3 | 26 | 3 | 18 | 69% |
-| pages/users-and-auth | 8 | 51 | 8 | 38 | 75% |
+| pages/user-menu | 3 | 26 | 3 | 20 | 77% |
+| pages/users-and-auth | 8 | 51 | 8 | 48 | 94% |
 | pages/virtualization-mgmt | 1 | 3 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 1 | 4 | ✅ |
-| **TOTAL** | **128** | **760** | **72** | **408** | **54%** |
+| **TOTAL** | **128** | **760** | **117** | **594** | **78%** |
 
 ## Unconverted Specs
-
-### pages/explorer/api
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| api-services.spec.ts | 1 | 0 |
-
-### pages/explorer/apps
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| charts.spec.ts | 9 | 0 |
-| index.spec.ts | 1 | 0 |
-| repositories.spec.ts | 3 | 0 |
-
-### pages/explorer/dashboard
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| certificates.spec.ts | 4 | 0 |
-| cluster-dashboard.spec.ts | 15 | 0 |
-| events.spec.ts | 4 | 0 |
-
-### pages/explorer/dashboard/websockets
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| connection.spec.ts | 4 | 0 |
-
-### pages/explorer/manager
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| index.spec.ts | 1 | 0 |
-
-### pages/explorer/more-resources/api
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| custom-resource-definitions.spec.ts | 5 | 0 |
-
-### pages/explorer/more-resources/core
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| service-accounts.spec.ts | 3 | 0 |
-
-### pages/explorer/more-resources/fleet
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| contents.spec.ts | 2 | 0 |
-
-### pages/explorer/more-resources/rbac
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| cluster-role-bindings.spec.ts | 2 | 0 |
-| cluster-roles.spec.ts | 2 | 0 |
-| role-bindings.spec.ts | 3 | 0 |
-| roles.spec.ts | 3 | 0 |
-
-### pages/explorer/more-resources/yaml
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| no-form-resource.spec.ts | 1 | 0 |
-
-### pages/explorer/policy
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| network-policy.spec.ts | 4 | 0 |
-
-### pages/explorer/service-discovery
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| horizontal-pod-autoscalers.spec.ts | 3 | 0 |
-| ingress.spec.ts | 8 | 0 |
-| services.spec.ts | 9 | 0 |
-
-### pages/explorer2
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| cluster-project-members.spec.ts | 4 | 0 |
-| cluster-tools.spec.ts | 4 | 0 |
-| describe-resource.spec.ts | 1 | 0 |
-| index.spec.ts | 1 | 0 |
-| namespace-picker.spec.ts | 8 | 0 |
-| project-namespace.spec.ts | 11 | 0 |
-| resource-search.spec.ts | 3 | 0 |
-
-### pages/explorer2/nodes
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| node-detail.spec.ts | 1 | 0 |
-| node-list.spec.ts | 1 | 0 |
-
-### pages/explorer2/storage
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| configmap.spec.ts | 6 | 0 |
-| persistent-volume-claims.spec.ts | 3 | 0 |
-| persistent-volumes.spec.ts | 3 | 0 |
-| project-secrets.spec.ts | 2 | 0 |
-| secrets.spec.ts | 2 | 0 |
-| storage-classes.spec.ts | 3 | 0 |
-
-### pages/explorer2/workloads
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| cronjobs.spec.ts | 5 | 0 |
-| daemonsets.spec.ts | 8 | 0 |
-| deployments.spec.ts | 15 | 0 |
-| jobs.spec.ts | 6 | 0 |
-| pods.spec.ts | 11 | 0 |
-| replicasets.spec.ts | 1 | 0 |
-| statefulsets.spec.ts | 7 | 0 |
-| workloads.spec.ts | 2 | 0 |
 
 ### pages/fleet
 
@@ -177,12 +53,6 @@ Playwright: 72 specs, 408 tests
 |------|-------|---------|
 | fleet-clusters.spec.ts | 15 | 0 |
 | gitrepo.spec.ts | 10 | 0 |
-
-### pages/generic
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| links.spec.ts | 3 | 0 |
 
 ### pages/manager
 
@@ -205,6 +75,18 @@ Playwright: 72 specs, 408 tests
 | navigation/page-actions.spec.ts | 0 | 2 | +2 |
 | pages/charts/monitoring-istio.spec.ts | 2 | 1 | -1 |
 | pages/charts/v2-monitoring.spec.ts | 4 | 1 | -3 |
+| pages/explorer/apps/charts.spec.ts | 9 | 6 | -3 |
+| pages/explorer/dashboard/certificates.spec.ts | 4 | 2 | -2 |
+| pages/explorer/dashboard/cluster-dashboard.spec.ts | 15 | 12 | -3 |
+| pages/explorer/dashboard/websockets/connection.spec.ts | 4 | 1 | -3 |
+| pages/explorer/policy/network-policy.spec.ts | 4 | 3 | -1 |
+| pages/explorer/service-discovery/ingress.spec.ts | 8 | 7 | -1 |
+| pages/explorer/service-discovery/services.spec.ts | 9 | 5 | -4 |
+| pages/explorer2/cluster-project-members.spec.ts | 4 | 3 | -1 |
+| pages/explorer2/namespace-picker.spec.ts | 8 | 7 | -1 |
+| pages/explorer2/project-namespace.spec.ts | 11 | 10 | -1 |
+| pages/explorer2/workloads/deployments.spec.ts | 15 | 12 | -3 |
+| pages/explorer2/workloads/pods.spec.ts | 11 | 10 | -1 |
 | pages/fleet/resources/bundle-namespace-mappings.spec.ts | 4 | 3 | -1 |
 | pages/fleet/resources/bundles.spec.ts | 6 | 5 | -1 |
 | pages/fleet/resources/cluster-registration-tokens.spec.ts | 6 | 4 | -2 |
@@ -225,7 +107,7 @@ Playwright: 72 specs, 408 tests
 | pages/manager/pod-security-policy-templates.spec.ts | 4 | 1 | -3 |
 | pages/manager/repositories.spec.ts | 14 | 12 | -2 |
 | pages/user-menu/account-api-keys.spec.ts | 7 | 2 | -5 |
-| pages/user-menu/preferences.spec.ts | 17 | 14 | -3 |
-| pages/users-and-auth/roles.spec.ts | 13 | 7 | -6 |
+| pages/user-menu/preferences.spec.ts | 17 | 16 | -1 |
+| pages/users-and-auth/roles.spec.ts | 13 | 14 | +1 |
 | pages/users-and-auth/user-retention.spec.ts | 6 | 5 | -1 |
-| pages/users-and-auth/users.spec.ts | 19 | 13 | -6 |
+| pages/users-and-auth/users.spec.ts | 19 | 16 | -3 |
