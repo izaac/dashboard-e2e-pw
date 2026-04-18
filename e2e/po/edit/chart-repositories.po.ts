@@ -33,12 +33,36 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return LabeledInputPo.byLabel(this.page, this.self(), 'OCI Repository Host URL');
   }
 
+  helmUrlInput(): Locator {
+    return this.page.getByTestId('clusterrepo-helm-url-input');
+  }
+
+  ociUrlInput(): Locator {
+    return this.page.getByTestId('clusterrepo-oci-url-input');
+  }
+
+  ociCaBundleInput(): Locator {
+    return this.page.getByTestId('clusterrepo-oci-cabundle-input');
+  }
+
   ociMinWaitInput(): Locator {
     return this.page.getByTestId('clusterrepo-oci-min-wait-input');
   }
 
   ociMaxWaitInput(): Locator {
     return this.page.getByTestId('clusterrepo-oci-max-wait-input');
+  }
+
+  ociMaxRetriesInput(): Locator {
+    return this.page.getByTestId('clusterrepo-oci-max-retries-input');
+  }
+
+  gitRepoBranchInput(): Locator {
+    return this.page.getByTestId('clusterrepo-git-branch-input');
+  }
+
+  gitRepoUrlInput(): Locator {
+    return this.page.getByTestId('clusterrepo-git-repo-input');
   }
 
   authentication(): LabeledSelectPo {

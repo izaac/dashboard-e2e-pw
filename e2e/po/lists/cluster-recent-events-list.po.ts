@@ -1,0 +1,19 @@
+import type { Page, Locator } from '@playwright/test';
+import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import { expect } from '@playwright/test';
+
+export default class ClusterRecentEventsListPo extends BaseResourceList {
+  constructor(page: Page, selector: string, parent?: Locator) {
+    super(page, selector, parent);
+  }
+
+  details(name: string, index: number): Locator {
+    return this.resourceTable().sortableTable().rowWithPartialName(name).column(index);
+  }
+
+  async checkTableIsEmpty(): Promise<void> {
+    await expect(
+      this.resourceTable().sortableTable().rowWithPartialName('There are no rows to show.').self(),
+    ).toBeVisible();
+  }
+}
