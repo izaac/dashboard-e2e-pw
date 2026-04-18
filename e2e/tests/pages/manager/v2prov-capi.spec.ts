@@ -30,6 +30,15 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     await clusterList.waitForPage();
   });
 
+  test('should not provide a link to capi cluster details', async ({ page }) => {
+    const clusterList = new ClusterManagerListPagePo(page);
+    const capiRow = clusterList.list().resourceTable().sortableTable().rowWithName(clusterName);
+    const localRow = clusterList.list().resourceTable().sortableTable().rowWithName('local');
+
+    await expect(capiRow.self().locator('a')).not.toBeAttached();
+    await expect(localRow.self().locator('a')).toBeAttached();
+  });
+
   test('should not allow editing CAPI cluster configs', async ({ page }) => {
     const clusterList = new ClusterManagerListPagePo(page);
     const capiMenu = await clusterList.list().actionMenu(clusterName);
@@ -41,6 +50,13 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     const localMenu = await clusterList.list().actionMenu('local');
 
     await expect(localMenu.getMenuItem('Edit Config')).toBeAttached();
+  });
+
+  test('should show a message indicating that CAPI clusters are not editable', async ({ page }) => {
+    const clusterList = new ClusterManagerListPagePo(page);
+
+    await expect(clusterList.capiWarningSubRow(clusterName)).toBeVisible();
+    await expect(clusterList.capiWarningSubRow('Local')).not.toBeAttached();
   });
 
   test('should not report a machine provider for CAPI clusters', async ({ page }) => {
