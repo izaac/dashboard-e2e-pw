@@ -5,7 +5,7 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { WorkloadsDeploymentsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 
-const workloadName = 'test-deployment-kubectl';
+const workloadName = `test-deployment-kubectl-${Date.now()}`;
 const namespace = 'default';
 
 test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }, () => {
