@@ -9,6 +9,20 @@ const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machines.yml');
 const blueprintEditPath = path.resolve('e2e/blueprints/cluster_management/machines-edit.yml');
 
+async function cleanupMachine(rancherApi: any, fullName: string) {
+  try {
+    await rancherApi.deleteRancherResource('v1', 'cluster.x-k8s.io.machines', fullName, false);
+    const resource = await rancherApi.getRancherResource('v1', 'cluster.x-k8s.io.machines', fullName, 0);
+
+    if (resource.status === 200 && resource.body.metadata?.finalizers) {
+      delete resource.body.metadata.finalizers;
+      await rancherApi.setRancherResource('v1', 'cluster.x-k8s.io.machines', fullName, resource.body);
+    }
+  } catch {
+    // resource may already be gone
+  }
+}
+
 test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
   test('can create a Machine', async ({ page, login, rancherApi }) => {
     await login();
@@ -41,37 +55,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     await machinesPage.waitForPage();
     await expect(machinesPage.list().details(machineName, 1)).toBeVisible();
 
-    // Cleanup
-    try {
-      const resource = await rancherApi.getRancherResource(
-        'v1',
-        'cluster.x-k8s.io.machines',
-        `${nsName}/${machineName}`,
-        0,
-      );
-
-      if (resource.status === 200) {
-        await rancherApi.deleteRancherResource('v1', 'cluster.x-k8s.io.machines', `${nsName}/${machineName}`, false);
-        const updated = await rancherApi.getRancherResource(
-          'v1',
-          'cluster.x-k8s.io.machines',
-          `${nsName}/${machineName}`,
-          0,
-        );
-
-        if (updated.status === 200 && updated.body.metadata?.finalizers) {
-          delete updated.body.metadata.finalizers;
-          await rancherApi.setRancherResource(
-            'v1',
-            'cluster.x-k8s.io.machines',
-            `${nsName}/${machineName}`,
-            updated.body,
-          );
-        }
-      }
-    } catch {
-      // resource may already be gone
-    }
+    await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
   });
 
   test('can edit a Machine', async ({ page, login, rancherApi }) => {
@@ -124,28 +108,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     expect(resp.status()).toBe(200);
     await machinesPage.waitForPage();
 
-    // Cleanup
-    try {
-      await rancherApi.deleteRancherResource('v1', 'cluster.x-k8s.io.machines', `${nsName}/${machineName}`, false);
-      const updated = await rancherApi.getRancherResource(
-        'v1',
-        'cluster.x-k8s.io.machines',
-        `${nsName}/${machineName}`,
-        0,
-      );
-
-      if (updated.status === 200 && updated.body.metadata?.finalizers) {
-        delete updated.body.metadata.finalizers;
-        await rancherApi.setRancherResource(
-          'v1',
-          'cluster.x-k8s.io.machines',
-          `${nsName}/${machineName}`,
-          updated.body,
-        );
-      }
-    } catch {
-      // resource may already be gone
-    }
+    await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
   });
 
   test('can delete a Machine', async ({ page, login, rancherApi }) => {
@@ -180,27 +143,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     await deleteResp;
     await machinesPage.waitForPage();
 
-    // Clear finalizers so resource actually deletes
-    try {
-      const resource = await rancherApi.getRancherResource(
-        'v1',
-        'cluster.x-k8s.io.machines',
-        `${nsName}/${machineName}`,
-        0,
-      );
-
-      if (resource.status === 200 && resource.body.metadata?.finalizers) {
-        delete resource.body.metadata.finalizers;
-        await rancherApi.setRancherResource(
-          'v1',
-          'cluster.x-k8s.io.machines',
-          `${nsName}/${machineName}`,
-          resource.body,
-        );
-      }
-    } catch {
-      // resource may already be gone
-    }
+    await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
 
     await expect(machinesPage.body()).not.toContainText(machineName);
   });

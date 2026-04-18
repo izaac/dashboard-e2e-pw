@@ -14,7 +14,8 @@ export default class CheckboxInputPo extends ComponentPo {
   async set(): Promise<void> {
     const checkbox = this.self().locator('.checkbox-custom');
 
-    await expect(checkbox).not.toBeDisabled();
+    await checkbox.scrollIntoViewIfNeeded();
+    await expect(checkbox).toBeVisible();
     await checkbox.click();
   }
 

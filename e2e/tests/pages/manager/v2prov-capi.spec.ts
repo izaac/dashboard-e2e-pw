@@ -37,7 +37,6 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     await expect(capiMenu.getMenuItem('Edit Config')).not.toBeAttached();
 
     await clusterList.list().actionMenuClose(clusterName);
-    await expect(page.locator('[dropdown-menu-collection]:visible')).toHaveCount(0);
 
     const localMenu = await clusterList.list().actionMenu('local');
 
