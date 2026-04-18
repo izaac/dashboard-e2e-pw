@@ -111,6 +111,22 @@ export default class ClusterDashboardPagePo extends PagePo {
     }
   }
 
+  certsSectionLocator(): Locator {
+    return this.page.locator('[data-testid="cluster-certs"]');
+  }
+
+  fullSecretsListLink(): Locator {
+    return this.page.locator('a').filter({ hasText: 'Full secrets list' });
+  }
+
+  deploymentsBox(): Locator {
+    return this.page.locator('.count-box, .simple-box').filter({ hasText: 'Deployments' });
+  }
+
+  nodesBox(text: string): Locator {
+    return this.page.locator('.count-box, .simple-box').filter({ hasText: new RegExp(`\\b${text}\\b`) });
+  }
+
   async goToAndWait(): Promise<void> {
     await this.goTo();
     await this.clusterActionsHeader().checkVisible();

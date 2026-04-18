@@ -1,0 +1,95 @@
+import type { Page } from '@playwright/test';
+import ClusterManagerCreateRke2AmazonPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-amazon.po';
+import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import CloudCredentialsCreateEditPo from '@/e2e/po/edit/cloud-credentials-amazon.po';
+
+export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateRke2AmazonPagePo {
+  constructor(page: Page, clusterId = '_') {
+    super(page, clusterId);
+  }
+
+  cloudCredentialsForm(): CloudCredentialsCreateEditPo {
+    return new CloudCredentialsCreateEditPo(this.page);
+  }
+
+  getClusterName(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="eks-name-input"]');
+  }
+
+  getClusterDescription(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[placeholder*="better describes this resource"]');
+  }
+
+  getRegion(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="eks_region"]');
+  }
+
+  getVersion(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="eks-version-dropdown"]');
+  }
+
+  getNodeGroup(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="eks-nodegroup-name"]');
+  }
+
+  getNodeRole(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="eks-noderole"]');
+  }
+
+  getLaunchTemplate(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="eks-launch-template-dropdown"]');
+  }
+
+  getDesiredASGSize(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Desired ASG Size');
+  }
+
+  getMinASGSize(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Minimum ASG Size');
+  }
+
+  getMaxASGSize(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Maximum ASG Size');
+  }
+
+  getInstanceType(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="eks-instance-type-dropdown"]');
+  }
+
+  getDiskSize(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="eks-disksize-input"]');
+  }
+
+  getPublicAccess(): CheckboxInputPo {
+    return CheckboxInputPo.byLabel(this.page, this.self(), 'Public Access');
+  }
+
+  getPrivateAccess(): CheckboxInputPo {
+    return CheckboxInputPo.byLabel(this.page, this.self(), 'Private Access');
+  }
+
+  /** Returns the highest version from the eks-version dropdown options */
+  async getLatestEKSversion(): Promise<string> {
+    const versionSelect = this.getVersion();
+
+    await versionSelect.toggle();
+    const options = versionSelect.getOptions();
+    const texts = await options.allInnerTexts();
+
+    await versionSelect.toggle();
+
+    let latestVersion = 0;
+
+    for (const text of texts) {
+      const num = parseFloat(text.trim());
+
+      if (!isNaN(num) && num > latestVersion) {
+        latestVersion = num;
+      }
+    }
+
+    return String(latestVersion);
+  }
+}
