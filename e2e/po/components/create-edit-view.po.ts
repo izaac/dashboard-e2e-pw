@@ -1,12 +1,11 @@
-import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 
 export default class CreateEditViewPo extends ComponentPo {
   nameNsDescription(): NameNsDescriptionPo {
-    return new NameNsDescriptionPo(this.page, '.dashboard-root', this.parentLocator);
+    return new NameNsDescriptionPo(this.page, ':scope', this.self());
   }
 
   errorBanner(): Locator {

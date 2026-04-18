@@ -23,8 +23,11 @@ export class HeaderPo extends ComponentPo {
     await filter.toggle();
   }
 
-  selectWorkspace(name: string): Locator {
-    return this.page.locator('[data-testid="workspace-switcher"]');
+  async selectWorkspace(name: string): Promise<void> {
+    const ws = this.page.locator('[data-testid="workspace-switcher"]');
+
+    await ws.click();
+    await this.page.locator(`.vs__dropdown-menu .vs__dropdown-option`).filter({ hasText: name }).click();
   }
 
   async checkCurrentWorkspace(name: string): Promise<void> {

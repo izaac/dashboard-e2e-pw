@@ -88,6 +88,8 @@ Use this to:
 - [Base Component PO](e2e/po/components/component.po.ts)
 - [Base Page PO](e2e/po/pages/page.po.ts)
 - [Rancher API Helper](support/fixtures/rancher-api.ts)
+- [Conversion Roadmap](docs/CONVERSION-ROADMAP.md) — classifies all unconverted specs by infra requirements
+- [Assertion Gap Map](docs/ASSERTION-GAP-MAP.md) — auto-generated test count comparison (`yarn gap-map`)
 
 ---
 

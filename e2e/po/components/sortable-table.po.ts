@@ -232,6 +232,19 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('thead tr');
   }
 
+  /** Return the visible text of each column header */
+  async headerNames(): Promise<string[]> {
+    const cells = this.tableHeaderRow().locator('.table-header-container .content');
+    const count = await cells.count();
+    const names: string[] = [];
+
+    for (let i = 0; i < count; i++) {
+      names.push((await cells.nth(i).innerText()).trim());
+    }
+
+    return names;
+  }
+
   sort(index: number): Locator {
     return this.self().locator('thead tr').locator('th').nth(index).locator('.sort');
   }

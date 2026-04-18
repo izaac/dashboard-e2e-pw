@@ -1,4 +1,5 @@
 import type { Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 /**
  * Represents a single row in a sortable table.
@@ -25,5 +26,13 @@ export default class ListRowPo {
 
   get(selector: string): Locator {
     return this.rowLocator.locator(selector);
+  }
+
+  async checkVisible(): Promise<void> {
+    await expect(this.rowLocator).toBeVisible();
+  }
+
+  async checkNotVisible(): Promise<void> {
+    await expect(this.rowLocator).not.toBeVisible();
   }
 }
