@@ -177,11 +177,15 @@ export default class SortableTablePo extends ComponentPo {
     const row = this.rowWithName(name);
 
     await row.actionBtn().click();
-    await expect(row.actionBtn()).toHaveAttribute('aria-expanded', 'true');
 
-    const actionMenu = new ActionMenuPo(this.page, row.self());
+    // v-popper may render the dropdown in a page-level portal rather than inside the row.
+    // Wait for the menu to appear at page scope; fall back to row-scoped if not found.
+    const pageMenu = new ActionMenuPo(this.page);
 
-    await expect(actionMenu.self()).toBeAttached();
+    await expect(pageMenu.self().or(new ActionMenuPo(this.page, row.self()).self())).toBeAttached();
+
+    const menuInRow = (await new ActionMenuPo(this.page, row.self()).self().count()) > 0;
+    const actionMenu = menuInRow ? new ActionMenuPo(this.page, row.self()) : pageMenu;
 
     if (!skipNoActionAvailableCheck) {
       await expect(actionMenu.self()).not.toContainText('No actions available');
@@ -193,9 +197,20 @@ export default class SortableTablePo extends ComponentPo {
 
   async rowActionMenuClose(name: string): Promise<void> {
     const row = this.rowWithName(name);
+    const pageMenu = new ActionMenuPo(this.page);
+    const isPageMenuOpen = (await pageMenu.self().count()) > 0;
 
-    await row.actionBtn().click();
-    await expect(row.actionBtn()).not.toHaveAttribute('aria-expanded', 'true');
+    if (isPageMenuOpen) {
+      await row.actionBtn().click();
+      await expect(pageMenu.self()).not.toBeAttached();
+    } else {
+      const rowMenu = new ActionMenuPo(this.page, row.self());
+
+      if ((await rowMenu.self().count()) > 0) {
+        await row.actionBtn().click();
+        await expect(rowMenu.self()).not.toBeAttached();
+      }
+    }
   }
 
   /** For a row with the given name return the checkbox used to select it */

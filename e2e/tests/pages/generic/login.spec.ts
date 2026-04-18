@@ -47,7 +47,7 @@ test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standa
     await loginPage.password().set(envMeta.password);
 
     // Start waiting BEFORE the action that triggers the response
-    const loginPromise = page.waitForResponse('**/v1-public/login*');
+    const loginPromise = page.waitForResponse('**/v3-public/localProviders/**');
 
     await loginPage.submit();
 
@@ -66,7 +66,7 @@ test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standa
     await loginPage.password().set(`${envMeta.password}abc`);
 
     // Start waiting BEFORE the action that triggers the response
-    const loginPromise = page.waitForResponse('**/v1-public/login*');
+    const loginPromise = page.waitForResponse('**/v3-public/localProviders/**');
 
     await loginPage.submit();
 

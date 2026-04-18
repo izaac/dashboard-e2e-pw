@@ -187,6 +187,9 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await repositoriesPage.list().resourceTable().sortableTable().rowSelectCtlWithName(repoName).set();
     await repositoriesPage.list().resourceTable().sortableTable().rowSelectCtlWithName(`${repoName}basic`).set();
 
+    const promptRemove = new PromptRemove(page);
+
+    // Set up response watchers just before the action that triggers the DELETE requests
     const deleteResp1 = page.waitForResponse(
       (r) => r.url().includes(`catalog.cattle.io.clusterrepos/${repoName}`) && r.request().method() === 'DELETE',
     );
@@ -194,9 +197,16 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       (r) => r.url().includes(`catalog.cattle.io.clusterrepos/${repoName}basic`) && r.request().method() === 'DELETE',
     );
 
-    await repositoriesPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
+    // In 2.13 the Delete action may be direct button or inside bulk-action dropdown
+    const directDeleteBtn = repositoriesPage.list().resourceTable().sortableTable().bulkActionButton('Delete');
+    const directVisible = await directDeleteBtn.isVisible().catch(() => false);
 
-    const promptRemove = new PromptRemove(page);
+    if (directVisible) {
+      await directDeleteBtn.click();
+    } else {
+      await repositoriesPage.list().openBulkActionDropdown();
+      await repositoriesPage.list().bulkActionButton('Delete').click();
+    }
 
     await promptRemove.remove();
     await Promise.all([deleteResp1, deleteResp2]);
@@ -343,6 +353,10 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 
       await expect(disabledActionMenu.getMenuItem('Refresh')).not.toBeAttached();
       await repositoriesPage.list().actionMenuClose(repoName);
+
+      // Reload to get fresh resource version before Enable (avoids 409 conflict on PUT)
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
 
       const enableMenu = await repositoriesPage.list().actionMenu(repoName);
 

@@ -219,6 +219,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.13');
       await login();
       const deploymentName = `e2e-redeploy-cancel-${Date.now()}`;
       const namespace = 'default';
@@ -272,6 +273,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('displays error banner on failure', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.13');
       await login();
       const deploymentName = `e2e-redeploy-err-${Date.now()}`;
       const namespace = 'default';

@@ -74,15 +74,34 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
   }
 
   async selectGitRepoCard(): Promise<void> {
-    await this.repoRcItemCard('git-repo').click();
+    // Rancher 2.13+ uses radio buttons instead of item cards; the input is visually hidden, click the label
+    const radioGroup = this.page.getByTestId('clusterrepo-radio-input');
+
+    if ((await radioGroup.count()) > 0) {
+      await radioGroup.locator('label:has(input[value="git-repo"])').click();
+    } else {
+      await this.repoRcItemCard('git-repo').click();
+    }
   }
 
   async selectOciUrlCard(): Promise<void> {
-    await this.repoRcItemCard('oci-url').click();
+    const radioGroup = this.page.getByTestId('clusterrepo-radio-input');
+
+    if ((await radioGroup.count()) > 0) {
+      await radioGroup.locator('label:has(input[value="oci-url"])').click();
+    } else {
+      await this.repoRcItemCard('oci-url').click();
+    }
   }
 
   async selectHelmUrlCard(): Promise<void> {
-    await this.repoRcItemCard('helm-url').click();
+    const radioGroup = this.page.getByTestId('clusterrepo-radio-input');
+
+    if ((await radioGroup.count()) > 0) {
+      await radioGroup.locator('label:has(input[value="helm-url"])').click();
+    } else {
+      await this.repoRcItemCard('helm-url').click();
+    }
   }
 
   lablesAnnotationsKeyValue(): KeyValuePo {
