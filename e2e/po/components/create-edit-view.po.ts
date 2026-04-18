@@ -2,6 +2,7 @@ import type { Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 
 export default class CreateEditViewPo extends ComponentPo {
   nameNsDescription(): NameNsDescriptionPo {
@@ -55,6 +56,26 @@ export default class CreateEditViewPo extends ComponentPo {
 
   async saveClusterAsYaml(): Promise<void> {
     await new AsyncButtonPo(this.page, '[data-testid="rke2-custom-create-yaml-save"]', this.self()).click();
+  }
+
+  keyInput(index = 0): Locator {
+    return this.page.getByTestId(`input-kv-item-key-${index}`).first();
+  }
+
+  tabResourceQuotas(): Locator {
+    return this.page.getByTestId('tab-resource-quotas').or(this.page.locator('#resource-quotas'));
+  }
+
+  btnAddResource(): Locator {
+    return this.page.locator('button').filter({ hasText: 'Add Resource' }).first();
+  }
+
+  inputProjectLimit(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="projectrow-project-quota-input"]');
+  }
+
+  yamlEditor(): Locator {
+    return this.page.locator('.resource-yaml .CodeMirror, .resource-yaml .code-mirror');
   }
 
   async saveAndWaitForRequests(method: string, endpoint: string): Promise<void> {

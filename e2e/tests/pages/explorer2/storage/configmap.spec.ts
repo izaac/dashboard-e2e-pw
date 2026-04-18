@@ -44,7 +44,7 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     await cruResource.nameNsDescription().name().set(configMapName);
 
-    await page.getByTestId('input-kv-item-key-0').first().fill('managerApiConfiguration.properties');
+    await cruResource.keyInput(0).fill('managerApiConfiguration.properties');
     await cruResource.nameNsDescription().description().set('Custom Config Map Description');
 
     const responsePromise = page.waitForResponse(

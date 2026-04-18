@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
+import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 
 test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', () => {
@@ -21,9 +22,10 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await masthead.create();
 
-        const nsSelect = page.getByTestId('name-ns-description-namespace');
+        const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+        const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'batch.job');
 
-        await nsSelect.click();
+        await createPage.namespaceDropdown().click();
 
         const createOption = page
           .locator('.vs__dropdown-menu .vs__dropdown-option')
@@ -31,14 +33,10 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await createOption.click();
 
-        const nsInput = page.getByTestId('name-ns-description-namespace').locator('input[type="text"]');
-
-        await nsInput.fill(namespaceName);
-
-        const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+        await createPage.namespaceInput().fill(namespaceName);
 
         await cruResource.nameNsDescription().name().set(jobName);
-        await page.getByTestId('input-container-image-0').fill('nginx');
+        await createPage.containerImage().set('nginx');
 
         const responsePromise = page.waitForResponse(
           (resp) => resp.url().includes('v1/batch.jobs') && resp.request().method() === 'POST',

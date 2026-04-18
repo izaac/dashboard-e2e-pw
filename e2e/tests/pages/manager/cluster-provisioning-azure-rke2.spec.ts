@@ -54,7 +54,7 @@ test.describe(
         (resp) => resp.url().includes('/meta/aksCheckCredentials') && resp.request().method() === 'POST',
       );
 
-      await page.getByRole('button', { name: /save/i }).click();
+      await createPage.saveButton().click();
       const resp = await credCheckResponse;
 
       expect(resp.status()).toBe(400);
@@ -116,16 +116,16 @@ test.describe(
         await createPage.nameNsDescription().description().set(`${clusterName}-description`);
 
         await createPage.poolNameInput().clear();
-        await expect(page.getByRole('button', { name: /create/i })).toBeDisabled();
+        await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolNameInput().fill('pool1');
-        await expect(page.getByRole('button', { name: /create/i })).toBeEnabled();
+        await expect(createPage.createButton()).toBeEnabled();
 
         await createPage.poolQuantityInput().fill('abc');
-        await expect(page.getByRole('button', { name: /create/i })).toBeDisabled();
+        await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolQuantityInput().fill('-1');
-        await expect(page.getByRole('button', { name: /create/i })).toBeDisabled();
+        await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolQuantityInput().fill('1');
-        await expect(page.getByRole('button', { name: /create/i })).toBeEnabled();
+        await expect(createPage.createButton()).toBeEnabled();
 
         await createPage.kubernetesVersionSelect().click();
         await createPage.kubernetesVersionOption(k8sVersion).click();
@@ -134,7 +134,7 @@ test.describe(
           (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
         );
 
-        await page.getByRole('button', { name: /create/i }).click();
+        await createPage.createButton().click();
         const response = await createClusterResponse;
 
         expect(response.status()).toBe(201);

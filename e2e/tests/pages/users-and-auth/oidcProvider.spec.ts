@@ -358,7 +358,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     expect(resp.status()).toBe(200);
     expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-remove']).toBe('client-secret-2');
 
-    await expect(page.getByTestId('item-card-client-secret-2')).not.toBeAttached();
+    await expect(oidcClientDetailPage.clientSecretCard(2)).not.toBeAttached();
 
     // Cleanup
     await deleteOidcClientIfExists(rancherApi);

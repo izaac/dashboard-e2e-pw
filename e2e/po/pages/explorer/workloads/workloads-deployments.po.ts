@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import {
   WorkloadsListPageBasePo,
   WorkloadsCreatePageBasePo,
@@ -29,11 +29,26 @@ export class WorkloadsDeploymentsListPagePo extends WorkloadsListPageBasePo {
   async deleteWithKubectl(_name: string, _namespace: string): Promise<void> {
     // Placeholder - use rancherApi fixture in actual tests
   }
+
+  redeployDialog(): Locator {
+    return this.page.getByTestId('redeploy-dialog').or(this.page.locator('.prompt-modal'));
+  }
 }
 
 export class WorkloadsDeploymentsCreatePagePo extends WorkloadsCreatePageBasePo {
   constructor(page: Page, clusterId = 'local', queryParams?: Record<string, string>) {
     super(page, clusterId, 'apps.deployment' as WorkloadType, queryParams);
+  }
+
+  addVolumeButton(): Locator {
+    return this.page
+      .locator('.add-vol button, [data-testid="add-volume-button"]')
+      .or(this.page.getByRole('button', { name: 'Add Volume' }))
+      .first();
+  }
+
+  dropdownMenu(): Locator {
+    return this.page.locator('.vs__dropdown-menu');
   }
 }
 

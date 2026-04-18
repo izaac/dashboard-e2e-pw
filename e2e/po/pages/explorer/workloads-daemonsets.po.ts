@@ -36,6 +36,10 @@ export class WorkLoadsDaemonsetsCreatePagePo extends PagePo {
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
   }
+
+  containerImageInput(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Container Image');
+  }
 }
 
 export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
@@ -63,5 +67,17 @@ export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
 
   ScalingUpgradePolicyRadioBtn(): RadioGroupInputPo {
     return new RadioGroupInputPo(this.page, '[data-testid="input-policy-strategy"]');
+  }
+
+  scalingUpgradePolicyRadioBtn(): RadioGroupInputPo {
+    return this.ScalingUpgradePolicyRadioBtn();
+  }
+
+  daemonSetTab(): Locator {
+    return this.page.getByTestId('btn-DaemonSet').or(this.page.locator('#DaemonSet'));
+  }
+
+  upgradingTab(): Locator {
+    return this.page.getByTestId('tab-upgrading').or(this.page.locator('#upgrading'));
   }
 }

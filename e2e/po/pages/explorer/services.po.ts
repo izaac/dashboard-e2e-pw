@@ -38,4 +38,12 @@ export class ServicesPagePo extends PagePo {
   errorBanner(): Locator {
     return this.page.locator('.banner.error');
   }
+
+  externalNameTab(): Locator {
+    return this.page.getByRole('heading', { name: 'External Name' });
+  }
+
+  externalNameInput(): Locator {
+    return this.page.getByRole('textbox', { name: 'DNS Name' });
+  }
 }

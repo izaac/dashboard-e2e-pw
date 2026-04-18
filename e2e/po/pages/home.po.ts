@@ -37,6 +37,10 @@ export default class HomePagePo extends PagePo {
     return this.page.locator('[data-testid="sortable-table-list-container"]');
   }
 
+  manageClustersButton(): Locator {
+    return this.page.getByTestId('home-manage-clusters-button');
+  }
+
   manageButton(): Locator {
     return this.page.getByTestId('cluster-management-manage-button');
   }

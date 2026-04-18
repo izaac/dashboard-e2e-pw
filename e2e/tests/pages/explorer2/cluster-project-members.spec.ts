@@ -87,7 +87,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       await projectMembership.submitProjectCreateButton();
       await responsePromise;
 
-      await expect(page.locator('.modal-overlay')).not.toBeAttached({ timeout: 15000 });
+      await expect(projectMembership.modalOverlay()).not.toBeAttached({ timeout: 15000 });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }

@@ -58,4 +58,12 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
   environmentDisplay(): Locator {
     return this.page.locator('[data-testid="machineConfig-azure-environment-value"] span');
   }
+
+  saveButton(): Locator {
+    return this.page.getByTestId('form-save');
+  }
+
+  createButton(): Locator {
+    return this.page.getByRole('button', { name: /create/i });
+  }
 }

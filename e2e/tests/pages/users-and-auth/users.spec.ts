@@ -147,7 +147,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await userCreate.waitForPage();
 
     // Global role checkboxes load asynchronously — wait before reading option labels
-    await expect(page.locator('.global-permissions .checkbox-section--global .checkbox-label')).not.toHaveCount(0);
+    await expect(userCreate.globalRoleBindings().globalOptionsLocator()).not.toHaveCount(0);
 
     const options = await userCreate.globalRoleBindings().globalOptions();
 
@@ -222,7 +222,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-xmark/);
 
       // Action menu must close before opening a new one, otherwise the next click targets the old menu
-      await expect(page.locator('[dropdown-menu-collection]:visible')).not.toBeAttached();
+      await expect(usersPo.list().actionMenuDropdown()).not.toBeAttached();
 
       // Activate user
       const activateMenu = await usersPo.list().actionMenu(actualUsername);
@@ -615,10 +615,10 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await adminCreate.resourceDetail().cruResource().saveOrCreate().click();
       await adminBindingFail;
 
-      const banner = page.locator('#cru-errors');
-
-      await expect(banner).toBeVisible();
-      await expect(banner).toContainText('You cannot assign Global Permissions that are higher than your own');
+      await expect(adminCreate.errorBanner()).toBeVisible();
+      await expect(adminCreate.errorBanner()).toContainText(
+        'You cannot assign Global Permissions that are higher than your own',
+      );
 
       await adminCreate.selectCheckbox('Administrator').uncheck();
       await adminCreate.selectCheckbox('User-Base').set();

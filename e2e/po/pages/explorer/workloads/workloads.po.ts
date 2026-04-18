@@ -6,13 +6,18 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 type WorkloadType =
   | 'workload'
   | 'pods'
+  | 'pod'
   | 'apps.deployments'
+  | 'apps.deployment'
+  | 'apps.daemonset'
+  | 'apps.statefulset'
+  | 'batch.job'
+  | 'batch.cronjob'
   | 'replicasets'
   | 'daemonsets'
   | 'statefulsets'
   | 'jobs'
-  | 'cronjobs'
-  | 'apps.deployment';
+  | 'cronjobs';
 
 /**
  * Base page object for workload list pages (Deployments, DaemonSets, etc.)
@@ -88,6 +93,54 @@ export class WorkloadsCreatePageBasePo extends PagePo {
 
   containerImage(): LabeledInputPo {
     return LabeledInputPo.byLabel(this.page, this.self(), 'Container Image');
+  }
+
+  containerImageInput(index = 0): Locator {
+    return this.page.getByTestId(`input-container-image-${index}`);
+  }
+
+  addContainerButton(): Locator {
+    return this.page.getByTestId('workload-button-add-container');
+  }
+
+  errorBanner(): Locator {
+    return this.page.locator('#cru-errors');
+  }
+
+  containerTab(index: number): Locator {
+    return this.page.getByTestId(`btn-container-${index}`);
+  }
+
+  podTab(): Locator {
+    return this.page.getByTestId('btn-pod');
+  }
+
+  storagePodTab(): Locator {
+    return this.page.getByRole('tabpanel', { name: 'Pod' }).getByRole('tab', { name: 'Storage' });
+  }
+
+  namespaceDropdown(): Locator {
+    return this.page.getByTestId('name-ns-description-namespace');
+  }
+
+  namespaceInput(): Locator {
+    return this.page.getByTestId('name-ns-description-namespace').locator('input[type="text"]');
+  }
+
+  async addEnvironmentVariable(): Promise<void> {
+    await this.page.getByTestId('add-env-var').click();
+  }
+
+  environmentVariableKeyInput(index: number): Locator {
+    return this.page.getByTestId(`env-var-row-${index}`).locator('.name input');
+  }
+
+  environmentVariableValueInput(index: number): Locator {
+    return this.page.getByTestId(`env-var-row-${index}`).locator('.single-value input');
+  }
+
+  async removeEnvironmentVariable(index: number): Promise<void> {
+    await this.page.getByTestId(`env-var-row-${index}`).locator('.remove button').click();
   }
 
   async save(): Promise<void> {

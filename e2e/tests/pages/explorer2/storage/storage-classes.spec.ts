@@ -43,7 +43,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       const cruResource = new CreateEditViewPo(page, '.dashboard-root');
 
       await cruResource.editAsYaml();
-      await expect(page.locator('.resource-yaml .CodeMirror, .resource-yaml .code-mirror')).toBeVisible();
+      await expect(cruResource.yamlEditor()).toBeVisible();
     });
   });
 });

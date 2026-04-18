@@ -94,36 +94,22 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await deploymentsCreatePage.goTo();
       await deploymentsCreatePage.waitForPage();
 
-      const containerTab = page.getByTestId('btn-container-0');
+      await deploymentsCreatePage.containerTab(0).click();
 
-      await containerTab.click();
+      await deploymentsCreatePage.addEnvironmentVariable();
+      await deploymentsCreatePage.addEnvironmentVariable();
+      await deploymentsCreatePage.addEnvironmentVariable();
 
-      const addEnvVarBtn = page
-        .locator('[data-testid="add-env-var"], button')
-        .filter({ hasText: 'Add Variable' })
-        .first();
+      await deploymentsCreatePage.environmentVariableKeyInput(0).fill('a');
+      await deploymentsCreatePage.environmentVariableValueInput(0).fill('a');
+      await deploymentsCreatePage.environmentVariableKeyInput(1).fill('b');
+      await deploymentsCreatePage.environmentVariableValueInput(1).fill('b');
+      await deploymentsCreatePage.environmentVariableKeyInput(2).fill('c');
+      await deploymentsCreatePage.environmentVariableValueInput(2).fill('c');
 
-      await addEnvVarBtn.click();
-      await addEnvVarBtn.click();
-      await addEnvVarBtn.click();
+      await deploymentsCreatePage.removeEnvironmentVariable(1);
 
-      const keyInputs = page.getByRole('textbox', { name: 'Variable Name' });
-      const valInputs = page.getByRole('textbox', { name: 'Value' });
-
-      await keyInputs.nth(0).fill('a');
-      await valInputs.nth(0).fill('a');
-      await keyInputs.nth(1).fill('b');
-      await valInputs.nth(1).fill('b');
-      await keyInputs.nth(2).fill('c');
-      await valInputs.nth(2).fill('c');
-
-      const removeButtons = page
-        .locator('.key-value-input .kv-item .remove button, .key-value-input .kv-item button.role-link, button')
-        .filter({ hasText: 'Remove' });
-
-      await removeButtons.nth(1).click();
-
-      await expect(keyInputs.nth(1)).toHaveValue('c');
+      await expect(deploymentsCreatePage.environmentVariableKeyInput(1)).toHaveValue('c');
     });
 
     test('should be able to select Pod CSI storage option', async ({ page, login }) => {
@@ -133,21 +119,11 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await deploymentsCreatePage.goTo();
       await deploymentsCreatePage.waitForPage();
 
-      const podTab = page.getByTestId('btn-pod');
+      await deploymentsCreatePage.podTab().click();
+      await deploymentsCreatePage.storagePodTab().click();
 
-      await podTab.click();
-
-      const storageTab = page.getByRole('tabpanel', { name: 'Pod' }).getByRole('tab', { name: 'Storage' });
-
-      await storageTab.click();
-
-      const addVolumeBtn = page
-        .locator('.add-vol button, [data-testid="add-volume-button"]')
-        .or(page.getByRole('button', { name: 'Add Volume' }))
-        .first();
-
-      await addVolumeBtn.click();
-      await expect(page.locator('.vs__dropdown-menu')).toContainText('CSI');
+      await deploymentsCreatePage.addVolumeButton().click();
+      await expect(deploymentsCreatePage.dropdownMenu()).toContainText('CSI');
     });
 
     test('Should be able to delete the workload', async ({ page, login, rancherApi }) => {
@@ -233,7 +209,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const redeployDialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const redeployDialog = listPage.redeployDialog();
 
         await expect(redeployDialog).toBeVisible();
 
@@ -292,7 +268,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const redeployDialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const redeployDialog = listPage.redeployDialog();
 
         await expect(redeployDialog).toBeVisible();
 
@@ -347,7 +323,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const redeployDialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const redeployDialog = listPage.redeployDialog();
 
         await expect(redeployDialog).toBeVisible();
         await redeployDialog.locator('button').filter({ hasText: 'Redeploy' }).click();

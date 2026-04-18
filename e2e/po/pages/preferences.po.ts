@@ -157,4 +157,9 @@ export default class PreferencesPagePo extends PagePo {
   dropdownOptionByIndex(index: number): Locator {
     return this.page.locator(`.vs__dropdown-menu .vs__dropdown-option:nth-child(${index})`);
   }
+
+  /** YAML editor keyboard mapping indicator (visible when a non-default keymap is active) */
+  keyboardMappingIndicator(): Locator {
+    return this.page.locator('.keyboard-mapping-indicator');
+  }
 }

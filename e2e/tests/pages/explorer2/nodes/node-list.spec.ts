@@ -33,7 +33,7 @@ test.describe('Nodes list', { tag: ['@explorer2', '@adminUser'] }, () => {
       await expect(sortableTable.self()).toContainText(nodeName);
 
       await sortableTable.rowElementLink(0, 2).click();
-      await expect(page.locator('.title-bar h1.title, .primaryheader h1')).toContainText('Node:');
+      await expect(clusterDashboard.mastheadTitle()).toContainText('Node:');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'nodes', nodeName, false);
     }

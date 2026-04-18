@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
+import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
 test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -79,9 +80,10 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await masthead.create();
 
       const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pod');
 
       await cruResource.nameNsDescription().name().set(podName);
-      await page.getByTestId('input-container-image-0').fill(SMALL_CONTAINER.image);
+      await createPage.containerImage().set(SMALL_CONTAINER.image);
 
       const responsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/pods') && resp.request().method() === 'POST',
@@ -115,14 +117,14 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await masthead.create();
 
-      const addContainerBtn = page.getByTestId('workload-button-add-container');
+      const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pod');
 
-      await addContainerBtn.click();
+      await createPage.addContainerButton().click();
 
-      await expect(page.getByTestId('btn-pod')).toContainText('Pod');
-      await expect(page.getByTestId('btn-container-0')).toContainText('container-0');
-      await expect(page.getByTestId('btn-container-1')).toContainText('container-1');
-      await expect(addContainerBtn).toContainText('Add Container');
+      await expect(createPage.podTab()).toContainText('Pod');
+      await expect(createPage.containerTab(0)).toContainText('container-0');
+      await expect(createPage.containerTab(1)).toContainText('container-1');
+      await expect(createPage.addContainerButton()).toContainText('Add Container');
     });
 
     test('should remove the correct environment variable from the workload form', async ({ page, login }) => {
@@ -136,28 +138,24 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await masthead.create();
 
-      const addEnvVarBtn = page.locator('button').filter({ hasText: 'Add Variable' }).first();
+      const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pod');
 
-      await addEnvVarBtn.click();
-      await addEnvVarBtn.click();
-      await addEnvVarBtn.click();
+      await createPage.addEnvironmentVariable();
+      await createPage.addEnvironmentVariable();
+      await createPage.addEnvironmentVariable();
 
-      const keyInputs = page.locator('.key-value-input .kv-item .name input');
+      await createPage.environmentVariableKeyInput(0).fill('FIRST_VAR');
+      await createPage.environmentVariableKeyInput(1).fill('SECOND_VAR');
+      await createPage.environmentVariableKeyInput(2).fill('THIRD_VAR');
 
-      await keyInputs.nth(0).fill('FIRST_VAR');
-      await keyInputs.nth(1).fill('SECOND_VAR');
-      await keyInputs.nth(2).fill('THIRD_VAR');
+      await expect(createPage.environmentVariableKeyInput(0)).toHaveValue('FIRST_VAR');
+      await expect(createPage.environmentVariableKeyInput(1)).toHaveValue('SECOND_VAR');
+      await expect(createPage.environmentVariableKeyInput(2)).toHaveValue('THIRD_VAR');
 
-      await expect(keyInputs.nth(0)).toHaveValue('FIRST_VAR');
-      await expect(keyInputs.nth(1)).toHaveValue('SECOND_VAR');
-      await expect(keyInputs.nth(2)).toHaveValue('THIRD_VAR');
+      await createPage.removeEnvironmentVariable(1);
 
-      const removeButtons = page.locator('.key-value-input .kv-item button.role-link');
-
-      await removeButtons.nth(1).click();
-
-      await expect(keyInputs.nth(0)).toHaveValue('FIRST_VAR');
-      await expect(keyInputs.nth(1)).toHaveValue('THIRD_VAR');
+      await expect(createPage.environmentVariableKeyInput(0)).toHaveValue('FIRST_VAR');
+      await expect(createPage.environmentVariableKeyInput(1)).toHaveValue('THIRD_VAR');
     });
 
     test.skip(true, 'Footer controls YAML Editor test requires viewport measurement not available in headless');

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import CopyToClipboardTextPo from '@/e2e/po/components/copy-to-clipboard-text.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
@@ -30,5 +30,9 @@ export default class OIDCClientDetailPo extends PagePo {
 
   secretCardMenu(): ActionMenuPo {
     return new ActionMenuPo(this.page);
+  }
+
+  clientSecretCard(index: number): Locator {
+    return this.page.getByTestId(`item-card-client-secret-${index}`);
   }
 }

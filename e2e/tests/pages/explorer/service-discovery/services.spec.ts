@@ -19,13 +19,13 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
       await servicesPage.waitForPage();
       await servicesPage.clickCreate();
 
-      await page.getByRole('heading', { name: 'External Name' }).click();
+      await servicesPage.externalNameTab().click();
       await expect(servicesPage.mastheadTitle()).toContainText('ExternalName');
 
       await servicesPage.nameInput().fill(serviceExternalName);
       await servicesPage.descriptionInput().fill(`${serviceExternalName}-desc`);
 
-      await page.getByRole('textbox', { name: 'DNS Name' }).fill('my.database.example.com');
+      await servicesPage.externalNameInput().fill('my.database.example.com');
 
       const createResponse = page.waitForResponse(
         (resp) => resp.url().includes('/v1/services') && resp.request().method() === 'POST',

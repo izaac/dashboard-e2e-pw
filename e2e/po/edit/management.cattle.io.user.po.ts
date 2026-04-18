@@ -1,4 +1,4 @@
-import type { Page, Response } from '@playwright/test';
+import type { Page, Locator, Response } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
@@ -10,8 +10,16 @@ class GlobalRoleBindingsPo extends ComponentPo {
     super(page, '.global-permissions');
   }
 
+  roleCheckbox(roleId: string): Locator {
+    return this.self().getByTestId(`grb-checkbox-${roleId}`);
+  }
+
+  globalOptionsLocator(): Locator {
+    return this.self().locator('.checkbox-section--global .checkbox-label-slot .checkbox-label');
+  }
+
   async globalOptions(): Promise<string[]> {
-    const labels = this.self().locator('.checkbox-section--global .checkbox-label-slot .checkbox-label');
+    const labels = this.globalOptionsLocator();
     const count = await labels.count();
     const options: string[] = [];
 
@@ -109,6 +117,10 @@ export default class MgmtUserEditPo extends PagePo {
 
   globalRoleBindings(): GlobalRoleBindingsPo {
     return new GlobalRoleBindingsPo(this.page);
+  }
+
+  errorBanner(): Locator {
+    return this.page.locator('#cru-errors');
   }
 
   resourceDetail(): ResourceDetailPo {

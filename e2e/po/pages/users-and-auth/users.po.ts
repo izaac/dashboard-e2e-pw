@@ -98,4 +98,8 @@ class UsersListPo extends BaseResourceList {
 
     await menu.getMenuItem(itemLabel).click();
   }
+
+  actionMenuDropdown(): Locator {
+    return this.page.locator('[dropdown-menu-collection]:visible');
+  }
 }

@@ -19,8 +19,10 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
     await sortableTable.groupByButtons(0).click();
 
+    const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+
     await expect(projectsNamespacesPage.createNamespaceButton()).toBeAttached();
-    await expect(page.getByTestId('masthead-create')).toContainText('Create Project');
+    await expect(mastheadPo.createButton()).toContainText('Create Project');
   });
 
   test('create namespace screen should have a projects dropdown', async ({ page }) => {
@@ -31,9 +33,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
     await projectsNamespacesPage.createNamespaceButton().click();
 
-    const projectSelect = page.getByTestId('name-ns-description-project');
-
-    await expect(projectSelect).toBeAttached();
+    await expect(projectsNamespacesPage.projectSelect()).toBeAttached();
   });
 
   test.describe('Project creation', () => {
@@ -103,15 +103,9 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
       await cruResource.nameNsDescription().name().set('test-1234');
 
-      await page.getByTestId('tab-resource-quotas').or(page.locator('#resource-quotas')).click();
-
-      const addResourceBtn = page.locator('button').filter({ hasText: 'Add Resource' }).first();
-
-      await addResourceBtn.click();
-
-      const projectLimitInput = page.locator('.project-limit input').first();
-
-      await projectLimitInput.fill('50');
+      await cruResource.tabResourceQuotas().click();
+      await cruResource.btnAddResource().click();
+      await cruResource.inputProjectLimit().set('50');
 
       await cruResource.formSave().click();
       await expect(cruResource.errorBanner()).toBeVisible();
@@ -131,15 +125,9 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
       await cruResource.nameNsDescription().name().set('test-1234');
 
-      await page.getByTestId('tab-resource-quotas').or(page.locator('#resource-quotas')).click();
-
-      const addResourceBtn = page.locator('button').filter({ hasText: 'Add Resource' }).first();
-
-      await addResourceBtn.click();
-
-      const projectLimitInput = page.locator('.project-limit input').first();
-
-      await projectLimitInput.fill('50');
+      await cruResource.tabResourceQuotas().click();
+      await cruResource.btnAddResource().click();
+      await cruResource.inputProjectLimit().set('50');
 
       await cruResource.formSave().click();
       await expect(cruResource.errorBanner()).toBeVisible();
