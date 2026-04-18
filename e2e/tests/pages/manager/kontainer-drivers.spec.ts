@@ -41,14 +41,10 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.refreshKubMetadata().click({ force: true });
 
-    try {
-      const resp = await refreshResp;
+    const resp = await refreshResp;
 
-      expect(resp.status()).toBe(200);
-    } catch {
-      // Request may get cancelled due to timeout per upstream bug #52557
-      await expect(driversPage.growlText()).toContainText('Error refreshing cluster drivers');
-    }
+    // Upstream bug #52557: refresh may return non-200 on timeout
+    expect.soft(resp.status()).toBe(200);
   });
 
   test('can create new driver', async ({ page, login, rancherApi }) => {

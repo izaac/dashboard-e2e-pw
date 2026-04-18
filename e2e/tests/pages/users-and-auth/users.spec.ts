@@ -15,30 +15,31 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
     const usersPo = new UsersPo(page);
 
-    await usersPo.goTo();
-    await usersPo.waitForPage();
+    try {
+      await usersPo.goTo();
+      await usersPo.waitForPage();
 
-    const burgerMenu = new BurgerMenuPo(page);
+      const burgerMenu = new BurgerMenuPo(page);
 
-    await burgerMenu.checkIfMenuItemLinkIsHighlighted('Users & Authentication');
+      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Users & Authentication');
 
-    await usersPo.list().create();
+      await usersPo.list().create();
 
-    const userCreate = usersPo.createEdit();
+      const userCreate = usersPo.createEdit();
 
-    await userCreate.waitForPage();
-    await userCreate.username().set(adminUsername);
-    await userCreate.newPass().set(adminPassword);
-    await userCreate.confirmNewPass().set(adminPassword);
-    await userCreate.selectCheckbox('Administrator').set();
-    await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+      await userCreate.waitForPage();
+      await userCreate.username().set(adminUsername);
+      await userCreate.newPass().set(adminPassword);
+      await userCreate.confirmNewPass().set(adminPassword);
+      await userCreate.selectCheckbox('Administrator').set();
+      await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+    } finally {
+      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+      const createdUser = usersResp.body.data.find((u: any) => u.username === adminUsername);
 
-    // Cleanup: find and delete the created user
-    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-    const createdUser = usersResp.body.data.find((u: any) => u.username === adminUsername);
-
-    if (createdUser) {
-      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
+      if (createdUser) {
+        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
+      }
     }
   });
 
@@ -50,28 +51,29 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
     const usersPo = new UsersPo(page);
 
-    await usersPo.goTo();
-    await usersPo.waitForPage();
-    await usersPo.list().create();
+    try {
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+      await usersPo.list().create();
 
-    const userCreate = usersPo.createEdit();
+      const userCreate = usersPo.createEdit();
 
-    await userCreate.waitForPage();
-    await userCreate.username().set(userBaseUsername);
-    await userCreate.newPass().set(userBasePassword);
-    await userCreate.confirmNewPass().set(userBasePassword);
-    await userCreate.selectCheckbox('User-Base').set();
-    await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+      await userCreate.waitForPage();
+      await userCreate.username().set(userBaseUsername);
+      await userCreate.newPass().set(userBasePassword);
+      await userCreate.confirmNewPass().set(userBasePassword);
+      await userCreate.selectCheckbox('User-Base').set();
+      await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
 
-    await usersPo.waitForPage();
-    await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
+      await usersPo.waitForPage();
+      await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
+    } finally {
+      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+      const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);
 
-    // Cleanup
-    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-    const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);
-
-    if (createdUser) {
-      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
+      if (createdUser) {
+        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
+      }
     }
   });
 
