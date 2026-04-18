@@ -35,6 +35,14 @@ export class ServicesPagePo extends PagePo {
     return this.page.getByTestId('form-save');
   }
 
+  externalNameTab(): Locator {
+    return this.page.getByRole('heading', { name: 'External Name' });
+  }
+
+  externalNameInput(): Locator {
+    return this.page.getByRole('textbox', { name: 'DNS Name' });
+  }
+
   errorBanner(): Locator {
     return this.page.locator('.banner.error');
   }

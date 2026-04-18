@@ -148,6 +148,11 @@ export default class PreferencesPagePo extends PagePo {
     await expect(this.page.locator(label)).toBeAttached();
   }
 
+  /** Keyboard mapping indicator shown in YAML editor when a non-default keymap is active */
+  keyboardMappingIndicator(): Locator {
+    return this.page.locator('.keyboard-mapping-indicator');
+  }
+
   /** Dropdown menu options list (visible when a select is open) */
   dropdownOptions(): Locator {
     return this.page.locator('.vs__dropdown-menu > li');

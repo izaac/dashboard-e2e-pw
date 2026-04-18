@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
+import HomePagePo from '@/e2e/po/pages/home.po';
 
 const namespace = 'fleet-default';
 
@@ -324,8 +325,10 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    await page.goto('./home');
-    await page.locator('[data-testid="home-manage-clusters-button"]').click();
+    const homePage = new HomePagePo(page);
+
+    await homePage.goTo();
+    await homePage.manageClustersButton().click();
     await expect(page).toHaveURL(/\/c\/_\/manager/);
 
     const jwtAuthPage = new JWTAuthenticationPagePo(page);

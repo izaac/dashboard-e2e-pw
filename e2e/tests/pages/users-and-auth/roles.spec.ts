@@ -129,9 +129,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         const userCreate = usersPo.createEdit();
 
         await userCreate.waitForPage();
-        const roleCheckbox = page.locator(`.global-permissions [data-testid="grb-checkbox-${globalRoleId}"]`);
-
-        await expect(roleCheckbox).toBeVisible();
+        await expect(userCreate.globalRoleBindings().roleCheckbox(globalRoleId)).toBeVisible();
 
         await sideNav.navToSideMenuEntryByLabel('Role Templates');
 

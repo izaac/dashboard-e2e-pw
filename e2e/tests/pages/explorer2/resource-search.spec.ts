@@ -15,7 +15,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
   test('can show resource search dialog', async ({ page }) => {
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
-    await page.getByTestId('header-resource-search').click();
+    await clusterDashboard.clusterActionsHeader().resourceSearchButton().click();
 
     const dialog = new ResourceSearchDialog(page);
 
@@ -34,7 +34,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
   test('can search by resource group', async ({ page }) => {
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
-    await page.getByTestId('header-resource-search').click();
+    await clusterDashboard.clusterActionsHeader().resourceSearchButton().click();
 
     const dialog = new ResourceSearchDialog(page);
 

@@ -3,7 +3,10 @@ import PagePo from '@/e2e/po/pages/page.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
-import { WorkloadsDaemonsetsListPagePo } from '@/e2e/po/pages/explorer/workloads-daemonsets.po';
+import {
+  WorkloadsDaemonsetsListPagePo,
+  WorkLoadsDaemonsetsEditPagePo,
+} from '@/e2e/po/pages/explorer/workloads-daemonsets.po';
 
 test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('modifying Scaling and Upgrade Policy to On Delete should use correct property OnDelete', async ({
@@ -39,7 +42,9 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       const cruResource = new CreateEditViewPo(page, '.dashboard-root');
 
       await cruResource.nameNsDescription().name().set(daemonsetName);
-      await page.getByTestId('input-container-image-0').fill('nginx');
+      const editPage = new WorkLoadsDaemonsetsEditPagePo(page, daemonsetName, 'local', namespace);
+
+      await editPage.containerImageInput().set('nginx');
       await cruResource.formSave().click();
 
       await listPage.waitForPage();
@@ -52,12 +57,10 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await actionMenu.getMenuItem('Edit Config').click();
 
-      await page.getByTestId('btn-DaemonSet').or(page.locator('#DaemonSet')).click();
-      await page.getByTestId('tab-upgrading').or(page.locator('#upgrading')).click();
+      await editPage.daemonSetTab().click();
+      await editPage.upgradingTab().click();
 
-      const onDeleteRadio = page.locator('.radio-group .radio-container').nth(1);
-
-      await onDeleteRadio.click();
+      await editPage.ScalingUpgradePolicyRadioBtn().set(1);
 
       await cruResource.formSave().click();
     } finally {

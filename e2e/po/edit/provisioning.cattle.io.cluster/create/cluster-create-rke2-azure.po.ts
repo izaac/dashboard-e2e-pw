@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 
 export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerCreatePagePo {
   constructor(page: Page, clusterId = '_') {
@@ -9,6 +10,14 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
 
   nameNsDescription(): NameNsDescriptionPo {
     return new NameNsDescriptionPo(this.page, ':scope', this.self());
+  }
+
+  saveButton(): AsyncButtonPo {
+    return new AsyncButtonPo(this.page, '[data-testid="form-save"]', this.self());
+  }
+
+  createButton(): AsyncButtonPo {
+    return this.resourceDetail().createEditView().createButton();
   }
 
   azureEnvironmentSelect(): Locator {

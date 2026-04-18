@@ -575,7 +575,7 @@ test.describe('User can update their preferences', () => {
       await page.goto('./c/local/explorer/resourcequota/create', { waitUntil: 'domcontentloaded' });
 
       // The keyboard mapping indicator should not exist for the default mapping
-      await expect(page.locator('.keyboard-mapping-indicator')).not.toBeAttached();
+      await expect(prefPage.keyboardMappingIndicator()).not.toBeAttached();
     },
   );
 

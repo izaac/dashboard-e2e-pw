@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 
@@ -116,6 +115,14 @@ export class WorkloadsCreatePageBasePo extends PagePo {
 
   async removeEnvironmentVariable(index: number): Promise<void> {
     await this.page.getByTestId(`env-var-row-${index}`).locator('.remove button').click();
+  }
+
+  addContainerButton(): Locator {
+    return this.page.getByTestId('workload-button-add-container');
+  }
+
+  errorBanner(): Locator {
+    return this.page.locator('#cru-errors');
   }
 
   storagePodTab(): Locator {

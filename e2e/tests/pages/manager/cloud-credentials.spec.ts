@@ -262,7 +262,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
       await deletePromise;
       await cloudCredentialsPage.waitForPage();
 
-      await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+      await expect(cloudCredentialsPage.list().rowWithName(cloudCredentialName).self()).not.toBeAttached();
     } finally {
       await rancherApi.deleteRancherResource('v3', 'cloudCredentials', credId, false);
     }
@@ -308,7 +308,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
       await deletePromise;
       await cloudCredentialsPage.waitForPage();
 
-      await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+      await expect(cloudCredentialsPage.list().rowWithName(cloudCredentialName).self()).not.toBeAttached();
     } finally {
       await rancherApi.deleteRancherResource('v3', 'cloudCredentials', credId, false);
     }

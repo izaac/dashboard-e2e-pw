@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import {
   WorkloadsListPageBasePo,
   WorkloadsCreatePageBasePo,
@@ -28,6 +28,10 @@ export class WorkloadsDeploymentsListPagePo extends WorkloadsListPageBasePo {
   /** Delete a resource via kubectl */
   async deleteWithKubectl(_name: string, _namespace: string): Promise<void> {
     // Placeholder - use rancherApi fixture in actual tests
+  }
+
+  redeployDialog(): Locator {
+    return this.page.getByTestId('redeploy-dialog').or(this.page.locator('.prompt-modal'));
   }
 }
 

@@ -79,4 +79,8 @@ export default class ClusterProjectMembersPo extends PagePo {
   projectTable(): SortableTablePo {
     return new SortableTablePo(this.page, '#project-membership [data-testid="sortable-table-list-container"]');
   }
+
+  modalOverlay(): Locator {
+    return this.page.locator('.modal-overlay');
+  }
 }

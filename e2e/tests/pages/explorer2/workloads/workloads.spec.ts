@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
+import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 
 test.describe('Workloads', { tag: ['@noVai', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -25,11 +26,11 @@ test.describe('Workloads', { tag: ['@noVai', '@adminUser'] }, () => {
   });
 
   test('Validation errors should not be shown when form is just opened', async ({ page }) => {
-    const deploymentsCreatePage = new PagePo(page, '/c/local/explorer/apps.deployment/create');
+    const deploymentsCreatePage = new WorkloadsCreatePageBasePo(page, 'local', 'apps.deployment');
 
     await deploymentsCreatePage.goTo();
     await deploymentsCreatePage.waitForPage();
 
-    await expect(page.locator('#cru-errors')).not.toBeAttached();
+    await expect(deploymentsCreatePage.errorBanner()).not.toBeAttached();
   });
 });

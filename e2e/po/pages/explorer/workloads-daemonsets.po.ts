@@ -61,7 +61,19 @@ export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
     await tabbed.clickTabWithSelector(selector);
   }
 
+  daemonSetTab(): Locator {
+    return this.page.getByTestId('btn-DaemonSet').or(this.page.locator('#DaemonSet'));
+  }
+
+  upgradingTab(): Locator {
+    return this.page.getByTestId('tab-upgrading').or(this.page.locator('#upgrading'));
+  }
+
   ScalingUpgradePolicyRadioBtn(): RadioGroupInputPo {
     return new RadioGroupInputPo(this.page, '[data-testid="input-policy-strategy"]');
+  }
+
+  scalingUpgradePolicyRadioBtn(): RadioGroupInputPo {
+    return this.ScalingUpgradePolicyRadioBtn();
   }
 }

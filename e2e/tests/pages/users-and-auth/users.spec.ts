@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 
 const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
@@ -149,7 +150,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await userCreate.waitForPage();
 
     // Global role checkboxes load asynchronously — wait before reading option labels
-    await expect(page.locator('.global-permissions .checkbox-section--global .checkbox-label')).not.toHaveCount(0);
+    await expect(userCreate.globalRoleBindings().globalOptionsLocator()).not.toHaveCount(0);
 
     const options = await userCreate.globalRoleBindings().globalOptions();
 
@@ -224,7 +225,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await expect(usersPo.list().details(userId, 1).locator('i')).toHaveClass(/icon-user-xmark/);
 
       // Action menu must close before opening a new one, otherwise the next click targets the old menu
-      await expect(page.locator('[dropdown-menu-collection]:visible')).not.toBeAttached();
+      await expect(new ActionMenuPo(page).self()).toBeHidden();
 
       // Activate user
       const activateMenu = await usersPo.list().actionMenu(userId);
@@ -635,7 +636,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await adminCreate.resourceDetail().cruResource().saveOrCreate().click();
       await adminBindingFail;
 
-      const banner = page.locator('#cru-errors');
+      const banner = adminCreate.resourceDetail().createEditView().errorBanner();
 
       await expect(banner).toBeVisible();
       await expect(banner).toContainText('You cannot assign Global Permissions that are higher than your own');

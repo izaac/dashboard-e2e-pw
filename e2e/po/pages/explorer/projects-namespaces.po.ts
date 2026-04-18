@@ -25,6 +25,10 @@ export class ProjectsNamespacesListPagePo extends PagePo {
   createNamespaceButton(): Locator {
     return this.self().locator('[data-testid="create_project_namespaces"]');
   }
+
+  projectSelect(): Locator {
+    return this.page.getByTestId('name-ns-description-project');
+  }
 }
 
 export class ProjectCreateEditPagePo extends PagePo {

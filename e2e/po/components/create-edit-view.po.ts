@@ -45,6 +45,22 @@ export default class CreateEditViewPo extends ComponentPo {
     return new AsyncButtonPo(this.page, '.cru-resource-footer .role-primary', this.self());
   }
 
+  keyInput(index = 0): Locator {
+    return this.self().getByTestId(`input-kv-item-key-${index}`);
+  }
+
+  tabResourceQuotas(): Locator {
+    return this.page.getByTestId('tab-resource-quotas').or(this.page.locator('#resource-quotas'));
+  }
+
+  btnAddResource(): Locator {
+    return this.self().locator('button').filter({ hasText: 'Add Resource' }).first();
+  }
+
+  inputProjectLimit(): Locator {
+    return this.self().locator('.project-limit input').first();
+  }
+
   async editAsYaml(): Promise<void> {
     await new AsyncButtonPo(this.page, '[data-testid="form-yaml"]', this.self()).click();
   }

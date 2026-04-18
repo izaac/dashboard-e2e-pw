@@ -41,6 +41,10 @@ export default class HomePagePo extends PagePo {
     return this.page.getByTestId('cluster-management-manage-button');
   }
 
+  manageClustersButton(): Locator {
+    return this.page.getByTestId('home-manage-clusters-button');
+  }
+
   importExistingButton(): Locator {
     return this.page.getByTestId('cluster-create-import-button');
   }

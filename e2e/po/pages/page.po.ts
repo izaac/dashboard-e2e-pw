@@ -75,6 +75,10 @@ export default class PagePo extends ComponentPo {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
   }
 
+  yamlEditor(): Locator {
+    return this.page.locator('.resource-yaml .CodeMirror, .resource-yaml .code-mirror');
+  }
+
   async waitForMastheadTitle(title: string): Promise<void> {
     await expect(this.mastheadTitle()).toContainText(title);
   }

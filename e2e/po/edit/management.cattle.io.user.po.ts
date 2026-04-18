@@ -1,4 +1,4 @@
-import type { Page, Response } from '@playwright/test';
+import type { Page, Locator, Response } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
@@ -8,6 +8,14 @@ import ComponentPo from '@/e2e/po/components/component.po';
 class GlobalRoleBindingsPo extends ComponentPo {
   constructor(page: Page) {
     super(page, '.global-permissions');
+  }
+
+  roleCheckbox(roleId: string): Locator {
+    return this.self().getByTestId(`grb-checkbox-${roleId}`);
+  }
+
+  globalOptionsLocator(): Locator {
+    return this.self().locator('.checkbox-section--global .checkbox-label');
   }
 
   async globalOptions(): Promise<string[]> {

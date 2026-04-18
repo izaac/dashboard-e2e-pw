@@ -207,7 +207,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const redeployDialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const redeployDialog = listPage.redeployDialog();
 
         await expect(redeployDialog).toBeVisible();
 
@@ -266,7 +266,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const redeployDialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const redeployDialog = listPage.redeployDialog();
 
         await expect(redeployDialog).toBeVisible();
 
@@ -321,7 +321,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const redeployDialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const redeployDialog = listPage.redeployDialog();
 
         await expect(redeployDialog).toBeVisible();
         await redeployDialog.locator('button').filter({ hasText: 'Redeploy' }).click();

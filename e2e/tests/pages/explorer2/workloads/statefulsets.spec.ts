@@ -1,6 +1,6 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { WorkloadsStatefulSetsListPagePo } from '@/e2e/po/pages/explorer/workloads-statefulsets.po';
 
 test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
@@ -35,7 +35,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       });
 
       try {
-        const listPage = new PagePo(page, '/c/local/explorer/apps.statefulset');
+        const listPage = new WorkloadsStatefulSetsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
@@ -45,7 +45,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const dialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
 
@@ -96,7 +96,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       });
 
       try {
-        const listPage = new PagePo(page, '/c/local/explorer/apps.statefulset');
+        const listPage = new WorkloadsStatefulSetsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
@@ -106,7 +106,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const dialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
         await dialog.locator('button').filter({ hasText: 'Cancel' }).click();
@@ -149,7 +149,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       });
 
       try {
-        const listPage = new PagePo(page, '/c/local/explorer/apps.statefulset');
+        const listPage = new WorkloadsStatefulSetsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
@@ -159,7 +159,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Redeploy').click();
 
-        const dialog = page.getByTestId('redeploy-dialog').or(page.locator('.prompt-modal'));
+        const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
         await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
