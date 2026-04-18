@@ -403,5 +403,275 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         }
       }
     });
+
+    test('can update a Global Role via YAML editor', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const roleName = `e2e-test-${Date.now()}-update-global`;
+
+      const createResp = await rancherApi.createRancherResource('v3', 'globalRoles', {
+        name: roleName,
+        displayName: roleName,
+        rules: [{ apiGroups: ['management.cattle.io'], resources: ['preferences'], verbs: ['get'] }],
+      });
+      const roleId = createResp.body.id;
+
+      try {
+        const roles = new RolesPo(page);
+
+        await roles.goTo(undefined, 'GLOBAL');
+        await roles.waitForPage(undefined, 'GLOBAL');
+
+        await roles.goToEditYamlPage(roleName);
+
+        const editRole = roles.createGlobal(roleId);
+        const yamlValue = await editRole.yamlEditor().value();
+        const json: any = jsyaml.load(yamlValue);
+
+        json.description = 'updated-description';
+        await editRole.yamlEditor().set(jsyaml.dump(json));
+
+        const saveResp = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/management.cattle.io.globalroles/') && resp.request().method() === 'PUT',
+          { timeout: 15000 },
+        );
+
+        await editRole.saveEditYamlForm().click();
+
+        const resp = await saveResp;
+
+        expect(resp.status()).toBe(200);
+
+        const body = await resp.json();
+
+        expect(body.description).toBe('updated-description');
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'globalRoles', roleId, false);
+      }
+    });
+
+    test('can import a Global Role via YAML', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const importRoleName = `e2e-import-global-${Date.now()}`;
+      const importYaml = `apiVersion: management.cattle.io/v3
+kind: GlobalRole
+displayName: ${importRoleName}
+metadata:
+  name: ${importRoleName}
+rules:
+- apiGroups:
+  - management.cattle.io
+  resources:
+  - preferences
+  verbs:
+  - get
+  - list
+  - watch
+`;
+
+      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+      const header = new HeaderPo(page);
+
+      await clusterDashboard.goTo();
+      await clusterDashboard.waitForPage();
+
+      await header.importYamlHeaderAction().click();
+      await header.importYaml().importYamlEditor().set(importYaml);
+      await header.importYaml().importYamlImportClick();
+      await header.importYaml().importYamlSuccessTitleCheck();
+      await header.importYaml().importYamlCloseClick();
+
+      try {
+        const roles = new RolesPo(page);
+
+        await roles.goTo(undefined, 'GLOBAL');
+        await roles.waitForPage(undefined, 'GLOBAL');
+
+        await expect(roles.list('GLOBAL').elementWithName(importRoleName)).toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'globalRoles', importRoleName, false);
+      }
+    });
+
+    test('can import a Cluster Role Template via YAML', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const importRoleName = `e2e-import-cluster-${Date.now()}`;
+      const importYaml = `apiVersion: management.cattle.io/v3
+kind: RoleTemplate
+displayName: ${importRoleName}
+context: cluster
+metadata:
+  name: ${importRoleName}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+`;
+
+      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+      const header = new HeaderPo(page);
+
+      await clusterDashboard.goTo();
+      await clusterDashboard.waitForPage();
+
+      await header.importYamlHeaderAction().click();
+      await header.importYaml().importYamlEditor().set(importYaml);
+      await header.importYaml().importYamlImportClick();
+      await header.importYaml().importYamlSuccessTitleCheck();
+      await header.importYaml().importYamlCloseClick();
+
+      try {
+        const roles = new RolesPo(page);
+
+        await roles.goTo(undefined, 'CLUSTER');
+        await roles.waitForPage(undefined, 'CLUSTER');
+
+        await roles.list('CLUSTER').resourceTable().sortableTable().filter(importRoleName);
+        await expect(roles.list('CLUSTER').elementWithName(importRoleName)).toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'roleTemplates', importRoleName, false);
+      }
+    });
+
+    test('can delete a Cluster Role template from the list', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const roleName = `e2e-test-${Date.now()}-delete-cluster`;
+
+      await rancherApi.createRancherResource('v3', 'roletemplates', {
+        context: 'cluster',
+        name: roleName,
+        rules: [{ apiGroups: [''], resources: ['pods'], verbs: ['get', 'list'] }],
+      });
+
+      const roles = new RolesPo(page);
+
+      await roles.goTo(undefined, 'CLUSTER');
+      await roles.waitForPage(undefined, 'CLUSTER');
+
+      await roles.list('CLUSTER').resourceTable().sortableTable().filter(roleName);
+
+      const actionMenu = await roles.list('CLUSTER').actionMenu(roleName);
+
+      await actionMenu.getMenuItem('Delete').click();
+
+      const promptRemove = new PromptRemove(page);
+
+      const deleteResponse = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/roleTemplates/') && resp.request().method() === 'DELETE',
+        { timeout: 10000 },
+      );
+
+      await promptRemove.remove();
+
+      const resp = await deleteResponse;
+
+      expect(resp.status()).toBeLessThan(300);
+      await expect(roles.list('CLUSTER').elementWithName(roleName)).not.toBeAttached();
+    });
+
+    test('can create a Cluster Role via form', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const clusterRoleName = `e2e-test-${Date.now()}-form-cluster`;
+      const roles = new RolesPo(page);
+      const fragment = 'CLUSTER';
+      let roleId: string | undefined;
+
+      try {
+        await roles.goTo(undefined, fragment);
+        await roles.waitForPage(undefined, fragment);
+        await roles.listCreate('Create Cluster Role');
+
+        const createClusterRole = roles.createRole();
+
+        await createClusterRole.waitForPage('roleContext=CLUSTER', 'grant-resources');
+        await createClusterRole.name().set(clusterRoleName);
+        await createClusterRole.description().set('e2e-form-cluster-role');
+        await createClusterRole.selectVerbs(0, 3);
+        await createClusterRole.selectVerbs(0, 4);
+        await createClusterRole.selectResourcesByLabelValue(0, 'ClusterRoles');
+
+        const resp = await createClusterRole.saveAndWaitForRequests('POST', '/v3/roletemplates');
+        const respBody = await resp.json();
+
+        roleId = respBody.id;
+
+        await roles.waitForPage(undefined, fragment);
+        await roles.list('CLUSTER').resourceTable().sortableTable().filter(clusterRoleName);
+        await roles.list('CLUSTER').resourceTable().sortableTable().checkRowCount(false, 1);
+      } finally {
+        if (roleId) {
+          await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleId, false);
+        }
+      }
+    });
+
+    test('can Download YAML for a Global Role', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const roleName = `e2e-test-${Date.now()}-dl-yaml`;
+
+      const resp = await rancherApi.createRancherResource('v3', 'globalRoles', {
+        name: roleName,
+        rules: [{ apiGroups: [''], resources: ['pods'], verbs: ['get', 'list'] }],
+      });
+
+      try {
+        const roles = new RolesPo(page);
+
+        await roles.goTo(undefined, 'GLOBAL');
+        await roles.waitForPage(undefined, 'GLOBAL');
+
+        await roles.list('GLOBAL').resourceTable().sortableTable().filter(roleName);
+        await roles.list('GLOBAL').elementWithName(roleName).click();
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          roles.list('GLOBAL').downloadYaml().click(),
+        ]);
+
+        expect(download.suggestedFilename()).toContain(roleName);
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'globalRoles', resp.body.id, false);
+      }
+    });
+
+    test('can Download YAML for a Cluster Role', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const roleName = `e2e-test-${Date.now()}-dl-cluster-yaml`;
+
+      const resp = await rancherApi.createRancherResource('v3', 'roletemplates', {
+        context: 'cluster',
+        name: roleName,
+        rules: [{ apiGroups: [''], resources: ['pods'], verbs: ['get', 'list'] }],
+      });
+
+      try {
+        const roles = new RolesPo(page);
+
+        await roles.goTo(undefined, 'CLUSTER');
+        await roles.waitForPage(undefined, 'CLUSTER');
+
+        await roles.list('CLUSTER').resourceTable().sortableTable().filter(roleName);
+        await roles.list('CLUSTER').elementWithName(roleName).click();
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          roles.list('CLUSTER').downloadYaml().click(),
+        ]);
+
+        expect(download.suggestedFilename()).toContain(roleName);
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleName, false);
+      }
+    });
   });
 });

@@ -407,6 +407,134 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     });
   });
 
+  test('cannot delete admin user via action menu', async ({ page, login, rancherApi }) => {
+    await login();
+
+    const usersPo = new UsersPo(page);
+
+    // Find the admin user's ID to match the table row link
+    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+    const adminUser = usersResp.body.data.find((u: any) => u.username === 'admin');
+    const adminId = adminUser.id;
+
+    await usersPo.goTo();
+    await usersPo.waitForPage();
+
+    await usersPo.list().clickRowActionMenuItem(adminId, 'Delete');
+
+    const promptRemove = new PromptRemove(page);
+
+    await expect(promptRemove.self()).toBeVisible();
+    await expect(promptRemove.self()).toContainText('Default Admin');
+  });
+
+  test('can change standard user password', async ({ page, login, rancherApi }) => {
+    const username = `pwd-change-${Date.now()}`;
+    const originalPassword = 'original-password-123';
+    const newPassword = 'changed-password-456';
+
+    const userResp = await rancherApi.createUser({
+      username,
+      globalRole: { role: 'user' },
+      password: originalPassword,
+    });
+    const userId = userResp.body.id;
+    const actualUsername = userResp.body.username;
+
+    try {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      // Navigate to edit page directly (row matching uses user ID in link column)
+      await usersPo.list().clickRowActionMenuItem(userId, 'Edit Config');
+
+      const userEdit = usersPo.createEdit(userId);
+
+      await userEdit.waitForPage();
+      await userEdit.newPass().set(newPassword);
+      await userEdit.confirmNewPass().set(newPassword);
+
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
+
+      expect(response.status()).toBe(200);
+
+      // Verify login with new password by logging out and back in
+      await page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
+      await login({ username: actualUsername, password: newPassword });
+      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 30000 });
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
+    }
+  });
+
+  test('user deletion via bulk removes only selected user', async ({ page, login, rancherApi }) => {
+    const user1Name = `bulk-del-a-${Date.now()}`;
+    const user2Name = `bulk-del-b-${Date.now()}`;
+
+    const user1Resp = await rancherApi.createUser({
+      username: user1Name,
+      globalRole: { role: 'user' },
+      password: 'password-123',
+    });
+    const user1Id = user1Resp.body.id;
+
+    const user2Resp = await rancherApi.createUser({
+      username: user2Name,
+      globalRole: { role: 'user' },
+      password: 'password-123',
+    });
+    const user2Id = user2Resp.body.id;
+
+    let user1Deleted = false;
+
+    try {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      // Select only user1 by user ID (rendered as link in table)
+      await usersPo.list().elementWithName(user1Id).locator('td:first-child').click();
+      await usersPo.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
+
+      const promptRemove = new PromptRemove(page);
+
+      await expect(promptRemove.self()).toBeVisible();
+
+      // Get the user's display name from the API for the confirmation prompt
+      const userData = await rancherApi.getRancherResource('v1', 'management.cattle.io.users', user1Id);
+      const user1DisplayName = userData.body.name || userData.body.username;
+
+      await promptRemove.confirm(user1DisplayName);
+
+      const deletePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+      );
+
+      await promptRemove.remove();
+
+      const deleteResp = await deletePromise;
+
+      expect([200, 204]).toContain(deleteResp.status());
+
+      await expect(usersPo.list().elementWithName(user1Id)).not.toBeAttached();
+      await expect(usersPo.list().elementWithName(user2Id)).toBeAttached();
+
+      user1Deleted = true;
+    } finally {
+      if (!user1Deleted) {
+        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user1Id, false);
+      }
+      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user2Id, false);
+    }
+  });
+
   test.describe('Create admin user with standard user', { tag: ['@flaky'] }, () => {
     test('User creation should complete after admin user fails to create for Standard user with Manage Users Role', async ({
       page,

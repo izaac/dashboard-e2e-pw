@@ -8,7 +8,7 @@ export default class RoleListPo extends BaseResourceList {
   }
 
   downloadYaml(): Locator {
-    return this.resourceTable().downloadYamlButton().first();
+    return this.self().getByTestId('sortable-table-download');
   }
 
   async rowCloneYamlClick(name: string): Promise<void> {

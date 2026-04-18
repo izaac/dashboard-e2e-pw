@@ -122,13 +122,18 @@ Some tests require infrastructure or credentials that may not be available in ev
 
 ### Atomic Tests
 
+_Verified against Playwright official best practices: "Each test should be completely isolated and run independently." Playwright calls this "starting from scratch" and warns that the alternative (cleaning up between tests) "can lead to forgotten cleanups and state leaks."_
+
 Each test must be **self-contained** — it should not depend on the execution order of other tests or on state left by a previous test. Upstream Cypress uses `testIsolation: 'off'` which creates implicit dependencies between tests. **We do not replicate that pattern.** Every Playwright test must:
 
 - Set up its own preconditions (via API or UI)
 - Assert the expected outcome
 - Clean up after itself (restore original state)
+- Never use shared mutable state between tests (`let` at describe scope that one test writes and another reads)
 
 ### Idempotent Tests
+
+_Our extension beyond Playwright's docs — required because tests share a live Rancher instance._
 
 Tests must produce the **same result** regardless of how many times they run or what state the server is in. This means:
 
@@ -136,6 +141,19 @@ Tests must produce the **same result** regardless of how many times they run or 
 - Never assume default values — query current state, set what you need, restore when done
 - Use unique test data (timestamps, random suffixes) to avoid collisions with parallel runs
 - If a resource might already exist, check first — don't fail on "already exists"
+
+### Resource Cleanup (in order of preference)
+
+1. **Playwright fixtures with `use()`** — framework-guaranteed teardown, best for reusable resource patterns (browser contexts, API clients). Playwright's officially recommended primary pattern.
+2. **`try/finally` inside the test** — correct for per-test resources with dynamic IDs created mid-test. Cleanup runs on assertion failure.
+3. **`afterEach`/`afterAll`** — acceptable for shared setup (one resource used by all tests in a describe). Requires shared variable. Use sparingly.
+4. **Never: no cleanup** — every resource created must be cleaned up. "The next test will reset it" is not acceptable.
+
+### Assertions
+
+- **Web-first assertions only** — `await expect(loc).toBeVisible()`, never `expect(await loc.isVisible()).toBe(true)`. Web-first auto-retry; manual checks race against the DOM.
+- **Locator preference** — `getByTestId` > `getByRole` > `getByText` > CSS selectors. We use `getByTestId` to match upstream Rancher `data-testid` attributes.
+- **No manual waits around assertions** — don't wrap `expect()` in try/catch. Playwright assertions auto-retry. Only use try/finally for cleanup that MUST run after resource creation.
 
 ### Upstream Parity
 

@@ -1,6 +1,8 @@
 import { test, expect } from '@/support/fixtures';
 import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
+import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
+import BannersPo from '@/e2e/po/components/banners.po';
 
 test.describe('User can update their preferences', () => {
   let savedPreferences: Record<string, any> | null = null;
@@ -494,6 +496,84 @@ test.describe('User can update their preferences', () => {
         expect(reqBody.data).toHaveProperty('show-pre-release', value);
         expect(respBody.data).toHaveProperty('show-pre-release', value);
       }
+    },
+  );
+
+  test(
+    'Can select Hide All Type Description Boxes',
+    { tag: ['@userMenu', '@adminUser', '@standardUser'] },
+    async ({ page, login }) => {
+      await login();
+
+      const prefPage = new PreferencesPagePo(page);
+      const banners = new BannersPo(page, 'header > .banner');
+      const featureFlagsPage = new FeatureFlagsPagePo(page);
+
+      await prefPage.goTo();
+      await prefPage.waitForPage();
+
+      const hideCheckbox = prefPage.hideDescriptionsCheckbox();
+
+      await hideCheckbox.checkVisible();
+
+      // Enable hide descriptions
+      const prefUpdatePromise1 = page.waitForResponse(
+        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+      );
+
+      await hideCheckbox.self().click();
+
+      const resp1 = await prefUpdatePromise1;
+
+      expect(resp1.status()).toBe(200);
+
+      // Verify banners hidden on feature flags page
+      await featureFlagsPage.goTo();
+      await featureFlagsPage.waitForPage();
+      await expect(banners.self()).not.toBeAttached();
+
+      // Disable hide descriptions
+      await prefPage.goTo();
+      await prefPage.waitForPage();
+      await hideCheckbox.checkVisible();
+
+      const prefUpdatePromise2 = page.waitForResponse(
+        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+      );
+
+      await hideCheckbox.self().click();
+
+      const resp2 = await prefUpdatePromise2;
+
+      expect(resp2.status()).toBe(200);
+
+      // Verify banners visible again
+      await featureFlagsPage.goTo();
+      await featureFlagsPage.waitForPage();
+      await expect(banners.self()).toBeAttached();
+    },
+  );
+
+  test(
+    'YAML Editor does not show any indicator for default keyboard mapping',
+    { tag: ['@userMenu', '@adminUser', '@standardUser'] },
+    async ({ page, login }) => {
+      await login();
+
+      const prefPage = new PreferencesPagePo(page);
+
+      await prefPage.goTo();
+      await prefPage.waitForPage();
+
+      const keymapContainer = prefPage.keymapOptions();
+
+      await expect(keymapContainer).toBeVisible();
+
+      // Navigate to a YAML create page (resourcequota)
+      await page.goto('./c/local/explorer/resourcequota/create', { waitUntil: 'domcontentloaded' });
+
+      // The keyboard mapping indicator should not exist for the default mapping
+      await expect(page.locator('.keyboard-mapping-indicator')).not.toBeAttached();
     },
   );
 
