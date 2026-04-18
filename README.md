@@ -2,6 +2,8 @@
 
 Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/dashboard), migrated from the upstream Cypress suite.
 
+This is not just a framework swap. Every test is rewritten to be **atomic** and **idempotent** — each test sets up its own state, runs independently of other tests, and cleans up after itself. Tests produce the same result whether run once, ten times, or after a partial failure. The goal is a stable, parallelizable suite that can run reliably against shared Rancher instances without flaky ordering dependencies.
+
 ## Quick Start
 
 ```bash
