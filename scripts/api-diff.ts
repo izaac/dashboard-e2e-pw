@@ -102,20 +102,27 @@ function collectKeys(obj: any, prefix: string, keys: Set<string>): void {
 async function discoverEndpoints(baseUrl: string, token: string): Promise<string[]> {
   const endpoints: string[] = [];
 
-  for (const prefix of ['v1', 'v3']) {
-    const resp = await fetchEndpoint(baseUrl, token, prefix);
-    const data = (resp as any)?.data || [];
+  // /v1 returns { data: [{ links: { resourceType: url, ... } }] }
+  const v1Resp = await fetchEndpoint(baseUrl, token, 'v1');
+  const v1Data = (v1Resp as any)?.data || [];
 
-    for (const item of data) {
-      const link = item?.links?.self;
+  for (const item of v1Data) {
+    const links = item?.links || {};
 
-      if (link && typeof link === 'string') {
-        const path = link.replace(`${baseUrl}/`, '');
-
-        if (path.startsWith(`${prefix}/`)) {
-          endpoints.push(path);
-        }
+    for (const [, url] of Object.entries(links)) {
+      if (typeof url === 'string' && url.startsWith(`${baseUrl}/v1/`)) {
+        endpoints.push(url.replace(`${baseUrl}/`, ''));
       }
+    }
+  }
+
+  // /v3/ returns { links: { resourceType: url, ... } } directly on root
+  const v3Resp = await fetchEndpoint(baseUrl, token, 'v3/');
+  const v3Links = (v3Resp as any)?.links || {};
+
+  for (const [, url] of Object.entries(v3Links)) {
+    if (typeof url === 'string' && url.startsWith(`${baseUrl}/v3/`)) {
+      endpoints.push(url.replace(`${baseUrl}/`, ''));
     }
   }
 
