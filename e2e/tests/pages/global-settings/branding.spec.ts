@@ -79,6 +79,7 @@ const BRANDING_SETTINGS = [
 ];
 
 test.describe('Branding', () => {
+  test.describe.configure({ mode: 'serial' });
   let savedBrandingValues: Record<string, { value: string; resourceVersion: string }> = {};
 
   test.beforeEach(async ({ login, page, rancherApi }) => {

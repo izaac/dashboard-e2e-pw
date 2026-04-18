@@ -9,6 +9,7 @@ import {
 const PSA_RESOURCE = 'management.cattle.io.podsecurityadmissionconfigurationtemplates';
 
 test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('can open Edit as YAML', async ({ page, login }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);

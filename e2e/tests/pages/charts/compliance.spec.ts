@@ -13,6 +13,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 const chartNamespace = 'compliance-operator-system';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
   });

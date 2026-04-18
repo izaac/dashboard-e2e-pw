@@ -59,6 +59,7 @@ async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAut
 }
 
 test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('should show the JWT Authentication list page', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
 

@@ -62,6 +62,7 @@ rules:
 `;
 
 test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.describe('Roles', () => {
     test('can create a Global Role template', async ({ page, login, rancherApi }) => {
       await login();

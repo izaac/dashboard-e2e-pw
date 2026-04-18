@@ -43,6 +43,7 @@ const bannerHtml =
 const acceptButtonText = 'Got it!';
 
 test.describe('Banners', () => {
+  test.describe.configure({ mode: 'serial' });
   let bannersPage: BannersPagePo;
 
   test.beforeEach(async ({ login, page }) => {

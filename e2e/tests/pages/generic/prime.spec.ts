@@ -19,6 +19,7 @@ async function interceptVersionAndSetToPrime(page: import('@playwright/test').Pa
 }
 
 test.describe('Prime Extension', { tag: ['@prime', '@generic', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('should have prime doc link in the links panel', async ({ page, login }) => {
     await interceptVersionAndSetToPrime(page);
     await login();

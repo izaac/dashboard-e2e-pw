@@ -3,6 +3,7 @@ import HomePagePo from '@/e2e/po/pages/home.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 
 test.describe('Home Page', () => {
+  test.describe.configure({ mode: 'serial' });
   test(
     'Confirm correct number of settings requests made',
     { tag: ['@generic', '@adminUser', '@standardUser'] },

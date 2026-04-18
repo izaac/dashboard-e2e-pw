@@ -14,6 +14,7 @@ const branchName = 'gh-pages';
 const harvesterGitRepoUrl = 'https://github.com/harvester/harvester-ui-extension.git';
 
 test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   let harvesterClusterName: string;
 
   test.beforeEach(async ({ login, rancherApi }) => {

@@ -21,6 +21,7 @@ import * as jsyaml from 'js-yaml';
  */
 
 test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('deactivating a hosted provider should hide its card from the cluster creation page', async ({
     page,
     login,
@@ -505,6 +506,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 });
 
 test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standardUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('can navigate to Cluster Management Page', async ({ page, login }) => {
     await login();
 

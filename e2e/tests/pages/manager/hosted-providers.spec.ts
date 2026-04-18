@@ -44,6 +44,7 @@ async function ensureProvidersState(rancherApi: any, providers: Record<string, b
 }
 
 test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('should show the hosted providers list page', async ({ page, login }) => {
     await login();
     const providersPage = new HostedProvidersPagePo(page);

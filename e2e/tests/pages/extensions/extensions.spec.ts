@@ -111,6 +111,7 @@ async function isExtensionInstalled(api: RancherApi, extensionName: string): Pro
 // =============================================================
 
 test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
   });
@@ -387,7 +388,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
 test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'] }, () => {
   // These tests install/uninstall extensions which can take time
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ mode: 'serial', timeout: 120_000 });
 
   test.beforeAll(async ({ rancherApi }) => {
     // Ensure the plugin examples repo exists

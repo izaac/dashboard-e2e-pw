@@ -5,12 +5,15 @@ import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.
 import { setupOpaGatekeeperRoutes } from '@/e2e/blueprints/other-products/opa-gatekeeper-routes';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
   });
 
   test.describe('OPA Gatekeeper resources', () => {
-    test('should check conditions related to issue #4600 (template w/ create btn + edit constraints w/ save btn)', async ({ page }) => {
+    test('should check conditions related to issue #4600 (template w/ create btn + edit constraints w/ save btn)', async ({
+      page,
+    }) => {
       // Set up route mocks BEFORE navigation so schemas are intercepted
       await setupOpaGatekeeperRoutes(page);
 

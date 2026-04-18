@@ -81,6 +81,7 @@ async function deleteOidcClientIfExists(rancherApi: RancherApi): Promise<void> {
 }
 
 test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('should be able to create an OIDC client application', async ({ page, login, rancherApi }) => {
     test.skip(!(await isOidcProviderEnabled(rancherApi)), 'OIDC Provider feature flag is not enabled');
 

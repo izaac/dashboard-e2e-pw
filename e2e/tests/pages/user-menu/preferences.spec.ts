@@ -5,6 +5,7 @@ import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags
 import BannersPo from '@/e2e/po/components/banners.po';
 
 test.describe('User can update their preferences', () => {
+  test.describe.configure({ mode: 'serial' });
   let savedPreferences: Record<string, any> | null = null;
 
   test.beforeEach(async ({ rancherApi }) => {
