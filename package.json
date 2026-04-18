@@ -30,6 +30,7 @@
     "po-diff": "npx tsx scripts/generate-po-index.ts --diff",
     "gap-map": "npx tsx scripts/generate-gap-map.ts",
     "branch-diff": "sh scripts/branch-backport.sh",
+    "api-diff": "npx tsx scripts/api-diff.ts",
     "prepare": "husky"
   },
   "dependencies": {
