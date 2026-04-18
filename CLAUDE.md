@@ -83,9 +83,32 @@ support/
 - Use `rancherApi` fixture for API operations (create/delete resources)
 - `waitForResponse` must be set up BEFORE the action that triggers it
 - URLs use `./path` prefix (relative to baseURL) — never absolute `/path`
-- **Atomic:** Each test is self-contained — no dependency on test execution order
-- **Idempotent:** Tests must pass on first run, Nth run, and after partial failures — use API to set known state, restore originals in cleanup
 - **Don't clone upstream config** — match the assertions, not the test structure. Cypress `testIsolation: 'off'` and shared state are anti-patterns we avoid
+
+### Test Isolation (Playwright official + our extensions)
+
+These rules are verified against Playwright's official best practices documentation.
+
+**Atomicity** — from Playwright: "Each test should be completely isolated and run independently." Playwright calls this "starting from scratch" and explicitly warns that the alternative (cleaning up between tests) "can lead to forgotten cleanups and state leaks, causing failures and harder debugging."
+- Each test sets up its own preconditions (via API or UI), asserts, and cleans up
+- No dependency on test execution order — any test must pass when run alone
+- No shared mutable state between tests (`let` at describe scope that one test writes and another reads)
+
+**Idempotency** — our extension beyond Playwright's docs, required because tests share a live Rancher instance:
+- Tests must produce the same result on run 1, run N, and after partial failures
+- Use `rancherApi` to query current state, set what you need, restore when done — never assume defaults
+- Use unique test data (`Date.now()` suffixes) to avoid collisions with parallel runs
+- If a resource might already exist, check first — don't fail on "already exists"
+
+**Resource cleanup patterns** (in order of preference):
+1. **Playwright fixtures with `use()`** — framework-guaranteed teardown, best for reusable resource patterns (browser contexts, API clients, authenticated sessions). This is what Playwright's docs recommend as the primary pattern.
+2. **`try/finally` inside the test** — correct for per-test resources with dynamic IDs created mid-test. Cleanup runs on assertion failure. Only risk: process crash skips `finally` (rare in E2E).
+3. **`afterEach`/`afterAll`** — acceptable for shared setup (e.g., one resource used by all tests in a describe). Requires shared variable at describe scope. Use sparingly — it couples tests.
+4. **Never: no cleanup** — every resource created must be cleaned up. "The next test will reset it" is not acceptable.
+
+**Web-first assertions** — from Playwright: use `await expect(loc).toBeVisible()`, never `expect(await loc.isVisible()).toBe(true)`. Web-first assertions auto-retry; manual checks race against the DOM.
+
+**Locator preference** — from Playwright: prefer `getByTestId`, `getByRole`, `getByText` over raw CSS selectors. We use `getByTestId` to match upstream Rancher `data-testid` attributes.
 
 ### URL Resolution
 
@@ -180,6 +203,7 @@ Husky + lint-staged runs on every commit:
 - Use subagents for codebase exploration — keeps main context clean.
 - Never load full docs when a link or `@` import suffices.
 - Point to specific files and line numbers in prompts — vague = expensive.
+- **Always query Context7** before implementing patterns you are not 100% certain about — especially test design (cleanup, fixtures, assertions), Playwright API usage, and any library/framework best practices. Training data may be stale; Context7 has current docs. This applies to both main context and subagents.
 
 ## Deep Docs (load only when needed)
 
