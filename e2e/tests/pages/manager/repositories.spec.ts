@@ -317,9 +317,9 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 });
 
 test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, () => {
-  test('can disable a repository', async ({ page, login, rancherApi }) => {
+  test('can disable/enable a repository', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo-dis');
+    const repoName = rancherApi.createE2EResourceName('repo-dis-en');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
@@ -330,64 +330,26 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
     await rancherApi.waitForResourceState('v1', 'catalog.cattle.io.clusterrepos', repoName);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
+    try {
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
 
-    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
+      const disableMenu = await repositoriesPage.list().actionMenu(repoName);
 
-    await actionMenu.getMenuItem('Disable').click();
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Disabled');
+      await disableMenu.getMenuItem('Disable').click();
+      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Disabled');
 
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
-  });
+      const disabledActionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-  test('refresh menu item is not displayed for disabled repository', async ({ page, login, rancherApi }) => {
-    await login();
-    const repoName = rancherApi.createE2EResourceName('repo-noref');
-    const repositoriesPage = new ChartRepositoriesPagePo(page);
+      await expect(disabledActionMenu.getMenuItem('Refresh')).not.toBeAttached();
+      await repositoriesPage.list().actionMenuClose(repoName);
 
-    await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
-      type: 'catalog.cattle.io.clusterrepo',
-      metadata: { name: repoName },
-      spec: { gitRepo: gitRepoUrl, gitBranch: 'release-v2.11', enabled: false },
-    });
+      const enableMenu = await repositoriesPage.list().actionMenu(repoName);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Disabled');
-
-    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
-
-    await expect(actionMenu.getMenuItem('Refresh')).not.toBeAttached();
-    await repositoriesPage.list().actionMenuClose(repoName);
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
-  });
-
-  test('can enable a repository', async ({ page, login, rancherApi }) => {
-    await login();
-    const repoName = rancherApi.createE2EResourceName('repo-en');
-    const repositoriesPage = new ChartRepositoriesPagePo(page);
-
-    // Create disabled repo
-    await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
-      type: 'catalog.cattle.io.clusterrepo',
-      metadata: { name: repoName },
-      spec: { gitRepo: gitRepoUrl, gitBranch: 'release-v2.11', enabled: false },
-    });
-
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Disabled');
-
-    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
-
-    await actionMenu.getMenuItem('Enable').click();
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 60000 });
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await enableMenu.getMenuItem('Enable').click();
+      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 60000 });
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    }
   });
 });

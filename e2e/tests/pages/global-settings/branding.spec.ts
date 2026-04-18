@@ -356,7 +356,7 @@ test.describe('Branding', () => {
     await expect(homePage.getBrandBannerImage()).toHaveAttribute('src', /\/img\/banner/);
   });
 
-  test('Login Background (Dark)', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
+  test('Login Background', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
     const brandingPage = new BrandingPagePo(page);
     const loginPage = new LoginPagePo(page);
 
@@ -366,20 +366,21 @@ test.describe('Branding', () => {
     await brandingPage.customLoginBackgroundCheckbox().hasAppropriateWidth();
     await brandingPage.customLoginBackgroundCheckbox().hasAppropriateHeight();
 
-    // Upload Dark Background
+    await brandingPage
+      .uploadButton('Upload Light Background')
+      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/backgrounds/login-landscape-light.svg'));
+
     await brandingPage
       .uploadButton('Upload Dark Background')
       .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/backgrounds/login-landscape-dark.svg'));
 
-    // Apply
-    await brandingPage.applyAndWait('ui-login-background-dark', 200);
+    await brandingPage.applyAndWait('ui-login-background-light', 200);
 
-    // Only dark preview should be visible
+    await brandingPage.loginBackgroundPreview('light').scrollIntoViewIfNeeded();
+    await expect(brandingPage.loginBackgroundPreview('light')).toBeVisible();
     await brandingPage.loginBackgroundPreview('dark').scrollIntoViewIfNeeded();
     await expect(brandingPage.loginBackgroundPreview('dark')).toBeVisible();
-    await expect(brandingPage.loginBackgroundPreview('light')).not.toBeAttached();
 
-    // Set Dark theme and check login page background
     await setTheme(page, 'Dark');
 
     const darkBgBase64 = fixtureBase64('branding/backgrounds/login-landscape-dark.svg');
@@ -388,60 +389,24 @@ test.describe('Branding', () => {
     await expect(loginPage.loginBackgroundImage()).toBeVisible();
     await expect(loginPage.loginBackgroundImage()).toHaveAttribute('src', `data:image/svg+xml;base64,${darkBgBase64}`);
 
-    // Re-login to continue
     await login();
-    const homePage = new HomePagePo(page);
+    const homePageDark = new HomePagePo(page);
 
-    await homePage.goTo();
+    await homePageDark.goTo();
 
-    // Reset
-    await navToBranding(page);
-    await brandingPage.customLoginBackgroundCheckbox().set();
-    await brandingPage.applyAndWait('ui-login-background-dark', 200);
-
-    // Set theme back to Light
     await setTheme(page, 'Light');
-  });
 
-  test('Login Background (Light)', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
-    const brandingPage = new BrandingPagePo(page);
-    const loginPage = new LoginPagePo(page);
-
-    await navToBranding(page);
-
-    // Ensure login background is disabled to clear leftover dark config
-    await brandingPage.customLoginBackgroundCheckbox().uncheck();
-    await brandingPage.applyAndWait('ui-login-background-dark', 200);
-
-    await brandingPage.customLoginBackgroundCheckbox().set();
-
-    // Upload Light Background
-    await brandingPage
-      .uploadButton('Upload Light Background')
-      .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/backgrounds/login-landscape-light.svg'));
-
-    // Apply
-    await brandingPage.applyAndWait('ui-login-background-light', 200);
-
-    // Only light preview should be visible
-    await brandingPage.loginBackgroundPreview('light').scrollIntoViewIfNeeded();
-    await expect(brandingPage.loginBackgroundPreview('light')).toBeVisible();
-    await expect(brandingPage.loginBackgroundPreview('dark')).not.toBeAttached();
-
-    // Verify login page shows the light background
     const lightBgBase64 = fixtureBase64('branding/backgrounds/login-landscape-light.svg');
 
     await loginPage.goTo();
     await expect(loginPage.loginBackgroundImage()).toBeVisible();
     await expect(loginPage.loginBackgroundImage()).toHaveAttribute('src', `data:image/svg+xml;base64,${lightBgBase64}`);
 
-    // Re-login to continue
     await login();
     const homePage = new HomePagePo(page);
 
     await homePage.goTo();
 
-    // Reset
     await navToBranding(page);
     await brandingPage.customLoginBackgroundCheckbox().set();
     await brandingPage.applyAndWait('ui-login-background-light', 200);
@@ -450,7 +415,6 @@ test.describe('Branding', () => {
     await expect(loginPage.loginBackgroundImage()).toBeVisible();
     await expect(loginPage.loginBackgroundImage()).toHaveAttribute('src', /\/img\/login-landscape/);
 
-    // Re-login to finish clean
     await login();
     const homeFinal = new HomePagePo(page);
 

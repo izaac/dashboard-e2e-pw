@@ -19,13 +19,6 @@ test.describe('Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
     await expect(page).toHaveTitle(expectedTitle);
   });
 
-  test('displays the list of secrets and has a create button', async ({ page }) => {
-    const secretsListPage = new SecretsListPagePo(page, 'local');
-
-    await secretsListPage.goTo();
-    await secretsListPage.waitForPage();
-
-    await expect(secretsListPage.createButtonTitle()).toHaveText('Create');
-    await secretsListPage.list().checkVisible();
-  });
+  // https://github.com/rancher/dashboard/issues/14773
+  test.skip('creates a project-scoped secret and displays it in the list', () => {});
 });

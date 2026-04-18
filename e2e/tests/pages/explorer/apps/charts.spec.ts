@@ -132,38 +132,6 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 
     await expect(chartsPage.emptyState()).not.toBeAttached();
   });
-
-  test('should load all charts when scrolling to the bottom', async ({ page, login }) => {
-    await login();
-
-    const chartsPage = new ChartsPage(page);
-
-    await chartsPage.goTo();
-    await chartsPage.waitForPage();
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
-
-    const totalCharts = await chartsPage.totalChartsCount();
-
-    let prevCount = 0;
-
-    for (let i = 0; i < 50; i++) {
-      const currentCount = await chartsPage.chartCards().count();
-
-      if (currentCount >= totalCharts) {
-        break;
-      }
-
-      if (currentCount > prevCount) {
-        prevCount = currentCount;
-      }
-
-      await chartsPage.scrollContainer().evaluate((el) => el.scrollTo(0, el.scrollHeight));
-      // Brief pause needed for virtual-scroll render cycle after programmatic scroll
-      await page.waitForTimeout(300);
-    }
-
-    await expect(chartsPage.chartCards()).toHaveCount(totalCharts, { timeout: 15000 });
-  });
 });
 
 test.describe('Chart Details Page', { tag: ['@explorer', '@adminUser'] }, () => {

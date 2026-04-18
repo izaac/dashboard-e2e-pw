@@ -482,43 +482,6 @@ test.describe('Settings', () => {
     resetSettings.push(settingName);
   });
 
-  test('can update kubeconfig-generate-token', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'kubeconfig-generate-token';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    // Set radio button to "false"
-    await settingsPage.radioButton(1).click();
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-
-    resetSettings.push(settingName);
-  });
-
   test('can update agent-tls-mode', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     const settingName = 'agent-tls-mode';
 

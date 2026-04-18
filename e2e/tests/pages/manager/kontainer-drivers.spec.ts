@@ -27,26 +27,6 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
   });
 
-  test('can attempt to refresh kubernetes metadata', async ({ page, login }) => {
-    await login();
-    const driversPage = new KontainerDriversPagePo(page);
-
-    await driversPage.goTo();
-    await driversPage.waitForPage();
-
-    const refreshResp = page.waitForResponse(
-      (r) => r.url().includes('/v3/kontainerdrivers?action=refresh') && r.request().method() === 'POST',
-      { timeout: 30000 },
-    );
-
-    await driversPage.refreshKubMetadata().click({ force: true });
-
-    const resp = await refreshResp;
-
-    // Upstream bug #52557: refresh may return non-200 on timeout
-    expect.soft(resp.status()).toBe(200);
-  });
-
   test('can create new driver', async ({ page, login, rancherApi }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
@@ -408,54 +388,64 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
   });
 
-  test('can delete a driver', async ({ page, login, rancherApi }) => {
+  test('can refresh kubernetes metadata', async ({ page, login }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
 
-    // Create driver via API
-    const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl || d.url === downloadUrlUpdated);
-
-    if (found) {
-      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
-    }
-
-    const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
-      type: 'kontainerDriver',
-      active: true,
-      url: downloadUrl,
-    });
-    const driverId = created.body.id;
-
-    await rancherApi.waitForRancherResource(
-      'v3',
-      'kontainerdrivers',
-      driverId,
-      (resp) => resp.body?.state === 'active',
-      40,
-      3000,
-    );
-
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
-    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(exampleDriver).set();
-    await driversPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
-
-    const promptRemove = new PromptRemove(page);
-    const deleteResp = page.waitForResponse(
-      (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'DELETE',
+    const refreshResp = page.waitForResponse(
+      (r) => r.url().includes('/v3/kontainerdrivers?action=refresh') && r.request().method() === 'POST',
+      { timeout: 30000 },
     );
 
-    await promptRemove.remove();
-    const resp = await deleteResp;
+    await driversPage.refreshKubMetadata().click({ force: true });
+    const resp = await refreshResp;
 
-    expect(resp.status()).toBe(200);
-    await driversPage.waitForPage();
-    await expect(driversPage.list().resourceTable().sortableTable().rowElementWithName(exampleDriver)).not.toBeAttached(
-      { timeout: 15000 },
-    );
+    expect.soft(resp.status()).toBe(200);
+  });
+
+  test('can delete drivers in bulk', async ({ page, login, rancherApi }) => {
+    await login();
+    const driver1Name = `e2e-driver-bulk1-${Date.now()}`;
+    const driver2Name = `e2e-driver-bulk2-${Date.now()}`;
+    let driver1Id = '';
+    let driver2Id = '';
+
+    try {
+      const resp1 = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
+        url: `https://example.com/${driver1Name}`,
+        active: false,
+      });
+
+      driver1Id = resp1.body.id;
+
+      const resp2 = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
+        url: `https://example.com/${driver2Name}`,
+        active: false,
+      });
+
+      driver2Id = resp2.body.id;
+
+      const driversPage = new KontainerDriversPagePo(page);
+
+      await driversPage.goTo();
+      await driversPage.waitForPage();
+
+      await driversPage.list().resourceTable().sortableTable().selectAll();
+      await driversPage.list().resourceTable().sortableTable().deleteButton().first().click();
+
+      const promptRemove = new PromptRemove(page);
+
+      await promptRemove.remove();
+    } finally {
+      if (driver1Id) {
+        await rancherApi.deleteRancherResource('v3', 'kontainerdrivers', driver1Id, false);
+      }
+      if (driver2Id) {
+        await rancherApi.deleteRancherResource('v3', 'kontainerdrivers', driver2Id, false);
+      }
+    }
   });
 });

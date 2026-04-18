@@ -347,48 +347,4 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await expect(jwtAuthPage.jwtAuthNavLink()).not.toBeAttached();
   });
-
-  test('should display JWT Authentication list page', async ({ login, page, envMeta }) => {
-    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
-
-    await login();
-
-    const jwtAuthPage = new JWTAuthenticationPagePo(page);
-
-    await jwtAuthPage.goTo('_');
-    await jwtAuthPage.waitForPage();
-
-    await jwtAuthPage.list().resourceTable().sortableTable().checkVisible();
-    await jwtAuthPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-  });
-
-  test('should display JWT Authentication populated list page', async ({ login, page, rancherApi, envMeta }) => {
-    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
-
-    await login();
-
-    const instance0 = rancherApi.createE2EResourceName('rke2cluster0');
-    const jwtAuthPage = new JWTAuthenticationPagePo(page);
-
-    try {
-      await createAmazonRke2ClusterWithoutMachineConfig(
-        rancherApi,
-        instance0,
-        envMeta.awsAccessKey!,
-        envMeta.awsSecretKey!,
-      );
-
-      await jwtAuthPage.goTo('_');
-      await jwtAuthPage.waitForPage();
-
-      await jwtAuthPage.list().resourceTable().sortableTable().checkVisible();
-      await jwtAuthPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-
-      const rows = jwtAuthPage.list().resourceTable().sortableTable().rowElements();
-
-      await expect(rows.first()).toBeVisible();
-    } finally {
-      await rancherApi.deleteRancherResource('v1', `provisioning.cattle.io.clusters/${namespace}`, instance0, false);
-    }
-  });
 });

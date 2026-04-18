@@ -63,10 +63,12 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.newPass().set(userBasePassword);
       await userCreate.confirmNewPass().set(userBasePassword);
       await userCreate.selectCheckbox('User-Base').set();
-      await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+      const bindingResp = await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+      const bindingBody = await bindingResp.json();
+      const userBaseId = bindingBody.userId;
 
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
+      await expect(usersPo.list().elementWithName(userBaseId)).toBeVisible();
     } finally {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
       const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);
@@ -103,10 +105,10 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     const userId = body.userId;
 
     await usersPo.waitForPage();
-    await expect(usersPo.list().elementWithName(standardUsername)).toBeVisible();
+    await expect(usersPo.list().elementWithName(userId)).toBeVisible();
 
-    // view user's details
-    await usersPo.list().details(standardUsername, 2).locator('a').click();
+    // view user's details via ID link in col-link-detail (column 2)
+    await usersPo.list().details(userId, 2).locator('a').click();
 
     const userDetails = usersPo.detail(userId);
 
@@ -215,21 +217,21 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersResponse;
 
       // Deactivate user
-      const deactivateMenu = await usersPo.list().actionMenu(actualUsername);
+      const deactivateMenu = await usersPo.list().actionMenu(userId);
 
       await deactivateMenu.getMenuItem('Disable').click();
 
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-xmark/);
+      await expect(usersPo.list().details(userId, 1).locator('i')).toHaveClass(/icon-user-xmark/);
 
       // Action menu must close before opening a new one, otherwise the next click targets the old menu
       await expect(page.locator('[dropdown-menu-collection]:visible')).not.toBeAttached();
 
       // Activate user
-      const activateMenu = await usersPo.list().actionMenu(actualUsername);
+      const activateMenu = await usersPo.list().actionMenu(userId);
 
       await activateMenu.getMenuItem('Enable').click();
 
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().details(userId, 1).locator('i')).toHaveClass(/icon-user-check/);
     });
 
     test('can Refresh Group Memberships via action menu', async ({ page, login }) => {
@@ -245,7 +247,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
           resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
       );
 
-      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Refresh Group Memberships');
+      await usersPo.list().clickRowActionMenuItem(userId, 'Refresh Group Memberships');
 
       const response = await responsePromise;
 
@@ -260,7 +262,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Edit Config');
+      await usersPo.list().clickRowActionMenuItem(userId, 'Edit Config');
 
       const userEdit = usersPo.createEdit(userId);
 
@@ -285,7 +287,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Edit YAML');
+      await usersPo.list().clickRowActionMenuItem(userId, 'Edit YAML');
 
       await expect(page).toHaveURL(/mode=edit&as=yaml/);
 
@@ -302,7 +304,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Delete');
+      await usersPo.list().clickRowActionMenuItem(userId, 'Delete');
 
       const promptRemove = new PromptRemove(page);
 
@@ -317,7 +319,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       expect([200, 204]).toContain(deleteResp.status());
 
-      await expect(usersPo.list().elementWithName(actualUsername)).not.toBeAttached();
+      await expect(usersPo.list().elementWithName(userId)).not.toBeAttached();
 
       // User already deleted, clear userId so afterEach doesn't fail
       userId = '';
@@ -345,13 +347,22 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       }
     });
 
-    test('can Deactivate and Activate users', async ({ page, login }) => {
+    test('can Deactivate and Activate users', async ({ page, login, rancherApi }) => {
       await login();
 
       const usersPo = new UsersPo(page);
 
+      // Look up admin resource ID so we can find its row by the ID link
+      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+      const adminUser = usersResp.body.data.find((u: any) => u.username === 'admin');
+      const adminResourceId = adminUser.id;
+
       await usersPo.goTo();
       await usersPo.waitForPage();
+
+      // Filter to just the test user so pagination doesn't hide it
+      await usersPo.list().resourceTable().sortableTable().filter(userBaseId);
+      await expect(usersPo.list().elementWithName(userBaseId)).toBeVisible();
 
       await usersPo.list().selectAll().self().click();
 
@@ -363,9 +374,14 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.list().deactivate().click();
       await deactivatePromise;
 
-      // admin stays active (cannot self-deactivate)
-      await expect(usersPo.list().details('admin', 1).locator('i')).toHaveClass(/icon-user-check/);
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-xmark/);
+      await expect(usersPo.list().details(userBaseId, 1).locator('i')).toHaveClass(/icon-user-xmark/);
+
+      // Clear filter and verify admin stays active (cannot self-deactivate)
+      await usersPo.list().resourceTable().sortableTable().resetFilter();
+      await expect(usersPo.list().details(adminResourceId, 1).locator('i')).toHaveClass(/icon-user-check/);
+
+      // Re-filter to the test user for activate
+      await usersPo.list().resourceTable().sortableTable().filter(userBaseId);
 
       // Activate
       const activatePromise = page.waitForResponse(
@@ -375,7 +391,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.list().activate().click();
       await activatePromise;
 
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().details(userBaseId, 1).locator('i')).toHaveClass(/icon-user-check/);
     });
 
     test('can Delete user via bulk', async ({ page, login }) => {
@@ -386,7 +402,9 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().elementWithName(actualUsername).locator('td:first-child').click();
+      await usersPo.list().resourceTable().sortableTable().filter(userBaseId);
+      await expect(usersPo.list().elementWithName(userBaseId)).toBeVisible();
+      await usersPo.list().elementWithName(userBaseId).locator('td:first-child').click();
       await usersPo.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
       const promptRemove = new PromptRemove(page);
@@ -402,7 +420,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       expect([200, 204]).toContain(deleteResp.status());
 
-      await expect(usersPo.list().elementWithName(actualUsername)).not.toBeAttached();
+      await expect(usersPo.list().elementWithName(userBaseId)).not.toBeAttached();
 
       // User already deleted
       userBaseId = '';
@@ -568,7 +586,9 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       );
 
       await userCreate.resourceDetail().cruResource().saveOrCreate().click();
-      await firstBinding;
+      const firstBindingResp = await firstBinding;
+      const firstBindingBody = await firstBindingResp.json();
+      const standardUserId = firstBindingBody.userId;
 
       // Second globalrolebinding POST may already have resolved before we start listening
       await page
@@ -585,7 +605,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await usersPo.goTo();
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(standardUsername)).toBeAttached({ timeout: 15000 });
+      await expect(usersPo.list().elementWithName(standardUserId)).toBeAttached({ timeout: 15000 });
 
       // Logout admin and login as the standard user
       await page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
@@ -622,11 +642,13 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await adminCreate.selectCheckbox('Administrator').uncheck();
       await adminCreate.selectCheckbox('User-Base').set();
-      await adminCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+      const adminBindingResp = await adminCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+      const adminBindingBody = await adminBindingResp.json();
+      const adminUserId = adminBindingBody.userId;
 
       await usersPo.goTo();
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(adminUsername)).toBeAttached({ timeout: 15000 });
+      await expect(usersPo.list().elementWithName(adminUserId)).toBeAttached({ timeout: 15000 });
 
       // Cleanup: delete both test users via API (rancherApi is logged in as admin)
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
