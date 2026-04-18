@@ -4,7 +4,7 @@
 Generated: 2026-04-18
 
 Upstream Cypress: 128 specs, 760 tests
-Playwright: 57 specs, 351 tests
+Playwright: 72 specs, 408 tests
 
 ## Summary
 
@@ -37,13 +37,13 @@ Playwright: 57 specs, 351 tests
 | pages/fleet/resources | 5 | 30 | 5 | 19 | 63% |
 | pages/generic | 11 | 68 | 10 | 65 | 96% |
 | pages/global-settings | 8 | 70 | 8 | 73 | 104% |
-| pages/manager | 24 | 155 | 0 | 0 | — |
+| pages/manager | 24 | 155 | 15 | 57 | 37% |
 | pages/user-menu | 3 | 26 | 3 | 18 | 69% |
 | pages/users-and-auth | 8 | 51 | 8 | 38 | 75% |
 | pages/virtualization-mgmt | 1 | 3 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 1 | 4 | ✅ |
-| **TOTAL** | **128** | **760** | **57** | **351** | **46%** |
+| **TOTAL** | **128** | **760** | **72** | **408** | **54%** |
 
 ## Unconverted Specs
 
@@ -188,30 +188,15 @@ Playwright: 57 specs, 351 tests
 
 | Spec | Tests | Skipped |
 |------|-------|---------|
-| agent-configuration-rke2.spec.ts | 2 | 0 |
 | aks-cluster-provisioning.spec.ts | 2 | 0 |
-| cilium-cni.spec.ts | 1 | 0 |
 | cloud-credential.spec.ts | 5 | 0 |
 | cloud-credentials.spec.ts | 6 | 0 |
-| cluster-list.spec.ts | 1 | 0 |
 | cluster-manager.spec.ts | 33 | 0 |
 | cluster-provisioning-amazon-ec2-rke2.spec.ts | 10 | 0 |
 | cluster-provisioning-azure-rke2.spec.ts | 6 | 0 |
-| edit-fake-cluster.spec.ts | 1 | 0 |
 | eks-cluster-provisioning.spec.ts | 3 | 0 |
 | gke-cluster-provisioning.spec.ts | 1 | 0 |
-| hosted-providers.spec.ts | 5 | 0 |
 | jwt-authentication.spec.ts | 8 | 0 |
-| kontainer-drivers.spec.ts | 12 | 0 |
-| machine-deployments.spec.ts | 7 | 0 |
-| machine-sets.spec.ts | 7 | 0 |
-| machines.spec.ts | 5 | 0 |
-| node-drivers.spec.ts | 9 | 1 |
-| pod-security-admissions.spec.ts | 8 | 0 |
-| pod-security-policy-templates.spec.ts | 4 | 0 |
-| registries.spec.ts | 3 | 0 |
-| repositories.spec.ts | 14 | 0 |
-| v2prov-capi.spec.ts | 2 | 0 |
 
 ## Converted Specs (test count comparison)
 
@@ -228,6 +213,17 @@ Playwright: 57 specs, 351 tests
 | pages/generic/home.spec.ts | 18 | 19 | +1 |
 | pages/generic/prime.spec.ts | 2 | 1 | -1 |
 | pages/global-settings/banners.spec.ts | 16 | 19 | +3 |
+| pages/manager/agent-configuration-rke2.spec.ts | 2 | 1 | -1 |
+| pages/manager/edit-fake-cluster.spec.ts | 1 | 2 | +1 |
+| pages/manager/hosted-providers.spec.ts | 5 | 4 | -1 |
+| pages/manager/kontainer-drivers.spec.ts | 12 | 10 | -2 |
+| pages/manager/machine-deployments.spec.ts | 7 | 5 | -2 |
+| pages/manager/machine-sets.spec.ts | 7 | 5 | -2 |
+| pages/manager/machines.spec.ts | 5 | 3 | -2 |
+| pages/manager/node-drivers.spec.ts | 9 | 1 | -8 |
+| pages/manager/pod-security-admissions.spec.ts | 8 | 6 | -2 |
+| pages/manager/pod-security-policy-templates.spec.ts | 4 | 1 | -3 |
+| pages/manager/repositories.spec.ts | 14 | 12 | -2 |
 | pages/user-menu/account-api-keys.spec.ts | 7 | 2 | -5 |
 | pages/user-menu/preferences.spec.ts | 17 | 14 | -3 |
 | pages/users-and-auth/roles.spec.ts | 13 | 7 | -6 |

@@ -1,8 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
-import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
-import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 
 const cloudCredentialsResponse = {
   type: 'collection',
@@ -59,16 +57,13 @@ test.describe('RKE2 Cilium CNI', () => {
       await expect(page).toHaveURL(/type=digitalocean/);
       await createPage.nameNsDescription().name().set('test-do-cilium');
 
-      const cniSelect = new LabeledSelectPo(page, '[data-testid="cluster-rke2-cni-select"]');
+      const cniSelect = createPage.cniSelect();
 
       await cniSelect.checkExists();
       await cniSelect.self().scrollIntoViewIfNeeded();
       await cniSelect.checkOptionSelected('calico');
 
-      const bandwidthManager = new CheckboxInputPo(
-        page,
-        '[data-testid="cluster-rke2-cni-cilium-bandwidth-manager-checkbox"]',
-      );
+      const bandwidthManager = createPage.ciliumBandwidthManagerCheckbox();
 
       await bandwidthManager.checkNotExists();
 

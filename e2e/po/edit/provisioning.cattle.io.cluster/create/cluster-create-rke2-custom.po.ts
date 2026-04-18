@@ -4,6 +4,8 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import RegistriesTabPo from '@/e2e/po/components/registries-tab.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 
 export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManagerCreatePagePo {
   static url(clusterId: string): string {
@@ -44,6 +46,14 @@ export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManager
 
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
+  }
+
+  cniSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="cluster-rke2-cni-select"]');
+  }
+
+  ciliumBandwidthManagerCheckbox(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="cluster-rke2-cni-cilium-bandwidth-manager-checkbox"]');
   }
 
   async create(): Promise<void> {

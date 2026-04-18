@@ -31,8 +31,8 @@ export default class BaseResourceList extends ComponentPo {
     return this.resourceTable().sortableTable().rowWithName(repoName).column(1);
   }
 
-  async actionMenuClose(rowLabel: string): Promise<ActionMenuPo> {
-    return this.resourceTable().sortableTable().rowActionMenuClose(rowLabel);
+  async actionMenuClose(rowLabel: string): Promise<void> {
+    await this.resourceTable().sortableTable().rowActionMenuClose(rowLabel);
   }
 
   details(name: string, index: number): Locator {

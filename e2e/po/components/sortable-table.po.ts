@@ -179,7 +179,7 @@ export default class SortableTablePo extends ComponentPo {
     await row.actionBtn().click();
     await expect(row.actionBtn()).toHaveAttribute('aria-expanded', 'true');
 
-    const actionMenu = this.rowActionMenu();
+    const actionMenu = new ActionMenuPo(this.page, row.self());
 
     await expect(actionMenu.self()).toBeAttached();
 
@@ -191,12 +191,11 @@ export default class SortableTablePo extends ComponentPo {
     return actionMenu;
   }
 
-  async rowActionMenuClose(name: string): Promise<ActionMenuPo> {
+  async rowActionMenuClose(name: string): Promise<void> {
     const row = this.rowWithName(name);
 
     await row.actionBtn().click();
-
-    return this.rowActionMenu();
+    await expect(row.actionBtn()).not.toHaveAttribute('aria-expanded', 'true');
   }
 
   /** For a row with the given name return the checkbox used to select it */
