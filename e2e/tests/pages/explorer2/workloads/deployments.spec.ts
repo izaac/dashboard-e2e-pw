@@ -37,6 +37,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('Should be able to scale the number of pods', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'scale-count-text/scale-up-button/scale-down-button testids added in 2.15, not present in 2.14');
       test.setTimeout(120000);
       await login();
       const namespace = `e2e-scale-ns-${Date.now()}`;
@@ -93,7 +94,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await deploymentsCreatePage.goTo();
       await deploymentsCreatePage.waitForPage();
 
-      const containerTab = page.locator('#container-0, [data-testid="btn-container-0"]');
+      const containerTab = page.getByTestId('btn-container-0');
 
       await containerTab.click();
 
@@ -106,10 +107,8 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await addEnvVarBtn.click();
       await addEnvVarBtn.click();
 
-      const keyInputs = page.locator('.key-value-input .kv-item .name input');
-      const valInputs = page.locator(
-        '.key-value-input .kv-item .value input, .key-value-input .kv-item .value textarea',
-      );
+      const keyInputs = page.getByRole('textbox', { name: 'Variable Name' });
+      const valInputs = page.getByRole('textbox', { name: 'Value' });
 
       await keyInputs.nth(0).fill('a');
       await valInputs.nth(0).fill('a');
@@ -118,9 +117,9 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await keyInputs.nth(2).fill('c');
       await valInputs.nth(2).fill('c');
 
-      const removeButtons = page.locator(
-        '.key-value-input .kv-item .remove button, .key-value-input .kv-item button.role-link',
-      );
+      const removeButtons = page
+        .locator('.key-value-input .kv-item .remove button, .key-value-input .kv-item button.role-link, button')
+        .filter({ hasText: 'Remove' });
 
       await removeButtons.nth(1).click();
 
@@ -134,15 +133,18 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await deploymentsCreatePage.goTo();
       await deploymentsCreatePage.waitForPage();
 
-      const podTab = page.locator('#pod, [data-testid="btn-pod"]');
+      const podTab = page.getByTestId('btn-pod');
 
       await podTab.click();
 
-      const storageTab = page.locator('#storage-pod, [data-testid="tab-storage-pod"]');
+      const storageTab = page.getByRole('tabpanel', { name: 'Pod' }).getByRole('tab', { name: 'Storage' });
 
       await storageTab.click();
 
-      const addVolumeBtn = page.locator('.add-vol button, [data-testid="add-volume-button"]').first();
+      const addVolumeBtn = page
+        .locator('.add-vol button, [data-testid="add-volume-button"]')
+        .or(page.getByRole('button', { name: 'Add Volume' }))
+        .first();
 
       await addVolumeBtn.click();
       await expect(page.locator('.vs__dropdown-menu')).toContainText('CSI');
@@ -199,6 +201,8 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Redeploy Dialog', () => {
+    test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.14');
+
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();
       const deploymentName = `e2e-redeploy-${Date.now()}`;

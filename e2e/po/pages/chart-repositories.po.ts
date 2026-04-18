@@ -27,7 +27,7 @@ export default class ChartRepositoriesPagePo extends PagePo {
   }
 
   async create(): Promise<void> {
-    await this.list().masthead().actions().filter({ hasText: 'Add Repository' }).click();
+    await this.page.getByTestId('masthead-create').click();
   }
 
   createEditRepositories(repoName?: string): ChartRepositoriesCreateEditPo {
