@@ -23,7 +23,7 @@ export default class PodSecurityAdmissionsPagePo extends PagePo {
     await this.list().masthead().actions().filter({ hasText: 'Create' }).click();
   }
 
-  createPodSecurityAdmissionForm(): PodSecurityAdmissionsCreateEditPo {
-    return new PodSecurityAdmissionsCreateEditPo(this.page, this.clusterId);
+  createPodSecurityAdmissionForm(id?: string): PodSecurityAdmissionsCreateEditPo {
+    return new PodSecurityAdmissionsCreateEditPo(this.page, this.clusterId, id);
   }
 }

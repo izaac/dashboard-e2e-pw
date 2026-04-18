@@ -133,7 +133,7 @@ export class RancherApi {
       expect([200, 201]).toContain(resp.status());
     }
 
-    return { status: resp.status(), body: await resp.json() };
+    return { status: resp.status(), body: await resp.json().catch(() => ({})) };
   }
 
   async setRancherResource(prefix: string, resourceType: string, resourceId: string, body: any) {

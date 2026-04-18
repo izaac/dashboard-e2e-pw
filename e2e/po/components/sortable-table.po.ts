@@ -76,14 +76,18 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   rowElementWithName(name: string): Locator {
-    // Find rows by exact name match — supports both linked (td a) and plain text (td) names
+    // Find rows by exact name match — supports linked (td a), plain text (td), and
+    // composite cells where the name is in a child element (td > span) with sibling
+    // content like description URLs (e.g. kontainer driver rows).
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const exactRegex = new RegExp(`^\\s*${escaped}\\s*$`);
 
     return this.self()
       .locator('tbody tr')
       .filter({
-        has: this.page.locator('td').filter({ hasText: exactRegex }),
+        has: this.page.locator('td').filter({
+          has: this.page.locator('span, a').filter({ hasText: exactRegex }),
+        }),
       });
   }
 
