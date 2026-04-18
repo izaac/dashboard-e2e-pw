@@ -16,6 +16,7 @@ browser-logs/
 
 # Claude Code (user-local settings — not version controlled)
 .claude/settings.local.json
+.claude/projects/
 
 # IDE
 .idea/
