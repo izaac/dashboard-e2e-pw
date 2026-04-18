@@ -4,6 +4,7 @@ import { nodeDriveResponse } from '@/e2e/tests/pages/manager/mock-responses';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
+import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
@@ -112,7 +113,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${prov.clusterProviderQueryParam}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(page.locator('.primaryheader h1, .title-bar h1')).toContainText(`Create ${prov.label}`);
+        await expect(clusterCreate.rke2PageTitle()).toContainText(`Create ${prov.label}`);
       });
     }
   });
@@ -217,6 +218,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -224,78 +226,80 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
 
-      await page.locator('[data-testid="btn-conditions"]').click();
+      await clusterDetail.conditionsTab().click();
       await expect(page).toHaveURL(/conditions/);
 
-      await expect(page.locator('tr:has-text("Created") td').nth(0)).toContainText('True');
+      await expect(clusterDetail.tableRowCell('Created', 0)).toContainText('True');
     });
 
     test('can navigate to Cluster Related Page', async ({ page, login }) => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await page.locator('[data-testid="btn-related"]').click();
+      await clusterDetail.relatedTab().click();
       await expect(page).toHaveURL(/related/);
 
-      await expect(page.locator('tr:has-text("Mgmt") td').nth(1)).toContainText('local');
+      await expect(clusterDetail.tableRowCell('Mgmt', 1)).toContainText('local');
     });
 
     test('can navigate to Cluster Provisioning Log Page', async ({ page, login }) => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await page.locator('[data-testid="btn-log"]').click();
+      await clusterDetail.logTab().click();
       await expect(page).toHaveURL(/log/);
 
-      await expect(page.locator('.logs-container, [data-testid="logs-container"]')).toBeVisible();
+      await expect(clusterDetail.logsContainer()).toBeVisible();
     });
 
     test('can navigate to Cluster Machines Page', async ({ page, login }) => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await page.locator('[data-testid="btn-node-pools"]').click();
+      await clusterDetail.nodePoolsTab().click();
       await expect(page).toHaveURL(/node-pools/);
 
-      await expect(page.locator('tr:has-text("machine-")')).toBeVisible();
+      await expect(clusterDetail.tableRowContaining('machine-')).toBeVisible();
     });
 
     test('Show Configuration allows to edit config and view yaml for local cluster', async ({ page, login }) => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await page.locator('button:has-text("Show Configuration"), [data-testid="show-configuration"]').click();
+      await clusterDetail.showConfigurationButton().click();
 
-      const drawer = page.locator('[data-testid="detail-drawer"], .side-panel');
+      const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
       await expect(drawer.locator('button:has-text("Save")')).toBeVisible();
 
-      // Check tabs: Config and YAML
       await expect(drawer.locator('[data-testid="tab-config"], button:has-text("Config")')).toBeVisible();
       await expect(drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")')).toBeVisible();
 
-      // Click YAML tab — save button should not exist
       await drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")').click();
       await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
     });
@@ -304,13 +308,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page.locator('[data-testid="cluster-namespace"]')).toContainText('fleet-local');
-      await page.locator('[data-testid="cluster-namespace"]').click();
+      await expect(clusterDetail.clusterNamespaceLink()).toContainText('fleet-local');
+      await clusterDetail.clusterNamespaceLink().click();
 
       await expect(page).toHaveURL(/Resources/);
     });
@@ -321,6 +326,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -328,10 +334,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await expect(page).toHaveURL(/mode=edit/);
 
-      // Name should be read-only for local cluster
-      await expect(page.locator('[data-testid="name-ns-description"] input[id*="name"]').first()).toBeDisabled();
+      await expect(clusterDetail.nameInput()).toBeDisabled();
 
-      await page.locator('button:has-text("Cancel"), [data-testid="cancel-button"]').click();
+      await clusterDetail.cancelButton().click();
       await clusterList.waitForPage();
     });
 
@@ -389,16 +394,17 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await login();
 
     const clusterList = new ClusterManagerListPagePo(page);
+    const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
     await clusterList.goTo();
     await clusterList.waitForPage();
 
     await clusterList.list().actionMenu('local').getMenuItem('Kubectl Shell').click();
 
-    await expect(page.locator('.terminal, [data-testid="kubectl-shell"]')).toBeVisible();
-    await expect(page.locator('.terminal, [data-testid="kubectl-shell"]').locator('text=Connected')).toBeVisible();
+    await expect(clusterDetail.kubectlShell()).toBeVisible();
+    await expect(clusterDetail.kubectlShell().locator('text=Connected')).toBeVisible();
 
-    await page.locator('[data-testid="close-shell-button"], .btn:has-text("Close")').click();
+    await clusterDetail.closeShellButton().click();
   });
 
   test.describe('Credential Step', () => {
@@ -526,6 +532,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -533,9 +540,9 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
 
-      await page.locator('button:has-text("Show Configuration"), [data-testid="show-configuration"]').click();
+      await clusterDetail.showConfigurationButton().click();
 
-      const drawer = page.locator('[data-testid="detail-drawer"], .side-panel');
+      const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
       await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
@@ -551,6 +558,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
+      const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -558,10 +566,8 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
 
-      const exploreBtn = page.locator('[data-testid="explore-button"], button:has-text("Explore")');
-
-      await expect(exploreBtn).toBeVisible();
-      await exploreBtn.click();
+      await expect(clusterDetail.exploreButton()).toBeVisible();
+      await clusterDetail.exploreButton().click();
 
       await expect(page).toHaveURL(/\/c\/local\/explorer/);
     });

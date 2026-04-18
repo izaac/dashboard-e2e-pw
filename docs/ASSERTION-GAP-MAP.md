@@ -4,7 +4,7 @@
 Generated: 2026-04-18
 
 Upstream Cypress: 128 specs, 760 tests
-Playwright: 117 specs, 594 tests
+Playwright: 128 specs, 687 tests
 
 ## Summary
 
@@ -33,40 +33,21 @@ Playwright: 117 specs, 594 tests
 | pages/explorer2/storage | 6 | 19 | 6 | 19 | ✅ |
 | pages/explorer2/workloads | 8 | 55 | 8 | 51 | 93% |
 | pages/extensions | 2 | 22 | 2 | 22 | ✅ |
-| pages/fleet | 5 | 41 | 3 | 16 | 39% |
+| pages/fleet | 5 | 41 | 5 | 37 | 90% |
 | pages/fleet/resources | 5 | 30 | 5 | 19 | 63% |
 | pages/generic | 11 | 68 | 11 | 68 | ✅ |
 | pages/global-settings | 8 | 70 | 8 | 73 | 104% |
-| pages/manager | 24 | 155 | 15 | 57 | 37% |
+| pages/manager | 24 | 155 | 24 | 129 | 83% |
 | pages/user-menu | 3 | 26 | 3 | 20 | 77% |
 | pages/users-and-auth | 8 | 51 | 8 | 48 | 94% |
 | pages/virtualization-mgmt | 1 | 3 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 1 | 4 | ✅ |
-| **TOTAL** | **128** | **760** | **117** | **594** | **78%** |
+| **TOTAL** | **128** | **760** | **128** | **687** | **90%** |
 
 ## Unconverted Specs
 
-### pages/fleet
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| fleet-clusters.spec.ts | 15 | 0 |
-| gitrepo.spec.ts | 10 | 0 |
-
-### pages/manager
-
-| Spec | Tests | Skipped |
-|------|-------|---------|
-| aks-cluster-provisioning.spec.ts | 2 | 0 |
-| cloud-credential.spec.ts | 5 | 0 |
-| cloud-credentials.spec.ts | 6 | 0 |
-| cluster-manager.spec.ts | 33 | 0 |
-| cluster-provisioning-amazon-ec2-rke2.spec.ts | 10 | 0 |
-| cluster-provisioning-azure-rke2.spec.ts | 6 | 0 |
-| eks-cluster-provisioning.spec.ts | 3 | 0 |
-| gke-cluster-provisioning.spec.ts | 1 | 0 |
-| jwt-authentication.spec.ts | 8 | 0 |
+All upstream specs have Playwright equivalents.
 
 ## Converted Specs (test count comparison)
 
@@ -87,6 +68,8 @@ Playwright: 117 specs, 594 tests
 | pages/explorer2/project-namespace.spec.ts | 11 | 10 | -1 |
 | pages/explorer2/workloads/deployments.spec.ts | 15 | 12 | -3 |
 | pages/explorer2/workloads/pods.spec.ts | 11 | 10 | -1 |
+| pages/fleet/fleet-clusters.spec.ts | 15 | 14 | -1 |
+| pages/fleet/gitrepo.spec.ts | 10 | 7 | -3 |
 | pages/fleet/resources/bundle-namespace-mappings.spec.ts | 4 | 3 | -1 |
 | pages/fleet/resources/bundles.spec.ts | 6 | 5 | -1 |
 | pages/fleet/resources/cluster-registration-tokens.spec.ts | 6 | 4 | -2 |
@@ -96,6 +79,8 @@ Playwright: 117 specs, 594 tests
 | pages/generic/prime.spec.ts | 2 | 1 | -1 |
 | pages/global-settings/banners.spec.ts | 16 | 19 | +3 |
 | pages/manager/agent-configuration-rke2.spec.ts | 2 | 1 | -1 |
+| pages/manager/cloud-credential.spec.ts | 5 | 4 | -1 |
+| pages/manager/cluster-manager.spec.ts | 33 | 32 | -1 |
 | pages/manager/edit-fake-cluster.spec.ts | 1 | 2 | +1 |
 | pages/manager/hosted-providers.spec.ts | 5 | 4 | -1 |
 | pages/manager/kontainer-drivers.spec.ts | 12 | 10 | -2 |

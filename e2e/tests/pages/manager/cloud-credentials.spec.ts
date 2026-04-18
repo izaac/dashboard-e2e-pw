@@ -3,18 +3,6 @@ import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credent
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 
 test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
-  let cloudcredentialId = '';
-
-  test.beforeAll(async ({ rancherApi }) => {
-    // Clean up any existing credentials to start fresh
-    const result = await rancherApi.getRancherResource('v3', 'cloudCredentials');
-    const credentials = result.body.data || [];
-
-    for (const cred of credentials) {
-      await rancherApi.deleteRancherResource('v3', 'cloudCredentials', cred.id.trim(), false);
-    }
-  });
-
   test('can see error when authentication fails', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
 
@@ -49,6 +37,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+    let cloudcredentialId = '';
 
     try {
       await cloudCredentialsPage.goTo();
@@ -75,7 +64,6 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
       expect(placeholder).not.toContain('optional');
 
-      // Save button disabled before name
       await cloudCredentialsPage
         .createEditCloudCreds()
         .saveCreateForm()
@@ -137,7 +125,6 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
       });
 
       credId = createResp.body.id;
-      cloudcredentialId = credId;
 
       await cloudCredentialsPage.goTo();
       await cloudCredentialsPage.waitForPage();
@@ -257,24 +244,28 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     const credId = createResp.body.id;
 
-    await cloudCredentialsPage.goTo();
-    await cloudCredentialsPage.waitForPage();
+    try {
+      await cloudCredentialsPage.goTo();
+      await cloudCredentialsPage.waitForPage();
 
-    const actionMenu = await cloudCredentialsPage.list().actionMenu(cloudCredentialName);
+      const actionMenu = await cloudCredentialsPage.list().actionMenu(cloudCredentialName);
 
-    await actionMenu.getMenuItem('Delete').click();
+      await actionMenu.getMenuItem('Delete').click();
 
-    const promptRemove = new PromptRemove(page);
-    const deletePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
-      { timeout: 15000 },
-    );
+      const promptRemove = new PromptRemove(page);
+      const deletePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
+        { timeout: 15000 },
+      );
 
-    await promptRemove.remove();
-    await deletePromise;
-    await cloudCredentialsPage.waitForPage();
+      await promptRemove.remove();
+      await deletePromise;
+      await cloudCredentialsPage.waitForPage();
 
-    await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+      await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+    } finally {
+      await rancherApi.deleteRancherResource('v3', 'cloudCredentials', credId, false);
+    }
   });
 
   test('can delete cloud credentials via bulk actions', async ({ login, page, rancherApi, envMeta }) => {
@@ -300,22 +291,26 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     const credId = createResp.body.id;
 
-    await cloudCredentialsPage.goTo();
-    await cloudCredentialsPage.waitForPage();
+    try {
+      await cloudCredentialsPage.goTo();
+      await cloudCredentialsPage.waitForPage();
 
-    await cloudCredentialsPage.list().resourceTable().sortableTable().rowSelectCtlWithName(cloudCredentialName).set();
-    await cloudCredentialsPage.list().resourceTable().sortableTable().deleteButton().click();
+      await cloudCredentialsPage.list().resourceTable().sortableTable().rowSelectCtlWithName(cloudCredentialName).set();
+      await cloudCredentialsPage.list().resourceTable().sortableTable().deleteButton().click();
 
-    const promptRemove = new PromptRemove(page);
-    const deletePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
-      { timeout: 15000 },
-    );
+      const promptRemove = new PromptRemove(page);
+      const deletePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
+        { timeout: 15000 },
+      );
 
-    await promptRemove.remove();
-    await deletePromise;
-    await cloudCredentialsPage.waitForPage();
+      await promptRemove.remove();
+      await deletePromise;
+      await cloudCredentialsPage.waitForPage();
 
-    await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+      await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+    } finally {
+      await rancherApi.deleteRancherResource('v3', 'cloudCredentials', credId, false);
+    }
   });
 });

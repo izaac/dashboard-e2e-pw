@@ -88,8 +88,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
 
     await fleetClusterListPage.sortableTable().checkLoadingIndicatorNotVisible();
 
-    // Local workspace always has at least 1 cluster (local)
-    await expect(fleetClusterListPage.sortableTable().self().locator('tr.main-row')).toHaveCount(1);
+    await expect(fleetClusterListPage.mainRows()).toHaveCount(1);
   });
 
   test('Git Repos Tab Add Repository button takes you to the correct page', async ({ page, login }) => {
@@ -156,7 +155,6 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
 
       await login();
 
-      // Create a git repo so bundles exist in the local workspace
       await rancherApi.createRancherResource(
         'v1',
         'fleet.cattle.io.gitrepos',
@@ -164,20 +162,17 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
       );
 
       try {
-        // Verify the git repo appears in app bundles list
         await fleetAppBundlesListPage.goTo();
         await fleetAppBundlesListPage.waitForPage();
         await header.selectWorkspace(workspace);
         await expect(fleetAppBundlesListPage.sortableTable().rowElementWithName(gitRepoName)).toBeVisible();
 
-        // Go to fleet cluster list
         await fleetClusterListPage.goTo();
         await fleetClusterListPage.waitForPage();
         await header.selectWorkspace(workspace);
 
         await fleetClusterListPage.sortableTable().checkLoadingIndicatorNotVisible();
 
-        // Check list table headers
         const expectedHeaders = [
           'State',
           'Name',
@@ -194,14 +189,12 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           await expect(headerCells.nth(i)).toContainText(expectedHeaders[i]);
         }
 
-        // Go to local cluster details
         await fleetClusterListPage.goToDetailsPage('local');
 
         const fleetClusterDetailsPage = new FleetClusterDetailsPo(page, workspace, 'local');
 
         await fleetClusterDetailsPage.waitForPage(undefined, 'applications');
 
-        // Check details table headers
         const expectedHeadersDetailsView = [
           'State',
           'Name',
@@ -217,8 +210,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           .self()
           .locator('.table-header-container .content');
 
-        // Switch to flat list view first
-        await page.locator('[data-testid="group-by-button-0"], .btn-group button').first().click();
+        await fleetClusterDetailsPage.flatListViewButton().click();
 
         for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
           await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);

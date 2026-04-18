@@ -44,4 +44,76 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   title(): Locator {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
   }
+
+  eventsTab(): Locator {
+    return this.page.getByTestId('btn-events');
+  }
+
+  snapshotsTab(): Locator {
+    return this.page.getByTestId('btn-snapshots');
+  }
+
+  conditionsTab(): Locator {
+    return this.page.getByTestId('btn-conditions');
+  }
+
+  relatedTab(): Locator {
+    return this.page.getByTestId('btn-related');
+  }
+
+  logTab(): Locator {
+    return this.page.getByTestId('btn-log');
+  }
+
+  nodePoolsTab(): Locator {
+    return this.page.getByTestId('btn-node-pools');
+  }
+
+  tabbedBlock(): Locator {
+    return this.page.getByTestId('tabbed-block');
+  }
+
+  showConfigurationButton(): Locator {
+    return this.page.locator('button:has-text("Show Configuration"), [data-testid="show-configuration"]');
+  }
+
+  configurationDrawer(): Locator {
+    return this.page.locator('[data-testid="detail-drawer"], .side-panel');
+  }
+
+  clusterNamespaceLink(): Locator {
+    return this.page.getByTestId('cluster-namespace');
+  }
+
+  nameInput(): Locator {
+    return this.page.locator('[data-testid="name-ns-description"] input[id*="name"]').first();
+  }
+
+  cancelButton(): Locator {
+    return this.page.locator('button:has-text("Cancel"), [data-testid="cancel-button"]');
+  }
+
+  kubectlShell(): Locator {
+    return this.page.locator('.terminal, [data-testid="kubectl-shell"]');
+  }
+
+  closeShellButton(): Locator {
+    return this.page.locator('[data-testid="close-shell-button"], .btn:has-text("Close")');
+  }
+
+  logsContainer(): Locator {
+    return this.page.locator('.logs-container, [data-testid="logs-container"]');
+  }
+
+  exploreButton(): Locator {
+    return this.page.locator('[data-testid="explore-button"], button:has-text("Explore")');
+  }
+
+  tableRowCell(rowText: string, cellIndex: number): Locator {
+    return this.page.locator(`tr:has-text("${rowText}") td`).nth(cellIndex);
+  }
+
+  tableRowContaining(text: string): Locator {
+    return this.page.locator(`tr:has-text("${text}")`);
+  }
 }

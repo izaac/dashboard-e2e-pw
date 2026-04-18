@@ -2,7 +2,6 @@ import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateEKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-eks.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
-import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import * as eksDefaultSettings from '@/e2e/blueprints/cluster_management/eks-default-settings';
 
 const eksSettings = {
@@ -21,12 +20,12 @@ const eksSettings = {
 
 test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
-    // Clean up any existing Amazon cloud credentials before suite runs
+    // Clean up test-prefixed Amazon cloud credentials from previous runs
     const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
 
     if (result.body?.pagination?.total > 0) {
       for (const item of result.body.data) {
-        if (item.amazonec2credentialConfig) {
+        if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
         }
       }
@@ -56,7 +55,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
@@ -87,7 +86,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       cloudCredId = credBody.id;
 
       await pageLoadPromise;
-      await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
       // Set cluster name and description
@@ -156,17 +155,12 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
-      // Select the pre-created cloud credential from the dropdown
-      const credSelect = page
-        .locator('[data-testid="eks-credential-select"], [data-testid="cloud-credentials-select"]')
-        .first();
-
-      await credSelect.click();
-      await page.locator(`.vs__dropdown-menu li:has-text("${credName}")`).click();
+      await createEKSClusterPage.credentialSelect().click();
+      await createEKSClusterPage.dropdownOption(credName).click();
 
       // Verify defaults
       await createEKSClusterPage.getRegion().checkOptionSelected(eksSettings.eksRegion);
@@ -183,19 +177,12 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await createEKSClusterPage.getInstanceType().checkContainsOptionSelected(eksSettings.instanceType);
       await createEKSClusterPage.getDiskSize().shouldHaveValue(eksSettings.diskSize);
 
-      // Check standard role selected (index 0)
-      const serviceRoleButtonGroup = new RadioGroupInputPo(page, '[data-testid="eks-service-role-radio"]');
+      await createEKSClusterPage.serviceRoleRadioGroup().isChecked(0);
 
-      await serviceRoleButtonGroup.isChecked(0);
-
-      // Check networking access defaults
       await createEKSClusterPage.getPublicAccess().isChecked();
       await createEKSClusterPage.getPrivateAccess().isNotChecked();
 
-      // Check VPC radio group (index 0)
-      const vpcButtonGroup = new RadioGroupInputPo(page, '[aria-label="VPCs and Subnets"]');
-
-      await vpcButtonGroup.isChecked(0);
+      await createEKSClusterPage.vpcRadioGroup().isChecked(0);
 
       // Set cluster name and create
       await createEKSClusterPage.getClusterName().set(clusterName);
@@ -274,16 +261,11 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
-      // Select credential
-      const credSelect = page
-        .locator('[data-testid="eks-credential-select"], [data-testid="cloud-credentials-select"]')
-        .first();
-
-      await credSelect.click();
-      await page.locator(`.vs__dropdown-menu li:has-text("${credName}")`).click();
+      await createEKSClusterPage.credentialSelect().click();
+      await createEKSClusterPage.dropdownOption(credName).click();
 
       const tabbedPo = new TabbedPo(page, '[data-testid="tabbed"]');
       const initialTabNames = await tabbedPo.tabNames();

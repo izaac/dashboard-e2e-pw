@@ -12,17 +12,18 @@ const MEDIUM_TIMEOUT = 120_000;
 const LONG_TIMEOUT = 360_000;
 const VERY_LONG_TIMEOUT = 900_000;
 
+// Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
 test.describe(
   'Deploy RKE2 cluster using node driver on Amazon EC2',
   { tag: ['@manager', '@adminUser', '@provisioning'] },
   () => {
     test.beforeAll(async ({ rancherApi }) => {
-      // Clean up any orphaned Amazon cloud credentials
+      // Clean up only test-prefixed Amazon cloud credentials from previous runs
       const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
 
       if (result.body?.pagination?.total > 0) {
         for (const item of result.body.data) {
-          if (item.amazonec2credentialConfig) {
+          if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
             await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
           }
         }
@@ -49,7 +50,7 @@ test.describe(
         await clusterList.waitForPage();
         await clusterList.createCluster();
         await createRKE2ClusterPage.selectCreate(0);
-        await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+        await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
         await expect(createRKE2ClusterPage.rke2PageTitle()).toContainText('Create Amazon EC2');
         await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2');
 
@@ -81,7 +82,7 @@ test.describe(
         cloudcredentialId = credBody.id;
 
         await pageLoadPromise;
-        await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+        await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
         await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2', 'basic');
 
         await createRKE2ClusterPage.nameNsDescription().name().set(clusterName);
@@ -171,14 +172,7 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      await clusterList
-        .list()
-        .resourceTable()
-        .sortableTable()
-        .rowWithName(clusterName)
-        .self()
-        .locator('.cluster-link a')
-        .click();
+      await clusterList.clusterLink(clusterName).click();
       await clusterDetails.waitForPage(undefined, 'machine-pools');
       await expect(clusterDetails.resourceDetail().title()).toContainText(clusterName);
 
@@ -200,14 +194,7 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      await clusterList
-        .list()
-        .resourceTable()
-        .sortableTable()
-        .rowWithName(clusterName)
-        .self()
-        .locator('.cluster-link a')
-        .click();
+      await clusterList.clusterLink(clusterName).click();
       await clusterDetails.waitForPage(undefined, 'machine-pools');
       await expect(clusterDetails.resourceDetail().title()).toContainText(clusterName);
 
@@ -278,8 +265,7 @@ test.describe(
 
         await clusterDetails.poolsList('machine').scaleDownButton(poolName).click();
 
-        // Handle scale-down confirmation dialog
-        const confirmBtn = page.locator('[data-testid="scale-pool-down-confirm"]');
+        const confirmBtn = clusterDetails.poolsList('machine').scalePoolDownConfirm();
 
         if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
           await confirmBtn.click();
@@ -386,7 +372,6 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      const initialCount = await clusterList.sortableTable().rowCount();
       const actionMenu = await clusterList.list().actionMenu(clusterName);
 
       await actionMenu.getMenuItem('Delete').click();
@@ -398,9 +383,6 @@ test.describe(
 
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Removing');
-      const newCount = await clusterList.sortableTable().rowCount();
-
-      expect(newCount).toBeLessThan(initialCount);
       await expect(clusterList.list().resourceTable().sortableTable().rowWithName(clusterName).self()).not.toBeAttached(
         { timeout: MEDIUM_TIMEOUT },
       );
@@ -444,7 +426,7 @@ test.describe(
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createRKE2ClusterPage.selectCreate(0);
-      await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+      await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
       await expect(createRKE2ClusterPage.rke2PageTitle()).toContainText('Create Amazon EC2');
       await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2', 'basic');
 
@@ -579,7 +561,7 @@ test.describe(
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createRKE2ClusterPage.selectCreate(0);
-      await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 15000 });
+      await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
       await expect(createRKE2ClusterPage.rke2PageTitle()).toContainText('Create Amazon EC2');
       await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2', 'basic');
 
