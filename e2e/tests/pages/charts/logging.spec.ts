@@ -11,6 +11,8 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   const chartAppDisplayName = 'Logging';
   const chartApp = 'rancher-logging';
   const chartCrd = 'rancher-logging-crd';

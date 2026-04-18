@@ -16,6 +16,8 @@ const linodeDriver = 'Linode LKE';
 const exampleDriver = 'Example';
 
 test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('should show the cluster drivers list page', async ({ page, login }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);

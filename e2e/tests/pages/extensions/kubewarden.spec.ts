@@ -10,6 +10,8 @@ const gitRepoName = 'rancher-extensions';
 const gitRepoUrl = 'https://github.com/rancher/ui-plugin-charts';
 
 test.describe('Kubewarden Extension', { tag: ['@extensions', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   let kubewardenAvailable = false;
 
   test.beforeAll(async ({ rancherApi }) => {
@@ -38,7 +40,7 @@ test.describe('Kubewarden Extension', { tag: ['@extensions', '@adminUser'] }, ()
       'v1',
       `catalog.cattle.io.apps/cattle-ui-plugin-system/${extensionName}?action=uninstall`,
       {},
-      false
+      false,
     );
 
     // Remove the repo

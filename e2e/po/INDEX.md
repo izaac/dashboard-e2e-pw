@@ -232,7 +232,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl |
-| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, nameInput, selectNamespace (+4) |
+| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, nameInput, selectNamespace (+13) |
 
 ## pages/extensions/
 

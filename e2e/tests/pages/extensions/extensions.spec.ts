@@ -111,6 +111,8 @@ async function isExtensionInstalled(api: RancherApi, extensionName: string): Pro
 // =============================================================
 
 test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ login }) => {
     await login();
   });

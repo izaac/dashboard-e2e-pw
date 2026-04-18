@@ -32,6 +32,8 @@ const nonUrlCases = ['test', 'https', 'test.com', 'a.test.com'];
 const settingsClusterId = '_';
 
 test.describe('Settings (Part 2)', () => {
+  test.describe.configure({ mode: 'serial' });
+
   const settingsOriginal: Record<string, any> = {};
   const resetSettings: string[] = [];
   let settingsPage: SettingsPagePo;

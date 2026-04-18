@@ -9,6 +9,8 @@ const clientSecret = 'test-client-secret';
 const issuerUrl = 'test-issuer-url';
 
 test.describe('Amazon Cognito', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page, login }) => {
     await login();
 

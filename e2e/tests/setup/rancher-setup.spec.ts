@@ -11,6 +11,8 @@ import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
  * @adminUserSetup @standardUserSetup @setup
  */
 test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUserSetup'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ envMeta }) => {
     test.skip(!envMeta.bootstrapPassword, 'Requires CATTLE_BOOTSTRAP_PASSWORD and a fresh Rancher instance');
   });

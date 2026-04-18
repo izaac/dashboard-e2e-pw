@@ -28,6 +28,8 @@ const settingsData: Record<string, { new: string; new2?: string; new3?: string }
 const settingsClusterId = '_';
 
 test.describe('Settings', () => {
+  test.describe.configure({ mode: 'serial' });
+
   const settingsOriginal: Record<string, any> = {};
   const resetSettings: string[] = [];
   let settingsPage: SettingsPagePo;

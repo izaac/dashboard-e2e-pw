@@ -5,6 +5,8 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { PerformancePagePo } from '@/e2e/po/pages/global-settings/performance.po';
 
 test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   let performanceSettingsOriginal: any;
   let perfPage: PerformancePagePo;
 

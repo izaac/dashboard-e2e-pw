@@ -24,6 +24,8 @@ const UPDATE_GROUP_NAME = 'update-group-1';
 const UPDATE_GROUP_IMAGE_PATH = 'some/path';
 
 test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ login }) => {
     await login();
   });

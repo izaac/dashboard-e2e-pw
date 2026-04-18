@@ -94,6 +94,45 @@ export class WorkloadsCreatePageBasePo extends PagePo {
     await this.page.getByTestId('form-save').click();
   }
 
+  containerTab(index = 0): Locator {
+    return this.page.locator(`li#container-${index}`);
+  }
+
+  podTab(): Locator {
+    return this.page.locator('li#pod');
+  }
+
+  async addEnvironmentVariable(): Promise<void> {
+    await this.page.getByTestId('add-env-var').click();
+  }
+
+  environmentVariableKeyInput(index: number): Locator {
+    return this.page.getByTestId(`env-var-row-${index}`).locator('.name input');
+  }
+
+  environmentVariableValueInput(index: number): Locator {
+    return this.page.getByTestId(`env-var-row-${index}`).locator('.single-value input, .single-value textarea');
+  }
+
+  async removeEnvironmentVariable(index: number): Promise<void> {
+    await this.page.getByTestId(`env-var-row-${index}`).locator('.remove button').click();
+  }
+
+  storagePodTab(): Locator {
+    return this.page.locator('li#storage-pod');
+  }
+
+  addVolumeButton(): Locator {
+    return this.page
+      .locator('.add-vol button, [data-testid="add-volume-button"]')
+      .or(this.page.getByRole('button', { name: 'Add Volume' }))
+      .first();
+  }
+
+  dropdownMenu(): Locator {
+    return this.page.locator('.vs__dropdown-menu');
+  }
+
   /**
    * Create a deployment via the UI form.
    * Fills name, container image, selects namespace, and saves.

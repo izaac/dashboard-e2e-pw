@@ -18,6 +18,8 @@ const configMapPayload = {
 };
 
 test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+
   const testChartsRepoName = 'test-charts';
   const testChartsGitRepoUrl = 'https://github.com/richard-cox/rodeo';
   const testChartsBranchName = 'master';
