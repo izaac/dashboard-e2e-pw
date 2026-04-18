@@ -40,4 +40,8 @@ export default class KontainerDriversPagePo extends PagePo {
   async createDriver(): Promise<void> {
     await this.list().masthead().actions().nth(1).click();
   }
+
+  growlText(): Locator {
+    return this.page.locator('.growl-text');
+  }
 }

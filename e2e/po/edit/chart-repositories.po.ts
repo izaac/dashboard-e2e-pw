@@ -102,6 +102,22 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return this.authSelectOrCreate('[data-testid="clusterrepo-auth-secret"]');
   }
 
+  authSecretUsername(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Username');
+  }
+
+  authSecretPassword(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.self(), 'Password');
+  }
+
+  authSecretSshPrivateKey(): Locator {
+    return this.self().locator('.labeled-input:has-text("Private Key") textarea');
+  }
+
+  authSecretSshPublicKey(): Locator {
+    return this.self().locator('.labeled-input:has-text("Public Key") textarea');
+  }
+
   refreshIntervalInput(): Locator {
     return this.page.getByTestId('clusterrepo-refresh-interval');
   }

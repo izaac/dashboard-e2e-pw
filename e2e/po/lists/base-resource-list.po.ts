@@ -34,4 +34,24 @@ export default class BaseResourceList extends ComponentPo {
   async actionMenuClose(rowLabel: string): Promise<ActionMenuPo> {
     return this.resourceTable().sortableTable().rowActionMenuClose(rowLabel);
   }
+
+  details(name: string, index: number): Locator {
+    return this.resourceTable().sortableTable().rowWithName(name).column(index);
+  }
+
+  activate(): Locator {
+    return this.page.getByTestId('sortable-table-activate');
+  }
+
+  deactivate(): Locator {
+    return this.page.getByTestId('sortable-table-deactivate');
+  }
+
+  async openBulkActionDropdown(): Promise<void> {
+    await this.resourceTable().sortableTable().bulkActionDropDownOpen();
+  }
+
+  bulkActionButton(name: string): Locator {
+    return this.resourceTable().sortableTable().bulkActionDropDownButton(name);
+  }
 }

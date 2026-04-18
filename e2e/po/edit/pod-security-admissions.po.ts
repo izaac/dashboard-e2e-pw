@@ -38,8 +38,11 @@ export default class PodSecurityAdmissionsCreateEditPo extends PagePo {
   }
 
   async psaControlVersion(itemRow: number, text: string): Promise<void> {
-    const input = this.page.locator(`[data-testid="pod-security-admission--psaControl-${itemRow}-version"] input`);
+    // The data-testid is on the input element itself, not a parent wrapper
+    const input = this.page.locator(`input[data-testid="pod-security-admission--psaControl-${itemRow}-version"]`);
 
+    await input.scrollIntoViewIfNeeded();
+    await input.clear();
     await input.fill(text);
   }
 
@@ -53,10 +56,13 @@ export default class PodSecurityAdmissionsCreateEditPo extends PagePo {
   }
 
   async setExemptionsInput(optionIndex: number, text: string): Promise<void> {
+    // The data-testid is on the input element itself
     const input = this.page.locator(
-      `[data-testid="pod-security-admission--psaExemptionsControl-${optionIndex}-value"] input`,
+      `input[data-testid="pod-security-admission--psaExemptionsControl-${optionIndex}-value"]`,
     );
 
+    await input.scrollIntoViewIfNeeded();
+    await input.clear();
     await input.fill(text);
   }
 

@@ -1,1 +1,2 @@
-export const CYPRESS_SAFE_RESOURCE_REVISION = Cypress.env('VAI_ENABLED') ? undefined : 999999999;
+// In Playwright, VAI state is unknown at blueprint-load time. Use undefined (safe default).
+export const CYPRESS_SAFE_RESOURCE_REVISION: number | undefined = undefined;
