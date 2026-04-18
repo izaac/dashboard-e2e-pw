@@ -1,0 +1,321 @@
+import { test, expect } from '@/support/fixtures';
+import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
+import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+
+test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
+  let cloudcredentialId = '';
+
+  test.beforeAll(async ({ rancherApi }) => {
+    // Clean up any existing credentials to start fresh
+    const result = await rancherApi.getRancherResource('v3', 'cloudCredentials');
+    const credentials = result.body.data || [];
+
+    for (const cred of credentials) {
+      await rancherApi.deleteRancherResource('v3', 'cloudCredentials', cred.id.trim(), false);
+    }
+  });
+
+  test('can see error when authentication fails', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+
+    await cloudCredentialsPage.goTo();
+    await cloudCredentialsPage.waitForPage();
+    await cloudCredentialsPage.create();
+    await cloudCredentialsPage.createEditCloudCreds().waitForPage();
+    await cloudCredentialsPage.createEditCloudCreds().cloudServiceOptions().selectSubTypeByIndex(0).click();
+    await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(cloudCredentialName);
+    await cloudCredentialsPage
+      .createEditCloudCreds()
+      .nameNsDescription()
+      .description()
+      .set(`${cloudCredentialName}-description`);
+    await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
+    await cloudCredentialsPage.createEditCloudCreds().secretKey().set(`${envMeta.awsSecretKey}abc`);
+    await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
+    await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
+
+    await expect(page.locator('body')).toContainText('Authentication test failed, please check your credentials');
+  });
+
+  test('can create aws cloud credentials', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+
+    try {
+      await cloudCredentialsPage.goTo();
+      await cloudCredentialsPage.waitForPage();
+      await cloudCredentialsPage.create();
+      await cloudCredentialsPage.createEditCloudCreds().waitForPage();
+      await cloudCredentialsPage.createEditCloudCreds().cloudServiceOptions().selectSubTypeByIndex(0).click();
+      await cloudCredentialsPage.createEditCloudCreds().waitForPage('type=aws');
+      await cloudCredentialsPage
+        .createEditCloudCreds()
+        .nameNsDescription()
+        .description()
+        .set(`${cloudCredentialName}-description`);
+      await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
+      await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
+      await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
+
+      // Name is mandatory — verify placeholder has no "optional"
+      const placeholder = await cloudCredentialsPage
+        .createEditCloudCreds()
+        .nameNsDescription()
+        .name()
+        .getAttributeValue('placeholder');
+
+      expect(placeholder).not.toContain('optional');
+
+      // Save button disabled before name
+      await cloudCredentialsPage
+        .createEditCloudCreds()
+        .saveCreateForm()
+        .cruResource()
+        .saveOrCreate()
+        .expectToBeDisabled();
+      await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(cloudCredentialName);
+      await cloudCredentialsPage
+        .createEditCloudCreds()
+        .saveCreateForm()
+        .cruResource()
+        .saveOrCreate()
+        .expectToBeEnabled();
+
+      const responsePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
+        { timeout: 15000 },
+      );
+
+      await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
+      const response = await responsePromise;
+
+      expect(response.status()).toBe(201);
+      const body = await response.json();
+
+      cloudcredentialId = body.id;
+
+      await cloudCredentialsPage.waitForPage();
+      await expect(cloudCredentialsPage.list().details(cloudCredentialName, 2)).toBeVisible();
+    } finally {
+      if (cloudcredentialId) {
+        await rancherApi.deleteRancherResource('v3', 'cloudCredentials', cloudcredentialId, false);
+      }
+    }
+  });
+
+  test('can edit cloud credentials', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+    let credId = '';
+
+    try {
+      // Create a credential first
+      const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
+        type: 'provisioning.cattle.io/cloud-credential',
+        metadata: { generateName: 'cc-', namespace: 'fleet-default' },
+        _name: cloudCredentialName,
+        annotations: { 'provisioning.cattle.io/driver': 'amazonec2' },
+        amazonec2credentialConfig: {
+          accessKey: envMeta.awsAccessKey,
+          secretKey: envMeta.awsSecretKey,
+        },
+        _type: 'provisioning.cattle.io/cloud-credential',
+        name: cloudCredentialName,
+      });
+
+      credId = createResp.body.id;
+      cloudcredentialId = credId;
+
+      await cloudCredentialsPage.goTo();
+      await cloudCredentialsPage.waitForPage();
+
+      const actionMenu = await cloudCredentialsPage.list().actionMenu(cloudCredentialName);
+
+      await actionMenu.getMenuItem('Edit Config').click();
+      await cloudCredentialsPage.createEditCloudCreds(credId).waitForPage('mode=edit');
+
+      await cloudCredentialsPage
+        .createEditCloudCreds()
+        .nameNsDescription()
+        .name()
+        .set(`${cloudCredentialName}-name-edit`);
+      await cloudCredentialsPage
+        .createEditCloudCreds()
+        .nameNsDescription()
+        .description()
+        .set(`${cloudCredentialName}-description-edit`);
+      await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
+
+      const putResponsePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'PUT',
+        { timeout: 15000 },
+      );
+
+      await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
+      await putResponsePromise;
+      await cloudCredentialsPage.waitForPage();
+
+      await expect(cloudCredentialsPage.list().details(`${cloudCredentialName}-name-edit`, 2)).toBeVisible();
+      await expect(cloudCredentialsPage.list().details(`${cloudCredentialName}-description-edit`, 3)).toBeVisible();
+    } finally {
+      if (credId) {
+        await rancherApi.deleteRancherResource('v3', 'cloudCredentials', credId, false);
+      }
+    }
+  });
+
+  test('can clone cloud credentials', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+    const createdIds: string[] = [];
+
+    try {
+      const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
+        type: 'provisioning.cattle.io/cloud-credential',
+        metadata: { generateName: 'cc-', namespace: 'fleet-default' },
+        _name: cloudCredentialName,
+        annotations: { 'provisioning.cattle.io/driver': 'amazonec2' },
+        amazonec2credentialConfig: {
+          accessKey: envMeta.awsAccessKey,
+          secretKey: envMeta.awsSecretKey,
+        },
+        _type: 'provisioning.cattle.io/cloud-credential',
+        name: cloudCredentialName,
+      });
+
+      createdIds.push(createResp.body.id);
+
+      await cloudCredentialsPage.goTo();
+      await cloudCredentialsPage.waitForPage();
+
+      const actionMenu = await cloudCredentialsPage.list().actionMenu(cloudCredentialName);
+
+      await actionMenu.getMenuItem('Clone').click();
+      await cloudCredentialsPage.createEditCloudCreds(createResp.body.id).waitForPage('mode=clone');
+
+      await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(`${cloudCredentialName}-clone`);
+      await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
+      await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
+
+      const postResponsePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
+        { timeout: 15000 },
+      );
+
+      await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
+      const response = await postResponsePromise;
+      const body = await response.json();
+
+      createdIds.push(body.id);
+      await cloudCredentialsPage.waitForPage();
+
+      await expect(cloudCredentialsPage.list().details(`${cloudCredentialName}-clone`, 1)).toBeVisible();
+    } finally {
+      for (const id of createdIds) {
+        await rancherApi.deleteRancherResource('v3', 'cloudCredentials', id, false);
+      }
+    }
+  });
+
+  test('can delete cloud credentials', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+
+    const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
+      type: 'provisioning.cattle.io/cloud-credential',
+      metadata: { generateName: 'cc-', namespace: 'fleet-default' },
+      _name: cloudCredentialName,
+      annotations: { 'provisioning.cattle.io/driver': 'amazonec2' },
+      amazonec2credentialConfig: {
+        accessKey: envMeta.awsAccessKey,
+        secretKey: envMeta.awsSecretKey,
+      },
+      _type: 'provisioning.cattle.io/cloud-credential',
+      name: cloudCredentialName,
+    });
+
+    const credId = createResp.body.id;
+
+    await cloudCredentialsPage.goTo();
+    await cloudCredentialsPage.waitForPage();
+
+    const actionMenu = await cloudCredentialsPage.list().actionMenu(cloudCredentialName);
+
+    await actionMenu.getMenuItem('Delete').click();
+
+    const promptRemove = new PromptRemove(page);
+    const deletePromise = page.waitForResponse(
+      (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
+      { timeout: 15000 },
+    );
+
+    await promptRemove.remove();
+    await deletePromise;
+    await cloudCredentialsPage.waitForPage();
+
+    await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+  });
+
+  test('can delete cloud credentials via bulk actions', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+
+    const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
+      type: 'provisioning.cattle.io/cloud-credential',
+      metadata: { generateName: 'cc-', namespace: 'fleet-default' },
+      _name: cloudCredentialName,
+      annotations: { 'provisioning.cattle.io/driver': 'amazonec2' },
+      amazonec2credentialConfig: {
+        accessKey: envMeta.awsAccessKey,
+        secretKey: envMeta.awsSecretKey,
+      },
+      _type: 'provisioning.cattle.io/cloud-credential',
+      name: cloudCredentialName,
+    });
+
+    const credId = createResp.body.id;
+
+    await cloudCredentialsPage.goTo();
+    await cloudCredentialsPage.waitForPage();
+
+    await cloudCredentialsPage.list().resourceTable().sortableTable().rowSelectCtlWithName(cloudCredentialName).set();
+    await cloudCredentialsPage.list().resourceTable().sortableTable().deleteButton().click();
+
+    const promptRemove = new PromptRemove(page);
+    const deletePromise = page.waitForResponse(
+      (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
+      { timeout: 15000 },
+    );
+
+    await promptRemove.remove();
+    await deletePromise;
+    await cloudCredentialsPage.waitForPage();
+
+    await expect(page.locator(`text=${cloudCredentialName}`)).not.toBeAttached();
+  });
+});
