@@ -57,13 +57,4 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       }
     });
   });
-
-  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
-
-    test('pagination is visible and user is able to navigate through cronjobs data', async () => {});
-    test('sorting changes the order of paginated cronjobs data', async () => {});
-    test('filter cronjobs', async () => {});
-    test('pagination is hidden', async () => {});
-  });
 });

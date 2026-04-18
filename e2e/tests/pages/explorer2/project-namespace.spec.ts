@@ -137,19 +137,5 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await expect(cruResource.errorBanner()).toBeVisible();
       await expect(cruResource.errorBanner()).toHaveCount(1);
     });
-
-    test.skip(
-      true,
-      'Test for multiple error resolution requires complex form interaction with resource quotas and container limits',
-    );
-    test('displays the most recent error after resolving a single error in a form with multiple errors', async () => {});
-  });
-
-  test.describe('Filtering projects with same name in groupBy list view', () => {
-    test.skip(true, 'Test requires creating 3 projects with same name via API — complex setup');
-
-    test('should show all projects with same name when filtering in Group by Project view', async () => {});
-    test('should show projects without namespaces when filtering in Group by Project view', async () => {});
-    test('should show projects with namespaces when filtering in flat list view', async () => {});
   });
 });

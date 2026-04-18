@@ -166,15 +166,6 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
   });
 
-  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
-
-    test('pagination is visible and user is able to navigate through deployments data', async () => {});
-    test('sorting changes the order of paginated deployments data', async () => {});
-    test('filter deployments', async () => {});
-    test('pagination is hidden', async () => {});
-  });
-
   test.describe('Redeploy Dialog', () => {
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.13');

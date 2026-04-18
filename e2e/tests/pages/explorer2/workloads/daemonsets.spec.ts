@@ -69,15 +69,6 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
     }
   });
 
-  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
-
-    test('pagination is visible and user is able to navigate through daemonsets data', async () => {});
-    test('sorting changes the order of paginated daemonsets data', async () => {});
-    test('filter daemonsets', async () => {});
-    test('pagination is hidden', async () => {});
-  });
-
   test.describe('Redeploy dialog', () => {
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();

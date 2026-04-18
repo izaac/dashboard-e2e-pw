@@ -3,15 +3,6 @@ import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { WorkloadsStatefulSetsListPagePo } from '@/e2e/po/pages/explorer/workloads-statefulsets.po';
 
 test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
-  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
-
-    test('pagination is visible and user is able to navigate through statefulsets data', async () => {});
-    test('sorting changes the order of paginated statefulsets data', async () => {});
-    test('filter statefulsets', async () => {});
-    test('pagination is hidden', async () => {});
-  });
-
   test.describe('Redeploy Dialog', () => {
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();

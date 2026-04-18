@@ -7,21 +7,6 @@ import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/wor
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
 test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
-  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
-
-    test('pagination is visible and user is able to navigate through pods data', async () => {});
-    test('sorting changes the order of paginated pods data', async () => {});
-    test('filter pods', async () => {});
-    test('pagination is hidden', async () => {});
-  });
-
-  test.describe('Should open a terminal', () => {
-    test.skip(true, 'Pod shell tests require a running pod with a shell — skipped in automated CI');
-
-    test('should open a pod shell', async () => {});
-  });
-
   test.describe('When cloning a pod', () => {
     test('Should have same spec as the original pod', async ({ page, login, rancherApi }) => {
       await login();
@@ -159,8 +144,5 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await expect(createPage.environmentVariableKeyInput(0)).toHaveValue('FIRST_VAR');
       await expect(createPage.environmentVariableKeyInput(1)).toHaveValue('THIRD_VAR');
     });
-
-    test.skip(true, 'Footer controls YAML Editor test requires viewport measurement not available in headless');
-    test('Footer controls should stick to bottom in YAML Editor', async () => {});
   });
 });
