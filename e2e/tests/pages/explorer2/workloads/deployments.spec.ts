@@ -49,7 +49,6 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('Should be able to scale the number of pods', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'scale-count-text/scale-up-button/scale-down-button testids added in 2.15, not present in 2.14');
       test.setTimeout(120000);
       await login();
       const namespace = `e2e-scale-ns-${Date.now()}`;
@@ -81,15 +80,15 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await detailsPage.goTo();
         await expect(detailsPage.mastheadTitle()).toContainText(deploymentName);
 
-        await expect(detailsPage.scaleCountText()).toContainText('1', { timeout: 30000 });
+        await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
 
         await expect(detailsPage.scaleUpButton()).toBeEnabled();
         await detailsPage.scaleUpButton().click();
 
-        await expect(detailsPage.scaleCountText()).toContainText('2', { timeout: 30000 });
+        await expect(detailsPage.scalerValue()).toContainText('2', { timeout: 30000 });
 
         await detailsPage.scaleDownButton().click();
-        await expect(detailsPage.scaleCountText()).toContainText('1', { timeout: 30000 });
+        await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
       }
@@ -473,8 +472,6 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Redeploy Dialog', () => {
-    test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.14');
-
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();
       const deploymentName = `e2e-redeploy-${Date.now()}`;
@@ -507,7 +504,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const redeployDialog = listPage.redeployDialog();
 
-        await expect(redeployDialog).toBeVisible();
+        await expect(redeployDialog.self()).toBeVisible();
 
         const responsePromise = page.waitForResponse(
           (resp) =>
@@ -515,7 +512,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
             resp.request().method() === 'PUT',
         );
 
-        await redeployDialog.locator('button').filter({ hasText: 'Redeploy' }).click();
+        await redeployDialog.confirmRedeploy();
 
         const response = await responsePromise;
 
@@ -566,10 +563,10 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const redeployDialog = listPage.redeployDialog();
 
-        await expect(redeployDialog).toBeVisible();
+        await expect(redeployDialog.self()).toBeVisible();
 
-        await redeployDialog.locator('button').filter({ hasText: 'Cancel' }).click();
-        await expect(redeployDialog).toBeHidden();
+        await redeployDialog.cancel();
+        await expect(redeployDialog.self()).toBeHidden();
 
         expect(redeployCallCount).toBe(0);
       } finally {
@@ -621,10 +618,10 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const redeployDialog = listPage.redeployDialog();
 
-        await expect(redeployDialog).toBeVisible();
-        await redeployDialog.locator('button').filter({ hasText: 'Redeploy' }).click();
+        await expect(redeployDialog.self()).toBeVisible();
+        await redeployDialog.confirmRedeploy();
 
-        await expect(redeployDialog.locator('.banner.error')).toBeVisible();
+        await expect(redeployDialog.errorBanner()).toBeVisible();
       } finally {
         await page.unroute(`**/v1/apps.deployments/${namespace}/${deploymentName}`);
         await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);

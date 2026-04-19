@@ -4,6 +4,7 @@ import {
   WorkloadsCreatePageBasePo,
   WorkloadDetailsPageBasePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads.po';
+import RedeployDialogPo from '@/e2e/po/components/workloads/redeploy-dialog.po';
 
 type WorkloadType = 'apps.deployment';
 
@@ -30,8 +31,8 @@ export class WorkloadsDeploymentsListPagePo extends WorkloadsListPageBasePo {
     // Placeholder - use rancherApi fixture in actual tests
   }
 
-  redeployDialog(): Locator {
-    return this.page.getByTestId('redeploy-dialog').or(this.page.locator('.prompt-modal'));
+  redeployDialog(): RedeployDialogPo {
+    return new RedeployDialogPo(this.page);
   }
 }
 
@@ -71,15 +72,19 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
     return this.page.getByTestId('btn-labels');
   }
 
-  scaleCountText(): Locator {
-    return this.page.getByTestId('scale-count-text');
+  scaler(): Locator {
+    return this.page.getByTestId('scaler');
+  }
+
+  scalerValue(): Locator {
+    return this.scaler().getByTestId('scaler-value');
   }
 
   scaleUpButton(): Locator {
-    return this.page.getByTestId('scale-up-button');
+    return this.scaler().getByTestId('scaler-increase');
   }
 
   scaleDownButton(): Locator {
-    return this.page.getByTestId('scale-down-button');
+    return this.scaler().getByTestId('scaler-decrease');
   }
 }
