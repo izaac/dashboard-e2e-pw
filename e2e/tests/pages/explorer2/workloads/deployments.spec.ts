@@ -4,7 +4,6 @@ import {
   WorkloadsDeploymentsCreatePagePo,
   WorkloadsDeploymentsDetailsPagePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
@@ -214,7 +213,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -274,7 +273,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -330,7 +329,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
 
         await actionMenu.getMenuItem('Redeploy').click();

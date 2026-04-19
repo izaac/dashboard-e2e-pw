@@ -30,7 +30,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await listPage.masthead().create();
 
-        const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'jobs');
+        const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'batch.job');
         const cruResource = new CreateEditViewPo(page, '.dashboard-root');
 
         await cruResource.nameNsDescription().createNewNamespace(namespaceName);

@@ -8,8 +8,6 @@ import type RancherApi from '@/support/fixtures/rancher-api';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { smallCollectionResponse } from '@/e2e/blueprints/explorer/workloads/small-collection';
 
-// ── Resource creation ──────────────────────────────────────────────
-
 /**
  * Bulk-create resources in a namespace via the Rancher API.
  * Returns the list of created resource names (sorted ASC).
@@ -36,8 +34,6 @@ export async function createBulkResources(
 
   return names.sort();
 }
-
-// ── User preferences ───────────────────────────────────────────────
 
 export interface SavedPrefs {
   'per-page'?: string;
@@ -75,8 +71,6 @@ export async function restoreTablePreferences(rancherApi: RancherApi, saved: Sav
     'group-by': saved['group-by'] ?? '',
   });
 }
-
-// ── Pagination assertions ──────────────────────────────────────────
 
 /**
  * Full pagination navigation test.
