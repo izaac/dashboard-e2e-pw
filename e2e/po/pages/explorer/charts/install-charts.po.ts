@@ -74,4 +74,9 @@ export class InstallChartPage extends PagePo {
   wizardFooter(): Locator {
     return this.page.locator('#wizard-footer-controls');
   }
+
+  /** Tabs shown on the install questions (Edit Options) screen */
+  tabsOnInstallQuestions(): Locator {
+    return this.self().locator('.tabs [data-testid^="btn-"]');
+  }
 }
