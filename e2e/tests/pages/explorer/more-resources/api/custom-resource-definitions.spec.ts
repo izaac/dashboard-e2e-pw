@@ -25,10 +25,10 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
 
       await expect(pagination).toBeVisible();
 
-      const beginBtn = pagination.locator('button').nth(0);
-      const leftBtn = pagination.locator('button').nth(1);
-      const rightBtn = pagination.locator('button').nth(2);
-      const endBtn = pagination.locator('button').nth(3);
+      const beginBtn = crdsPage.sortableTable().paginationBeginButton();
+      const leftBtn = crdsPage.sortableTable().paginationPrevButton();
+      const rightBtn = crdsPage.sortableTable().paginationNextButton();
+      const endBtn = crdsPage.sortableTable().paginationEndButton();
 
       await expect(beginBtn).toBeDisabled();
       await expect(leftBtn).toBeDisabled();
@@ -89,16 +89,14 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
 
       const firstRowBefore = await crdsPage
         .sortableTable()
-        .rowElements()
-        .first()
-        .locator('td:nth-of-type(3)')
+        .rowCell(crdsPage.sortableTable().rowElements().first(), 2)
         .innerText();
 
       expect(firstRowBefore.length).toBeGreaterThan(0);
 
       await crdsPage.sortableTable().sort(2).click();
 
-      await expect(crdsPage.sortableTable().rowElements().first().locator('td:nth-of-type(3)')).not.toHaveText(
+      await expect(crdsPage.sortableTable().rowCell(crdsPage.sortableTable().rowElements().first(), 2)).not.toHaveText(
         firstRowBefore,
         { timeout: 10000 },
       );
@@ -136,7 +134,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
 
         const crdYamlPath = path.resolve('e2e/blueprints/explorer/more-resources/api/custom-resource-definition.yml');
         const crdYaml = fs.readFileSync(crdYamlPath, 'utf-8');
-        const json: any = jsyaml.load(crdYaml);
+        const json: Record<string, unknown> = jsyaml.load(crdYaml);
 
         json.metadata.name = crdName;
         json.spec.group = crdGroup;

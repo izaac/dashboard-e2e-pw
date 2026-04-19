@@ -1,6 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { WorkloadsCronJobsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-cronjobs.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
 test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -35,19 +34,16 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       });
 
       try {
-        const listPage = new PagePo(page, '/c/local/explorer/batch.cronjob');
+        const listPage = new WorkloadsCronJobsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
-
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-        const actionMenu = await sortableTable.rowActionMenuOpen(cronJobName);
 
         const responsePromise = page.waitForResponse(
           (resp) => resp.url().includes(`v1/batch.jobs/${namespace}`) && resp.request().method() === 'POST',
         );
 
-        await actionMenu.getMenuItem('Run Now').click();
+        await listPage.rowActionMenuClick(cronJobName, 'Run Now');
 
         const response = await responsePromise;
 

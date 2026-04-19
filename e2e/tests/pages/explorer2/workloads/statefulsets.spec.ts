@@ -1,5 +1,4 @@
 import { test, expect } from '@/support/fixtures';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { WorkloadsStatefulSetsListPagePo } from '@/e2e/po/pages/explorer/workloads-statefulsets.po';
 
 test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -31,8 +30,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-        const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
+        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
 
@@ -46,7 +44,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
             resp.request().method() === 'PUT',
         );
 
-        await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
+        await listPage.redeployDialogConfirmButton().click();
         const response = await responsePromise;
 
         expect(response.status()).toBe(200);
@@ -92,15 +90,14 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-        const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
+        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
 
         const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
-        await dialog.locator('button').filter({ hasText: 'Cancel' }).click();
+        await listPage.redeployDialogCancelButton().click();
         await expect(dialog).toBeHidden();
         expect(redeployCallCount).toBe(0);
       } finally {
@@ -145,16 +142,15 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-        const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
+        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
 
         const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
-        await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
-        await expect(dialog.locator('.banner.error')).toBeVisible();
+        await listPage.redeployDialogConfirmButton().click();
+        await expect(listPage.redeployDialogErrorBanner()).toBeVisible();
       } finally {
         await page.unroute(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`);
         await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);

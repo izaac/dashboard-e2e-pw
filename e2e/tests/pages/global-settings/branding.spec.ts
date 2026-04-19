@@ -1,4 +1,5 @@
 import { test, expect } from '@/support/fixtures';
+import type { Page, Response } from '@playwright/test';
 import { BrandingPagePo } from '@/e2e/po/pages/global-settings/branding.po';
 import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
@@ -35,7 +36,7 @@ function fixtureBase64(relativePath: string): string {
 }
 
 /** Navigate to branding page via burger menu */
-async function navToBranding(page: any) {
+async function navToBranding(page: Page) {
   const burgerMenu = new BurgerMenuPo(page);
   const sideNav = new ProductNavPo(page);
 
@@ -45,19 +46,19 @@ async function navToBranding(page: any) {
 }
 
 /** Navigate to preferences page */
-async function navToPreferences(page: any) {
+async function navToPreferences(page: Page) {
   await page.goto('./prefs', { waitUntil: 'domcontentloaded' });
 }
 
 /** Set theme via preferences page and wait for API confirmation */
-async function setTheme(page: any, theme: 'Dark' | 'Light') {
+async function setTheme(page: Page, theme: 'Dark' | 'Light') {
   const prefPage = new PreferencesPagePo(page);
 
   await navToPreferences(page);
   await prefPage.themeButtons().checkVisible();
 
   const prefResponsePromise = page.waitForResponse(
-    (resp: any) => resp.url().includes('v1/userpreferences') && resp.request().method() === 'PUT',
+    (resp: Response) => resp.url().includes('v1/userpreferences') && resp.request().method() === 'PUT',
   );
 
   await prefPage.themeButtons().set(theme);

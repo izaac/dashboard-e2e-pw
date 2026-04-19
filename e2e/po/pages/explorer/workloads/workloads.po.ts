@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 type WorkloadType =
   | 'workload'
@@ -26,6 +27,11 @@ export class WorkloadsListPageBasePo extends PagePo {
 
   sortableTable(): Locator {
     return this.self().locator('.sortable-table');
+  }
+
+  /** SortableTablePo with full component methods (action menus, row selection, etc.) */
+  sortableTablePo(): SortableTablePo {
+    return new SortableTablePo(this.page, '.sortable-table');
   }
 
   listElementWithName(name: string): Locator {
@@ -60,6 +66,12 @@ export class WorkloadsListPageBasePo extends PagePo {
     await row
       .locator('button[data-testid$="action-button"], .actions .btn.role-multi-action, button.actions-container')
       .click();
+  }
+
+  /** Open the row action menu for a named resource and click a menu item */
+  async rowActionMenuClick(name: string, menuItem: string): Promise<void> {
+    await this.rowActionMenuOpen(name);
+    await this.page.getByRole('menuitem', { name: menuItem }).click();
   }
 }
 

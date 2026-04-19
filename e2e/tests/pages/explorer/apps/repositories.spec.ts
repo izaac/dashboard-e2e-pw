@@ -3,8 +3,6 @@ import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import ChartRepositoriesCreateEditPo from '@/e2e/po/edit/chart-repositories.po';
 
 test.describe('Apps', () => {
-  test.describe.configure({ mode: 'serial' });
-
   test.describe('Repositories', { tag: ['@explorer', '@adminUser'] }, () => {
     test.describe('Add', () => {
       test('after add, repo list should not contain multiple entries', async ({ page, login, rancherApi }) => {

@@ -7,6 +7,8 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
+
 export class InstallChartPage extends PagePo {
   constructor(page: Page, clusterId = 'local') {
     super(page, `/c/${clusterId}/apps/charts/install`);
@@ -70,13 +72,50 @@ export class InstallChartPage extends PagePo {
     return new LabeledInputPo(this.page, '[data-testid="custom-registry-input"]');
   }
 
+  /** TabbedPo scoped to the install wizard's tabbed block */
+  installTabs(): TabbedPo {
+    return new TabbedPo(this.page, '[data-testid="tabbed-block"]');
+  }
+
+  /** LabeledSelectPo for a question section's search input */
+  questionSectionSelect(sectionName: string): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, `section[id="${sectionName}"] [type="search"]`);
+  }
+
+  /** Select namespace if the selector is visible (some charts use fixed namespaces) */
+  async selectNamespaceIfVisible(name: string): Promise<void> {
+    const nsSelect = this.nameNsDescription().namespace();
+    const visible = await nsSelect.self().isVisible();
+
+    if (visible) {
+      await this.selectNamespaceOption(name);
+    }
+  }
+
+  /** Storage options radio group for a chart (e.g. rancher-backup) */
+  chartStorageOptions(chartSelector: string): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, `[chart="${chartSelector}"]`);
+  }
+
+  /** Storage class select for backup chart */
+  backupStorageClassSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="backup-chart-select-existing-storage-class"]');
+  }
+
+  /** Switch to Edit Options view (first tab button) */
+  async editOptionsView(): Promise<void> {
+    const tabbedOptions = new TabbedPo(this.page);
+
+    await tabbedOptions.clickTabWithSelector('[data-testid="button-group-child-0"]');
+  }
+
   /** The wizard footer controls container */
   wizardFooter(): Locator {
     return this.page.locator('#wizard-footer-controls');
   }
 
   /** Tabs shown on the install questions (Edit Options) screen */
-  tabsOnInstallQuestions(): Locator {
+  tabsCountOnInstallQuestions(): Locator {
     return this.self().locator('.tabs [data-testid^="btn-"]');
   }
 }

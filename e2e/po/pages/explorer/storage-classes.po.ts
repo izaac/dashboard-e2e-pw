@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
 export class StorageClassesPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -29,6 +30,10 @@ export class StorageClassesPagePo extends PagePo {
 
   yamlEditor(): Locator {
     return this.page.locator('.resource-yaml .CodeMirror, .resource-yaml .code-mirror');
+  }
+
+  createEditView(): CreateEditViewPo {
+    return new CreateEditViewPo(this.page, '.dashboard-root');
   }
 
   createStorageClassesForm(): StorageClassesCreateEditPo {

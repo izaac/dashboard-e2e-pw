@@ -1,7 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import { NodesListPagePo } from '@/e2e/po/pages/explorer/nodes.po';
 
 test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('should still show the node detail view when the page is refreshed', async ({ page, login }) => {
@@ -12,11 +11,11 @@ test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
     await clusterDashboard.waitForPage();
     await clusterDashboard.navToSideMenuEntryByLabel('Nodes');
 
-    const masthead = new ResourceListMastheadPo(page, ':scope');
+    const nodesPage = new NodesListPagePo(page);
 
-    await expect(masthead.title()).toContainText('Nodes');
+    await expect(nodesPage.masthead().title()).toContainText('Nodes');
 
-    const sortableTable = new SortableTablePo(page, '[data-testid="cluster-node-list"] .sortable-table');
+    const sortableTable = nodesPage.sortableTable();
 
     await sortableTable.checkVisible();
 

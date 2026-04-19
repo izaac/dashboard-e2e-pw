@@ -28,4 +28,9 @@ export default class CloudCredentialsPagePo extends PagePo {
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
   }
+
+  /** Body-level text container for auth error messages during credential creation */
+  bodyContent(): import('@playwright/test').Locator {
+    return this.page.locator('body');
+  }
 }

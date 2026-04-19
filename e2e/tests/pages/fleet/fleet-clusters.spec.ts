@@ -183,7 +183,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           'Last Seen',
           'Age',
         ];
-        const headerCells = fleetClusterListPage.sortableTable().self().locator('.table-header-container .content');
+        const headerCells = fleetClusterListPage.sortableTable().headerContentCells();
 
         for (let i = 0; i < expectedHeaders.length; i++) {
           await expect(headerCells.nth(i)).toContainText(expectedHeaders[i]);
@@ -194,6 +194,8 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
         const fleetClusterDetailsPage = new FleetClusterDetailsPo(page, workspace, 'local');
 
         await fleetClusterDetailsPage.waitForPage(undefined, 'applications');
+        await fleetClusterDetailsPage.appBundlesList().checkVisible();
+        await fleetClusterDetailsPage.appBundlesList().checkLoadingIndicatorNotVisible();
 
         const expectedHeadersDetailsView = [
           'State',
@@ -205,10 +207,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           'Resources',
           'Age',
         ];
-        const detailHeaderCells = fleetClusterDetailsPage
-          .appBundlesList()
-          .self()
-          .locator('.table-header-container .content');
+        const detailHeaderCells = fleetClusterDetailsPage.appBundlesList().headerContentCells();
 
         await fleetClusterDetailsPage.flatListViewButton().click();
 

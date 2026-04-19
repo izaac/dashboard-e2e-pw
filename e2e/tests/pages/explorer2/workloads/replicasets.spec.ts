@@ -1,6 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { WorkloadsReplicaSetsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-replicasets.po';
 
 test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('Workloads', () => {
@@ -25,12 +24,12 @@ test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
         });
 
         try {
-          const listPage = new PagePo(page, '/c/local/explorer/apps.replicaset');
+          const listPage = new WorkloadsReplicaSetsListPagePo(page);
 
           await listPage.goTo();
           await listPage.waitForPage();
 
-          const sortableTable = new SortableTablePo(page, '.sortable-table');
+          const sortableTable = listPage.sortableTablePo();
 
           await expect(sortableTable.rowElementWithPartialName(replicasetName)).toBeVisible();
 

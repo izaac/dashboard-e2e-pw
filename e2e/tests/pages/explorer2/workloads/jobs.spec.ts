@@ -1,9 +1,7 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
+import { WorkloadsJobsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-jobs.po';
 
 test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', () => {
@@ -13,33 +11,17 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       const jobName = `e2e-job-${Date.now()}`;
 
       try {
-        const listPage = new PagePo(page, '/c/local/explorer/batch.job');
+        const listPage = new WorkloadsJobsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const masthead = new ResourceListMastheadPo(page, ':scope');
-
-        await masthead.create();
+        await listPage.masthead().create();
 
         const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'jobs');
-        const nsSelect = page.getByTestId('name-ns-description-namespace');
-
-        await nsSelect.click();
-
-        const createOption = page
-          .locator('.vs__dropdown-menu .vs__dropdown-option')
-          .filter({ hasText: 'Create a New Namespace' });
-
-        await createOption.click();
-
-        // After selecting "Create a New Namespace", a textbox appears for the namespace name
-        const nsInput = page.getByRole('textbox', { name: 'Name' }).first();
-
-        await nsInput.fill(namespaceName);
-
         const cruResource = new CreateEditViewPo(page, '.dashboard-root');
 
+        await cruResource.nameNsDescription().createNewNamespace(namespaceName);
         await cruResource.nameNsDescription().name().set(jobName);
         await createPage.containerImage().set('nginx');
 
@@ -55,7 +37,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
 
         await expect(sortableTable.rowElementWithPartialName(jobName)).toBeVisible();
       } finally {
@@ -89,12 +71,12 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       });
 
       try {
-        const listPage = new PagePo(page, '/c/local/explorer/batch.job');
+        const listPage = new WorkloadsJobsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(jobName);
 
         await actionMenu.getMenuItem('Clone').click();

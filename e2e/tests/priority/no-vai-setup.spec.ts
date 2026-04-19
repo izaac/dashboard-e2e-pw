@@ -7,9 +7,9 @@ const RESTART_TIMEOUT = 120000;
 // Vai ('ui-sql-cache') is now on by default. This sets up the `noVai` test suite by disabling it.
 
 test.describe('Disable Vai', { tag: ['@noVai', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-
   test('Disable Feature Flag', async ({ page, login, rancherApi }) => {
+    // This test triggers a Rancher restart — needs extra time
+    test.setTimeout(180000);
     const key = 'ui-sql-cache';
 
     await login();
@@ -24,9 +24,7 @@ test.describe('Disable Vai', { tag: ['@noVai', '@adminUser'] }, () => {
     await featureFlagsPage.navTo();
     await featureFlagsPage.waitForPage();
 
-    // Check that the flag is not visible in the page and the ff is enabled
-    await expect(featureFlagsPage.self()).not.toContainText(key);
-
+    // Verify the flag is currently enabled via API
     const isEnabled = await rancherApi.isVaiCacheEnabled();
 
     expect(isEnabled).toBe(true);

@@ -1,7 +1,5 @@
 import { test, expect } from '@/support/fixtures';
 import { StorageClassesPagePo } from '@/e2e/po/pages/explorer/storage-classes.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
 test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
@@ -12,7 +10,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       await storageClassesPage.goTo();
       await storageClassesPage.waitForPage();
 
-      const sortableTable = new SortableTablePo(page, '.sortable-table');
+      const sortableTable = storageClassesPage.list().resourceTable().sortableTable();
 
       await sortableTable.checkVisible();
       const expectedHeaders = ['State', 'Name', 'Provisioner', 'Default', 'Age'];
@@ -28,7 +26,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       await storageClassesPage.goTo();
       await storageClassesPage.waitForPage();
 
-      const sortableTable = new SortableTablePo(page, '.sortable-table');
+      const sortableTable = storageClassesPage.list().resourceTable().sortableTable();
 
       await sortableTable.checkVisible();
     });
@@ -41,10 +39,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       await storageClassesPage.waitForPage();
 
       await storageClassesPage.clickCreate();
-
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
-
-      await cruResource.editAsYaml();
+      await storageClassesPage.createEditView().editAsYaml();
       await expect(storageClassesPage.yamlEditor()).toBeVisible();
     });
   });

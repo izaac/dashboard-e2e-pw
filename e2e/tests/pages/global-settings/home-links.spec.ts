@@ -11,7 +11,7 @@ test.describe('Home Links', () => {
   test.describe.configure({ mode: 'serial' });
 
   let homeLinksPage: HomeLinksPagePo;
-  let originalCustomLinks: any;
+  let originalCustomLinks: Record<string, unknown>;
 
   test.beforeEach(async ({ login, page, rancherApi }) => {
     await login();

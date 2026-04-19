@@ -178,40 +178,46 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       spec: {},
     });
 
-    const listPage = new FleetClusterGroupsListPagePo(page);
-    const headerPo = new HeaderPo(page);
+    try {
+      const listPage = new FleetClusterGroupsListPagePo(page);
+      const headerPo = new HeaderPo(page);
 
-    await listPage.goTo();
-    await listPage.waitForPage();
-    await headerPo.selectWorkspace(localWorkspace);
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await headerPo.selectWorkspace(localWorkspace);
 
-    const rowCountBefore = await listPage.list().resourceTable().sortableTable().rowCount();
+      await expect(listPage.list().resourceTable().sortableTable().self()).toBeVisible();
 
-    const actionMenu = await listPage.list().actionMenu(clusterGroupName);
+      const actionMenu = await listPage.list().actionMenu(clusterGroupName);
 
-    await actionMenu.getMenuItem('Delete').click();
+      await actionMenu.getMenuItem('Delete').click();
 
-    const deletePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`v1/fleet.cattle.io.clustergroups/${localWorkspace}/${clusterGroupName}`) &&
-        resp.request().method() === 'DELETE',
-    );
+      const deletePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`v1/fleet.cattle.io.clustergroups/${localWorkspace}/${clusterGroupName}`) &&
+          resp.request().method() === 'DELETE',
+      );
 
-    const promptRemove = new PromptRemove(page);
+      const promptRemove = new PromptRemove(page);
 
-    await promptRemove.remove();
-    await deletePromise;
+      await promptRemove.remove();
+      await deletePromise;
 
-    await listPage.waitForPage();
-    await listPage
-      .list()
-      .resourceTable()
-      .sortableTable()
-      .checkRowCount(false, rowCountBefore - 1);
-
-    const rowNames = await listPage.list().resourceTable().sortableTable().rowNames('.col-link-detail');
-
-    expect(rowNames).not.toContain(clusterGroupName);
+      await expect(
+        listPage.list().resourceTable().sortableTable().detailsPageLinkWithName(clusterGroupName),
+      ).not.toBeAttached();
+    } finally {
+      try {
+        await rancherApi.deleteRancherResource(
+          'v1',
+          'fleet.cattle.io.clustergroups',
+          `${localWorkspace}/${clusterGroupName}`,
+          false,
+        );
+      } catch {
+        // Already deleted by test — expected
+      }
+    }
   });
 
   // Regression: https://github.com/rancher/dashboard/issues/11687
@@ -241,6 +247,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await headerPo.selectWorkspace(localWorkspace);
       await listPage.list().rowWithName(groupName).checkVisible();
 
+      await expect(listPage.list().resourceTable().sortableTable().self()).toBeVisible();
       const expectedHeaders = ['State', 'Name', 'Clusters Ready', 'Resources', 'Age'];
       const actualHeaders = await listPage.list().resourceTable().sortableTable().headerNames();
 
@@ -252,6 +259,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await detailsPage.waitForPage(undefined, 'clusters');
 
+      await expect(detailsPage.clusterList().sortableTable().self()).toBeVisible();
       const expectedHeadersDetailsView = [
         'State',
         'Name',

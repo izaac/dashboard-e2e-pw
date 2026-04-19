@@ -9,8 +9,6 @@ import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags
  * It's designed to run in Jenkins CI environment as part of the test setup process.
  */
 test.describe('Enable OIDC Provider', { tag: ['@jenkins', '@noPrime', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-
   test('Enable Feature Flag', async ({ page, login }) => {
     await login();
 

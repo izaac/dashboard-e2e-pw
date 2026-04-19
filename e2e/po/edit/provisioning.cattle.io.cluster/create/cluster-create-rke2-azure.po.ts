@@ -64,6 +64,10 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
     return this.page.locator('[data-testid="machineConfig-azure-location"]');
   }
 
+  locationSelectedText(): Locator {
+    return this.locationSelect().locator('.vs__selected-options > span');
+  }
+
   environmentDisplay(): Locator {
     return this.page.locator('[data-testid="machineConfig-azure-environment-value"] span');
   }

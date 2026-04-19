@@ -102,7 +102,7 @@ test.describe('Home Page', () => {
         const response = await route.fetch();
         const json = await response.json();
 
-        const localIndex = json.data.findIndex((item: any) => item.id.includes('/local'));
+        const localIndex = json.data.findIndex((item: Record<string, string>) => item.id.includes('/local'));
 
         if (localIndex >= 0) {
           json.data[localIndex].metadata.annotations['field.cattle.io/description'] = longClusterDescription;

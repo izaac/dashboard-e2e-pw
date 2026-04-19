@@ -1,8 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { dummyNode } from '@/e2e/blueprints/explorer2/nodes';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import { NodesListPagePo } from '@/e2e/po/pages/explorer/nodes.po';
 
 test.describe('Nodes list', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('should show the nodes list page with dummy node', async ({ page, login, rancherApi }) => {
@@ -22,11 +21,11 @@ test.describe('Nodes list', { tag: ['@explorer2', '@adminUser'] }, () => {
       await clusterDashboard.waitForPage();
       await clusterDashboard.navToSideMenuEntryByLabel('Nodes');
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
+      const nodesPage = new NodesListPagePo(page);
 
-      await expect(masthead.title()).toContainText('Nodes');
+      await expect(nodesPage.masthead().title()).toContainText('Nodes');
 
-      const sortableTable = new SortableTablePo(page, '[data-testid="cluster-node-list"] .sortable-table');
+      const sortableTable = nodesPage.sortableTable();
 
       await sortableTable.checkVisible();
       await expect(sortableTable.rowElements()).toHaveCount(nodeCount);

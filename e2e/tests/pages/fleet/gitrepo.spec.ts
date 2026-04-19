@@ -29,7 +29,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('check table headers are available in list and details view', async ({ page, login, rancherApi }) => {
-    const gitRepoName = rancherApi.createE2EResourceName('git-repo');
+    const gitRepoName = rancherApi.createE2EResourceName('git-repo-headers');
 
     await login();
 
@@ -57,7 +57,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         'Resources',
         'Age',
       ];
-      const headerCells = listPage.sortableTable().self().locator('.table-header-container .content');
+      const headerCells = listPage.sortableTable().headerContentCells();
 
       for (let i = 0; i < expectedHeadersListView.length; i++) {
         await expect(headerCells.nth(i)).toContainText(expectedHeadersListView[i]);
@@ -70,7 +70,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
       const expectedHeadersDetailsView = ['State', 'Name', 'Deployments', 'Last Updated', 'Date'];
-      const detailHeaderCells = gitRepoDetails.bundlesList().self().locator('.table-header-container .content');
+      const detailHeaderCells = gitRepoDetails.bundlesList().headerContentCells();
 
       for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
         await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);
@@ -81,7 +81,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('check all tabs are available in the details view', async ({ page, login, rancherApi }) => {
-    const gitRepoName = rancherApi.createE2EResourceName('git-repo');
+    const gitRepoName = rancherApi.createE2EResourceName('git-repo-tabs');
 
     await login();
 
@@ -104,10 +104,10 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
-      await expect(gitRepoDetails.gitRepoTabs().self().locator('.tab')).toHaveCount(4, { timeout: 10000 });
+      await expect(gitRepoDetails.gitRepoTabs().tabItems()).toHaveCount(4, { timeout: 10000 });
 
       const tabs = ['Bundles', 'Resources', 'Conditions', 'Recent Events'];
-      const tabLocators = gitRepoDetails.gitRepoTabs().self().locator('.tab');
+      const tabLocators = gitRepoDetails.gitRepoTabs().tabItems();
 
       for (let i = 0; i < tabs.length; i++) {
         await expect(tabLocators.nth(i)).toContainText(tabs[i]);
@@ -119,7 +119,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
   test.describe('Edit', () => {
     test('Can Clone a git repo', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('git-repo-clone');
       let cloneName = '';
 
       await login();
@@ -169,7 +169,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Edit Yaml', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('git-repo-edityaml');
 
       await login();
 
@@ -204,7 +204,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Download Yaml', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('git-repo-dlyaml');
 
       await login();
 
@@ -233,7 +233,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Edit Config', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('git-repo-editcfg');
       const description = `${editRepoName}-desc`;
 
       await login();

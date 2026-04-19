@@ -47,7 +47,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
       const detailsPage = new FleetBundleDetailsPo(page, localWorkspace, bundle);
 
       await detailsPage.waitForPage();
-      await detailsPage.tabs().clickTabWithName('resources');
+      await expect(detailsPage.resourcesList().sortableTable().self()).toBeVisible();
 
       const expectedResourceHeaders = ['State', 'Name', 'Kind', 'Cluster', 'Namespace', 'API Version'];
       const resourceHeaderNames = await detailsPage.resourcesList().sortableTable().headerNames();
@@ -84,7 +84,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(createPage.mastheadTitle()).toContainText('Bundle: Create');
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: any = jsyaml.load(val);
+        const json: Record<string, unknown> = jsyaml.load(val);
 
         json.metadata.name = customBundleName;
         json.spec = json.spec || {};
@@ -138,7 +138,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(createPage.mastheadTitle()).toContainText(`Bundle: Clone from ${customBundleName}`);
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: any = jsyaml.load(val);
+        const json: Record<string, unknown> = jsyaml.load(val);
 
         json.metadata.name = cloneName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));

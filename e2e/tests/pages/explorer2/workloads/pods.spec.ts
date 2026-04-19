@@ -1,8 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
+import { WorkloadsPodsListPagePo, WorkloadsPodsDetailPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
 import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
@@ -17,11 +14,11 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await rancherApi.createPod(namespace, origPodName, 'nginx:alpine');
 
       try {
-        const clonePage = new PagePo(page, `/c/local/explorer/pod/${namespace}/${origPodName}`);
+        const detailPage = new WorkloadsPodsDetailPagePo(page, namespace, origPodName);
 
-        await page.goto(`.${clonePage['path']}?mode=clone`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`.${detailPage['path']}?mode=clone`, { waitUntil: 'domcontentloaded' });
 
-        const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+        const cruResource = detailPage.createEditView();
 
         await cruResource.nameNsDescription().name().set(clonePodName);
 
@@ -35,14 +32,13 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         expect(response.status()).toBe(201);
 
-        const podsPage = new PagePo(page, '/c/local/explorer/pod');
+        const podsPage = new WorkloadsPodsListPagePo(page);
 
-        await podsPage.waitForPage();
+        await podsPage.goTo();
+        await expect(podsPage.sortableTable().self()).toBeVisible();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-
-        await sortableTable.filter(clonePodName);
-        await expect(sortableTable.rowElementWithPartialName(clonePodName)).toBeVisible();
+        await podsPage.filterBySearchBox(clonePodName);
+        await expect(podsPage.sortableTable().rowElementWithPartialName(clonePodName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', `pods/${namespace}`, origPodName, false);
         await rancherApi.deleteRancherResource('v1', `pods/${namespace}`, clonePodName, false);
@@ -55,16 +51,14 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await login();
       const podName = `e2e-pod-units-${Date.now()}`;
 
-      const podsPage = new PagePo(page, '/c/local/explorer/pod');
+      const podsPage = new WorkloadsPodsListPagePo(page);
 
       await podsPage.goTo();
       await podsPage.waitForPage();
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
+      await podsPage.masthead().create();
 
-      await masthead.create();
-
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = podsPage.createEditView();
 
       await cruResource.nameNsDescription().name().set(podName);
       await cruResource.nameNsDescription().selectNamespace('default');
@@ -85,9 +79,7 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       try {
         await podsPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-
-        await expect(sortableTable.rowElementWithPartialName(podName)).toBeVisible();
+        await expect(podsPage.sortableTable().rowElementWithPartialName(podName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', 'pods/default', podName, false);
       }
@@ -95,14 +87,12 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test('should properly add container tabs to the tablist', async ({ page, login }) => {
       await login();
-      const podsPage = new PagePo(page, '/c/local/explorer/pod');
+      const podsPage = new WorkloadsPodsListPagePo(page);
 
       await podsPage.goTo();
       await podsPage.waitForPage();
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
-
-      await masthead.create();
+      await podsPage.masthead().create();
 
       const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pods');
       const addContainerBtn = createPage.addContainerButton();
@@ -117,14 +107,12 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test('should remove the correct environment variable from the workload form', async ({ page, login }) => {
       await login();
-      const podsPage = new PagePo(page, '/c/local/explorer/pod');
+      const podsPage = new WorkloadsPodsListPagePo(page);
 
       await podsPage.goTo();
       await podsPage.waitForPage();
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
-
-      await masthead.create();
+      await podsPage.masthead().create();
 
       const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pods');
 

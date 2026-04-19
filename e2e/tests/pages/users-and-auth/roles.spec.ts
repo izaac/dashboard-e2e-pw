@@ -137,7 +137,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.goToEditYamlPage(globalRoleName);
 
         const yamlValue = await createGlobalRole.yamlEditor().value();
-        const json: any = jsyaml.load(yamlValue);
+        const json: Record<string, unknown> = jsyaml.load(yamlValue);
 
         json.builtin = false;
         await createGlobalRole.yamlEditor().set(jsyaml.dump(json));
@@ -392,7 +392,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         try {
           const allRoles = await rancherApi.getRancherResource('v3', 'globalRoles');
           const clonedRole = allRoles.body.data?.find(
-            (r: any) => r.displayName === clonedRoleName || r.name === clonedRoleName,
+            (r: Record<string, string>) => r.displayName === clonedRoleName || r.name === clonedRoleName,
           );
 
           if (clonedRole) {
@@ -426,7 +426,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         const editRole = roles.createGlobal(roleId);
         const yamlValue = await editRole.yamlEditor().value();
-        const json: any = jsyaml.load(yamlValue);
+        const json: Record<string, unknown> = jsyaml.load(yamlValue);
 
         json.description = 'updated-description';
         await editRole.yamlEditor().set(jsyaml.dump(json));

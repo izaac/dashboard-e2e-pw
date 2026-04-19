@@ -7,6 +7,12 @@ import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
 /**
  * Rancher setup — equivalent of cypress/e2e/tests/setup/rancher-setup.spec.ts
  *
+ * NOTE: This spec is NOT needed when Rancher is provisioned via Ansible
+ * (~/repo/qa-infra-automation/ansible/testing/dashboard-e2e-pw).
+ * The Ansible playbook creates the instance with admin + standard_user
+ * accounts (same passwords), so bootstrap + user creation is already done.
+ * Only run this spec against a fresh, unconfigured Rancher instance.
+ *
  * Tags mirror the Cypress grep tags for filtering:
  * @adminUserSetup @standardUserSetup @setup
  */

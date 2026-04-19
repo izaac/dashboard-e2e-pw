@@ -59,6 +59,6 @@ export class FleetBundleDetailsPo extends PagePo {
   }
 
   resourcesList(): ResourceTablePo {
-    return new ResourceTablePo(this.page, '#resources [data-testid="sortable-table-list-container"]');
+    return new ResourceTablePo(this.page, '[data-testid="sortable-table-list-container"]');
   }
 }

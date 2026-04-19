@@ -36,7 +36,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
     } finally {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const createdUser = usersResp.body.data.find((u: any) => u.username === adminUsername);
+      const createdUser = usersResp.body.data.find((u: Record<string, string>) => u.username === adminUsername);
 
       if (createdUser) {
         await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
@@ -72,7 +72,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
     } finally {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);
+      const createdUser = usersResp.body.data.find((u: Record<string, string>) => u.username === userBaseUsername);
 
       if (createdUser) {
         await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
@@ -130,7 +130,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const response = await route.fetch();
       const body = await response.json();
 
-      const adminIndex = body.data.findIndex((item: any) => item.id === 'admin');
+      const adminIndex = body.data.findIndex((item: Record<string, string>) => item.id === 'admin');
 
       if (adminIndex !== -1) {
         const adminRole = body.data.splice(adminIndex, 1)[0];
@@ -355,7 +355,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       // Look up admin resource ID so we can find its row by the ID link
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const adminUser = usersResp.body.data.find((u: any) => u.username === 'admin');
+      const adminUser = usersResp.body.data.find((u: Record<string, string>) => u.username === 'admin');
       const adminResourceId = adminUser.id;
 
       await usersPo.goTo();
@@ -435,7 +435,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
     // Find the admin user's ID to match the table row link
     const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-    const adminUser = usersResp.body.data.find((u: any) => u.username === 'admin');
+    const adminUser = usersResp.body.data.find((u: Record<string, string>) => u.username === 'admin');
     const adminId = adminUser.id;
 
     await usersPo.goTo();
@@ -655,7 +655,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
 
       for (const username of [standardUsername, adminUsername]) {
-        const user = usersResp.body.data.find((u: any) => u.username === username);
+        const user = usersResp.body.data.find((u: Record<string, string>) => u.username === username);
 
         if (user) {
           await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user.id, false);

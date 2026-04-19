@@ -71,8 +71,12 @@ export default class SortableTablePo extends ComponentPo {
     await this.filterComponent().clear();
   }
 
+  groupRows(): Locator {
+    return this.self().locator('tr.group-row');
+  }
+
   groupElementWithName(name: string): Locator {
-    return this.self().locator('tr.group-row').filter({ hasText: name });
+    return this.groupRows().filter({ hasText: name });
   }
 
   rowElements(): Locator {
@@ -266,7 +270,7 @@ export default class SortableTablePo extends ComponentPo {
 
   /** Return the visible text of each column header */
   async headerNames(): Promise<string[]> {
-    const cells = this.tableHeaderRow().locator('.table-header-container .content');
+    const cells = this.headerContentCells();
     const count = await cells.count();
     const names: string[] = [];
 
@@ -275,6 +279,10 @@ export default class SortableTablePo extends ComponentPo {
     }
 
     return names;
+  }
+
+  headerContentCells(): Locator {
+    return this.tableHeaderRow().locator('.table-header-container .content');
   }
 
   sort(index: number): Locator {
@@ -292,6 +300,27 @@ export default class SortableTablePo extends ComponentPo {
 
   pagination(): Locator {
     return this.page.locator('div.paging');
+  }
+
+  paginationBeginButton(): Locator {
+    return this.pagination().locator('button').nth(0);
+  }
+
+  paginationPrevButton(): Locator {
+    return this.pagination().locator('button').nth(1);
+  }
+
+  paginationNextButton(): Locator {
+    return this.pagination().locator('button').nth(2);
+  }
+
+  paginationEndButton(): Locator {
+    return this.pagination().locator('button').nth(3);
+  }
+
+  /** Returns the cell locator at a given column index (0-based) for a row */
+  rowCell(row: Locator, colIndex: number): Locator {
+    return row.locator(`td:nth-of-type(${colIndex + 1})`);
   }
 
   async waitForListItemRemoval(rowNameSelector: string, name: string): Promise<void> {

@@ -94,8 +94,8 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       if (reenableAKS) {
         // Restore AKS to active state if test failed mid-way
         const setting = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators');
-        const operators: any[] = JSON.parse(setting.body.value || '[]');
-        const aks = operators.find((o: any) => o.name === 'aks');
+        const operators: Record<string, unknown>[] = JSON.parse(setting.body.value || '[]');
+        const aks = operators.find((o: Record<string, unknown>) => o.name === 'aks');
 
         if (aks && !aks.active) {
           aks.active = true;

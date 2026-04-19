@@ -4,6 +4,8 @@ import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import GenericPrompt from '@/e2e/po/prompts/genericPrompt.po';
+import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
 export class ProjectsNamespacesListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -20,6 +22,18 @@ export class ProjectsNamespacesListPagePo extends PagePo {
 
   baseResourceList(): BaseResourceList {
     return new BaseResourceList(this.page, '.dashboard-root');
+  }
+
+  masthead(): ResourceListMastheadPo {
+    return new ResourceListMastheadPo(this.page, ':scope');
+  }
+
+  createEditView(): CreateEditViewPo {
+    return new CreateEditViewPo(this.page, '.dashboard-root');
+  }
+
+  flatListButton(): Locator {
+    return this.self().getByRole('button', { name: 'Flat List' });
   }
 
   createNamespaceButton(): Locator {

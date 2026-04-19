@@ -38,11 +38,23 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.namespaceDropdown().getByTestId('namespaces-values');
   }
 
+  selectedValuesClearIcon(): Locator {
+    return this.selectedValues().locator('i');
+  }
+
+  nsOptionItems(): Locator {
+    return this.getOptions().locator('.ns-option');
+  }
+
+  optionByText(text: string): Locator {
+    return this.getOptions().locator(`text=${text}`);
+  }
+
   /** Check if an option is checked by label */
   async isChecked(label: string): Promise<void> {
     const option = this.getOptions().getByText(new RegExp(` ${label} `));
 
-    await expect(option.locator('i')).toHaveClass(/icon-checkmark/);
+    await expect(option.locator('i.icon-checkmark')).toBeAttached();
   }
 
   /** Get checkmark icon */

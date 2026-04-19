@@ -2,9 +2,9 @@ import { test, expect } from '@/support/fixtures';
 import ClusterToolsPagePo from '@/e2e/po/pages/explorer/cluster-tools.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
 test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
   });
@@ -61,7 +61,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
         resp.request().method() === 'POST',
     );
 
-    const formSave = new CreateEditViewPo(page, '.dashboard-root');
+    const formSave = clusterTools.createEditView();
 
     await formSave.formSave().click();
     await formSave.formSave().click();
@@ -86,7 +86,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
         resp.request().method() === 'POST',
     );
 
-    const formSave = new CreateEditViewPo(page, '.dashboard-root');
+    const formSave = clusterTools.createEditView();
 
     await formSave.formSave().click();
     await formSave.formSave().click();

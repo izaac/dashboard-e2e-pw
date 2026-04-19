@@ -48,14 +48,17 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test('can deselect options', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
     const namespacePicker = new NamespaceFilterPo(page);
 
+    // Reset to known state — prior tests may have changed namespace selections
+    await namespacePicker.toggle();
+    await namespacePicker.clickOptionByLabel('Only User Namespaces');
+    await namespacePicker.closeDropdown();
+
     await namespacePicker.toggle();
 
     await namespacePicker.clickOptionByLabel('default');
     await namespacePicker.isChecked('default');
 
-    const clearBtn = namespacePicker.selectedValues().locator('i');
-
-    await clearBtn.click();
+    await namespacePicker.selectedValuesClearIcon().click();
 
     await namespacePicker.isChecked('Only User Namespaces');
   });
@@ -63,13 +66,18 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test('can filter after making a selection', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
     const namespacePicker = new NamespaceFilterPo(page);
 
+    // Reset to known state — prior tests may have changed namespace selections
+    await namespacePicker.toggle();
+    await namespacePicker.clickOptionByLabel('Only User Namespaces');
+    await namespacePicker.closeDropdown();
+
     await namespacePicker.toggle();
 
     await namespacePicker.clickOptionByLabel('Project: Default');
     await namespacePicker.isChecked('Project: Default');
 
     await namespacePicker.searchByName('default');
-    const options = namespacePicker.getOptions().locator('.ns-option');
+    const options = namespacePicker.nsOptionItems();
 
     await expect(options).not.toHaveCount(0);
   });
@@ -80,11 +88,11 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await namespacePicker.toggle();
 
     await namespacePicker.searchByName('default');
-    const options = namespacePicker.getOptions().locator('.ns-option');
+    const options = namespacePicker.nsOptionItems();
 
     await expect(options).not.toHaveCount(0);
 
-    await namespacePicker.clickOptionByLabel('Project: Default');
+    await namespacePicker.clickOptionByLabelAndWaitForRequest('Project: Default');
     await namespacePicker.isChecked('Project: Default');
 
     await namespacePicker.clearSearchFilter();
@@ -122,8 +130,8 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         const namespacePicker = new NamespaceFilterPo(page);
 
         await namespacePicker.toggle();
-        await expect(namespacePicker.getOptions().locator(`text=${projName}`)).toBeVisible({ timeout: 15000 });
-        await expect(namespacePicker.getOptions().locator(`text=${nsName}`)).toBeVisible();
+        await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
+        await expect(namespacePicker.optionByText(nsName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
         await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
@@ -158,17 +166,30 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         },
       });
 
-      const namespacePicker = new NamespaceFilterPo(page);
+      try {
+        const namespacePicker = new NamespaceFilterPo(page);
 
-      await namespacePicker.toggle();
-      await expect(namespacePicker.getOptions().locator(`text=${projName}`)).toBeVisible({ timeout: 15000 });
+        await namespacePicker.toggle();
+        await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
 
-      await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
-      await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
+        await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
 
-      await namespacePicker.toggle();
-      await namespacePicker.toggle();
-      await expect(namespacePicker.getOptions().locator(`text=${projName}`)).not.toBeAttached({ timeout: 20000 });
+        await namespacePicker.toggle();
+        await namespacePicker.toggle();
+        await expect(namespacePicker.optionByText(projName)).not.toBeAttached({ timeout: 20000 });
+      } finally {
+        try {
+          await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
+        } catch {
+          // Already deleted by test — expected
+        }
+        try {
+          await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
+        } catch {
+          // Already deleted by test — expected
+        }
+      }
     },
   );
 });

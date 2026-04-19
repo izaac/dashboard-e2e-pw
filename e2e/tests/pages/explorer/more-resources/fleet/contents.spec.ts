@@ -49,9 +49,9 @@ test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
       await contentsPage.list().resourceTable().sortableTable().checkVisible();
       await contentsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-      const headerRow = contentsPage.list().resourceTable().sortableTable().tableHeaderRow();
-
-      await expect(headerRow.locator('.table-header-container .content').first()).toBeVisible({ timeout: 15000 });
+      await expect(contentsPage.list().resourceTable().sortableTable().headerContentCells().first()).toBeVisible({
+        timeout: 15000,
+      });
 
       const headers = await contentsPage.list().resourceTable().sortableTable().headerNames();
 

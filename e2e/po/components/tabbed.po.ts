@@ -22,6 +22,10 @@ export default class TabbedPo extends ComponentPo {
     return this.page.getByTestId(`${componentTestId}-block`).locator('> li');
   }
 
+  tabItems(): Locator {
+    return this.self().locator('.tab');
+  }
+
   async assertTabIsActive(selector: string): Promise<void> {
     const { expect } = await import('@playwright/test');
 

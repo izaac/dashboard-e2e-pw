@@ -1,4 +1,5 @@
 import { test, expect } from '@/support/fixtures';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
 import MachinesPagePo from '@/e2e/po/pages/cluster-manager/machines.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
@@ -9,7 +10,7 @@ const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machines.yml');
 const blueprintEditPath = path.resolve('e2e/blueprints/cluster_management/machines-edit.yml');
 
-async function cleanupMachine(rancherApi: any, fullName: string) {
+async function cleanupMachine(rancherApi: RancherApi, fullName: string) {
   try {
     await rancherApi.deleteRancherResource('v1', 'cluster.x-k8s.io.machines', fullName, false);
     const resource = await rancherApi.getRancherResource('v1', 'cluster.x-k8s.io.machines', fullName, 0);
@@ -35,7 +36,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     await machinesPage.createEditMachines().waitForPage('as=yaml');
 
     const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: any = jsyaml.load(machineDoc);
+    const json: Record<string, unknown> = jsyaml.load(machineDoc);
 
     json.metadata.name = machineName;
     json.metadata.namespace = nsName;
@@ -65,7 +66,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Create via YAML
     const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: any = jsyaml.load(machineDoc);
+    const json: Record<string, unknown> = jsyaml.load(machineDoc);
 
     json.metadata.name = machineName;
     json.metadata.namespace = nsName;
@@ -88,7 +89,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     );
 
     const editDoc = fs.readFileSync(blueprintEditPath, 'utf-8');
-    const editJson: any = jsyaml.load(editDoc);
+    const editJson: Record<string, unknown> = jsyaml.load(editDoc);
 
     editJson.spec.bootstrap.dataSecretName = 'secretName2';
     editJson.metadata.creationTimestamp = created.body.metadata.creationTimestamp;
@@ -118,7 +119,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Create resource via API
     const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: any = jsyaml.load(machineDoc);
+    const json: Record<string, unknown> = jsyaml.load(machineDoc);
 
     json.metadata.name = machineName;
     json.metadata.namespace = nsName;

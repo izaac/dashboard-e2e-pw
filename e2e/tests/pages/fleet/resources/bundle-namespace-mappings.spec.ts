@@ -28,7 +28,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
         await expect(createPage.mastheadTitle()).toContainText('BundleNamespaceMapping: Create');
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: any = jsyaml.load(val);
+        const json: Record<string, unknown> = jsyaml.load(val);
 
         json.metadata.name = customMappingName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
@@ -81,7 +81,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
         );
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: any = jsyaml.load(val);
+        const json: Record<string, unknown> = jsyaml.load(val);
 
         json.metadata.name = cloneName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));

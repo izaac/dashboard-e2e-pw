@@ -15,7 +15,7 @@ test.describe('Charts Install', { tag: ['@charts', '@adminUser'] }, () => {
       await chartPage.goToInstall();
       await installChart.nextPage();
 
-      const tabs = installChart.tabsOnInstallQuestions();
+      const tabs = installChart.tabsCountOnInstallQuestions();
 
       await expect(tabs).not.toBeAttached();
     });

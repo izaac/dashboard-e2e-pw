@@ -149,11 +149,51 @@ Tests must produce the **same result** regardless of how many times they run or 
 3. **`afterEach`/`afterAll`** — acceptable for shared setup (one resource used by all tests in a describe). Requires shared variable. Use sparingly.
 4. **Never: no cleanup** — every resource created must be cleaned up. "The next test will reset it" is not acceptable.
 
+#### try/finally Scope and Ordering
+
+- Start `try` AFTER resource creation, not at test start — the resource must exist before cleanup makes sense.
+- **Delete tests with finalized resources:** Kubernetes resources with finalizers stay visible after API delete until finalizers are removed. Call the cleanup function (which strips finalizers) INSIDE try BEFORE the "resource disappeared" assertion, AND in finally as safety net:
+  ```ts
+  await rancherApi.createResource(...);
+  try {
+    // ... UI delete action ...
+    await cleanup(rancherApi, id);         // strips finalizers so resource disappears
+    await expect(body).not.toContainText(name); // NOW assert it's gone
+  } finally {
+    await cleanup(rancherApi, id);         // safety net if assertion fails
+  }
+  ```
+- Cleanup functions must be idempotent (handle "resource already gone" gracefully).
+
 ### Assertions
 
 - **Web-first assertions only** — `await expect(loc).toBeVisible()`, never `expect(await loc.isVisible()).toBe(true)`. Web-first auto-retry; manual checks race against the DOM.
 - **Locator preference** — `getByTestId` > `getByRole` > `getByText` > CSS selectors. We use `getByTestId` to match upstream Rancher `data-testid` attributes.
 - **No manual waits around assertions** — don't wrap `expect()` in try/catch. Playwright assertions auto-retry. Only use try/finally for cleanup that MUST run after resource creation.
+
+### Non-Web-First PO Methods (Gotcha)
+
+Some PO methods read DOM state without auto-retry. They return stale or empty results if the page hasn't rendered yet. **Always wait for content visibility before calling them:**
+
+```ts
+// BAD — headerNames() returns [] if table hasn't rendered
+const headers = await table.headerNames();
+
+// GOOD — wait for table, then read headers
+await expect(table.self()).toBeVisible();
+const headers = await table.headerNames();
+```
+
+Methods that need a visibility guard first: `headerNames()`, `rowCount()`, `allInnerTexts()`, `innerText()`, CodeMirror `.value()`. Any PO method that calls `.count()`, `.allInnerTexts()`, or `.innerText()` on a locator is non-retrying.
+
+### Rancher Version DOM Differences
+
+PO selectors verified against upstream Cypress may not match the actual Rancher version under test. **Always verify selectors against the real DOM** when a test fails with "element not found":
+
+- Read `dom-snapshot.html` from test artifacts to see actual DOM structure
+- `grep -oP 'data-testid="[^"]*"'` on the snapshot to find available testids
+- Common 2.13 differences: wrapper `div#resources` missing on detail pages, tab `data-testid` names changed, resource list containers restructured
+- `waitForPage()` only validates the URL — it does NOT guarantee content has rendered. Always follow with a content visibility check before reading non-retrying methods.
 
 ### Upstream Parity
 
@@ -162,6 +202,21 @@ Tests must produce the **same result** regardless of how many times they run or 
 - API-based state setup is the **correct** approach for idempotent tests, even when upstream relies on natural defaults
 - If upstream skips cleanup because "the next test resets it", we still clean up explicitly
 
+### Serial Mode (`mode: 'serial'`)
+
+Default: tests run independently. Only add `test.describe.configure({ mode: 'serial' })` when tests have **genuine dependencies** that cannot be broken:
+
+| Justified | Example |
+|-----------|---------|
+| ✅ Extension lifecycle | kubewarden: install → configure → verify → uninstall |
+| ✅ Cloud provisioning chain | ec2-rke2: provision cluster (10+ min) → inspect → snapshot → delete |
+| ✅ All tests mutate same global setting | home-links: every test writes `ui-custom-links` |
+| ❌ Single-test describes | No benefit — remove it |
+| ❌ Independent CRUD tests | Each test creates its own resource — no dependency |
+| ❌ "Tests ran in order in Cypress" | Not a reason — Cypress `testIsolation: 'off'` is an anti-pattern |
+
+If adding serial, add a comment explaining WHY.
+
 ---
 
 ## TEST EXECUTION RULES
@@ -169,8 +224,10 @@ Tests must produce the **same result** regardless of how many times they run or 
 ### Running Tests
 
 - **Command:** `npx playwright test <spec> --reporter=line`
+- **Always use Sonnet agents** for test execution — never run tests in the main Opus context.
 - Run one spec file at a time when debugging. Use `-g "test name"` to isolate a single test.
 - **Sequential, not parallel:** All specs run against a shared Rancher instance. Specs that mutate global state (branding, settings, extensions, user preferences) affect what other specs see. Run **one agent at a time** when any spec in the batch writes global state. Never run two test agents simultaneously unless both are purely read-only (e.g. login page checks, version display). When in doubt, run sequential.
+- **PROVEN: Parallel browser sessions cause login failures.** The `login()` fixture hangs with "Logging in..." when two sessions compete for auth against the same Rancher instance. This is not flaky — it's deterministic. One session at a time, always.
 
 ### On Failure
 
@@ -214,25 +271,7 @@ If the verify step fails, the task is NOT done. Fix and re-verify.
 
 ## SESSION RETROS
 
-After every non-trivial session, save a retro to `docs/retros/YYYY-MM-DD-topic.md`. Format:
-
-```markdown
-# Retro: <topic>
-
-## What happened
-<2-3 bullet points>
-
-## What worked
-<things to keep doing>
-
-## What broke / wasted time
-<things to avoid next time>
-
-## Decisions made
-<any rules, patterns, or approaches decided during the session>
-```
-
-The next session loads the latest retro for continuity.
+After non-trivial sessions (5+ files touched, big refactors, tricky debugging), save a retro to persistent memory at `~/.claude/projects/`. Use `project` type memory with name `retro-YYYY-MM-DD-topic`. Sections: What changed, What worked, What didn't, Carry forward. Under 30 lines. **Never write retros into the repo.**
 
 ---
 

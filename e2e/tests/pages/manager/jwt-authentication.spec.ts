@@ -1,11 +1,13 @@
 import { test, expect } from '@/support/fixtures';
+import type { Page } from '@playwright/test';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 
 const namespace = 'fleet-default';
 
 async function createAmazonRke2ClusterWithoutMachineConfig(
-  rancherApi: any,
+  rancherApi: RancherApi,
   name: string,
   accessKey: string,
   secretKey: string,
@@ -35,10 +37,9 @@ async function createAmazonRke2ClusterWithoutMachineConfig(
   return clusterResp.body.metadata?.name ?? name;
 }
 
-async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAuthenticationPagePo): Promise<void> {
+async function goToJWTAuthenticationPageAndSettle(page: Page, jwtAuthPage: JWTAuthenticationPagePo): Promise<void> {
   const fetchResponsePromise = page.waitForResponse(
-    (resp: any) =>
-      resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'GET',
+    (resp) => resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'GET',
     { timeout: 15000 },
   );
 
@@ -60,8 +61,6 @@ async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAut
 }
 
 test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-
   test('should show the JWT Authentication list page', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
 
@@ -117,7 +116,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
       await goToJWTAuthenticationPageAndSettle(page, jwtAuthPage);
 
       const enableResponsePromise = page.waitForResponse(
-        (resp: any) =>
+        (resp) =>
           resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'POST',
         { timeout: 15000 },
       );
@@ -127,7 +126,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
         .resourceTable()
         .sortableTable()
         .rowActionMenuOpen(instance0)
-        .then((menu: any) => menu.getMenuItem('Enable').click());
+        .then((menu) => menu.getMenuItem('Enable').click());
 
       const enableResp = await enableResponsePromise;
 
@@ -173,7 +172,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
       await goToJWTAuthenticationPageAndSettle(page, jwtAuthPage);
 
       const disableResponsePromise = page.waitForResponse(
-        (resp: any) =>
+        (resp) =>
           resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'PUT',
         { timeout: 15000 },
       );
@@ -183,7 +182,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
         .resourceTable()
         .sortableTable()
         .rowActionMenuOpen(instance0)
-        .then((menu: any) => menu.getMenuItem('Disable').click());
+        .then((menu) => menu.getMenuItem('Disable').click());
 
       const disableResp = await disableResponsePromise;
 
@@ -224,7 +223,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
       await goToJWTAuthenticationPageAndSettle(page, jwtAuthPage);
 
       const enableResponsePromise = page.waitForResponse(
-        (resp: any) =>
+        (resp) =>
           resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'POST',
         { timeout: 15000 },
       );
@@ -296,7 +295,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
       await goToJWTAuthenticationPageAndSettle(page, jwtAuthPage);
 
       const disableResponsePromise = page.waitForResponse(
-        (resp: any) =>
+        (resp) =>
           resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'PUT',
         { timeout: 15000 },
       );
@@ -333,11 +332,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
-    const advancedGroup = jwtAuthPage
-      .sideNav()
-      .self()
-      .locator('a, .accordion-title, .side-nav-group-name')
-      .filter({ hasText: 'Advanced' });
+    const advancedGroup = jwtAuthPage.advancedSideNavGroup();
     const advancedVisible = await advancedGroup.isVisible({ timeout: 3000 }).catch((e: Error) => {
       if (!e.message.includes('strict mode violation')) {
         throw e;

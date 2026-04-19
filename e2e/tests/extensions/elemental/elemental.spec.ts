@@ -192,7 +192,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     await elementalPo.genericNameNsDescription().name().set(REG_ENDPOINT_NAME);
 
     const yamlValue = await elementalPo.genericCodeMirror().value();
-    const json: any = jsyaml.load(yamlValue);
+    const json = jsyaml.load(yamlValue) as Record<string, Record<string, Record<string, Record<string, string>>>>;
 
     json.config.elemental.install.device = REG_ENDPOINT_DEVICE_PATH;
     await elementalPo.genericCodeMirror().set(jsyaml.dump(json));
@@ -270,7 +270,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     }
 
     const yamlValue = await elementalPo.genericResourceDetail().resourceYaml().codeMirror().value();
-    const json: any = jsyaml.load(yamlValue);
+    const json = jsyaml.load(yamlValue) as Record<string, Record<string, string>>;
 
     json.metadata.name = MACHINE_INV_NAME;
     await elementalPo.genericResourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));

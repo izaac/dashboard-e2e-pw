@@ -14,6 +14,8 @@ test.describe(
   'Deploy RKE2 cluster using node driver on Amazon EC2',
   { tag: ['@manager', '@adminUser', '@provisioning'] },
   () => {
+    test.describe.configure({ mode: 'serial' });
+
     test.beforeAll(async ({ rancherApi }) => {
       // Clean up only test-prefixed Amazon cloud credentials from previous runs
       const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);

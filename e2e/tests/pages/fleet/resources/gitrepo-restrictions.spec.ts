@@ -28,7 +28,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(createPage.mastheadTitle()).toContainText('GitRepoRestriction: Create');
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: any = jsyaml.load(val);
+        const json: Record<string, unknown> = jsyaml.load(val);
 
         json.metadata.name = customRestrictionName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
@@ -81,7 +81,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
         );
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: any = jsyaml.load(val);
+        const json: Record<string, unknown> = jsyaml.load(val);
 
         json.metadata.name = cloneName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));

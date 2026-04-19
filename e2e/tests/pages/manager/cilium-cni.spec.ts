@@ -32,7 +32,7 @@ test.describe('RKE2 Cilium CNI', () => {
         route.fulfill({ status: 201, json: {} }),
       );
 
-      let capturedClusterBody: any = null;
+      let capturedClusterBody: Record<string, unknown> | null = null;
 
       await page.route('**/v1/provisioning.cattle.io.clusters', (route) => {
         if (route.request().method() === 'POST') {

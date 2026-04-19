@@ -44,7 +44,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
 
     if (existing.body?.data) {
-      const found = existing.body.data.find((d: any) => d.url === downloadUrl);
+      const found = existing.body.data.find((d: Record<string, string>) => d.url === downloadUrl);
 
       if (found) {
         await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
@@ -144,10 +144,10 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     // Ensure both drivers are inactive via API
     const drivers = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
     const otcDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
+      (d: Record<string, string>) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
     );
     const okeDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
+      (d: Record<string, string>) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
     );
 
     for (const driver of [otcDriver, okeDriver]) {
@@ -208,10 +208,10 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     // Ensure both drivers are active via API
     const drivers = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
     const otcDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
+      (d: Record<string, string>) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
     );
     const okeDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
+      (d: Record<string, string>) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
     );
 
     for (const driver of [otcDriver, okeDriver]) {
@@ -266,7 +266,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Create a fresh example driver
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl);
+    const found = existing.body?.data?.find((d: Record<string, string>) => d.url === downloadUrl);
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
@@ -289,57 +289,58 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       3000,
     );
 
-    // Deactivate
-    await driversPage.goTo();
-    await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
-    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    try {
+      // Deactivate
+      await driversPage.goTo();
+      await driversPage.waitForPage();
+      await driversPage.list().resourceTable().sortableTable().checkVisible();
+      await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    const deactivateResp = page.waitForResponse(
-      (r) => r.url().includes('action=deactivate') && r.request().method() === 'POST',
-    );
+      const deactivateResp = page.waitForResponse(
+        (r) => r.url().includes('action=deactivate') && r.request().method() === 'POST',
+      );
 
-    const actionMenu = await driversPage.list().actionMenu(exampleDriver);
+      const actionMenu = await driversPage.list().actionMenu(exampleDriver);
 
-    await actionMenu.getMenuItem('Deactivate').click();
-    const deactivateDialog = new DeactivateDriverDialogPo(page);
+      await actionMenu.getMenuItem('Deactivate').click();
+      const deactivateDialog = new DeactivateDriverDialogPo(page);
 
-    await deactivateDialog.deactivate();
-    const resp1 = await deactivateResp;
+      await deactivateDialog.deactivate();
+      const resp1 = await deactivateResp;
 
-    expect(resp1.status()).toBe(200);
+      expect(resp1.status()).toBe(200);
 
-    await clusterList.goTo();
-    await clusterList.waitForPage();
-    await clusterList.createCluster();
-    await createCluster.waitForPage();
-    await createCluster.gridElementExistanceByName('example', 'not.toBeVisible');
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createCluster.waitForPage();
+      await createCluster.gridElementExistanceByName('example', 'not.toBeVisible');
 
-    // Activate
-    await driversPage.goTo();
-    await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
-    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+      // Activate
+      await driversPage.goTo();
+      await driversPage.waitForPage();
+      await driversPage.list().resourceTable().sortableTable().checkVisible();
+      await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    const activateResp = page.waitForResponse(
-      (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
-    );
+      const activateResp = page.waitForResponse(
+        (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
+      );
 
-    const actionMenu2 = await driversPage.list().actionMenu(exampleDriver);
+      const actionMenu2 = await driversPage.list().actionMenu(exampleDriver);
 
-    await actionMenu2.getMenuItem('Activate').click();
-    const resp2 = await activateResp;
+      await actionMenu2.getMenuItem('Activate').click();
+      const resp2 = await activateResp;
 
-    expect(resp2.status()).toBe(200);
+      expect(resp2.status()).toBe(200);
 
-    await clusterList.goTo();
-    await clusterList.waitForPage();
-    await clusterList.createCluster();
-    await createCluster.waitForPage();
-    await createCluster.gridElementExistanceByName('example', 'toBeVisible');
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createCluster.waitForPage();
+      await createCluster.gridElementExistanceByName('example', 'toBeVisible');
+    } finally {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+    }
   });
 
   test('can edit a cluster driver', async ({ page, login, rancherApi }) => {
@@ -349,7 +350,9 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Create driver via API
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl || d.url === downloadUrlUpdated);
+    const found = existing.body?.data?.find(
+      (d: Record<string, string>) => d.url === downloadUrl || d.url === downloadUrlUpdated,
+    );
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
@@ -371,27 +374,28 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       3000,
     );
 
-    await driversPage.goTo();
-    await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
-    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    try {
+      await driversPage.goTo();
+      await driversPage.waitForPage();
+      await driversPage.list().resourceTable().sortableTable().checkVisible();
+      await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    const actionMenu = await driversPage.list().actionMenu(exampleDriver);
+      const actionMenu = await driversPage.list().actionMenu(exampleDriver);
 
-    await actionMenu.getMenuItem('Edit Config').click();
-    await createDriverPage.downloadUrl().set(downloadUrlUpdated);
+      await actionMenu.getMenuItem('Edit Config').click();
+      await createDriverPage.downloadUrl().set(downloadUrlUpdated);
 
-    const updateResp = page.waitForResponse(
-      (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'PUT',
-    );
+      const updateResp = page.waitForResponse(
+        (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'PUT',
+      );
 
-    await createDriverPage.saveCreateForm().createEditView().save();
-    const resp = await updateResp;
+      await createDriverPage.saveCreateForm().createEditView().save();
+      const resp = await updateResp;
 
-    expect(resp.status()).toBe(200);
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+      expect(resp.status()).toBe(200);
+    } finally {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+    }
   });
 
   test('can refresh kubernetes metadata', async ({ page, login }) => {

@@ -1,8 +1,4 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import {
   WorkloadsDaemonsetsListPagePo,
   WorkLoadsDaemonsetsEditPagePo,
@@ -30,16 +26,14 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     try {
-      const listPage = new PagePo(page, '/c/local/explorer/apps.daemonset');
+      const listPage = new WorkloadsDaemonsetsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
+      await listPage.masthead().create();
 
-      await masthead.create();
-
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = listPage.createEditView();
 
       await cruResource.nameNsDescription().name().set(daemonsetName);
       const editPage = new WorkLoadsDaemonsetsEditPagePo(page, daemonsetName, 'local', namespace);
@@ -49,11 +43,9 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.waitForPage();
 
-      const sortableTable = new SortableTablePo(page, '.sortable-table');
+      await expect(listPage.sortableTable().rowElementWithPartialName(daemonsetName)).toBeVisible();
 
-      await expect(sortableTable.rowElementWithPartialName(daemonsetName)).toBeVisible();
-
-      const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
+      const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
 
       await actionMenu.getMenuItem('Edit Config').click();
 
@@ -109,7 +101,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
             resp.request().method() === 'PUT',
         );
 
-        await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
+        await listPage.redeployDialogConfirmButton().click();
         const response = await responsePromise;
 
         expect(response.status()).toBe(200);
@@ -147,19 +139,18 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       try {
         const listPage = new WorkloadsDaemonsetsListPagePo(page);
-        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
 
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
+        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
 
         const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
-        await dialog.locator('button').filter({ hasText: 'Cancel' }).click();
+        await listPage.redeployDialogCancelButton().click();
         await expect(dialog).toBeHidden();
         expect(redeployCallCount).toBe(0);
       } finally {
@@ -196,20 +187,19 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       try {
         const listPage = new WorkloadsDaemonsetsListPagePo(page);
-        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
 
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
+        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
 
         const dialog = listPage.redeployDialog();
 
         await expect(dialog).toBeVisible();
-        await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
-        await expect(dialog.locator('.banner.error')).toBeVisible();
+        await listPage.redeployDialogConfirmButton().click();
+        await expect(listPage.redeployDialogErrorBanner()).toBeVisible();
       } finally {
         await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
         await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);

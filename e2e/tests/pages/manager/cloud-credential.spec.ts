@@ -47,9 +47,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
     await cloudCredentialsPage.createEditCloudCreds().secretKey().set(secret);
     await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(name);
 
-    const nameValue = await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().value();
-
-    expect(nameValue).toBe(name);
+    await expect(cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().self()).toHaveValue(name);
 
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
@@ -85,9 +83,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
     await cloudCredentialsPage.createEditCloudCreds().secretKey().set(secret);
     await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(name);
 
-    const nameValue = await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().value();
-
-    expect(nameValue).toBe(name);
+    await expect(cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().self()).toHaveValue(name);
 
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
@@ -297,32 +293,28 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
       await azureCreatePage.cloudCredentialSelect().click();
       await azureCreatePage.dropdownOption(cloudCredsToCreate[0].name).click();
 
-      const locationSelect = azureCreatePage.locationSelect();
       const envDisplay = azureCreatePage.environmentDisplay();
 
-      await expect(locationSelect.locator('.vs__selected-options > span')).toHaveText(
-        cloudCredsToCreate[0].body[0].name,
-        { useInnerText: true },
-      );
+      await expect(azureCreatePage.locationSelectedText()).toHaveText(cloudCredsToCreate[0].body[0].name, {
+        useInnerText: true,
+      });
       await expect(envDisplay).toHaveText(cloudCredsToCreate[0].environment);
 
       await azureCreatePage.cloudCredentialSelect().click();
       await azureCreatePage.dropdownOption(cloudCredsToCreate[1].name).click();
 
       await expect(envDisplay).toHaveText(cloudCredsToCreate[1].environment);
-      await expect(locationSelect.locator('.vs__selected-options > span')).toHaveText(
-        cloudCredsToCreate[1].body[0].name,
-        { useInnerText: true },
-      );
+      await expect(azureCreatePage.locationSelectedText()).toHaveText(cloudCredsToCreate[1].body[0].name, {
+        useInnerText: true,
+      });
 
       await azureCreatePage.cloudCredentialSelect().click();
       await azureCreatePage.dropdownOption(cloudCredsToCreate[2].name).click();
 
       await expect(envDisplay).toHaveText(cloudCredsToCreate[2].environment);
-      await expect(locationSelect.locator('.vs__selected-options > span')).toHaveText(
-        cloudCredsToCreate[2].body[0].name,
-        { useInnerText: true },
-      );
+      await expect(azureCreatePage.locationSelectedText()).toHaveText(cloudCredsToCreate[2].body[0].name, {
+        useInnerText: true,
+      });
     } finally {
       for (const id of azCreatedCloudCredsIds) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', id, false);

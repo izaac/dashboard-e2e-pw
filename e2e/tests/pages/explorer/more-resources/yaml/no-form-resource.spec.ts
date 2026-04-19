@@ -3,7 +3,7 @@ import { LeasesPagePo } from '@/e2e/po/pages/explorer/leases.po';
 
 test.describe('No Custom Form Resource', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@adminUser'] }, () => {
-    test('can create a resource using the Create from YAML button', async ({ page, login }) => {
+    test('can create a resource using the Create from YAML button', async ({ page, login, rancherApi }) => {
       await login();
       const leasesPage = new LeasesPagePo(page, 'local');
 
@@ -20,7 +20,15 @@ test.describe('No Custom Form Resource', { tag: ['@explorer', '@adminUser'] }, (
       const resp = await createResp;
 
       expect(resp.status()).toBe(201);
-      await leasesPage.waitForPage();
+
+      const body = await resp.json();
+      const leaseId = `${body.metadata.namespace}/${body.metadata.name}`;
+
+      try {
+        await leasesPage.waitForPage();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'coordination.k8s.io.leases', leaseId, false);
+      }
     });
   });
 });

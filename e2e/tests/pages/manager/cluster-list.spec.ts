@@ -28,9 +28,7 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);
       await createPage.selectCustom(0);
 
-      const titleText = await createPage.title().innerText();
-
-      expect(titleText.replace(/\s+/g, ' ')).toContain('Cluster: Create Custom');
+      await expect(createPage.title()).toContainText('Cluster: Create Custom');
       await createPage.nameNsDescription().name().checkVisible();
 
       await createPage.resourceDetail().createEditView().editClusterAsYaml();
@@ -46,7 +44,7 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       );
 
       const yamlVal = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-      const json: any = jsyaml.load(yamlVal);
+      const json: Record<string, unknown> = jsyaml.load(yamlVal);
 
       json.metadata.name = customClusterName;
       json.metadata.namespace = nsName;

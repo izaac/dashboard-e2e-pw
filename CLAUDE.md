@@ -9,7 +9,7 @@ See @AGENTS.md for Monko identity, Caveman protocol, and agent boundaries.
 - @README.md
 - @playwright.config.ts
 - @support/fixtures/index.ts
-- Latest retro: check `docs/retros/` for session continuity
+- Latest retro: check `~/.claude/projects/` memory (type: `project`, name: `retro-*`)
 
 ## Project Overview
 
@@ -73,9 +73,11 @@ support/
 - `self()` returns a `Locator` (equivalent of Cypress `self()` returning Chainable)
 - Component POs extend `ComponentPo`, page POs extend `PagePo`
 - **Same class names and method names as upstream Cypress POs**
-- **Same CSS selectors and data-testid values as upstream**
+- **Same CSS selectors and data-testid values as upstream** — but verify against actual Rancher version DOM (see Rancher Version DOM Differences in AGENTS.md)
 - All methods are `async` and return `Promise<void>` or `Locator`
 - Selectors live in POs only — never in spec files
+- **Grouped view gotcha:** When a list page uses "Group by Namespace" (e.g., pods), the search filter input is OUTSIDE the `.sortable-table` div. `SortableTablePo.filter()` won't find it. Add a `filterBySearchBox()` method to the list PO using `page.getByRole('searchbox', { name: 'Filter table results' })`
+- **`waitForPage()` only checks URL, not content.** Follow with `await expect(table.self()).toBeVisible()` before calling non-retrying PO methods like `headerNames()` or `rowCount()`
 
 ### Specs
 
@@ -204,6 +206,8 @@ Husky + lint-staged runs on every commit:
 - Use subagents for codebase exploration — keeps main context clean.
 - Never load full docs when a link or `@` import suffices.
 - Point to specific files and line numbers in prompts — vague = expensive.
+- **Always use Sonnet agents for test execution** — never run `npx playwright test` in the main Opus context. Opus audits and fixes; Sonnet runs.
+- **After each spec run, Opus does gold standard audit** — check atomicity, idempotency, no raw selectors, web-first assertions, proper cleanup, no unnecessary serial mode. Fix ALL violations found.
 - **Always query Context7** before implementing patterns you are not 100% certain about — especially test design (cleanup, fixtures, assertions), Playwright API usage, and any library/framework best practices. Training data may be stale; Context7 has current docs. This applies to both main context and subagents.
 
 ## Deep Docs (load only when needed)

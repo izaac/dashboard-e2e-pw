@@ -1,17 +1,12 @@
 import { test, expect } from '@/support/fixtures';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
-import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import { exampleStorageClass, defaultStorageClass } from '@/e2e/blueprints/charts/rancher-backup-chart';
-import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
-import TabbedPo from '@/e2e/po/components/tabbed.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
 
 const STORAGE_CLASS_RESOURCE = 'storage.k8s.io.storageclasses';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-
   test.describe('Rancher Backups', () => {
     test.beforeEach(async ({ login }) => {
       await login();
@@ -63,7 +58,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installPage.scrollMainContentToBottom();
 
         // Select 'Use an existing storage class' option
-        const storageOptions = new RadioGroupInputPo(page, '[chart="[chart: cluster/rancher-charts/rancher-backup]"]');
+        const storageOptions = installPage.chartStorageOptions('[chart: cluster/rancher-charts/rancher-backup]');
 
         await storageOptions.checkExists();
         await storageOptions.set(2);
@@ -72,7 +67,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installPage.scrollMainContentToBottom();
 
         // Verify the drop-down exists and select default storage class
-        const select = new LabeledSelectPo(page, '[data-testid="backup-chart-select-existing-storage-class"]');
+        const select = installPage.backupStorageClassSelect();
 
         await select.checkExists();
         await select.toggle();
@@ -81,9 +76,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         // Verify that changing tabs doesn't reset the last selected storage class option
         await installPage.editYaml();
-        const tabbedOptions = new TabbedPo(page);
-
-        await installPage.editOptions(tabbedOptions, '[data-testid="button-group-child-0"]');
+        await installPage.editOptionsView();
 
         await select.checkExists();
         await select.checkOptionSelected('test-default-storage-class');

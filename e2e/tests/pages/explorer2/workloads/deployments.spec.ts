@@ -27,13 +27,15 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const response = await responsePromise;
 
-      expect(response.status()).toBe(201);
-      const body = await response.json();
+      try {
+        expect(response.status()).toBe(201);
+        const body = await response.json();
 
-      expect(body.metadata.name).toBe(deploymentName);
-      expect(body.metadata.namespace).toBe(namespace);
-
-      await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        expect(body.metadata.name).toBe(deploymentName);
+        expect(body.metadata.namespace).toBe(namespace);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+      }
     });
 
     test('Should be able to scale the number of pods', async ({ page, login, rancherApi }) => {
@@ -69,19 +71,19 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await detailsPage.goTo();
         await expect(detailsPage.mastheadTitle()).toContainText(deploymentName);
 
-        await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('1', { timeout: 30000 });
+        await expect(page.getByTestId('scale-count-text')).toContainText('1', { timeout: 30000 });
 
-        const scaleUpBtn = page.locator('[data-testid="scale-up-button"]');
+        const scaleUpBtn = page.getByTestId('scale-up-button');
 
         await expect(scaleUpBtn).toBeEnabled();
         await scaleUpBtn.click();
 
-        await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('2', { timeout: 30000 });
+        await expect(page.getByTestId('scale-count-text')).toContainText('2', { timeout: 30000 });
 
-        const scaleDownBtn = page.locator('[data-testid="scale-down-button"]');
+        const scaleDownBtn = page.getByTestId('scale-down-button');
 
         await scaleDownBtn.click();
-        await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('1', { timeout: 30000 });
+        await expect(page.getByTestId('scale-count-text')).toContainText('1', { timeout: 30000 });
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
       }
@@ -146,23 +148,31 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
 
-      await listPage.goTo();
-      await listPage.waitForPage();
+      try {
+        await listPage.goTo();
+        await listPage.waitForPage();
 
-      await expect(listPage.listElementWithName(deploymentName)).toBeVisible();
+        await expect(listPage.listElementWithName(deploymentName)).toBeVisible();
 
-      const responsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
-          resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'DELETE',
+        );
 
-      await listPage.deleteItemWithUI(deploymentName);
+        await listPage.deleteItemWithUI(deploymentName);
 
-      const response = await responsePromise;
+        const response = await responsePromise;
 
-      expect([200, 204]).toContain(response.status());
-      await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached({ timeout: 15000 });
+        expect([200, 204]).toContain(response.status());
+        await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached({ timeout: 15000 });
+      } finally {
+        try {
+          await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        } catch {
+          // Already deleted by test — expected
+        }
+      }
     });
   });
 
