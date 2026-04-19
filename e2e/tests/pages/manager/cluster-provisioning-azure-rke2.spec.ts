@@ -233,7 +233,9 @@ test.describe(
       await clusterList.waitForPage();
 
       try {
-        await clusterList.list().actionMenu(clusterName).getMenuItem('Delete').click();
+        const deleteMenu = await clusterList.list().actionMenu(clusterName);
+
+        await deleteMenu.getMenuItem('Delete').click();
         await promptRemove.confirm(clusterName);
         await promptRemove.remove();
 

@@ -46,7 +46,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           resp.url().includes('v1/management.cattle.io.settings/kev2-operators') && resp.request().method() === 'PUT',
       );
 
-      await providersPage.list().actionMenu('Azure AKS').getMenuItem('Deactivate').click();
+      const deactivateMenu = await providersPage.list().actionMenu('Azure AKS');
+
+      await deactivateMenu.getMenuItem('Deactivate').click();
       const deactivateResp = await updateResponse;
 
       expect(deactivateResp.status()).toBe(200);
@@ -68,7 +70,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await providersPage.goTo();
       await providersPage.waitForPage();
-      await providersPage.list().actionMenu('Azure AKS').getMenuItem('Activate').click();
+      const activateMenu = await providersPage.list().actionMenu('Azure AKS');
+
+      await activateMenu.getMenuItem('Activate').click();
       const reactivateResp = await reactivateResponse;
 
       expect(reactivateResp.status()).toBe(200);
@@ -329,7 +333,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.list().actionMenu('local').getMenuItem('Edit Config').click();
+      const editMenu = await clusterList.list().actionMenu('local');
+
+      await editMenu.getMenuItem('Edit Config').click();
 
       await expect(page).toHaveURL(/mode=edit/);
 
@@ -398,7 +404,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterList.goTo();
     await clusterList.waitForPage();
 
-    await clusterList.list().actionMenu('local').getMenuItem('Kubectl Shell').click();
+    const shellMenu = await clusterList.list().actionMenu('local');
+
+    await shellMenu.getMenuItem('Kubectl Shell').click();
 
     await expect(clusterDetail.kubectlShell()).toBeVisible();
     await expect(clusterDetail.kubectlShell().locator('text=Connected')).toBeVisible();

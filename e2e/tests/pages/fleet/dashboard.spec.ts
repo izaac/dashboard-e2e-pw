@@ -53,7 +53,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
     await appBundleCreatePage.createGitRepo();
 
     await gitRepoCreatePage.waitForPage();
-    await expect(gitRepoCreatePage.mastheadTitle()).toContainText('App Bundle: Create');
+    await expect(gitRepoCreatePage.mastheadTitleLocator()).toContainText('App Bundle: Create');
   });
 
   test('Should display workspace cards', async ({ page, rancherApi }) => {
