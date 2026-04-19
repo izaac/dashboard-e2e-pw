@@ -276,7 +276,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await appRepoList.waitForPage();
     await expect(
       appRepoList.list().resourceTable().sortableTable().rowElementWithPartialName(UI_PLUGINS_PARTNERS_REPO_NAME),
-    ).toBeAttached();
+    ).toBeAttached({ timeout: 30000 });
 
     // Cleanup: remove the partners repo we just added
     await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
@@ -316,8 +316,8 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await expect(nameInput).toBeVisible();
     await nameInput.fill(repoName);
 
-    // Select git repo card
-    await repoCreateEdit.gitRepoCard().click();
+    // Select git repo type (radio button in 2.13)
+    await repoCreateEdit.selectGitRepoCard();
 
     // Fill git repo URL and branch
     const gitRepoInput = repoCreateEdit.gitRepoInput();

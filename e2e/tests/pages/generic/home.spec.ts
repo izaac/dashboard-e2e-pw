@@ -79,7 +79,9 @@ test.describe('Home Page', () => {
 
       // Filter with non-matching text
       await homePage.list().filter('random text');
-      await expect(homePage.list().noRowsText()).toBeVisible();
+      await expect(homePage.list().rowElements().first()).toContainText(
+        'There are no rows which match your search query.',
+      );
 
       // Filter with matching text
       await homePage.list().filter('local');

@@ -210,6 +210,22 @@ Husky + lint-staged runs on every commit:
 - **After each spec run, Opus does gold standard audit** — check atomicity, idempotency, no raw selectors, web-first assertions, proper cleanup, no unnecessary serial mode. Fix ALL violations found.
 - **Always query Context7** before implementing patterns you are not 100% certain about — especially test design (cleanup, fixtures, assertions), Playwright API usage, and any library/framework best practices. Training data may be stale; Context7 has current docs. This applies to both main context and subagents.
 
+## Cross-Branch Porting Notes (2.13 → 2.14 / master)
+
+Bugs found and fixed during the 2.13 gold standard audit. Re-check these when porting specs to other branches — some may differ per Rancher version, others are universal fixes.
+
+| Finding | 2.13 Fix | Check on 2.14/master |
+|---------|----------|----------------------|
+| User CRUD uses v3 Norman API, not v1 Steve | `waitForResponse` targets `v3/users`, `v3/globalrolebindings` | Verify which API the browser actually sends — may revert to v1 |
+| Refresh group membership returns 200, not 201 | Assert `toBe(200)` | Confirm response code matches |
+| `slide-in-panel-component` testid has no `.chrome` suffix | `getByTestId('slide-in-panel-component')` | Same — `.chrome` was our bug |
+| `group-by-button-0` testid doesn't exist | Removed `flatListViewButton()` — table is flat by default | May exist in other versions — verify DOM |
+| `item-card-git-repo` / `item-card-oci-url` cards don't exist | 2.13 uses `clusterrepo-radio-input` radio group; use `selectGitRepoCard()` PO method | Cards may return in newer versions — PO handles both |
+| Home page cluster list: no `.no-rows` class on empty filter | Check `rowElements().first()` for text content | Verify if `.no-rows` class appears in other versions |
+| Bare `waitForResponse` inherits `actionTimeout` (10s) | Always add explicit `{ timeout: 30000 }` | Universal — applies to all branches |
+| Fleet deploys leave `nginx-keep` namespace | Explicit `deleteNamespace(['nginx-keep'])` in finally blocks | Universal — fleet doesn't clean deployed namespaces |
+| Extensions partner repo may not resolve | Test skips gracefully if catalog fetch fails | Check if partner chart repo URL changed |
+
 ## Deep Docs (load only when needed)
 
 - @e2e/po/components/component.po.ts — Base component PO pattern
