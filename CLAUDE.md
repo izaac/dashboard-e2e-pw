@@ -226,6 +226,79 @@ Bugs found and fixed during the 2.13 gold standard audit. Re-check these when po
 | Fleet deploys leave `nginx-keep` namespace | Explicit `deleteNamespace(['nginx-keep'])` in finally blocks | Universal — fleet doesn't clean deployed namespaces |
 | Extensions partner repo may not resolve | Test skips gracefully if catalog fetch fails | Check if partner chart repo URL changed |
 
+## Forward Branch Strategy (2.13 → 2.14 → master)
+
+### Step 1: Branch from 2.13
+
+All gold standard fixes, PO methods, cleanup patterns carry forward.
+
+```bash
+git checkout release-2.14
+git checkout -b e2e-port-from-2.13
+git cherry-pick <range of 2.13 commits>   # or merge --squash
+```
+
+### Step 2: Run gap-map first
+
+Upstream 2.14 may have new/changed specs. Diff tells us what's new vs what moved.
+
+```bash
+yarn gap-map    # against 2.14 upstream Cypress specs
+yarn po-diff    # shows new PO methods needed
+```
+
+Port PO changes BEFORE touching specs — specs depend on POs being correct.
+
+### Step 3: DOM audit before tests
+
+Spin up 2.14 Rancher, check the **Cross-Branch Porting Notes** table above. The 9 findings are the first things to verify:
+
+- Do user ops go back to v1 Steve API or stay v3?
+- Do item-cards replace radio buttons on repo create?
+- Does `.no-rows` class exist on home table?
+- Does partner-extensions repo actually get created?
+
+### Step 4: Run full suite first, fix second
+
+Don't guess what breaks. Run all specs, read `FAILURE-SUMMARY.md`, batch fixes by category:
+
+| Failure type | Action |
+|-------------|--------|
+| **Selector changed** (testid renamed, wrapper added/removed) | Fix PO — DOM may differ between versions |
+| **API path changed** (v3 → v1 or vice versa) | Check browser DevTools network tab — match what browser sends |
+| **Feature doesn't exist** (UI element missing) | `test.skip()` with version reason |
+| **New feature added** (new UI not in 2.13) | Port upstream Cypress test for it — new coverage |
+| **Timing/flake** | Add explicit `{ timeout: 30000 }` or visibility guard |
+
+### Step 5: Version-specific selector strategy
+
+DO NOT use conditionals (`if (version === '2.14')`) in specs or POs. Instead:
+- PO methods handle both patterns with `.or()` fallbacks where the DOM differs
+- If a feature flat-out doesn't exist, `test.skip()` with a version guard
+- Example: `selectGitRepoCard()` already handles both radio (2.13) and card (2.14+)
+
+### Step 6: Fill the 14% gap on 2.13 first
+
+Those ~105 tests transfer directly to 2.14. Better to write them once on stable ground.
+
+### Step 7: master branch
+
+Same process as 2.14. Master may have unreleased features — use feature flags:
+```typescript
+test.skip(!envMeta.someFeatureFlag, 'Requires feature X (unreleased)');
+```
+
+### Porting checklist per branch
+
+- [ ] `yarn po-diff` clean (no missing methods)
+- [ ] `yarn gap-map` shows expected delta (new tests in newer versions are OK)
+- [ ] All specs pass or skip with documented reason
+- [ ] No raw selectors in specs, no `any` types, lint clean
+
+### Biggest risk
+
+Rancher 2.14 likely has UI component changes (cards vs radios, new testids, restructured pages). The PO layer absorbs this — specs stay clean.
+
 ## Deep Docs (load only when needed)
 
 - @e2e/po/components/component.po.ts — Base component PO pattern
