@@ -47,8 +47,8 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
       const detailsPage = new FleetBundleDetailsPo(page, localWorkspace, bundle);
 
       await detailsPage.waitForPage();
-      await detailsPage.tabs().clickTabWithName('resources');
 
+      await detailsPage.resourcesList().sortableTable().checkVisible();
       const expectedResourceHeaders = ['State', 'Name', 'Kind', 'Cluster', 'Namespace', 'API Version'];
       const resourceHeaderNames = await detailsPage.resourcesList().sortableTable().headerNames();
 

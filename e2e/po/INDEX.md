@@ -266,7 +266,7 @@
 | FleetClusterListPagePo | fleet.cattle.io.cluster.po.ts | PagePo | — | super, list, resourceTableDetails, sortableTable, mainRows, goToDetailsPage, editFleetCluster, clusterTabs (+6) |
 | FleetClusterGroupsListPagePo | fleet.cattle.io.clustergroup.po.ts | PagePo | `/c/${clusterId}/fleet/fleet.cattle.io.clustergroup` | super, list, baseResourceList, resourceTableDetails, goToDetailsPage, resourceDetail, clusterList |
 | FleetClusterRegistrationTokenListPagePo | fleet.cattle.io.clusterregistrationtoken.po.ts | PagePo | — | super, baseResourceList, list, resourceDetail |
-| FleetWorkspaceListPagePo | fleet.cattle.io.fleetworkspace.po.ts | PagePo | — | super, baseResourceList, list, goToDetailsPage, resourceDetail, workspaceTabs, recentEventsList, relatedResourcesList |
+| FleetWorkspaceListPagePo | fleet.cattle.io.fleetworkspace.po.ts | PagePo | — | super, baseResourceList, list, goToDetailsPage, resourceDetail, defaultOciRegistry, workspaceTabs, recentEventsList (+1) |
 | FleetGitRepoRestrictionListPagePo | fleet.cattle.io.gitreporestriction.po.ts | PagePo | — | super, baseResourceList, list, resourceDetail |
 | FleetHelmOpCreateEditPo | fleet.cattle.io.helmop.po.ts | PagePo | — | super, resourceDetail, setChart, setRepository, setVersion, setTargetNamespace, targetClusterOptions, targetCluster (+2) |
 

@@ -63,7 +63,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
   test.describe('CRUD', () => {
     test('can create a fleet workspace', async ({ page, login, rancherApi }) => {
       await login();
-      const customWorkspace = rancherApi.createE2EResourceName('fleet-workspace');
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-ws-create');
       const listPage = new FleetWorkspaceListPagePo(page);
       const createPage = new FleetWorkspaceCreateEditPo(page);
 
@@ -123,7 +123,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('can Edit Config', async ({ page, login, rancherApi }) => {
-      const customWorkspace = rancherApi.createE2EResourceName('fleet-workspace');
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-ws-edit');
       const ociSecretName = rancherApi.createE2EResourceName('oci-secret');
 
       await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
@@ -133,8 +133,18 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await rancherApi.createRancherResource('v1', 'secrets', {
         metadata: { name: ociSecretName, namespace: customWorkspace },
-        type: 'kubernetes.io/dockerconfigjson',
-        data: { '.dockerconfigjson': Buffer.from('{}').toString('base64') },
+        type: 'fleet.cattle.io/bundle-oci-storage/v1alpha1',
+        apiVersion: 'v1',
+        kind: 'Secret',
+        data: {
+          agentPassword: 'Zm9v',
+          agentUsername: 'ZmxlZXQtY2k=',
+          basicHTTP: 'ZmFsc2U=',
+          insecure: 'dHJ1ZQ==',
+          password: 'Zm9v',
+          reference: '',
+          username: 'ZmxlZXQtY2k=',
+        },
       });
 
       try {
@@ -165,7 +175,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
           (resp) => resp.url().includes(`/v3/fleetWorkspaces/${customWorkspace}`) && resp.request().method() === 'PUT',
         );
 
-        await editPage.resourceDetail().cruResource().save();
+        await editPage.resourceDetail().cruResource().saveOrCreate().click();
         const resp = await responsePromise;
 
         expect(resp.status()).toBe(200);
@@ -182,7 +192,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('can Download YAML', async ({ page, login, rancherApi }) => {
-      const customWorkspace = rancherApi.createE2EResourceName('fleet-workspace');
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-ws-dl');
 
       await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
         metadata: { name: customWorkspace },
