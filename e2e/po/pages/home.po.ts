@@ -4,6 +4,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import NotificationsCenterPo from '@/e2e/po/components/notification-center.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 export default class HomePagePo extends PagePo {
   static url = '/home';
@@ -33,8 +34,16 @@ export default class HomePagePo extends PagePo {
     return this.changelog().self().locator('a');
   }
 
-  list(): Locator {
-    return this.page.locator('[data-testid="sortable-table-list-container"]');
+  list(): SortableTablePo {
+    return new SortableTablePo(this.page, '[data-testid="sortable-table-list-container"]');
+  }
+
+  clusterRow(name: string) {
+    return this.list().rowWithPartialName(name);
+  }
+
+  clusterDescription(): Locator {
+    return this.list().self().locator('.cluster-description');
   }
 
   manageButton(): Locator {

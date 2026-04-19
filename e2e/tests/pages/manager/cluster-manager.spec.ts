@@ -8,8 +8,6 @@ import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisionin
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
-import * as jsyaml from 'js-yaml';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -21,8 +19,6 @@ import * as jsyaml from 'js-yaml';
  */
 
 test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-
   test('deactivating a hosted provider should hide its card from the cluster creation page', async ({
     page,
     login,
@@ -65,9 +61,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(
-        clusterCreatePage.self().locator('[data-testid*="azure-aks"], .item:has-text("Azure AKS")'),
-      ).not.toBeAttached();
+      await expect(clusterCreatePage.providerCard('azure-aks', 'Azure AKS')).not.toBeAttached();
 
       // Re-enable AKS
       const reactivateResponse = page.waitForResponse(
@@ -87,9 +81,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(
-        clusterCreatePage.self().locator('[data-testid*="azure-aks"], .item:has-text("Azure AKS")'),
-      ).toBeAttached();
+      await expect(clusterCreatePage.providerCard('azure-aks', 'Azure AKS')).toBeAttached();
     } finally {
       if (reenableAKS) {
         // Restore AKS to active state if test failed mid-way
@@ -213,11 +205,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
     await homePage.goTo();
     await burgerMenu.toggle();
-
-    const clusterManagementNavItem = burgerMenu.self().locator('text=Cluster Management');
-
-    await expect(clusterManagementNavItem).toBeVisible();
-    await clusterManagementNavItem.click();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Cluster Management');
 
     const clusterList = new ClusterManagerListPagePo(page);
 
@@ -233,15 +221,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(page).toHaveURL(/fleet-local\/local|\/c\/local\//);
 
       await clusterDetail.conditionsTab().click();
       await expect(page).toHaveURL(/conditions/);
 
-      // Find the row where the first cell is exactly "Created" (not e.g. "BackingNamespaceCreated")
-      const createdRow = page.locator('tr').filter({ has: page.locator('td').filter({ hasText: /^\s*Created\s*$/ }) });
+      const createdRow = clusterDetail.conditionRow('Created');
 
       await expect(createdRow.locator('td').nth(1)).toContainText('True');
     });
@@ -254,7 +241,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.relatedTab().click();
       await expect(page).toHaveURL(/related/);
@@ -271,7 +258,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.logTab().click();
       await expect(page).toHaveURL(/log/);
@@ -287,7 +274,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.nodePoolsTab().click();
       await expect(page).toHaveURL(/node-pools/);
@@ -306,20 +293,20 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.showConfigurationButton().click();
 
       const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
-      await expect(drawer.locator('button:has-text("Save")')).toBeVisible();
+      await expect(clusterDetail.drawerSaveButton()).toBeVisible();
 
-      await expect(drawer.locator('[data-testid="tab-config"], button:has-text("Config")')).toBeVisible();
-      await expect(drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")')).toBeVisible();
+      await expect(clusterDetail.drawerConfigTab()).toBeVisible();
+      await expect(clusterDetail.drawerYamlTab()).toBeVisible();
 
-      await drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")').click();
-      await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
+      await clusterDetail.drawerYamlTab().click();
+      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
     });
 
     test('can navigate to namespace from cluster detail view', async ({ page, login }) => {
@@ -333,7 +320,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(clusterDetail.clusterNamespaceLink()).toContainText('fleet-local');
       await clusterDetail.clusterNamespaceLink().click();
@@ -388,11 +375,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterList.waitForPage();
 
     // Select the local cluster row checkbox
-    await clusterList
-      .list()
-      .self()
-      .locator('[data-testid="sortable-table-0-row"] .checkbox-custom')
-      .click({ force: true });
+    await clusterList.sortableTable().rowSelectCtlWithName('local').set();
     // In Rancher 2.13 bulk actions appear as direct buttons (no dropdown needed)
     await page.getByTestId('sortable-table-download').click();
 
@@ -414,11 +397,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         resp.request().method() === 'POST',
     );
 
-    await clusterList
-      .list()
-      .self()
-      .locator('[data-testid="sortable-table-0-row"] .checkbox-custom')
-      .click({ force: true });
+    await clusterList.sortableTable().rowSelectCtlWithName('local').set();
     // In Rancher 2.13 bulk actions appear as direct buttons (no dropdown needed)
     await page.getByTestId('sortable-table-downloadKubeConfig').click();
 
@@ -441,8 +420,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await kubectlMenu.getMenuItem('Kubectl Shell').click();
 
     await expect(clusterDetail.kubectlShell()).toBeVisible();
-    // "Connected" status appears in .status span, not inside .terminal
-    await expect(page.locator('.container-shell .status').filter({ hasText: 'Connected' })).toBeVisible();
+    await expect(clusterDetail.shellStatus()).toContainText('Connected');
 
     await clusterDetail.closeShellButton().click();
   });
@@ -468,7 +446,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           await clusterCreate.goTo(`type=${driver}&rkeType=rke2`);
           await clusterCreate.waitForPage();
 
-          await expect(clusterCreate.self().locator('[data-testid="select-credential"]')).toBeAttached();
+          await expect(clusterCreate.credentialStep()).toBeAttached();
         });
 
         test('should show credential step when `addCloudCredential` is false', async ({ page, login }) => {
@@ -487,7 +465,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           await clusterCreate.goTo(`type=${driver}&rkeType=rke2`);
           await clusterCreate.waitForPage();
 
-          await expect(clusterCreate.self().locator('[data-testid="select-credential"]')).toBeAttached();
+          await expect(clusterCreate.credentialStep()).toBeAttached();
         });
       });
     }
@@ -511,7 +489,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${driver2}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(clusterCreate.self().locator('[data-testid="select-credential"]')).toBeAttached();
+        await expect(clusterCreate.credentialStep()).toBeAttached();
       });
 
       test('should NOT show credential step when `addCloudCredential` is false', async ({ page, login }) => {
@@ -530,7 +508,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${driver2}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(clusterCreate.self().locator('[data-testid="select-credential"]')).not.toBeAttached();
+        await expect(clusterCreate.credentialStep()).not.toBeAttached();
       });
     });
   });
@@ -545,11 +523,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
     await homePage.goTo();
     await burgerMenu.toggle();
-
-    const clusterManagementNavItem = burgerMenu.self().locator('text=Cluster Management');
-
-    await expect(clusterManagementNavItem).toBeVisible();
-    await clusterManagementNavItem.click();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Cluster Management');
 
     const clusterList = new ClusterManagerListPagePo(page);
 
@@ -571,7 +545,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(page).toHaveURL(/fleet-local\/local|\/c\/local\//);
 
@@ -580,13 +554,13 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
-      await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
+      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
 
-      await expect(drawer.locator('[data-testid="tab-config"], button:has-text("Config")')).toBeVisible();
-      await expect(drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")')).toBeVisible();
+      await expect(clusterDetail.drawerConfigTab()).toBeVisible();
+      await expect(clusterDetail.drawerYamlTab()).toBeVisible();
 
-      await drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")').click();
-      await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
+      await clusterDetail.drawerYamlTab().click();
+      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
     });
 
     test('Shows the explore button and navigates to the cluster explorer when clicked', async ({ page, login }) => {
@@ -597,7 +571,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       // URL lands on the cluster detail page in manager (fleet-local/local) or the explorer
       await expect(page).toHaveURL(/fleet-local\/local|\/c\/local\//);

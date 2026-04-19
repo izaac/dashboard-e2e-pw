@@ -285,6 +285,7 @@ After non-trivial sessions (5+ files touched, big refactors, tricky debugging), 
 - **Check upstream parity via `yarn po-diff`** before manually comparing POs — do NOT read upstream files one by one.
 - **Follow upstream Cypress PO structure** — same class names, same method names, same selectors.
 - **1:1 upstream parity only** — never add tests that don't exist in upstream Cypress. This is a port, not an expansion. If upstream is missing coverage, flag it to Chief — don't write it yourself.
+- **Accessibility specs (`e2e/tests/accessibility/`) are out of scope** — do not run, audit, or fix them. They are axe-core a11y scans, not functional E2E tests.
 - Write idiomatic TypeScript (strict mode, no `any` unless unavoidable).
 
 ### Never

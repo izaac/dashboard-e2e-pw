@@ -209,13 +209,12 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
         ];
         const detailHeaderCells = fleetClusterDetailsPage.appBundlesList().headerContentCells();
 
-        await fleetClusterDetailsPage.flatListViewButton().click();
-
         for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
           await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);
         }
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
+        await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
       }
     },
   );

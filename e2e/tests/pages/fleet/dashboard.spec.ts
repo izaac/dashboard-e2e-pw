@@ -100,6 +100,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(clusterGroupsPanel.description()).toContainText('1');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -142,6 +143,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(activeStatePanel.card(repoName)).toBeVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -171,6 +173,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(activeStatePanel.self()).toBeHidden();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -204,6 +207,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await tablePanel.checkVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -236,6 +240,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(details).toContainText(repoName);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -272,6 +277,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await appDetails.waitForPage(undefined, 'bundles');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 });

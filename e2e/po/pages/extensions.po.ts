@@ -1,5 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
+import { expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
@@ -8,8 +8,6 @@ import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import BannersPo from '@/e2e/po/components/banners.po';
-
-// --------------- Install Extension Dialog ---------------
 
 class InstallExtensionDialog {
   private page: Page;
@@ -68,8 +66,6 @@ class InstallExtensionDialog {
     return texts;
   }
 }
-
-// --------------- Extensions Page ---------------
 
 export default class ExtensionsPagePo extends PagePo {
   extensionTabs: TabbedPo;
@@ -222,6 +218,14 @@ export default class ExtensionsPagePo extends PagePo {
     return this.extensionTabs.getTab('builtin');
   }
 
+  tabByName(name: string): Locator {
+    return this.page.getByTestId(`extension-tab-${name}`);
+  }
+
+  extensionCardByName(name: string): Locator {
+    return this.page.getByTestId('extension-card-install-btn').locator('..').filter({ hasText: name });
+  }
+
   async checkForExtensionTab(tab: 'available' | 'installed' | 'builtin'): Promise<boolean> {
     await this.waitForTabs();
 
@@ -282,7 +286,7 @@ export default class ExtensionsPagePo extends PagePo {
   }
 
   async addReposModalAddClick(): Promise<void> {
-    await this.addReposModal().locator('.dialog-buttons button:last-child').click();
+    await this.addReposModal().getByRole('button', { name: 'Add' }).click();
   }
 
   // --- extension script import ---

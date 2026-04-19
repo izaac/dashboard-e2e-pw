@@ -111,6 +111,30 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
     return this.page.locator('[data-testid="explore-button"], button:has-text("Explore")');
   }
 
+  shellStatus(): Locator {
+    return this.page.locator('.container-shell .status');
+  }
+
+  conditionRow(name: string): Locator {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    return this.page.locator('tr').filter({
+      has: this.page.locator('td').filter({ hasText: new RegExp(`^\\s*${escaped}\\s*$`) }),
+    });
+  }
+
+  drawerSaveButton(): Locator {
+    return this.configurationDrawer().locator('button:has-text("Save")');
+  }
+
+  drawerConfigTab(): Locator {
+    return this.configurationDrawer().locator('[data-testid="tab-config"], button:has-text("Config")');
+  }
+
+  drawerYamlTab(): Locator {
+    return this.configurationDrawer().locator('[data-testid="tab-yaml"], button:has-text("YAML")');
+  }
+
   tableRowCell(rowText: string, cellIndex: number): Locator {
     return this.page.locator(`tr:has-text("${rowText}") td`).nth(cellIndex);
   }

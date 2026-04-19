@@ -65,10 +65,6 @@ export class FleetClusterDetailsPo extends PagePo {
   clusterLabels(): Locator {
     return this.self().locator('.tag-data');
   }
-
-  flatListViewButton(): Locator {
-    return this.page.getByTestId('group-by-button-0');
-  }
 }
 
 export class FleetClusterEditPo extends PagePo {

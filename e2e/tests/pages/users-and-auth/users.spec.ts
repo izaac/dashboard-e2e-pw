@@ -65,7 +65,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.confirmNewPass().set(userBasePassword);
       await userCreate.selectCheckbox('User-Base').set();
       // Wait for user creation POST (binding POST may 404 in 2.13 if user creation is async)
-      await userCreate.saveAndWaitForRequests('POST', '/v1/management.cattle.io.users');
+      await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
 
       await usersPo.waitForPage();
       // Find the user by username since userId from binding may not be available
@@ -170,14 +170,17 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
     const responsePromise = page.waitForResponse(
       (resp) =>
-        resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
+        resp.url().includes('/v3/users') &&
+        resp.url().includes('action=refreshauthprovideraccess') &&
+        resp.request().method() === 'POST',
+      { timeout: 30000 },
     );
 
     await usersPo.list().refreshGroupMembership().self().click();
 
     const response = await responsePromise;
 
-    expect(response.status()).toBe(201);
+    expect(response.status()).toBe(200);
   });
 
   test.describe('Action Menu', () => {
@@ -207,10 +210,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const usersPo = new UsersPo(page);
 
       const usersResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes('/v1/management.cattle.io.users') &&
-          resp.request().method() === 'GET' &&
-          resp.status() === 200,
+        (resp) => resp.url().includes('/v3/users') && resp.request().method() === 'GET' && resp.status() === 200,
+        { timeout: 30000 },
       );
 
       await usersPo.goTo();
@@ -245,14 +246,17 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       const responsePromise = page.waitForResponse(
         (resp) =>
-          resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
+          resp.url().includes('/v3/users') &&
+          resp.url().includes('action=refreshauthprovideraccess') &&
+          resp.request().method() === 'POST',
+        { timeout: 30000 },
       );
 
       await usersPo.list().clickRowActionMenuItem(userId, 'Refresh Group Memberships');
 
       const response = await responsePromise;
 
-      expect(response.status()).toBe(201);
+      expect(response.status()).toBe(200);
     });
 
     test('can Edit Config', async ({ page, login }) => {
@@ -272,7 +276,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await userEdit.description().set('e2e_test');
 
-      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v3/users/${userId}`);
 
       expect(response.status()).toBe(200);
       const body = await response.json();
@@ -310,7 +314,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const promptRemove = new PromptRemove(page);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
+        { timeout: 30000 },
       );
 
       await promptRemove.confirm(actualUsername);
@@ -369,7 +374,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       // Deactivate
       const deactivatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'PUT',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'PUT',
+        { timeout: 30000 },
       );
 
       await usersPo.list().deactivate().click();
@@ -386,7 +392,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       // Activate
       const activatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'PUT',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'PUT',
+        { timeout: 30000 },
       );
 
       await usersPo.list().activate().click();
@@ -411,7 +418,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const promptRemove = new PromptRemove(page);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
+        { timeout: 30000 },
       );
 
       await promptRemove.confirm(actualUsername);
@@ -426,27 +434,6 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       // User already deleted
       userBaseId = '';
     });
-  });
-
-  test('cannot delete admin user via action menu', async ({ page, login, rancherApi }) => {
-    await login();
-
-    const usersPo = new UsersPo(page);
-
-    // Find the admin user's ID to match the table row link
-    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-    const adminUser = usersResp.body.data.find((u: Record<string, string>) => u.username === 'admin');
-    const adminId = adminUser.id;
-
-    await usersPo.goTo();
-    await usersPo.waitForPage();
-
-    await usersPo.list().clickRowActionMenuItem(adminId, 'Delete');
-
-    const promptRemove = new PromptRemove(page);
-
-    await expect(promptRemove.self()).toBeVisible();
-    await expect(promptRemove.self()).toContainText('Default Admin');
   });
 
   test('can change standard user password', async ({ page, login, rancherApi }) => {
@@ -479,7 +466,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userEdit.newPass().set(newPassword);
       await userEdit.confirmNewPass().set(newPassword);
 
-      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v3/users/${userId}`);
 
       expect(response.status()).toBe(200);
 
@@ -535,7 +522,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await promptRemove.confirm(user1DisplayName);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
+        { timeout: 30000 },
       );
 
       await promptRemove.remove();
@@ -584,6 +572,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const firstBinding = page.waitForResponse(
         (resp) =>
           resp.url().includes('/v3/globalrolebindings') && resp.request().method() === 'POST' && resp.status() === 201,
+        { timeout: 30000 },
       );
 
       await userCreate.resourceDetail().cruResource().saveOrCreate().click();

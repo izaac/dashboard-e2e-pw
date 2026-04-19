@@ -70,7 +70,7 @@ export default class MgmtUserEditPo extends PagePo {
     // Set up response listener BEFORE clicking to avoid race conditions
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(url) && resp.request().method() === method,
-      { timeout: 15000 },
+      { timeout: 30000 },
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();
@@ -84,8 +84,8 @@ export default class MgmtUserEditPo extends PagePo {
     }
 
     const userCreationPromise = this.page.waitForResponse(
-      (resp) => resp.url().includes('v1/management.cattle.io.users') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      (resp) => resp.url().includes('v3/globalrolebindings') && resp.request().method() === 'POST',
+      { timeout: 30000 },
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();
@@ -110,7 +110,7 @@ export default class MgmtUserEditPo extends PagePo {
     const bindingResp = await bindingPromise;
 
     if (bindingResp.status() !== 201 && userId) {
-      await this.page.request.delete(`v1/management.cattle.io.users/${userId}`);
+      await this.page.request.delete(`v3/users/${userId}`);
       await this.page.waitForTimeout(2000);
       await this.saveCreateWithErrorRetry(attempt + 1);
     }

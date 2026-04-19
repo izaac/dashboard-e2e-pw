@@ -75,7 +75,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterManagerDetailRke2AmazonEc2PagePo | cluster-detail-rke2-amazon.po.ts | PagePo | — | super, resourceDetail, poolsList, snapshotsList, recentEventsList, selectTab, title, eventsTab (+17) |
+| ClusterManagerDetailRke2AmazonEc2PagePo | cluster-detail-rke2-amazon.po.ts | PagePo | — | super, resourceDetail, poolsList, snapshotsList, recentEventsList, selectTab, title, eventsTab (+22) |
 
 ## edit/auth/
 
@@ -113,7 +113,7 @@
 | ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+3) |
 | ClusterManagerCreateRke2AzurePagePo | cluster-create-rke2-azure.po.ts | ClusterManagerCreatePagePo | — | super, nameNsDescription, saveButton, createButton, azureEnvironmentSelect, azureDropdownOption, subscriptionIdInput, clientIdInput (+9) |
 | ClusterManagerCreateRke2CustomPagePo | cluster-create-rke2-custom.po.ts | ClusterManagerCreatePagePo | — | super, goToCustomClusterCreation, goToDigitalOceanCreation, title, clusterConfigurationTabs, registries, nameNsDescription, resourceDetail (+4) |
-| ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+12) |
+| ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+14) |
 
 ## edit/provisioning.cattle.io.cluster/edit/
 
@@ -159,9 +159,9 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+44) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+46) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
-| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, manageButton, manageClustersButton (+16) |
+| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, clusterRow, clusterDescription (+18) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+19) |
@@ -262,7 +262,7 @@
 | FleetApplicationListPagePo | fleet.cattle.io.application.po.ts | PagePo | `/c/_/fleet/application` | super, list, resourceTableDetails, sortableTable, goToDetailsPage, resourceDetail, createGitRepo, createHelmOp (+11) |
 | FleetBundlesListPagePo | fleet.cattle.io.bundle.po.ts | PagePo | — | super, baseResourceList, list, resourceTableDetails, goToDetailsPage, resourceDetail, tabs, resourcesList |
 | FleetBundleNamespaceMappingListPagePo | fleet.cattle.io.bundlenamespacemapping.po.ts | PagePo | — | super, baseResourceList, list, resourceDetail |
-| FleetClusterListPagePo | fleet.cattle.io.cluster.po.ts | PagePo | — | super, list, resourceTableDetails, sortableTable, mainRows, goToDetailsPage, editFleetCluster, clusterTabs (+6) |
+| FleetClusterListPagePo | fleet.cattle.io.cluster.po.ts | PagePo | — | super, list, resourceTableDetails, sortableTable, mainRows, goToDetailsPage, editFleetCluster, clusterTabs (+5) |
 | FleetClusterGroupsListPagePo | fleet.cattle.io.clustergroup.po.ts | PagePo | `/c/${clusterId}/fleet/fleet.cattle.io.clustergroup` | super, list, baseResourceList, resourceTableDetails, goToDetailsPage, resourceDetail, clusterList |
 | FleetClusterRegistrationTokenListPagePo | fleet.cattle.io.clusterregistrationtoken.po.ts | PagePo | — | super, baseResourceList, list, resourceDetail |
 | FleetWorkspaceListPagePo | fleet.cattle.io.fleetworkspace.po.ts | PagePo | — | super, baseResourceList, list, goToDetailsPage, resourceDetail, workspaceTabs, recentEventsList, relatedResourcesList |
