@@ -52,6 +52,9 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
       await pvcPage.waitForPage();
 
       const sortableTable = new SortableTablePo(page, '.sortable-table');
+      const rowCount = await sortableTable.rowCount();
+
+      test.skip(rowCount === 0, 'No PVCs exist to group by namespace');
 
       await sortableTable.groupByButtons(1).click();
       await expect(sortableTable.self().locator('tr.group-row').first()).toBeVisible({ timeout: 15000 });
