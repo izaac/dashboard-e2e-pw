@@ -9,6 +9,6 @@ export class WorkloadsStatefulSetsListPagePo extends WorkloadsListPageBasePo {
   }
 
   redeployDialog(): Locator {
-    return this.page.getByTestId('redeploy-dialog').or(this.page.locator('.prompt-modal'));
+    return this.page.locator('#modal-container-element');
   }
 }

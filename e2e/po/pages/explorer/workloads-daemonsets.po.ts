@@ -20,7 +20,7 @@ export class WorkloadsDaemonsetsListPagePo extends PagePo {
   }
 
   redeployDialog(): Locator {
-    return this.page.locator('[data-testid="redeploy-dialog"]');
+    return this.page.locator('#modal-container-element');
   }
 }
 

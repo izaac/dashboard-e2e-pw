@@ -84,7 +84,7 @@ export class WorkloadsCreatePageBasePo extends PagePo {
   }
 
   async selectNamespace(label: string): Promise<void> {
-    const nsSelect = this.page.getByTestId('name-ns-description-namespace');
+    const nsSelect = this.page.getByTestId('namespaces-dropdown');
 
     await nsSelect.click();
     await this.page.locator(`.vs__dropdown-menu`).getByRole('option', { name: label, exact: true }).click();
@@ -119,11 +119,11 @@ export class WorkloadsCreatePageBasePo extends PagePo {
   }
 
   namespaceDropdown(): Locator {
-    return this.page.getByTestId('name-ns-description-namespace');
+    return this.page.getByTestId('namespaces-dropdown');
   }
 
   namespaceInput(): Locator {
-    return this.page.getByTestId('name-ns-description-namespace').locator('input[type="text"]');
+    return this.page.getByTestId('name-ns-description-namespace-create').locator('input[type="text"]');
   }
 
   async addEnvironmentVariable(): Promise<void> {
