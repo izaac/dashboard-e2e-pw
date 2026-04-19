@@ -157,7 +157,40 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('can Download YAML', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
+      const defaultWorkspace = 'fleet-default';
+      const restrictionName = rancherApi.createE2EResourceName('restriction');
+
+      await rancherApi.createRancherResource('v1', 'fleet.cattle.io.gitreporestrictions', {
+        metadata: { name: restrictionName, namespace: defaultWorkspace },
+        allowedTargetNamespaces: [],
+      });
+
+      try {
+        await login();
+        const listPage = new FleetGitRepoRestrictionListPagePo(page);
+        const headerPo = new HeaderPo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(defaultWorkspace);
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(restrictionName);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${restrictionName}.yaml`);
+      } finally {
+        await rancherApi.deleteRancherResource(
+          'v1',
+          `fleet.cattle.io.gitreporestrictions/${defaultWorkspace}`,
+          restrictionName,
+          false,
+        );
+      }
     });
   });
 });

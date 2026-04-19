@@ -214,7 +214,35 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('can Download YAML', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
+      const localWorkspace = 'fleet-local';
+      const bundleName = rancherApi.createE2EResourceName('bundle');
+
+      await rancherApi.createRancherResource('v1', 'fleet.cattle.io.bundles', {
+        metadata: { name: bundleName, namespace: localWorkspace },
+        spec: {},
+      });
+
+      try {
+        await login();
+        const listPage = new FleetBundlesListPagePo(page);
+        const headerPo = new HeaderPo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(localWorkspace);
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(bundleName);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${bundleName}.yaml`);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.bundles/${localWorkspace}`, bundleName, false);
+      }
     });
   });
 });

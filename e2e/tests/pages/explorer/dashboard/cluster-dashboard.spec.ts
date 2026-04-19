@@ -108,8 +108,6 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
   });
 
   test('can download kubeconfig from header', async ({ page, login }) => {
-    test.skip(true, 'Download testing requires file system access - Playwright download handling needs refinement');
-
     await login();
 
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
@@ -118,10 +116,8 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await clusterDashboard.waitForPage();
 
     const header = new HeaderPo(page);
-    const downloadPromise = page.waitForEvent('download');
 
-    await header.downloadKubeconfig().click();
-    const download = await downloadPromise;
+    const [download] = await Promise.all([page.waitForEvent('download'), header.downloadKubeconfig().click()]);
 
     expect(download.suggestedFilename()).toBe('local.yaml');
   });

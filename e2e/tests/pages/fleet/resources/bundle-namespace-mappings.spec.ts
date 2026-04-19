@@ -157,7 +157,41 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
     });
 
     test('can Download YAML', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
+      const defaultWorkspace = 'fleet-default';
+      const mappingName = rancherApi.createE2EResourceName('mapping');
+
+      await rancherApi.createRancherResource('v1', 'fleet.cattle.io.bundlenamespacemappings', {
+        metadata: { name: mappingName, namespace: defaultWorkspace },
+        bundleSelector: {},
+        namespaceSelector: {},
+      });
+
+      try {
+        await login();
+        const listPage = new FleetBundleNamespaceMappingListPagePo(page);
+        const headerPo = new HeaderPo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(defaultWorkspace);
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(mappingName);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${mappingName}.yaml`);
+      } finally {
+        await rancherApi.deleteRancherResource(
+          'v1',
+          `fleet.cattle.io.bundlenamespacemappings/${defaultWorkspace}`,
+          mappingName,
+          false,
+        );
+      }
     });
   });
 });

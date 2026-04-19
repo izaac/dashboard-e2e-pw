@@ -166,7 +166,32 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('can Download YAML', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-workspace');
+
+      await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
+        metadata: { name: customWorkspace },
+        name: customWorkspace,
+      });
+
+      try {
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(customWorkspace);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${customWorkspace}.yaml`);
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', customWorkspace, false);
+      }
     });
 
     test('can delete workspace', async ({ page, login, rancherApi }) => {
