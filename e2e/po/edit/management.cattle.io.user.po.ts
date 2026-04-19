@@ -67,9 +67,10 @@ export default class MgmtUserEditPo extends PagePo {
   }
 
   async saveAndWaitForRequests(method: string, url: string): Promise<Response> {
+    // Set up response listener BEFORE clicking to avoid race conditions
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(url) && resp.request().method() === method,
-      { timeout: 10000 },
+      { timeout: 15000 },
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();

@@ -391,11 +391,10 @@ test.describe('Feature Flags', () => {
       await expect(featureFlagsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features');
-      // We filter out fleet and ui-sql-cache feature flags
-      const featureCount = resp.body.count - 2;
       const rowCount = await featureFlagsPage.list().resourceTable().sortableTable().rowElements().count();
 
-      expect(rowCount).toBe(featureCount);
+      // Row count must match API count — filtering hidden flags varies by Rancher version
+      expect(rowCount).toBe(resp.body.count);
     });
   });
 });

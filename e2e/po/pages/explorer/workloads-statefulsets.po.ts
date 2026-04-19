@@ -11,6 +11,9 @@ export class WorkloadsStatefulSetsListPagePo extends PagePo {
   }
 
   redeployDialog(): Locator {
-    return this.page.getByTestId('redeploy-dialog').or(this.page.locator('.prompt-modal'));
+    return this.page
+      .getByTestId('redeploy-dialog')
+      .or(this.page.locator('.prompt-modal'))
+      .or(this.page.getByRole('alertdialog').filter({ hasText: 'Redeploy' }));
   }
 }

@@ -61,19 +61,21 @@ export class PerformancePagePo extends RootClusterPage {
   }
 
   websocketCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Disable websocket notifications' });
+    // The Rancher checkbox renders both a hidden <input> and a visible <span role="checkbox">.
+    // Use the span (second match) which is the interactable element.
+    return this.page.getByRole('checkbox', { name: 'Disable websocket notifications' }).nth(1);
   }
 
   incrementalLoadingCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable incremental loading' });
+    return this.page.getByRole('checkbox', { name: 'Enable incremental loading' }).nth(1);
   }
 
   manualRefreshCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable manual refresh of data for lists' });
+    return this.page.getByRole('checkbox', { name: 'Enable manual refresh of data for lists' }).nth(1);
   }
 
   garbageCollectionCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable Garbage Collection' });
+    return this.page.getByRole('checkbox', { name: 'Enable Garbage Collection' }).nth(1);
   }
 
   garbageCollectionThresholdInput(): Locator {
@@ -81,11 +83,11 @@ export class PerformancePagePo extends RootClusterPage {
   }
 
   nsFilterCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable Required Namespace / Project Filtering' });
+    return this.page.getByRole('checkbox', { name: 'Enable Required Namespace / Project Filtering' }).nth(1);
   }
 
   advancedWorkerCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable Advanced Websocket Web Worker' });
+    return this.page.getByRole('checkbox', { name: 'Enable Advanced Websocket Web Worker' }).nth(1);
   }
 
   confirmationModal(): CardPo {

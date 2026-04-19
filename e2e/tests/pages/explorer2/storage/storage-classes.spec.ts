@@ -13,6 +13,8 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       await storageClassesPage.waitForPage();
 
       const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+      await sortableTable.checkVisible();
       const expectedHeaders = ['State', 'Name', 'Provisioner', 'Default', 'Age'];
       const headerNames = await sortableTable.headerNames();
 

@@ -98,7 +98,9 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   closeShellButton(): Locator {
-    return this.page.locator('[data-testid="close-shell-button"], .btn:has-text("Close")');
+    return this.page.locator(
+      '[data-testid="close-shell-button"], .btn:has-text("Close"), [data-testid="wm-tab-close-button"], .wm-closer-button',
+    );
   }
 
   logsContainer(): Locator {

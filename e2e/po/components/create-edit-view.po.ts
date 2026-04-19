@@ -50,15 +50,16 @@ export default class CreateEditViewPo extends ComponentPo {
   }
 
   tabResourceQuotas(): Locator {
-    return this.page.getByTestId('tab-resource-quotas').or(this.page.locator('#resource-quotas'));
+    return this.page.locator('li[data-testid="resource-quotas"]');
   }
 
   btnAddResource(): Locator {
-    return this.self().locator('button').filter({ hasText: 'Add Resource' }).first();
+    return this.self().getByRole('button', { name: 'Add Resource' });
   }
 
   inputProjectLimit(): Locator {
-    return this.self().locator('.project-limit input').first();
+    // Resource quota row contains spinbutton inputs — first is the Project Limit
+    return this.self().locator('[role="tabpanel"][aria-labelledby="tab-resource-quotas"] input[type="number"]').first();
   }
 
   async editAsYaml(): Promise<void> {

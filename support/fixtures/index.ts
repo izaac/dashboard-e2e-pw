@@ -153,6 +153,12 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         .last()
         .fill(username);
       await page.locator('[data-testid="local-login-password"] input').fill(password);
+
+      // Re-check consent banner — it may appear after page load (lazy rendering)
+      if (await consentBanner.isVisible({ timeout: 500 }).catch(() => false)) {
+        await consentBanner.locator('button').click();
+      }
+
       await page.locator('[data-testid="login-submit"]').click();
 
       // The login POST may take time on busy servers. Wait up to 60s for the URL

@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
-import type ActionMenuPo from '@/e2e/po/components/action-menu.po';
+import ListRowPo from '@/e2e/po/components/list-row.po';
+import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 
 export default class MgmtFeatureFlagListPo extends BaseResourceList {
   constructor(page: Page, parent?: Locator) {
@@ -15,24 +16,51 @@ export default class MgmtFeatureFlagListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().rowElementWithName(name);
   }
 
+  /** Find the row for a feature flag by exact name (plain text in <td>, no wrapping <a>/<span>) */
+  private rowByExactName(name: string): Locator {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const exactRegex = new RegExp(`^\\s*${escaped}\\s*$`);
+
+    return this.resourceTable()
+      .sortableTable()
+      .self()
+      .locator('tbody tr')
+      .filter({
+        has: this.page.locator('td').filter({ hasText: exactRegex }),
+      });
+  }
+
   details(name: string, index: number): Locator {
-    return this.resourceTable().sortableTable().rowWithName(name).column(index);
+    return new ListRowPo(this.rowByExactName(name)).column(index);
   }
 
   async clickRowActionMenuItem(name: string, itemLabel: string): Promise<void> {
-    const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name);
+    // Feature flag names are plain text in <td> cells — use exact row match for action button
+    const row = new ListRowPo(this.rowByExactName(name));
+
+    await row.actionBtn().click();
+
+    const actionMenu = new ActionMenuPo(this.page);
 
     await actionMenu.getMenuItem(itemLabel).click();
   }
 
   async getRowActionMenuItem(name: string, itemLabel: string): Promise<Locator> {
-    const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name);
+    const row = new ListRowPo(this.rowByExactName(name));
+
+    await row.actionBtn().click();
+
+    const actionMenu = new ActionMenuPo(this.page);
 
     return actionMenu.getMenuItem(itemLabel);
   }
 
   async getRowNoActionMenu(name: string): Promise<Locator> {
-    const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name, true);
+    const row = new ListRowPo(this.rowByExactName(name));
+
+    await row.actionBtn().click();
+
+    const actionMenu = new ActionMenuPo(this.page);
 
     return actionMenu.getMenuItem('No actions available');
   }

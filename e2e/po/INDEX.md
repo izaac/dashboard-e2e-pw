@@ -28,7 +28,7 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, checkVisible, checkNotVisible |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, checkVisible, checkNotVisible, checkExists, checkNotExists |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton, selectedValues (+7) |
@@ -44,7 +44,7 @@
 | ResourceYamlPo | resource-yaml.po.ts | ComponentPo | `.resource-yaml` | super, body, footer, codeMirror, cancel, saveOrCreate |
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, createBasicAuth, createRKEAuth, waitForNotLoading |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+42) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+43) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, getTab, tabNames (+1) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
@@ -175,7 +175,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | CloudCredentialsPagePo | cloud-credentials.po.ts | PagePo | — | super, create, createEditCloudCreds, list, resourceDetail |
-| ClusterManagerListPagePo | cluster-manager-list.po.ts | PagePo | — | super, list, sortableTable, importCluster, createCluster, editCluster, clusterLink, goToDetailsPage (+2) |
+| ClusterManagerListPagePo | cluster-manager-list.po.ts | PagePo | — | super, list, sortableTable, importCluster, createCluster, editCluster, clusterLink, goToDetailsPage (+3) |
 | HostedProvidersPagePo | hosted-providers.po.ts | PagePo | — | super, title, list |
 | JWTAuthenticationPagePo | jwt-authentication.po.ts | PagePo | — | super, list, sideNav, jwtAuthNavLink |
 | KontainerDriversPagePo | kontainer-drivers.po.ts | PagePo | — | super, list, goToDriverListAndGetDriverDetails, title, refreshKubMetadata, createDriver, growlText |

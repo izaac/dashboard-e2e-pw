@@ -12,6 +12,8 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
       await pvcPage.waitForPage();
 
       const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+      await sortableTable.checkVisible();
       const expectedHeaders = [
         'State',
         'Name',

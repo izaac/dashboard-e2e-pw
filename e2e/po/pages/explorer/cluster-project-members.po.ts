@@ -73,7 +73,9 @@ export default class ClusterProjectMembersPo extends PagePo {
   }
 
   listElementWithName(name: string): Locator {
-    return this.sortableTable().rowElementWithName(name);
+    // Cluster member rows contain the username plus the cluster display name (e.g. "Local"),
+    // so a partial match is required here rather than exact.
+    return this.sortableTable().rowElementWithPartialName(name);
   }
 
   projectTable(): SortableTablePo {

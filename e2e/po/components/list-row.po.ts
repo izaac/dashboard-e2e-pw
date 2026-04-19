@@ -35,4 +35,12 @@ export default class ListRowPo {
   async checkNotVisible(): Promise<void> {
     await expect(this.rowLocator).not.toBeVisible();
   }
+
+  async checkExists(): Promise<void> {
+    await expect(this.rowLocator).toBeAttached();
+  }
+
+  async checkNotExists(): Promise<void> {
+    await expect(this.rowLocator).not.toBeAttached();
+  }
 }

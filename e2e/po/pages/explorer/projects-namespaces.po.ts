@@ -23,7 +23,12 @@ export class ProjectsNamespacesListPagePo extends PagePo {
   }
 
   createNamespaceButton(): Locator {
-    return this.self().locator('[data-testid="create_project_namespaces"]');
+    // In grouped view the create-namespace action is a per-project link; fall back to
+    // the legacy masthead button for older Rancher versions that still render it.
+    return this.self()
+      .getByRole('link', { name: 'Create Namespace' })
+      .first()
+      .or(this.self().locator('[data-testid="create_project_namespaces"]'));
   }
 
   projectSelect(): Locator {

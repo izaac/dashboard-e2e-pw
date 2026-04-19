@@ -138,7 +138,9 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
-        await listPage.list().actionMenu(editRepoName).getMenuItem('Clone').click();
+        const cloneMenu = await listPage.list().actionMenu(editRepoName);
+
+        await cloneMenu.getMenuItem('Clone').click();
 
         const gitRepoEditPage = new FleetGitRepoCreateEditPo(page, workspace, editRepoName);
 
@@ -185,7 +187,9 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
-        await listPage.list().actionMenu(editRepoName).getMenuItem('Edit YAML').click();
+        const editYamlMenu = await listPage.list().actionMenu(editRepoName);
+
+        await editYamlMenu.getMenuItem('Edit YAML').click();
 
         const gitRepoEditPage = new FleetGitRepoCreateEditPo(page, workspace, editRepoName);
 
@@ -218,7 +222,9 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
-        await listPage.list().actionMenu(editRepoName).getMenuItem('Download YAML').click();
+        const downloadMenu = await listPage.list().actionMenu(editRepoName);
+
+        await downloadMenu.getMenuItem('Download YAML').click();
 
         await expect(listPage.sortableTable().self()).toBeVisible();
       } finally {
@@ -246,7 +252,9 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
-        await listPage.list().actionMenu(editRepoName).getMenuItem('Edit Config').click();
+        const editConfigMenu = await listPage.list().actionMenu(editRepoName);
+
+        await editConfigMenu.getMenuItem('Edit Config').click();
 
         const gitRepoEditPage = new FleetGitRepoCreateEditPo(page, workspace, editRepoName);
 

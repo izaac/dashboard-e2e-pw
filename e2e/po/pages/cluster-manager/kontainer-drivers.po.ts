@@ -38,7 +38,13 @@ export default class KontainerDriversPagePo extends PagePo {
   }
 
   async createDriver(): Promise<void> {
-    await this.list().masthead().actions().nth(1).click();
+    // Rancher 2.13: "Add Cluster Driver" link in masthead actions
+    await this.page
+      .locator(
+        'a[href*="kontainerDriver/create"], a:has-text("Add Cluster Driver"), button:has-text("Add Cluster Driver")',
+      )
+      .first()
+      .click();
   }
 
   growlText(): Locator {

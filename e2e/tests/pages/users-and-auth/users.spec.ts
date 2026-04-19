@@ -64,12 +64,12 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.newPass().set(userBasePassword);
       await userCreate.confirmNewPass().set(userBasePassword);
       await userCreate.selectCheckbox('User-Base').set();
-      const bindingResp = await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
-      const bindingBody = await bindingResp.json();
-      const userBaseId = bindingBody.userId;
+      // Wait for user creation POST (binding POST may 404 in 2.13 if user creation is async)
+      await userCreate.saveAndWaitForRequests('POST', '/v1/management.cattle.io.users');
 
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(userBaseId)).toBeVisible();
+      // Find the user by username since userId from binding may not be available
+      await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
     } finally {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
       const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);

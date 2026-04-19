@@ -1,6 +1,5 @@
 import { test, expect } from '@/support/fixtures';
 import { ProjectsNamespacesListPagePo } from '@/e2e/po/pages/explorer/projects-namespaces.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
@@ -15,9 +14,8 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
     await projectsNamespacesPage.goTo();
     await projectsNamespacesPage.waitForPage();
 
-    const sortableTable = new SortableTablePo(page, '.sortable-table');
-
-    await sortableTable.groupByButtons(0).click();
+    // Group-by buttons are in the list masthead, not inside .sortable-table
+    await page.getByRole('button', { name: 'Flat List' }).click();
 
     const mastheadPo = new ResourceListMastheadPo(page, ':scope');
 

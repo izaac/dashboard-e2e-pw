@@ -33,7 +33,8 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await createOption.click();
 
-        const nsInput = nsSelect.locator('input[type="text"]');
+        // After selecting "Create a New Namespace", a textbox appears for the namespace name
+        const nsInput = page.getByRole('textbox', { name: 'Name' }).first();
 
         await nsInput.fill(namespaceName);
 

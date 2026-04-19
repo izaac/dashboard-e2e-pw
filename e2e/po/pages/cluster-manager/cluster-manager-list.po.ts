@@ -42,6 +42,14 @@ export default class ClusterManagerListPagePo extends PagePo {
     await this.list().resourceTable().goToDetailsPage(name, selector);
   }
 
+  /** Returns the "Explore" button locator for a cluster row */
+  explore(clusterName: string): Locator {
+    return this.sortableTable()
+      .rowWithName(clusterName)
+      .self()
+      .locator('[data-testid="explore-button"], a:has-text("Explore"), button:has-text("Explore")');
+  }
+
   capiWarningSubRow(clusterName: string): Locator {
     return this.list().self().locator(`[data-testid="capi-unsupported-warning-${clusterName}"]`);
   }

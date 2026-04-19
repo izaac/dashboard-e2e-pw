@@ -67,6 +67,7 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       const cruResource = new CreateEditViewPo(page, '.dashboard-root');
 
       await cruResource.nameNsDescription().name().set(podName);
+      await cruResource.nameNsDescription().selectNamespace('default');
       const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pods');
 
       await createPage.containerImage().set(SMALL_CONTAINER.image);

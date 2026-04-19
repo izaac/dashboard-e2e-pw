@@ -20,7 +20,9 @@ export class WorkloadsDaemonsetsListPagePo extends PagePo {
   }
 
   redeployDialog(): Locator {
-    return this.page.locator('[data-testid="redeploy-dialog"]');
+    return this.page
+      .locator('[data-testid="redeploy-dialog"]')
+      .or(this.page.getByRole('alertdialog').filter({ hasText: 'Redeploy' }));
   }
 }
 
@@ -62,11 +64,12 @@ export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
   }
 
   daemonSetTab(): Locator {
-    return this.page.getByTestId('btn-DaemonSet').or(this.page.locator('#DaemonSet'));
+    return this.page.getByTestId('btn-DaemonSet');
   }
 
   upgradingTab(): Locator {
-    return this.page.getByTestId('tab-upgrading').or(this.page.locator('#upgrading'));
+    // Two tab sets exist (workload-general-tabs and workload-pod-tabs) — use the general one
+    return this.page.getByTestId('workload-general-tabs').getByTestId('btn-upgrading');
   }
 
   ScalingUpgradePolicyRadioBtn(): RadioGroupInputPo {

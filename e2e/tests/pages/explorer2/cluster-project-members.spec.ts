@@ -10,11 +10,10 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
   }) => {
     await login();
     const username = `e2e-test-${Date.now()}-cluster-member`;
-    const userResp = await rancherApi.createUser({
-      username,
-      globalRole: { role: 'user' },
-      password: 'standard-password',
-    });
+    const userResp = await rancherApi.createUser(
+      { username, globalRole: { role: 'user' }, password: 'standard-password' },
+      { createNameOptions: { onlyContext: true } },
+    );
 
     try {
       const homePage = new HomePagePo(page);
@@ -64,11 +63,10 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
   test('Can create a member with custom permissions', async ({ page, login, rancherApi }) => {
     await login();
     const username = `e2e-test-${Date.now()}-proj-member`;
-    const userResp = await rancherApi.createUser({
-      username,
-      globalRole: { role: 'user' },
-      password: 'standard-password',
-    });
+    const userResp = await rancherApi.createUser(
+      { username, globalRole: { role: 'user' }, password: 'standard-password' },
+      { createNameOptions: { onlyContext: true } },
+    );
 
     try {
       const projectMembership = new ClusterProjectMembersPo(page, 'local', 'project-membership');

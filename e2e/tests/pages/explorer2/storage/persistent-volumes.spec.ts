@@ -14,6 +14,8 @@ test.describe('PersistentVolumes', { tag: ['@explorer2', '@adminUser'] }, () => 
       await pvPage.waitForPage();
 
       const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+      await sortableTable.checkVisible();
       const expectedHeaders = ['State', 'Name', 'Reclaim Policy', 'Persistent Volume Claim', 'Source', 'Reason', 'Age'];
       const headerNames = await sortableTable.headerNames();
 

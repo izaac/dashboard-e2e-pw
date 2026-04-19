@@ -208,6 +208,7 @@ Use these tools instead of doing things manually. No exceptions.
 - **Check existing POs via `e2e/po/INDEX.md`** before creating new ones — do NOT `find` or `grep` for POs.
 - **Check upstream parity via `yarn po-diff`** before manually comparing POs — do NOT read upstream files one by one.
 - **Follow upstream Cypress PO structure** — same class names, same method names, same selectors.
+- **1:1 upstream parity only** — never add tests that don't exist in upstream Cypress. This is a port, not an expansion. If upstream is missing coverage, flag it to Chief — don't write it yourself.
 - Write idiomatic TypeScript (strict mode, no `any` unless unavoidable).
 
 ### Never

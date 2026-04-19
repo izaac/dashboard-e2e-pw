@@ -41,7 +41,10 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   groupByButtons(index: number): Locator {
-    return this.self().locator(`[data-testid="button-group-child-${index}"]`);
+    // Group-by buttons can be inside the sortable-table container or in the header above it
+    return this.self()
+      .locator(`[data-testid="button-group-child-${index}"]`)
+      .or(this.page.locator(`[data-testid="button-group-child-${index}"]`).first());
   }
 
   deleteButton(): Locator {
@@ -53,7 +56,8 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   filterComponent(): Locator {
-    return this.self().locator('[data-testid="search-box-filter-row"] input');
+    // The search input is within the sortable-table component
+    return this.self().locator('[data-testid="search-box-filter-row"] input').first();
   }
 
   async filter(searchText: string): Promise<void> {
@@ -76,18 +80,24 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   rowElementWithName(name: string): Locator {
-    // Find rows by exact name match — supports linked (td a), plain text (td), and
-    // composite cells where the name is in a child element (td > span) with sibling
-    // content like description URLs (e.g. kontainer driver rows).
+    // Find rows by exact name match. Works for all cell types:
+    //   - linked cells (td a) — hasText matches the inner <a> text
+    //   - plain text cells (td with direct text — e.g. feature flags)
+    //   - cells with name+description (td span + td div) — matches span/a only, not whole td
+    // Uses td.hasText(exactRegex) first; falls back to td span/a with exact text for
+    // cells that contain both a name element and a description sub-element.
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const exactRegex = new RegExp(`^\\s*${escaped}\\s*$`);
 
     return this.self()
       .locator('tbody tr')
       .filter({
-        has: this.page.locator('td').filter({
-          has: this.page.locator('span, a').filter({ hasText: exactRegex }),
-        }),
+        has: this.page
+          .locator('td')
+          .filter({
+            has: this.page.locator('span, a').filter({ hasText: exactRegex }),
+          })
+          .or(this.page.locator('td').filter({ hasText: exactRegex })),
       });
   }
 
@@ -224,6 +234,10 @@ export default class SortableTablePo extends ComponentPo {
 
   selectAllCheckbox(): ComponentPo {
     return new ComponentPo(this.page, '[data-testid="sortable-table_check_select_all"]');
+  }
+
+  async selectAll(): Promise<void> {
+    await this.selectAllCheckbox().self().locator('.checkbox-custom').click();
   }
 
   async selectedCount(): Promise<number> {

@@ -133,7 +133,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
     await fleetClusterListPage.sortableTable().checkVisible();
     await fleetClusterListPage.sortableTable().checkLoadingIndicatorNotVisible();
 
-    const actionMenu = fleetClusterListPage.list().actionMenu('local');
+    const actionMenu = await fleetClusterListPage.list().actionMenu('local');
 
     await expect(actionMenu.getMenuItem('Pause')).toBeAttached();
     await expect(actionMenu.getMenuItem('Force Update')).toBeAttached();
