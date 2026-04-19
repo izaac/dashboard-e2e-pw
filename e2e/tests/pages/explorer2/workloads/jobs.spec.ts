@@ -4,6 +4,18 @@ import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import {
+  createBulkResources,
+  setTablePreferences,
+  restoreTablePreferences,
+  assertPaginationNavigation,
+  assertPaginationSorting,
+  assertPaginationFilter,
+  assertPaginationHidden,
+  mockSmallCollection,
+  type SavedPrefs,
+} from './pagination.utils';
 
 test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', () => {
@@ -108,11 +120,122 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
+    test.describe.configure({ mode: 'serial' });
+    // Serial: tests share bulk resource setup (22 resources + user prefs)
 
-    test('pagination is visible and user is able to navigate through jobs data', async () => {});
-    test('sorting changes the order of paginated jobs data', async () => {});
-    test('filter jobs', async () => {});
-    test('pagination is hidden', async () => {});
+    let savedPrefs: SavedPrefs;
+    let ns1: string;
+    let ns2: string;
+    let bulkNames: string[];
+    let uniqueName: string;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      ns1 = `e2e-job-list-${Date.now()}`;
+      ns2 = `e2e-job-unique-${Date.now()}`;
+
+      await Promise.all([
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns1 },
+        }),
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns2 },
+        }),
+      ]);
+
+      uniqueName = `e2e-unique-${Date.now()}`;
+
+      const [names] = await Promise.all([
+        createBulkResources(rancherApi, 'v1', 'batch.jobs', ns1, 22, (ns: string, name: string) => ({
+          apiVersion: 'batch/v1',
+          kind: 'Job',
+          metadata: { name, namespace: ns },
+          spec: {
+            template: {
+              spec: {
+                containers: [{ name: 'test', image: SMALL_CONTAINER.image, command: ['sh', '-c', 'exit 0'] }],
+                restartPolicy: 'Never',
+              },
+            },
+            backoffLimit: 0,
+          },
+        })),
+        rancherApi.createRancherResource('v1', 'batch.jobs', {
+          apiVersion: 'batch/v1',
+          kind: 'Job',
+          metadata: { name: uniqueName, namespace: ns2 },
+          spec: {
+            template: {
+              spec: {
+                containers: [{ name: 'test', image: SMALL_CONTAINER.image, command: ['sh', '-c', 'exit 0'] }],
+                restartPolicy: 'Never',
+              },
+            },
+            backoffLimit: 0,
+          },
+        }),
+      ]);
+
+      bulkNames = names;
+      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      await restoreTablePreferences(rancherApi, savedPrefs);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+    });
+
+    test('pagination is visible and user is able to navigate through jobs data', async ({ page, login }) => {
+      await login();
+      const listPage = new PagePo(page, '/c/local/explorer/batch.job');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationNavigation(table, 23);
+    });
+
+    test('sorting changes the order of paginated jobs data', async ({ page, login }) => {
+      await login();
+      const listPage = new PagePo(page, '/c/local/explorer/batch.job');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+    });
+
+    test('filter jobs', async ({ page, login }) => {
+      await login();
+      const listPage = new PagePo(page, '/c/local/explorer/batch.job');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      await login();
+
+      await mockSmallCollection(page, 'v1/batch.jobs', 'batch.job');
+
+      const listPage = new PagePo(page, '/c/local/explorer/batch.job');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationHidden(table);
+
+      await page.unroute('**/v1/batch.jobs?**');
+    });
   });
 });

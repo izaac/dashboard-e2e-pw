@@ -1,15 +1,138 @@
 import { test, expect } from '@/support/fixtures';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { WorkloadsStatefulSetsListPagePo } from '@/e2e/po/pages/explorer/workloads-statefulsets.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import {
+  createBulkResources,
+  setTablePreferences,
+  restoreTablePreferences,
+  assertPaginationNavigation,
+  assertPaginationSorting,
+  assertPaginationFilter,
+  assertPaginationHidden,
+  mockSmallCollection,
+  type SavedPrefs,
+} from './pagination.utils';
 
 test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
+    test.describe.configure({ mode: 'serial' });
+    // Serial: tests share bulk resource setup (22 resources + user prefs)
 
-    test('pagination is visible and user is able to navigate through statefulsets data', async () => {});
-    test('sorting changes the order of paginated statefulsets data', async () => {});
-    test('filter statefulsets', async () => {});
-    test('pagination is hidden', async () => {});
+    let savedPrefs: SavedPrefs;
+    let ns1: string;
+    let ns2: string;
+    let bulkNames: string[];
+    let uniqueName: string;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      ns1 = `e2e-ss-list-${Date.now()}`;
+      ns2 = `e2e-ss-unique-${Date.now()}`;
+
+      await Promise.all([
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns1 },
+        }),
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns2 },
+        }),
+      ]);
+
+      uniqueName = `e2e-unique-${Date.now()}`;
+
+      const [names] = await Promise.all([
+        createBulkResources(rancherApi, 'v1', 'apps.statefulsets', ns1, 22, (ns: string, name: string) => ({
+          apiVersion: 'apps/v1',
+          kind: 'StatefulSet',
+          metadata: { name, namespace: ns },
+          spec: {
+            replicas: 0,
+            serviceName: name,
+            selector: { matchLabels: { app: name } },
+            template: {
+              metadata: { labels: { app: name } },
+              spec: { containers: [SMALL_CONTAINER] },
+            },
+          },
+        })),
+        rancherApi.createRancherResource('v1', 'apps.statefulsets', {
+          apiVersion: 'apps/v1',
+          kind: 'StatefulSet',
+          metadata: { name: uniqueName, namespace: ns2 },
+          spec: {
+            replicas: 0,
+            serviceName: uniqueName,
+            selector: { matchLabels: { app: uniqueName } },
+            template: {
+              metadata: { labels: { app: uniqueName } },
+              spec: { containers: [SMALL_CONTAINER] },
+            },
+          },
+        }),
+      ]);
+
+      bulkNames = names;
+      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      await restoreTablePreferences(rancherApi, savedPrefs);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+    });
+
+    test('pagination is visible and user is able to navigate through statefulsets data', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationNavigation(table, 23);
+    });
+
+    test('sorting changes the order of paginated statefulsets data', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+    });
+
+    test('filter statefulsets', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      await login();
+
+      await mockSmallCollection(page, 'v1/apps.statefulsets', 'apps.statefulset');
+
+      const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationHidden(table);
+
+      await page.unroute('**/v1/apps.statefulsets?**');
+    });
   });
 
   test.describe('Redeploy Dialog', () => {

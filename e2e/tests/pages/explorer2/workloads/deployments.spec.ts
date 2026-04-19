@@ -6,6 +6,17 @@ import {
 } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import {
+  createBulkResources,
+  setTablePreferences,
+  restoreTablePreferences,
+  assertPaginationNavigation,
+  assertPaginationSorting,
+  assertPaginationFilter,
+  assertPaginationHidden,
+  mockSmallCollection,
+  type SavedPrefs,
+} from './pagination.utils';
 
 test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', { tag: ['@standardUser', '@adminUser'] }, () => {
@@ -168,12 +179,121 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
-    test.skip(true, 'Pagination tests require bulk resource creation infrastructure (createManyNamespacedResources)');
+    test.describe.configure({ mode: 'serial' });
+    // Serial: tests share bulk resource setup (22 resources + user prefs)
 
-    test('pagination is visible and user is able to navigate through deployments data', async () => {});
-    test('sorting changes the order of paginated deployments data', async () => {});
-    test('filter deployments', async () => {});
-    test('pagination is hidden', async () => {});
+    let savedPrefs: SavedPrefs;
+    let ns1: string;
+    let ns2: string;
+    let bulkNames: string[];
+    let uniqueName: string;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      ns1 = `e2e-deploy-list-${Date.now()}`;
+      ns2 = `e2e-deploy-unique-${Date.now()}`;
+
+      await Promise.all([
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns1 },
+        }),
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns2 },
+        }),
+      ]);
+
+      uniqueName = `e2e-unique-${Date.now()}`;
+
+      const [names] = await Promise.all([
+        createBulkResources(rancherApi, 'v1', 'apps.deployments', ns1, 22, (ns: string, name: string) => ({
+          apiVersion: 'apps/v1',
+          kind: 'Deployment',
+          metadata: { name, namespace: ns },
+          spec: {
+            replicas: 0,
+            selector: { matchLabels: { app: name } },
+            template: {
+              metadata: { labels: { app: name } },
+              spec: { containers: [SMALL_CONTAINER] },
+            },
+          },
+        })),
+        rancherApi.createRancherResource('v1', 'apps.deployments', {
+          apiVersion: 'apps/v1',
+          kind: 'Deployment',
+          metadata: { name: uniqueName, namespace: ns2 },
+          spec: {
+            replicas: 0,
+            selector: { matchLabels: { app: uniqueName } },
+            template: {
+              metadata: { labels: { app: uniqueName } },
+              spec: { containers: [SMALL_CONTAINER] },
+            },
+          },
+        }),
+      ]);
+
+      bulkNames = names;
+      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      await restoreTablePreferences(rancherApi, savedPrefs);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+    });
+
+    test('pagination is visible and user is able to navigate through deployments data', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationNavigation(table, 23);
+    });
+
+    test('sorting changes the order of paginated deployments data', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+    });
+
+    test('filter deployments', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      await login();
+
+      await mockSmallCollection(page, 'v1/apps.deployments', 'apps.deployment');
+
+      const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = new SortableTablePo(page, '.sortable-table');
+
+      await assertPaginationHidden(table);
+
+      await page.unroute('**/v1/apps.deployments?**');
+    });
   });
 
   test.describe('Redeploy Dialog', () => {
