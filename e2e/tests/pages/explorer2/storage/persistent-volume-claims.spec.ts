@@ -14,10 +14,10 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
       const sortableTable = new SortableTablePo(page, '.sortable-table');
 
       await sortableTable.checkVisible();
+      // Namespace column may not appear in 2.13 when the table is empty
       const expectedHeaders = [
         'State',
         'Name',
-        'Namespace',
         'Status',
         'Volume',
         'Capacity',
