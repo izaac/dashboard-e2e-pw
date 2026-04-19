@@ -13,7 +13,7 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
   test.describe('CRUD', () => {
     test('can create a cluster registration token', async ({ page, login, rancherApi }) => {
       await login();
-      const customTokenName = rancherApi.createE2EResourceName('fleet-token');
+      const customTokenName = rancherApi.createE2EResourceName('token-create');
       const listPage = new FleetClusterRegistrationTokenListPagePo(page);
       const headerPo = new HeaderPo(page);
       const createPage = new FleetTokensCreateEditPo(page);
@@ -56,7 +56,7 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
 
     test('can clone a cluster registration token', async ({ page, login, rancherApi }) => {
       await login();
-      const customTokenName = rancherApi.createE2EResourceName('fleet-token');
+      const customTokenName = rancherApi.createE2EResourceName('token-clone');
       const cloneName = `${customTokenName}-clone`;
 
       await rancherApi.createRancherResource('v1', 'fleet.cattle.io.clusterregistrationtokens', {

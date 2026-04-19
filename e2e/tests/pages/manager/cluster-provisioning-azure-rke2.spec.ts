@@ -28,7 +28,7 @@ test.describe(
       login,
       rancherApi,
     }) => {
-      const credName = rancherApi.createE2EResourceName('azurecloudcredential');
+      const credName = rancherApi.createE2EResourceName('az-cred-err');
 
       await login();
 
@@ -63,8 +63,8 @@ test.describe(
     });
 
     test('can create a RKE2 cluster using Azure cloud provider', async ({ page, login, rancherApi, envMeta }) => {
-      const clusterName = rancherApi.createE2EResourceName('rke2azure');
-      const credName = rancherApi.createE2EResourceName('azurecloudcredential');
+      const clusterName = rancherApi.createE2EResourceName('az-create');
+      const credName = rancherApi.createE2EResourceName('az-cred');
       let clusterId = '';
       let cloudcredentialId = '';
 
@@ -158,7 +158,7 @@ test.describe(
     });
 
     test('can see details of cluster in cluster list', async ({ page, login, rancherApi, envMeta }) => {
-      const clusterName = rancherApi.createE2EResourceName('rke2azure');
+      const clusterName = rancherApi.createE2EResourceName('az-list');
 
       await login();
 
@@ -174,7 +174,7 @@ test.describe(
     });
 
     test('cluster details page', async ({ page, login, rancherApi }) => {
-      const clusterName = rancherApi.createE2EResourceName('rke2azure');
+      const clusterName = rancherApi.createE2EResourceName('az-detail');
 
       await login();
 
@@ -193,7 +193,7 @@ test.describe(
     });
 
     test('can create snapshot', async ({ page, login, rancherApi }) => {
-      const clusterName = rancherApi.createE2EResourceName('rke2azure');
+      const clusterName = rancherApi.createE2EResourceName('az-snap');
 
       await login();
 
@@ -222,7 +222,7 @@ test.describe(
     });
 
     test('can delete an Azure RKE2 cluster', async ({ page, login, rancherApi }) => {
-      const clusterName = rancherApi.createE2EResourceName('rke2azure');
+      const clusterName = rancherApi.createE2EResourceName('az-del');
 
       await login();
 

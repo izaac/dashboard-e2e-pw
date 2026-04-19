@@ -28,7 +28,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
   test('can create a Machine', async ({ page, login, rancherApi }) => {
     await login();
     const machinesPage = new MachinesPagePo(page);
-    const machineName = rancherApi.createE2EResourceName('machines');
+    const machineName = rancherApi.createE2EResourceName('mach-create');
 
     await machinesPage.goTo();
     await machinesPage.waitForPage();
@@ -62,7 +62,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
   test('can edit a Machine', async ({ page, login, rancherApi }) => {
     await login();
     const machinesPage = new MachinesPagePo(page);
-    const machineName = rancherApi.createE2EResourceName('machines');
+    const machineName = rancherApi.createE2EResourceName('mach-edit');
 
     // Create via YAML
     const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');
@@ -115,7 +115,7 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
   test('can delete a Machine', async ({ page, login, rancherApi }) => {
     await login();
     const machinesPage = new MachinesPagePo(page);
-    const machineName = rancherApi.createE2EResourceName('machines');
+    const machineName = rancherApi.createE2EResourceName('mach-del');
 
     // Create resource via API
     const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');

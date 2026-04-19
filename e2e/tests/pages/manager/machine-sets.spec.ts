@@ -28,7 +28,7 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
   test('can create a MachineSet', async ({ page, login, rancherApi }) => {
     await login();
     const machineSetsPage = new MachineSetsPagePo(page);
-    const machineSetName = rancherApi.createE2EResourceName('machinesets');
+    const machineSetName = rancherApi.createE2EResourceName('ms-create');
 
     try {
       await machineSetsPage.goTo();
@@ -60,7 +60,7 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
   test('can edit a MachineSet', async ({ page, login, rancherApi }) => {
     await login();
     const machineSetsPage = new MachineSetsPagePo(page);
-    const machineSetName = rancherApi.createE2EResourceName('machinesets');
+    const machineSetName = rancherApi.createE2EResourceName('ms-edit');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
     const json: Record<string, unknown> = jsyaml.load(doc);
@@ -111,7 +111,7 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
   test('can clone a MachineSet', async ({ page, login, rancherApi }) => {
     await login();
     const machineSetsPage = new MachineSetsPagePo(page);
-    const machineSetName = rancherApi.createE2EResourceName('machinesets');
+    const machineSetName = rancherApi.createE2EResourceName('ms-clone');
     const cloneName = `${machineSetName}-clone`;
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
@@ -155,7 +155,7 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
   test('can delete a MachineSet', async ({ page, login, rancherApi }) => {
     await login();
     const machineSetsPage = new MachineSetsPagePo(page);
-    const machineSetName = rancherApi.createE2EResourceName('machinesets');
+    const machineSetName = rancherApi.createE2EResourceName('ms-del');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
     const json: Record<string, unknown> = jsyaml.load(doc);
@@ -193,7 +193,7 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
   test('can delete MachineSet via bulk actions', async ({ page, login, rancherApi }) => {
     await login();
     const machineSetsPage = new MachineSetsPagePo(page);
-    const machineSetName = rancherApi.createE2EResourceName('machinesets');
+    const machineSetName = rancherApi.createE2EResourceName('ms-bulk');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
     const json: Record<string, unknown> = jsyaml.load(doc);

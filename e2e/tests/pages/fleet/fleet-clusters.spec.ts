@@ -148,7 +148,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
     'check table headers are available in list and details view',
     { tag: ['@noVai', '@adminUser'] },
     async ({ page, login, rancherApi }) => {
-      const gitRepoName = rancherApi.createE2EResourceName('git-repo');
+      const gitRepoName = rancherApi.createE2EResourceName('fc-repo');
       const fleetClusterListPage = new FleetClusterListPagePo(page);
       const fleetAppBundlesListPage = new FleetApplicationListPagePo(page);
       const header = new HeaderPo(page);

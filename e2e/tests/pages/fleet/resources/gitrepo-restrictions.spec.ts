@@ -13,7 +13,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
   test.describe('CRUD', () => {
     test('can create a gitrepo restriction', async ({ page, login, rancherApi }) => {
       await login();
-      const customRestrictionName = rancherApi.createE2EResourceName('fleet-restriction');
+      const customRestrictionName = rancherApi.createE2EResourceName('restrict-create');
       const listPage = new FleetGitRepoRestrictionListPagePo(page);
       const headerPo = new HeaderPo(page);
       const createPage = new FleetRestrictionCreateEditPo(page);
@@ -56,7 +56,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
 
     test('can clone a gitrepo restriction', async ({ page, login, rancherApi }) => {
       await login();
-      const customRestrictionName = rancherApi.createE2EResourceName('fleet-restriction');
+      const customRestrictionName = rancherApi.createE2EResourceName('restrict-clone');
       const cloneName = `${customRestrictionName}-clone`;
 
       await rancherApi.createRancherResource('v1', 'fleet.cattle.io.gitreporestrictions', {

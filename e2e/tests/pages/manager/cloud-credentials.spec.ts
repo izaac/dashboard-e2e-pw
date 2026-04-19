@@ -8,7 +8,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-err');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
 
     await cloudCredentialsPage.goTo();
@@ -37,7 +37,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-create');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
     let cloudcredentialId = '';
 
@@ -107,7 +107,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-edit');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
     let credId = '';
 
@@ -171,7 +171,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-clone');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
     const createdIds: string[] = [];
 
@@ -228,7 +228,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-del');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
 
     const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
@@ -275,7 +275,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const cloudCredentialName = rancherApi.createE2EResourceName('cloudCredential');
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-bulk');
     const cloudCredentialsPage = new CloudCredentialsPagePo(page);
 
     const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {

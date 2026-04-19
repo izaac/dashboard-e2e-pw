@@ -66,8 +66,8 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const instance0 = rancherApi.createE2EResourceName('rke2cluster0');
-    const instance1 = rancherApi.createE2EResourceName('rke2cluster1');
+    const instance0 = rancherApi.createE2EResourceName('jwt-list-c0');
+    const instance1 = rancherApi.createE2EResourceName('jwt-list-c1');
     const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
     try {
@@ -102,7 +102,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const instance0 = rancherApi.createE2EResourceName('rke2cluster0');
+    const instance0 = rancherApi.createE2EResourceName('jwt-enable-c0');
     const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
     try {
@@ -146,7 +146,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const instance0 = rancherApi.createE2EResourceName('rke2cluster0');
+    const instance0 = rancherApi.createE2EResourceName('jwt-disable-c0');
     const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
     try {
@@ -202,8 +202,8 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const instance0 = rancherApi.createE2EResourceName('rke2cluster0');
-    const instance1 = rancherApi.createE2EResourceName('rke2cluster1');
+    const instance0 = rancherApi.createE2EResourceName('jwt-bulken-c0');
+    const instance1 = rancherApi.createE2EResourceName('jwt-bulken-c1');
     const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
     try {
@@ -252,8 +252,8 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
-    const instance0 = rancherApi.createE2EResourceName('rke2cluster0');
-    const instance1 = rancherApi.createE2EResourceName('rke2cluster1');
+    const instance0 = rancherApi.createE2EResourceName('jwt-bulkdis-c0');
+    const instance1 = rancherApi.createE2EResourceName('jwt-bulkdis-c1');
     const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
     try {
