@@ -41,7 +41,10 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   groupByButtons(index: number): Locator {
-    return this.self().locator(`[data-testid="button-group-child-${index}"]`);
+    // Group-by buttons can be inside the sortable-table container or in the header above it
+    return this.self()
+      .locator(`[data-testid="button-group-child-${index}"]`)
+      .or(this.page.locator(`[data-testid="button-group-child-${index}"]`).first());
   }
 
   deleteButton(): Locator {
@@ -53,7 +56,8 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   filterComponent(): Locator {
-    return this.self().locator('[data-testid="search-box-filter-row"] input');
+    // Search input lives in .sortable-table-header, a sibling of the <table>
+    return this.self().locator('..').locator('[data-testid="search-box-filter-row"] input').first();
   }
 
   async filter(searchText: string): Promise<void> {
@@ -67,8 +71,12 @@ export default class SortableTablePo extends ComponentPo {
     await this.filterComponent().clear();
   }
 
+  groupRows(): Locator {
+    return this.self().locator('tr.group-row');
+  }
+
   groupElementWithName(name: string): Locator {
-    return this.self().locator('tr.group-row').filter({ hasText: name });
+    return this.groupRows().filter({ hasText: name });
   }
 
   rowElements(): Locator {
@@ -76,18 +84,22 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   rowElementWithName(name: string): Locator {
-    // Find rows by exact name match — supports linked (td a), plain text (td), and
-    // composite cells where the name is in a child element (td > span) with sibling
-    // content like description URLs (e.g. kontainer driver rows).
+    // Find rows by exact name match. Works for all cell types:
+    //   - linked cells (td a) — hasText matches the inner <a> text
+    //   - plain text cells (td with direct text — e.g. feature flags)
+    //   - cells with name+description (td span + td div) — matches span/a only, not whole td
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const exactRegex = new RegExp(`^\\s*${escaped}\\s*$`);
 
     return this.self()
       .locator('tbody tr')
       .filter({
-        has: this.page.locator('td').filter({
-          has: this.page.locator('span, a').filter({ hasText: exactRegex }),
-        }),
+        has: this.page
+          .locator('td')
+          .filter({
+            has: this.page.locator('span, a').filter({ hasText: exactRegex }),
+          })
+          .or(this.page.locator('td').filter({ hasText: exactRegex })),
       });
   }
 
@@ -177,11 +189,15 @@ export default class SortableTablePo extends ComponentPo {
     const row = this.rowWithName(name);
 
     await row.actionBtn().click();
-    await expect(row.actionBtn()).toHaveAttribute('aria-expanded', 'true');
 
-    const actionMenu = new ActionMenuPo(this.page, row.self());
+    // v-popper may render the dropdown in a page-level portal rather than inside the row.
+    // Wait for the menu to appear at page scope; fall back to row-scoped if not found.
+    const pageMenu = new ActionMenuPo(this.page);
 
-    await expect(actionMenu.self()).toBeAttached();
+    await expect(pageMenu.self().or(new ActionMenuPo(this.page, row.self()).self())).toBeAttached();
+
+    const menuInRow = (await new ActionMenuPo(this.page, row.self()).self().count()) > 0;
+    const actionMenu = menuInRow ? new ActionMenuPo(this.page, row.self()) : pageMenu;
 
     if (!skipNoActionAvailableCheck) {
       await expect(actionMenu.self()).not.toContainText('No actions available');
@@ -193,9 +209,20 @@ export default class SortableTablePo extends ComponentPo {
 
   async rowActionMenuClose(name: string): Promise<void> {
     const row = this.rowWithName(name);
+    const pageMenu = new ActionMenuPo(this.page);
+    const isPageMenuOpen = (await pageMenu.self().count()) > 0;
 
-    await row.actionBtn().click();
-    await expect(row.actionBtn()).not.toHaveAttribute('aria-expanded', 'true');
+    if (isPageMenuOpen) {
+      await row.actionBtn().click();
+      await expect(pageMenu.self()).not.toBeAttached();
+    } else {
+      const rowMenu = new ActionMenuPo(this.page, row.self());
+
+      if ((await rowMenu.self().count()) > 0) {
+        await row.actionBtn().click();
+        await expect(rowMenu.self()).not.toBeAttached();
+      }
+    }
   }
 
   /** For a row with the given name return the checkbox used to select it */
@@ -209,6 +236,10 @@ export default class SortableTablePo extends ComponentPo {
 
   selectAllCheckbox(): ComponentPo {
     return new ComponentPo(this.page, '[data-testid="sortable-table_check_select_all"]');
+  }
+
+  async selectAll(): Promise<void> {
+    await this.selectAllCheckbox().self().locator('.checkbox-custom').click();
   }
 
   async selectedCount(): Promise<number> {
@@ -237,7 +268,7 @@ export default class SortableTablePo extends ComponentPo {
 
   /** Return the visible text of each column header */
   async headerNames(): Promise<string[]> {
-    const cells = this.tableHeaderRow().locator('.table-header-container .content');
+    const cells = this.headerContentCells();
     const count = await cells.count();
     const names: string[] = [];
 
@@ -246,6 +277,10 @@ export default class SortableTablePo extends ComponentPo {
     }
 
     return names;
+  }
+
+  headerContentCells(): Locator {
+    return this.tableHeaderRow().locator('.table-header-container .content');
   }
 
   sort(index: number): Locator {
@@ -263,6 +298,32 @@ export default class SortableTablePo extends ComponentPo {
 
   pagination(): Locator {
     return this.page.locator('div.paging');
+  }
+
+  paginationBeginButton(): Locator {
+    return this.pagination().locator('button').nth(0);
+  }
+
+  paginationPrevButton(): Locator {
+    return this.pagination().locator('button').nth(1);
+  }
+
+  paginationNextButton(): Locator {
+    return this.pagination().locator('button').nth(2);
+  }
+
+  paginationEndButton(): Locator {
+    return this.pagination().locator('button').nth(3);
+  }
+
+  /** Text like "1 - 10 of 25 Pods" shown between pagination buttons */
+  paginationText(): Locator {
+    return this.pagination().locator('span');
+  }
+
+  /** Returns the cell locator at a given column index (0-based) for a row */
+  rowCell(row: Locator, colIndex: number): Locator {
+    return row.locator(`td:nth-of-type(${colIndex + 1})`);
   }
 
   async waitForListItemRemoval(rowNameSelector: string, name: string): Promise<void> {

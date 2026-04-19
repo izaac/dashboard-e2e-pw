@@ -238,7 +238,7 @@
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |
-| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${ urlStr }${ params }` | super, sortableTable, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, nameInput, selectNamespace (+16) |
+| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, nameInput, selectNamespace (+16) |
 
 ## pages/extensions/
 

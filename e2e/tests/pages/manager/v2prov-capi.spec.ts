@@ -5,6 +5,7 @@ import { mockCapiProvCluster, mockCapiMgmtCluster } from '@/e2e/blueprints/manag
 const clusterName = 'mocked-capi';
 
 test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager', '@adminUser'] }, () => {
+  // Tests share mocked route state - serial prevents route conflicts
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login, page }) => {
     await page.route('**/v1/provisioning.cattle.io.clusters?*', async (route) => {

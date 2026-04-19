@@ -27,32 +27,41 @@ async function resetRetentionSettings(rancherApi: RancherApi): Promise<void> {
 }
 
 test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
+  // All tests mutate the same global retention settings - serial prevents conflicts
   test.describe.configure({ mode: 'serial' });
-  test('save button should be disabled when form is invalid', async ({ page, login }) => {
-    await login();
+  test('save button should be disabled when form is invalid', async ({ page, login, rancherApi }) => {
+    try {
+      await login();
 
-    const userRetentionPo = new UserRetentionPo(page);
+      const userRetentionPo = new UserRetentionPo(page);
 
-    await userRetentionPo.goTo();
-    await userRetentionPo.waitForPage();
-    await userRetentionPo.disableAfterPeriodCheckbox().set();
-    await userRetentionPo.disableAfterPeriodInput().set('30d');
+      await userRetentionPo.goTo();
+      await userRetentionPo.waitForPage();
+      await userRetentionPo.disableAfterPeriodCheckbox().set();
+      await userRetentionPo.disableAfterPeriodInput().set('30d');
 
-    await userRetentionPo.saveButton().expectToBeDisabled();
+      await userRetentionPo.saveButton().expectToBeDisabled();
+    } finally {
+      await resetRetentionSettings(rancherApi);
+    }
   });
 
-  test('save button should be enabled when form is valid', async ({ page, login }) => {
-    await login();
+  test('save button should be enabled when form is valid', async ({ page, login, rancherApi }) => {
+    try {
+      await login();
 
-    const userRetentionPo = new UserRetentionPo(page);
+      const userRetentionPo = new UserRetentionPo(page);
 
-    await userRetentionPo.goTo();
-    await userRetentionPo.waitForPage();
-    await userRetentionPo.disableAfterPeriodCheckbox().set();
-    await userRetentionPo.disableAfterPeriodInput().set('300h');
-    await userRetentionPo.userRetentionCron().set('0 0 1 1 *');
+      await userRetentionPo.goTo();
+      await userRetentionPo.waitForPage();
+      await userRetentionPo.disableAfterPeriodCheckbox().set();
+      await userRetentionPo.disableAfterPeriodInput().set('300h');
+      await userRetentionPo.userRetentionCron().set('0 0 1 1 *');
 
-    await userRetentionPo.saveButton().expectToBeEnabled();
+      await userRetentionPo.saveButton().expectToBeEnabled();
+    } finally {
+      await resetRetentionSettings(rancherApi);
+    }
   });
 
   test('can save user retention settings', async ({ page, login, rancherApi }) => {
