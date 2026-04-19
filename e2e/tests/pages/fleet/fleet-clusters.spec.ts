@@ -220,8 +220,9 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
         ];
         const detailsTable = fleetClusterDetailsPage.appBundlesList();
 
-        await fleetClusterDetailsPage.flatListViewButton().click();
-        await expect(detailsTable.self()).toBeVisible();
+        await detailsTable.checkVisible();
+        await detailsTable.checkLoadingIndicatorNotVisible();
+        await detailsTable.groupByButtons(0).click();
 
         const actualHeadersDetailsView = await detailsTable.headerNames();
 
