@@ -199,6 +199,43 @@ Use these tools instead of doing things manually. No exceptions.
 
 ---
 
+## VERIFICATION BEFORE COMPLETION
+
+Never say "done" or "fixed" without running the verify command and showing output. This is non-negotiable.
+
+- **After fixing a test:** run `npx playwright test <spec> --reporter=line` and show the result
+- **After editing POs/code:** run `npx eslint --fix <files>` and confirm clean
+- **After a full suite run:** run `yarn summarize-failures` and report the summary
+- **After committing:** run `git status` to confirm clean state
+
+If the verify step fails, the task is NOT done. Fix and re-verify.
+
+---
+
+## SESSION RETROS
+
+After every non-trivial session, save a retro to `docs/retros/YYYY-MM-DD-topic.md`. Format:
+
+```markdown
+# Retro: <topic>
+
+## What happened
+<2-3 bullet points>
+
+## What worked
+<things to keep doing>
+
+## What broke / wasted time
+<things to avoid next time>
+
+## Decisions made
+<any rules, patterns, or approaches decided during the session>
+```
+
+The next session loads the latest retro for continuity.
+
+---
+
 ## AGENT BOUNDARIES
 
 ### Always

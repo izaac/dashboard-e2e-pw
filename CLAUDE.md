@@ -9,6 +9,7 @@ See @AGENTS.md for Monko identity, Caveman protocol, and agent boundaries.
 - @README.md
 - @playwright.config.ts
 - @support/fixtures/index.ts
+- Latest retro: check `docs/retros/` for session continuity
 
 ## Project Overview
 
