@@ -3,8 +3,8 @@
 
 Generated: 2026-04-19
 
-Upstream Cypress: 124 specs, 733 tests
-Playwright: 124 specs, 667 tests
+Upstream Cypress: 124 specs, 675 tests
+Playwright: 124 specs, 677 tests
 
 ## Summary
 
@@ -15,35 +15,35 @@ Playwright: 124 specs, 667 tests
 | extensions/elemental | 1 | 8 | 1 | 8 | ✅ |
 | navigation | 1 | 0 | 1 | 2 | — |
 | navigation/side-nav | 3 | 19 | 3 | 19 | ✅ |
-| pages/charts | 8 | 16 | 8 | 12 | 75% |
+| pages/charts | 8 | 12 | 8 | 12 | ✅ |
 | pages/explorer/api | 1 | 1 | 1 | 1 | ✅ |
-| pages/explorer/apps | 3 | 12 | 3 | 9 | 75% |
-| pages/explorer/dashboard | 3 | 23 | 3 | 18 | 78% |
-| pages/explorer/dashboard/websockets | 1 | 4 | 1 | 1 | 25% |
+| pages/explorer/apps | 3 | 12 | 3 | 12 | ✅ |
+| pages/explorer/dashboard | 3 | 21 | 3 | 19 | 90% |
+| pages/explorer/dashboard/websockets | 1 | 4 | 1 | 4 | ✅ |
 | pages/explorer/manager | 1 | 1 | 1 | 1 | ✅ |
 | pages/explorer/more-resources/api | 1 | 5 | 1 | 5 | ✅ |
 | pages/explorer/more-resources/core | 1 | 3 | 1 | 3 | ✅ |
 | pages/explorer/more-resources/fleet | 1 | 2 | 1 | 2 | ✅ |
 | pages/explorer/more-resources/rbac | 4 | 10 | 4 | 10 | ✅ |
 | pages/explorer/more-resources/yaml | 1 | 1 | 1 | 1 | ✅ |
-| pages/explorer/policy | 1 | 4 | 1 | 3 | 75% |
+| pages/explorer/policy | 1 | 4 | 1 | 4 | ✅ |
 | pages/explorer/service-discovery | 3 | 19 | 3 | 19 | ✅ |
 | pages/explorer2 | 7 | 32 | 7 | 29 | 91% |
 | pages/explorer2/nodes | 2 | 2 | 2 | 2 | ✅ |
-| pages/explorer2/storage | 5 | 18 | 5 | 16 | 89% |
-| pages/explorer2/workloads | 8 | 54 | 8 | 49 | 91% |
+| pages/explorer2/storage | 5 | 16 | 5 | 17 | 106% |
+| pages/explorer2/workloads | 8 | 53 | 8 | 49 | 92% |
 | pages/extensions | 2 | 22 | 2 | 22 | ✅ |
-| pages/fleet | 4 | 37 | 4 | 35 | 95% |
+| pages/fleet | 4 | 35 | 4 | 35 | ✅ |
 | pages/fleet/resources | 5 | 30 | 5 | 19 | 63% |
-| pages/generic | 11 | 68 | 11 | 68 | ✅ |
-| pages/global-settings | 8 | 69 | 8 | 71 | 103% |
-| pages/manager | 22 | 135 | 22 | 113 | 84% |
-| pages/user-menu | 3 | 26 | 3 | 20 | 77% |
+| pages/generic | 11 | 65 | 11 | 68 | 105% |
+| pages/global-settings | 8 | 65 | 8 | 72 | 111% |
+| pages/manager | 22 | 112 | 22 | 113 | 101% |
+| pages/user-menu | 3 | 9 | 3 | 20 | 222% |
 | pages/users-and-auth | 7 | 52 | 7 | 49 | 94% |
 | pages/virtualization-mgmt | 1 | 3 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 1 | 4 | ✅ |
-| **TOTAL** | **124** | **733** | **124** | **667** | **91%** |
+| **TOTAL** | **124** | **675** | **124** | **677** | **100%** |
 
 ## Unconverted Specs
 
@@ -54,42 +54,145 @@ All upstream specs have Playwright equivalents.
 | Spec | Upstream Tests | PW Tests | Delta |
 |------|---------------|----------|-------|
 | navigation/page-actions.spec.ts | 0 | 2 | +2 |
-| pages/charts/monitoring-istio.spec.ts | 2 | 1 | -1 |
-| pages/charts/v2-monitoring.spec.ts | 4 | 1 | -3 |
-| pages/explorer/apps/charts.spec.ts | 8 | 5 | -3 |
-| pages/explorer/dashboard/certificates.spec.ts | 4 | 2 | -2 |
-| pages/explorer/dashboard/cluster-dashboard.spec.ts | 15 | 12 | -3 |
-| pages/explorer/dashboard/websockets/connection.spec.ts | 4 | 1 | -3 |
-| pages/explorer/policy/network-policy.spec.ts | 4 | 3 | -1 |
+| pages/explorer/dashboard/cluster-dashboard.spec.ts | 14 | 12 | -2 |
 | pages/explorer2/cluster-project-members.spec.ts | 4 | 3 | -1 |
 | pages/explorer2/namespace-picker.spec.ts | 8 | 7 | -1 |
 | pages/explorer2/project-namespace.spec.ts | 11 | 10 | -1 |
-| pages/explorer2/storage/secrets.spec.ts | 3 | 1 | -2 |
+| pages/explorer2/storage/secrets.spec.ts | 1 | 2 | +1 |
 | pages/explorer2/workloads/deployments.spec.ts | 14 | 12 | -2 |
-| pages/explorer2/workloads/pods.spec.ts | 11 | 8 | -3 |
-| pages/fleet/gitrepo.spec.ts | 9 | 7 | -2 |
+| pages/explorer2/workloads/pods.spec.ts | 10 | 8 | -2 |
 | pages/fleet/resources/bundle-namespace-mappings.spec.ts | 4 | 3 | -1 |
 | pages/fleet/resources/bundles.spec.ts | 6 | 5 | -1 |
 | pages/fleet/resources/cluster-registration-tokens.spec.ts | 6 | 4 | -2 |
 | pages/fleet/resources/gitrepo-restrictions.spec.ts | 4 | 3 | -1 |
 | pages/fleet/resources/workspaces.spec.ts | 10 | 4 | -6 |
-| pages/generic/home.spec.ts | 18 | 19 | +1 |
-| pages/generic/prime.spec.ts | 2 | 1 | -1 |
+| pages/generic/home.spec.ts | 15 | 19 | +4 |
+| pages/generic/login.spec.ts | 3 | 2 | -1 |
 | pages/global-settings/banners.spec.ts | 16 | 19 | +3 |
-| pages/global-settings/settings.spec.ts | 13 | 12 | -1 |
-| pages/manager/agent-configuration-rke2.spec.ts | 2 | 1 | -1 |
+| pages/global-settings/branding.spec.ts | 5 | 9 | +4 |
 | pages/manager/cilium-cni.spec.ts | 2 | 1 | -1 |
-| pages/manager/cluster-manager.spec.ts | 33 | 32 | -1 |
+| pages/manager/cluster-manager.spec.ts | 31 | 32 | +1 |
 | pages/manager/edit-fake-cluster.spec.ts | 1 | 2 | +1 |
-| pages/manager/kontainer-drivers.spec.ts | 11 | 10 | -1 |
+| pages/manager/kontainer-drivers.spec.ts | 2 | 10 | +8 |
 | pages/manager/machine-deployments.spec.ts | 7 | 5 | -2 |
 | pages/manager/machine-sets.spec.ts | 7 | 5 | -2 |
 | pages/manager/machines.spec.ts | 4 | 3 | -1 |
-| pages/manager/node-drivers.spec.ts | 9 | 1 | -8 |
 | pages/manager/pod-security-admissions.spec.ts | 7 | 6 | -1 |
-| pages/manager/pod-security-policy-templates.spec.ts | 4 | 1 | -3 |
 | pages/manager/repositories.spec.ts | 12 | 10 | -2 |
-| pages/user-menu/account-api-keys.spec.ts | 7 | 2 | -5 |
-| pages/user-menu/preferences.spec.ts | 17 | 16 | -1 |
+| pages/user-menu/account-api-keys.spec.ts | 1 | 2 | +1 |
+| pages/user-menu/preferences.spec.ts | 6 | 16 | +10 |
 | pages/users-and-auth/roles.spec.ts | 13 | 14 | +1 |
 | pages/users-and-auth/users.spec.ts | 19 | 15 | -4 |
+
+## Missing Tests (by name match)
+
+> Tests present upstream but not found by name in Playwright. Some may exist under different names.
+
+### pages/explorer/dashboard/cluster-dashboard.spec.ts
+
+- can import a YAML successfully, using the header action 
+- can download kubeconfig from header
+- can view events and change events list count in cluster dashboard
+- does not show fleet controller status if the user does not have permission to view the fleet controller deployment
+
+### pages/explorer2/cluster-project-members.spec.ts
+
+- Should create a new user
+- Members added to both Cluster Membership should not show 
+
+### pages/explorer2/namespace-picker.spec.ts
+
+- can filter workloads by project/namespace from the picker dropdown
+
+### pages/explorer2/project-namespace.spec.ts
+
+- sets the creator principal id annotation when creating a project and using third-party auth
+
+### pages/explorer2/workloads/deployments.spec.ts
+
+- Should be able to view and edit configuration of pod volumes with no custom component
+- should be able to add and remove container volume mounts
+
+### pages/explorer2/workloads/pods.spec.ts
+
+- should open a pod shell
+- Footer controls should stick to bottom in YAML Editor
+
+### pages/fleet/resources/bundle-namespace-mappings.spec.ts
+
+- can Download YAML
+
+### pages/fleet/resources/bundles.spec.ts
+
+- can Download YAML
+
+### pages/fleet/resources/cluster-registration-tokens.spec.ts
+
+- can Download YAML
+- validate cluster registration tokens table in empty state
+- validate cluster registration tokens table
+
+### pages/fleet/resources/gitrepo-restrictions.spec.ts
+
+- can Download YAML
+
+### pages/fleet/resources/workspaces.spec.ts
+
+- check table headers are available in list and details view
+- pagination is visible and user is able to navigate through workspace data
+- filter workspace
+- sorting changes the order of paginated workspace data
+- pagination is hidden
+- can Edit Config
+- can Download YAML
+
+### pages/generic/login.spec.ts
+
+- Cannot login with invalid credentials
+
+### pages/manager/cilium-cni.spec.ts
+
+- ipv6 configuration is sent correctly on cluster create
+
+### pages/manager/machine-deployments.spec.ts
+
+- validating machine deployments page with percy
+- can create a MachineDeployments
+- can edit a MachineDeployments
+- can clone a MachineDeployments
+- can download YAML
+- can delete a MachineDeployments
+
+### pages/manager/machine-sets.spec.ts
+
+- validating empty machine sets page with percy
+- can download YAML
+
+### pages/manager/machines.spec.ts
+
+- can download YAML
+
+### pages/manager/pod-security-admissions.spec.ts
+
+- can open 
+- can create a policy security admission
+- can edit a policy security admission
+- can clone a policy security admission
+- can download YAML for a policy security admission
+- can delete a policy security admission
+- can delete a policy security admission via bulk actions
+
+### pages/manager/repositories.spec.ts
+
+- validating repositories page with percy
+- can download YAML
+
+### pages/users-and-auth/users.spec.ts
+
+- can Download YAML
+- can Download YAML
+- pagination is visible and user is able to navigate through users data
+- filter users
+- sorting changes the order of paginated users data
+- pagination is hidden
+

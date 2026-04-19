@@ -27,7 +27,15 @@ interface SpecEntry {
 }
 
 function extractTests(filePath: string, pattern: RegExp, skipPattern: RegExp): { tests: string[]; skipped: string[] } {
-  const src = fs.readFileSync(filePath, 'utf-8');
+  const raw = fs.readFileSync(filePath, 'utf-8');
+
+  // Strip comments to avoid counting commented-out tests
+  const src = raw
+    .replace(/\/\*[\s\S]*?\*\//g, '') // block comments
+    .split('\n')
+    .map((line) => (line.trimStart().startsWith('//') ? '' : line))
+    .join('\n');
+
   const tests: string[] = [];
   const skipped: string[] = [];
   let m;
@@ -96,20 +104,22 @@ const upstreamSpecs = collectSpecs(UPSTREAM_TEST_ROOT, UPSTREAM_TEST_ROOT);
 // Extract test names
 const itPattern = /\bit\(\s*['"`]([^'"`]+)['"`]/g;
 const itSkipPattern = /\bit\.skip\(\s*['"`]([^'"`]+)['"`]/g;
+// test.skip('name', callback) — first arg is a string = test definition (counts as test)
+// test.skip(condition, 'reason') — first arg is NOT a string = conditional skip (ignored)
 const testPattern = /\btest\(\s*['"`]([^'"`]+)['"`]/g;
-const testSkipPattern = /\btest\.skip\(\s*(?:true\s*,\s*)?['"`]([^'"`]+)['"`]/g;
+const testSkipDefPattern = /\btest\.skip\(\s*['"`]([^'"`]+)['"`]/g;
 
 for (const spec of upstreamSpecs) {
   const { tests, skipped } = extractTests(spec.filePath, itPattern, itSkipPattern);
 
-  spec.tests = tests;
+  spec.tests = [...tests, ...skipped];
   spec.skippedTests = skipped;
 }
 
 for (const spec of pwSpecs) {
-  const { tests, skipped } = extractTests(spec.filePath, testPattern, testSkipPattern);
+  const { tests, skipped } = extractTests(spec.filePath, testPattern, testSkipDefPattern);
 
-  spec.tests = tests;
+  spec.tests = [...tests, ...skipped];
   spec.skippedTests = skipped;
 }
 
@@ -259,6 +269,45 @@ for (const spec of upstreamSpecs) {
 
   if (delta !== 0) {
     lines.push(`| ${spec.relativePath} | ${spec.tests.length} | ${pw.tests.length} | ${deltaStr} |`);
+  }
+}
+
+lines.push('');
+
+// Missing tests detail: show which specific tests are missing per spec
+const specsWithMissing: { spec: string; missing: string[] }[] = [];
+
+for (const spec of upstreamSpecs) {
+  const norm = normalizeSpecPath(spec.relativePath);
+  const pw = pwByPath.get(norm);
+
+  if (!pw || pw.tests.length >= spec.tests.length) {
+    continue;
+  }
+
+  const pwLower = new Set(pw.tests.map((t) => t.toLowerCase().trim()));
+  const missing = spec.tests.filter((t) => !pwLower.has(t.toLowerCase().trim()));
+
+  if (missing.length > 0) {
+    specsWithMissing.push({ spec: spec.relativePath, missing });
+  }
+}
+
+if (specsWithMissing.length > 0) {
+  lines.push('## Missing Tests (by name match)');
+  lines.push('');
+  lines.push('> Tests present upstream but not found by name in Playwright. Some may exist under different names.');
+  lines.push('');
+
+  for (const { spec, missing } of specsWithMissing) {
+    lines.push(`### ${spec}`);
+    lines.push('');
+
+    for (const t of missing) {
+      lines.push(`- ${t}`);
+    }
+
+    lines.push('');
   }
 }
 
