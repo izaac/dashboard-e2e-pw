@@ -4,7 +4,7 @@
 Generated: 2026-04-19
 
 Upstream Cypress: 124 specs, 733 tests
-Playwright: 124 specs, 628 tests
+Playwright: 124 specs, 667 tests
 
 ## Summary
 
@@ -27,11 +27,11 @@ Playwright: 124 specs, 628 tests
 | pages/explorer/more-resources/rbac | 4 | 10 | 4 | 10 | ✅ |
 | pages/explorer/more-resources/yaml | 1 | 1 | 1 | 1 | ✅ |
 | pages/explorer/policy | 1 | 4 | 1 | 3 | 75% |
-| pages/explorer/service-discovery | 3 | 19 | 3 | 15 | 79% |
-| pages/explorer2 | 7 | 32 | 7 | 25 | 78% |
+| pages/explorer/service-discovery | 3 | 19 | 3 | 19 | ✅ |
+| pages/explorer2 | 7 | 32 | 7 | 29 | 91% |
 | pages/explorer2/nodes | 2 | 2 | 2 | 2 | ✅ |
 | pages/explorer2/storage | 5 | 18 | 5 | 16 | 89% |
-| pages/explorer2/workloads | 8 | 54 | 8 | 25 | 46% |
+| pages/explorer2/workloads | 8 | 54 | 8 | 49 | 91% |
 | pages/extensions | 2 | 22 | 2 | 22 | ✅ |
 | pages/fleet | 4 | 37 | 4 | 35 | 95% |
 | pages/fleet/resources | 5 | 30 | 5 | 19 | 63% |
@@ -39,11 +39,11 @@ Playwright: 124 specs, 628 tests
 | pages/global-settings | 8 | 69 | 8 | 71 | 103% |
 | pages/manager | 22 | 135 | 22 | 113 | 84% |
 | pages/user-menu | 3 | 26 | 3 | 20 | 77% |
-| pages/users-and-auth | 7 | 52 | 7 | 42 | 81% |
+| pages/users-and-auth | 7 | 52 | 7 | 49 | 94% |
 | pages/virtualization-mgmt | 1 | 3 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 1 | 4 | ✅ |
-| **TOTAL** | **124** | **733** | **124** | **628** | **86%** |
+| **TOTAL** | **124** | **733** | **124** | **667** | **91%** |
 
 ## Unconverted Specs
 
@@ -61,17 +61,12 @@ All upstream specs have Playwright equivalents.
 | pages/explorer/dashboard/cluster-dashboard.spec.ts | 15 | 12 | -3 |
 | pages/explorer/dashboard/websockets/connection.spec.ts | 4 | 1 | -3 |
 | pages/explorer/policy/network-policy.spec.ts | 4 | 3 | -1 |
-| pages/explorer/service-discovery/services.spec.ts | 9 | 5 | -4 |
 | pages/explorer2/cluster-project-members.spec.ts | 4 | 3 | -1 |
 | pages/explorer2/namespace-picker.spec.ts | 8 | 7 | -1 |
-| pages/explorer2/project-namespace.spec.ts | 11 | 6 | -5 |
+| pages/explorer2/project-namespace.spec.ts | 11 | 10 | -1 |
 | pages/explorer2/storage/secrets.spec.ts | 3 | 1 | -2 |
-| pages/explorer2/workloads/cronjobs.spec.ts | 5 | 1 | -4 |
-| pages/explorer2/workloads/daemonsets.spec.ts | 8 | 4 | -4 |
-| pages/explorer2/workloads/deployments.spec.ts | 14 | 8 | -6 |
-| pages/explorer2/workloads/jobs.spec.ts | 6 | 2 | -4 |
-| pages/explorer2/workloads/pods.spec.ts | 11 | 4 | -7 |
-| pages/explorer2/workloads/statefulsets.spec.ts | 7 | 3 | -4 |
+| pages/explorer2/workloads/deployments.spec.ts | 14 | 12 | -2 |
+| pages/explorer2/workloads/pods.spec.ts | 11 | 8 | -3 |
 | pages/fleet/gitrepo.spec.ts | 9 | 7 | -2 |
 | pages/fleet/resources/bundle-namespace-mappings.spec.ts | 4 | 3 | -1 |
 | pages/fleet/resources/bundles.spec.ts | 6 | 5 | -1 |
@@ -96,6 +91,5 @@ All upstream specs have Playwright equivalents.
 | pages/manager/repositories.spec.ts | 12 | 10 | -2 |
 | pages/user-menu/account-api-keys.spec.ts | 7 | 2 | -5 |
 | pages/user-menu/preferences.spec.ts | 17 | 16 | -1 |
-| pages/users-and-auth/index.spec.ts | 8 | 1 | -7 |
 | pages/users-and-auth/roles.spec.ts | 13 | 14 | +1 |
 | pages/users-and-auth/users.spec.ts | 19 | 15 | -4 |

@@ -1,36 +1,38 @@
 <!-- AUTO-GENERATED reference — update manually as specs are converted -->
 # Conversion Roadmap
 
-Generated: 2026-04-17
+Generated: 2026-04-19
 
 Use `yarn gap-map` for automated test count comparison. This document classifies specs by infrastructure requirements.
+Current status: **124 specs, 667/733 tests (91%)**.
 
 ## Can Run Locally (no cloud creds, no downstream clusters)
 
-### Explorer (20 specs, ~72 tests)
+### Explorer (20 specs — 67/72 upstream tests ported, 93%)
 
-| Spec | Tests | Area |
-|------|-------|------|
-| api/api-services.spec.ts | 1 | API services browsing |
-| apps/charts.spec.ts | 9 | Helm charts CRUD |
-| apps/index.spec.ts | 1 | App list navigation |
-| apps/repositories.spec.ts | 3 | Helm repositories |
-| dashboard/certificates.spec.ts | 3 | Certificate viewing |
-| dashboard/events.spec.ts | 4 | Event list |
-| dashboard/websockets/connection.spec.ts | 4 | WebSocket connections |
-| manager/index.spec.ts | 1 | Manager index |
-| more-resources/api/custom-resource-definitions.spec.ts | 5 | CRD management |
-| more-resources/core/service-accounts.spec.ts | 3 | Service account CRUD |
-| more-resources/fleet/contents.spec.ts | 2 | Fleet content browsing |
-| more-resources/rbac/cluster-role-bindings.spec.ts | 2 | RBAC binding |
-| more-resources/rbac/cluster-roles.spec.ts | 2 | RBAC role creation |
-| more-resources/rbac/role-bindings.spec.ts | 3 | Role binding CRUD |
-| more-resources/rbac/roles.spec.ts | 3 | Role CRUD |
-| more-resources/yaml/no-form-resource.spec.ts | 1 | YAML form fallback |
-| policy/network-policy.spec.ts | 4 | Network policy CRUD |
-| service-discovery/horizontal-pod-autoscalers.spec.ts | 3 | HPA management |
-| service-discovery/ingress.spec.ts | 8 | Ingress CRUD |
-| service-discovery/services.spec.ts | 9 | Service management |
+| Spec | Upstream | PW | Area |
+|------|----------|-----|------|
+| api/api-services.spec.ts | 1 | 1 ✅ | API services browsing |
+| apps/charts.spec.ts | 8 | 5 | Helm charts CRUD |
+| apps/index.spec.ts | 1 | 1 ✅ | App list navigation |
+| apps/repositories.spec.ts | 3 | 3 ✅ | Helm repositories |
+| dashboard/certificates.spec.ts | 4 | 2 | Certificate viewing |
+| dashboard/events.spec.ts | 4 | 4 ✅ | Event list |
+| dashboard/cluster-dashboard.spec.ts | 15 | 12 | Cluster dashboard |
+| dashboard/websockets/connection.spec.ts | 4 | 1 | WebSocket connections |
+| manager/index.spec.ts | 1 | 1 ✅ | Manager index |
+| more-resources/api/custom-resource-definitions.spec.ts | 5 | 5 ✅ | CRD management |
+| more-resources/core/service-accounts.spec.ts | 3 | 3 ✅ | Service account CRUD |
+| more-resources/fleet/contents.spec.ts | 2 | 2 ✅ | Fleet content browsing |
+| more-resources/rbac/cluster-role-bindings.spec.ts | 2 | 2 ✅ | RBAC binding |
+| more-resources/rbac/cluster-roles.spec.ts | 2 | 2 ✅ | RBAC role creation |
+| more-resources/rbac/role-bindings.spec.ts | 3 | 3 ✅ | Role binding CRUD |
+| more-resources/rbac/roles.spec.ts | 3 | 3 ✅ | Role CRUD |
+| more-resources/yaml/no-form-resource.spec.ts | 1 | 1 ✅ | YAML form fallback |
+| policy/network-policy.spec.ts | 4 | 3 | Network policy CRUD |
+| service-discovery/horizontal-pod-autoscalers.spec.ts | 3 | 3 ✅ | HPA management |
+| service-discovery/ingress.spec.ts | 8 | 8 ✅ | Ingress CRUD |
+| service-discovery/services.spec.ts | 8 | 8 ✅ | Service management |
 
 ### Explorer2 (23 specs, ~111 tests)
 
