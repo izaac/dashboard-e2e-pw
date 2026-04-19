@@ -24,7 +24,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   test('can create a pod security admission', async ({ page, login, rancherApi }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);
-    const psaName = rancherApi.createE2EResourceName('psa');
+    const psaName = rancherApi.createE2EResourceName('psa-create');
 
     // Cleanup any pre-existing resource
     await rancherApi.deleteRancherResource('v1', PSA_RESOURCE, psaName, false);
@@ -69,7 +69,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   test('can edit a pod security admission', async ({ page, login, rancherApi }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);
-    const psaName = rancherApi.createE2EResourceName('psa');
+    const psaName = rancherApi.createE2EResourceName('psa-edit');
 
     // Create via API
     await rancherApi.createRancherResource('v1', PSA_RESOURCE, {
@@ -117,7 +117,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   test('can clone a pod security admission', async ({ page, login, rancherApi }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);
-    const psaName = rancherApi.createE2EResourceName('psa');
+    const psaName = rancherApi.createE2EResourceName('psa-clone');
     const cloneName = `${psaName}-clone`;
 
     await rancherApi.createRancherResource('v1', PSA_RESOURCE, {
@@ -152,7 +152,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   test('can delete a pod security admission', async ({ page, login, rancherApi }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);
-    const psaName = rancherApi.createE2EResourceName('psa');
+    const psaName = rancherApi.createE2EResourceName('psa-del');
 
     await rancherApi.createRancherResource('v1', PSA_RESOURCE, {
       type: 'management.cattle.io.podsecurityadmissionconfigurationtemplate',
@@ -184,7 +184,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   test('can delete a pod security admission via bulk actions', async ({ page, login, rancherApi }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);
-    const psaName = rancherApi.createE2EResourceName('psa');
+    const psaName = rancherApi.createE2EResourceName('psa-bulk');
 
     await rancherApi.createRancherResource('v1', PSA_RESOURCE, {
       type: 'management.cattle.io.podsecurityadmissionconfigurationtemplate',
@@ -215,7 +215,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   test('can download YAML for a pod security admission', async ({ page, login, rancherApi }) => {
     await login();
     const psaPage = new PodSecurityAdmissionsPagePo(page);
-    const psaName = rancherApi.createE2EResourceName('psa');
+    const psaName = rancherApi.createE2EResourceName('psa-dl');
 
     await rancherApi.createRancherResource('v1', PSA_RESOURCE, {
       type: 'management.cattle.io.podsecurityadmissionconfigurationtemplate',

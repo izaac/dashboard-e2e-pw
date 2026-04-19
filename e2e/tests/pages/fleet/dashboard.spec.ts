@@ -18,7 +18,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
   test.beforeEach(async ({ login, rancherApi }) => {
     await login();
-    repoName = rancherApi.createE2EResourceName('git-repo');
+    repoName = rancherApi.createE2EResourceName('dash-repo');
   });
 
   test('Has the correct title', async ({ page, rancherApi }) => {

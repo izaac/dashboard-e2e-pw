@@ -69,7 +69,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
 
     test('can create a bundle', async ({ page, login, rancherApi }) => {
       await login();
-      const customBundleName = rancherApi.createE2EResourceName('fleet-bundle');
+      const customBundleName = rancherApi.createE2EResourceName('bundle-create');
       const listPage = new FleetBundlesListPagePo(page);
       const headerPo = new HeaderPo(page);
       const createPage = new FleetBundlesCreateEditPo(page);
@@ -114,7 +114,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
 
     test('can clone a bundle', async ({ page, login, rancherApi }) => {
       await login();
-      const customBundleName = rancherApi.createE2EResourceName('fleet-bundle');
+      const customBundleName = rancherApi.createE2EResourceName('bundle-clone');
       const cloneName = `${customBundleName}-clone`;
 
       await rancherApi.createRancherResource('v1', 'fleet.cattle.io.bundles', {

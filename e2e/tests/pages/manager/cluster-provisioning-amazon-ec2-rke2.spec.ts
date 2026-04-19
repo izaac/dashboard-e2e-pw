@@ -35,7 +35,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-create');
       const credentialName = rancherApi.createE2EResourceName('ec2cloudcredential');
       const clusterList = new ClusterManagerListPagePo(page);
       const createRKE2ClusterPage = new ClusterManagerCreateRke2AmazonPagePo(page);
@@ -142,7 +142,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-list');
       const clusterList = new ClusterManagerListPagePo(page);
 
       // This test expects a cluster created by the previous test to be in "Active" state.
@@ -164,7 +164,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-detail');
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const tabbedPo = new TabbedPo(page, '[data-testid="tabbed-block"]');
@@ -186,7 +186,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-scaleup');
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const poolName = `${clusterName}-pool1`;
@@ -231,7 +231,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-scaledn');
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const poolName = `${clusterName}-pool1`;
@@ -291,7 +291,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-upgrade');
       const clusterList = new ClusterManagerListPagePo(page);
       const editClusterPage = new ClusterManagerEditGenericPagePo(page, '_', clusterName);
 
@@ -334,7 +334,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-snap');
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const tabbedPo = new TabbedPo(page, '[data-testid="tabbed-block"]');
@@ -366,7 +366,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-del');
       const clusterList = new ClusterManagerListPagePo(page);
 
       await clusterList.goTo();
@@ -398,7 +398,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-dual');
       const clusterList = new ClusterManagerListPagePo(page);
       const createRKE2ClusterPage = new ClusterManagerCreateRke2AmazonPagePo(page);
 
@@ -533,7 +533,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('rke2ec2cluster');
+      const clusterName = rancherApi.createE2EResourceName('ec2-ipv6');
       const clusterList = new ClusterManagerListPagePo(page);
       const createRKE2ClusterPage = new ClusterManagerCreateRke2AmazonPagePo(page);
 

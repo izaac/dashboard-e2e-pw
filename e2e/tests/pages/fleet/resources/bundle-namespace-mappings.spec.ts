@@ -13,7 +13,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
   test.describe('CRUD', () => {
     test('can create a bundle namespace mapping', async ({ page, login, rancherApi }) => {
       await login();
-      const customMappingName = rancherApi.createE2EResourceName('fleet-mapping');
+      const customMappingName = rancherApi.createE2EResourceName('mapping-create');
       const listPage = new FleetBundleNamespaceMappingListPagePo(page);
       const headerPo = new HeaderPo(page);
       const createPage = new FleetBundleNsMappingCreateEditPo(page);
@@ -56,7 +56,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
 
     test('can clone a bundle namespace mapping', async ({ page, login, rancherApi }) => {
       await login();
-      const customMappingName = rancherApi.createE2EResourceName('fleet-mapping');
+      const customMappingName = rancherApi.createE2EResourceName('mapping-clone');
       const cloneName = `${customMappingName}-clone`;
 
       await rancherApi.createRancherResource('v1', 'fleet.cattle.io.bundlenamespacemappings', {

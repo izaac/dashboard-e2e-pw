@@ -34,7 +34,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
     test('Can create a HelmOp with Secrets and ConfigMaps', async ({ page, rancherApi }) => {
       test.skip(!hasDownstreamCluster, 'Requires a downstream cluster in fleet-default workspace');
 
-      const helmOpName = rancherApi.createE2EResourceName('helmop');
+      const helmOpName = rancherApi.createE2EResourceName('helmop-create');
       const ts = Date.now();
       const secret1Name = `helmop-secret-${ts}-1`;
       const secret2Name = `helmop-secret-${ts}-2`;
@@ -150,7 +150,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
     test('Can edit a HelmOp to remove and add Secrets and ConfigMaps', async ({ page, rancherApi }) => {
       test.skip(!hasDownstreamCluster, 'Requires a downstream cluster in fleet-default workspace');
 
-      const helmOpName = rancherApi.createE2EResourceName('helmop');
+      const helmOpName = rancherApi.createE2EResourceName('helmop-edit');
       const ts = Date.now();
       const oldSecret1 = `helmop-old-secret-${ts}-1`;
       const oldSecret2 = `helmop-old-secret-${ts}-2`;

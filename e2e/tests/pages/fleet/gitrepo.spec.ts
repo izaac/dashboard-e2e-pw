@@ -29,7 +29,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('check table headers are available in list and details view', async ({ page, login, rancherApi }) => {
-    const gitRepoName = rancherApi.createE2EResourceName('git-repo');
+    const gitRepoName = rancherApi.createE2EResourceName('gitrepo-headers');
 
     await login();
 
@@ -81,7 +81,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('check all tabs are available in the details view', async ({ page, login, rancherApi }) => {
-    const gitRepoName = rancherApi.createE2EResourceName('git-repo');
+    const gitRepoName = rancherApi.createE2EResourceName('gitrepo-tabs');
 
     await login();
 
@@ -119,7 +119,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
   test.describe('Edit', () => {
     test('Can Clone a git repo', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-clone');
       let cloneName = '';
 
       await login();
@@ -167,7 +167,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Edit Yaml', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-yaml');
 
       await login();
 
@@ -200,7 +200,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Download Yaml', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-dl');
 
       await login();
 
@@ -229,7 +229,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Edit Config', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-edit');
       const description = `${editRepoName}-desc`;
 
       await login();

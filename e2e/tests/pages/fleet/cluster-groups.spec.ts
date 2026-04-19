@@ -15,7 +15,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('can create cluster group', async ({ page, rancherApi }) => {
-    const clusterGroupName = rancherApi.createE2EResourceName('cluster-group');
+    const clusterGroupName = rancherApi.createE2EResourceName('cg-create');
     const listPage = new FleetClusterGroupsListPagePo(page);
     const headerPo = new HeaderPo(page);
 
@@ -51,7 +51,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('can edit a cluster group', async ({ page, rancherApi }) => {
-    const clusterGroupName = rancherApi.createE2EResourceName('cluster-group');
+    const clusterGroupName = rancherApi.createE2EResourceName('cg-edit');
 
     await rancherApi.createRancherResource('v1', 'fleet.cattle.io.clustergroups', {
       type: 'fleet.cattle.io.clustergroup',
@@ -107,7 +107,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('can clone a cluster group', async ({ page, rancherApi }) => {
-    const clusterGroupName = rancherApi.createE2EResourceName('cluster-group');
+    const clusterGroupName = rancherApi.createE2EResourceName('cg-clone');
     const cloneName = `clone-${clusterGroupName}`;
 
     await rancherApi.createRancherResource('v1', 'fleet.cattle.io.clustergroups', {
@@ -170,7 +170,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('can delete cluster group', async ({ page, rancherApi }) => {
-    const clusterGroupName = rancherApi.createE2EResourceName('cluster-group');
+    const clusterGroupName = rancherApi.createE2EResourceName('cg-del');
 
     await rancherApi.createRancherResource('v1', 'fleet.cattle.io.clustergroups', {
       type: 'fleet.cattle.io.clustergroup',

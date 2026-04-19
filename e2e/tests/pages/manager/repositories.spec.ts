@@ -8,7 +8,7 @@ const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
 test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@adminUser'] }, () => {
   test('can create a repository', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-create');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     try {
@@ -41,7 +41,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
   test('can edit a repository', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-edit');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
@@ -78,7 +78,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
   test('can clone a repository', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-clone');
     const cloneName = `${repoName}-clone`;
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
@@ -115,7 +115,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
   test('can download YAML', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-dl');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
@@ -142,7 +142,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
   test('can refresh a repository', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-refresh');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
@@ -173,7 +173,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
   test('can delete a repository', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-del');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
@@ -203,7 +203,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
   test('can delete repositories via bulk actions', async ({ page, login, rancherApi }) => {
     await login();
-    const repoName = rancherApi.createE2EResourceName('repo');
+    const repoName = rancherApi.createE2EResourceName('repo-bulk');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
     // Create two repos for bulk delete

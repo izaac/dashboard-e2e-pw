@@ -27,7 +27,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
   test('can create a MachineDeployment', async ({ page, login, rancherApi }) => {
     await login();
     const mdPage = new MachineDeploymentsPagePo(page);
-    const mdName = rancherApi.createE2EResourceName('machinedeployments');
+    const mdName = rancherApi.createE2EResourceName('md-create');
 
     try {
       await mdPage.goTo();
@@ -60,7 +60,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
   test('can edit a MachineDeployment', async ({ page, login, rancherApi }) => {
     await login();
     const mdPage = new MachineDeploymentsPagePo(page);
-    const mdName = rancherApi.createE2EResourceName('machinedeployments');
+    const mdName = rancherApi.createE2EResourceName('md-edit');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
     const json: any = jsyaml.load(doc);
@@ -112,7 +112,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
   test('can clone a MachineDeployment', async ({ page, login, rancherApi }) => {
     await login();
     const mdPage = new MachineDeploymentsPagePo(page);
-    const mdName = rancherApi.createE2EResourceName('machinedeployments');
+    const mdName = rancherApi.createE2EResourceName('md-clone');
     const cloneName = `${mdName}-clone`;
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
@@ -157,7 +157,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
   test('can delete a MachineDeployment', async ({ page, login, rancherApi }) => {
     await login();
     const mdPage = new MachineDeploymentsPagePo(page);
-    const mdName = rancherApi.createE2EResourceName('machinedeployments');
+    const mdName = rancherApi.createE2EResourceName('md-del');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
     const json: any = jsyaml.load(doc);
@@ -191,7 +191,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
   test('can delete MachineDeployments via bulk actions', async ({ page, login, rancherApi }) => {
     await login();
     const mdPage = new MachineDeploymentsPagePo(page);
-    const mdName = rancherApi.createE2EResourceName('machinedeployments');
+    const mdName = rancherApi.createE2EResourceName('md-bulk');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
     const json: any = jsyaml.load(doc);
