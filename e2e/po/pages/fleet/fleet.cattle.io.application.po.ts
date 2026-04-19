@@ -93,8 +93,12 @@ export class FleetGitRepoCreateEditPo extends PagePo {
     return this.self().locator('[data-testid="fleet-target-cluster-name-selector"]');
   }
 
+  mastheadTitleLocator(): Locator {
+    return this.self().locator('.primaryheader h1, .title-bar h1');
+  }
+
   async mastheadTitle(): Promise<string> {
-    return (await this.self().locator('.primaryheader h1, .title-bar h1').textContent()) ?? '';
+    return (await this.mastheadTitleLocator().textContent()) ?? '';
   }
 }
 

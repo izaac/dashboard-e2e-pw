@@ -259,7 +259,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | FleetDashboardListPagePo | fleet-dashboard.po.ts | PagePo | `/c/${clusterId}/fleet` | super, navTo, workspaceCard, slideInPanel, slideInPanelTitleLink, fleetDashboardEmptyState, getStartedButton, viewModeButton (+3) |
-| FleetApplicationListPagePo | fleet.cattle.io.application.po.ts | PagePo | `/c/_/fleet/application` | super, list, resourceTableDetails, sortableTable, goToDetailsPage, resourceDetail, createGitRepo, createHelmOp (+11) |
+| FleetApplicationListPagePo | fleet.cattle.io.application.po.ts | PagePo | `/c/_/fleet/application` | super, list, resourceTableDetails, sortableTable, goToDetailsPage, resourceDetail, createGitRepo, createHelmOp (+12) |
 | FleetBundlesListPagePo | fleet.cattle.io.bundle.po.ts | PagePo | — | super, baseResourceList, list, resourceTableDetails, goToDetailsPage, resourceDetail, tabs, resourcesList |
 | FleetBundleNamespaceMappingListPagePo | fleet.cattle.io.bundlenamespacemapping.po.ts | PagePo | — | super, baseResourceList, list, resourceDetail |
 | FleetClusterListPagePo | fleet.cattle.io.cluster.po.ts | PagePo | — | super, list, resourceTableDetails, sortableTable, mainRows, goToDetailsPage, editFleetCluster, clusterTabs (+6) |

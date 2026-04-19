@@ -140,7 +140,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await editView.nameNsDescription().description().set(`${customWorkspace}-desc-edit`);
 
-        await editPage.resourceDetail().tabs().clickTabWithSelector('[data-testid="btn-ociRegistries"]');
+        await editPage.resourceDetail().tabs().clickTabWithName('ociRegistries');
 
         await editPage.defaultOciRegistry().toggle();
         await editPage.defaultOciRegistry().clickLabel(ociSecretName);
@@ -180,26 +180,30 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       await login();
       const listPage = new FleetWorkspaceListPagePo(page);
 
-      await listPage.goTo();
-      await listPage.waitForPage();
-      await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+      try {
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
 
-      const actionMenu = await listPage.list().actionMenu(deleteName);
+        const actionMenu = await listPage.list().actionMenu(deleteName);
 
-      await actionMenu.getMenuItem('Delete').click();
+        await actionMenu.getMenuItem('Delete').click();
 
-      const responsePromise = page.waitForResponse(
-        (resp) => resp.url().includes(`/v3/fleetWorkspaces/${deleteName}`) && resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) => resp.url().includes(`/v3/fleetWorkspaces/${deleteName}`) && resp.request().method() === 'DELETE',
+        );
 
-      const prompt = new PromptRemove(page);
+        const prompt = new PromptRemove(page);
 
-      await prompt.confirmField().set(deleteName);
-      await prompt.remove();
-      await responsePromise;
-      await listPage.waitForPage();
+        await prompt.confirmField().set(deleteName);
+        await prompt.remove();
+        await responsePromise;
+        await listPage.waitForPage();
 
-      await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', deleteName, false);
+      }
     });
   });
 });

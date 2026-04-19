@@ -57,11 +57,11 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         'Resources',
         'Age',
       ];
-      const headerCells = listPage.sortableTable().self().locator('.table-header-container .content');
 
-      for (let i = 0; i < expectedHeadersListView.length; i++) {
-        await expect(headerCells.nth(i)).toContainText(expectedHeadersListView[i]);
-      }
+      await expect(listPage.sortableTable().self()).toBeVisible();
+      const actualHeaders = await listPage.sortableTable().headerNames();
+
+      expect(actualHeaders).toEqual(expectedHeadersListView);
 
       await listPage.goToDetailsPage(gitRepoName);
 
@@ -70,11 +70,11 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
       const expectedHeadersDetailsView = ['State', 'Name', 'Deployments', 'Last Updated', 'Date'];
-      const detailHeaderCells = gitRepoDetails.bundlesList().self().locator('.table-header-container .content');
 
-      for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
-        await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);
-      }
+      await expect(gitRepoDetails.bundlesList().self()).toBeVisible();
+      const actualHeadersDetailsView = await gitRepoDetails.bundlesList().headerNames();
+
+      expect(actualHeadersDetailsView).toEqual(expectedHeadersDetailsView);
     } finally {
       await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
     }
@@ -104,13 +104,13 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
-      await expect(gitRepoDetails.gitRepoTabs().self().locator('.tab')).toHaveCount(4, { timeout: 10000 });
+      const expectedTabs = ['Bundles', 'Resources', 'Conditions', 'Recent Events'];
+      const tabs = gitRepoDetails.gitRepoTabs().allTabs();
 
-      const tabs = ['Bundles', 'Resources', 'Conditions', 'Recent Events'];
-      const tabLocators = gitRepoDetails.gitRepoTabs().self().locator('.tab');
+      await expect(tabs).toHaveCount(expectedTabs.length, { timeout: 10000 });
 
-      for (let i = 0; i < tabs.length; i++) {
-        await expect(tabLocators.nth(i)).toContainText(tabs[i]);
+      for (const name of expectedTabs) {
+        await expect(tabs.filter({ hasText: name })).toHaveCount(1);
       }
     } finally {
       await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
@@ -144,9 +144,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await gitRepoEditPage.waitForPage('mode=clone');
 
-        const title = await gitRepoEditPage.mastheadTitle();
-
-        expect(title.replace(/\s+/g, ' ')).toContain(`App Bundle: Clone from ${editRepoName}`);
+        await expect(gitRepoEditPage.mastheadTitleLocator()).toContainText(`App Bundle: Clone from ${editRepoName}`);
 
         cloneName = `clone-${editRepoName}`;
 
@@ -191,9 +189,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await gitRepoEditPage.waitForPage('mode=edit&as=yaml');
 
-        const title = await gitRepoEditPage.mastheadTitle();
-
-        expect(title.replace(/\s+/g, ' ')).toContain(`App Bundle: ${editRepoName}`);
+        await expect(gitRepoEditPage.mastheadTitleLocator()).toContainText(`App Bundle: ${editRepoName}`);
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }

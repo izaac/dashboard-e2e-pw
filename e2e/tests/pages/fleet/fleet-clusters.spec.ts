@@ -130,9 +130,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
     await appBundleCreatePage.createGitRepo();
     await gitRepoCreatePage.waitForPage();
 
-    const title = await gitRepoCreatePage.mastheadTitle();
-
-    expect(title.replace(/\s+/g, ' ')).toContain('App Bundle: Create');
+    await expect(gitRepoCreatePage.mastheadTitleLocator()).toContainText('App Bundle: Create');
   });
 
   test('should only display action menu with allowed actions only', async ({ page, login }) => {
@@ -198,11 +196,11 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           'Last Seen',
           'Age',
         ];
-        const headerCells = fleetClusterListPage.sortableTable().self().locator('.table-header-container .content');
 
-        for (let i = 0; i < expectedHeaders.length; i++) {
-          await expect(headerCells.nth(i)).toContainText(expectedHeaders[i]);
-        }
+        await expect(fleetClusterListPage.sortableTable().self()).toBeVisible();
+        const actualHeaders = await fleetClusterListPage.sortableTable().headerNames();
+
+        expect(actualHeaders).toEqual(expectedHeaders);
 
         await fleetClusterListPage.goToDetailsPage('local');
 
@@ -220,16 +218,14 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           'Resources',
           'Age',
         ];
-        const detailHeaderCells = fleetClusterDetailsPage
-          .appBundlesList()
-          .self()
-          .locator('.table-header-container .content');
+        const detailsTable = fleetClusterDetailsPage.appBundlesList();
 
         await fleetClusterDetailsPage.flatListViewButton().click();
+        await expect(detailsTable.self()).toBeVisible();
 
-        for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
-          await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);
-        }
+        const actualHeadersDetailsView = await detailsTable.headerNames();
+
+        expect(actualHeadersDetailsView).toEqual(expectedHeadersDetailsView);
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
       }

@@ -186,27 +186,31 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
       const listPage = new FleetBundlesListPagePo(page);
       const headerPo = new HeaderPo(page);
 
-      await listPage.goTo();
-      await listPage.waitForPage();
-      await headerPo.selectWorkspace(localWorkspace);
+      try {
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(localWorkspace);
 
-      const actionMenu = await listPage.list().actionMenu(deleteName);
+        const actionMenu = await listPage.list().actionMenu(deleteName);
 
-      await actionMenu.getMenuItem('Delete').click();
+        await actionMenu.getMenuItem('Delete').click();
 
-      const responsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/fleet.cattle.io.bundles/${localWorkspace}/${deleteName}`) &&
-          resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/fleet.cattle.io.bundles/${localWorkspace}/${deleteName}`) &&
+            resp.request().method() === 'DELETE',
+        );
 
-      const prompt = new PromptRemove(page);
+        const prompt = new PromptRemove(page);
 
-      await prompt.remove();
-      await responsePromise;
-      await listPage.waitForPage();
+        await prompt.remove();
+        await responsePromise;
+        await listPage.waitForPage();
 
-      await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.bundles/${localWorkspace}`, deleteName, false);
+      }
     });
 
     test('can Download YAML', async ({ page, login, rancherApi }) => {
