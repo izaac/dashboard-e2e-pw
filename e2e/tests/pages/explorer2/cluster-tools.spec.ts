@@ -51,7 +51,10 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
     await clusterTools.goTo();
     await clusterTools.waitForPage();
 
-    const chartVersion = (await clusterTools.getChartVersion('Alerting Drivers').textContent())?.trim();
+    const chartVersionLocator = clusterTools.getChartVersion('Alerting Drivers');
+
+    await expect(chartVersionLocator).not.toHaveText('');
+    const chartVersion = (await chartVersionLocator.textContent())?.trim();
 
     await clusterTools.goToInstall('Alerting Drivers');
 

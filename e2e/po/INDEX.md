@@ -118,10 +118,10 @@
 |-------|------|---------|----------|---------|
 | ClusterManagerCreateAKSPagePo | cluster-create-aks.po.ts | ClusterManagerCreatePagePo | — | super, resourceDetail, clusterNameInput, clusterResourceGroup, dnsPrefixInput, regionSelect, kubernetesVersionSelect, cloudCredentialSelect (+1) |
 | ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup, getClusterName, getClusterDescription (+15) |
-| ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+3) |
+| ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+4) |
 | ClusterManagerCreateRke2AzurePagePo | cluster-create-rke2-azure.po.ts | ClusterManagerCreatePagePo | — | super, nameNsDescription, azureEnvironmentSelect, azureDropdownOption, subscriptionIdInput, clientIdInput, clientSecretInput, poolNameInput (+8) |
 | ClusterManagerCreateRke2CustomPagePo | cluster-create-rke2-custom.po.ts | ClusterManagerCreatePagePo | — | super, goToCustomClusterCreation, goToDigitalOceanCreation, title, clusterConfigurationTabs, registries, nameNsDescription, resourceDetail (+4) |
-| ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+12) |
+| ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+13) |
 
 ## edit/provisioning.cattle.io.cluster/edit/
 
@@ -169,10 +169,10 @@
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
 | InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+44) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
-| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, manageClustersButton, manageButton (+16) |
+| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+19) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
-| PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+18) |
+| PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+20) |
 | PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+25) |
 | RancherSetupConfigurePage | rancher-setup-configure.po.ts | PagePo | — | super, goTo, choosePassword, password, confirmPassword, termsAgreement, serverUrl, serverUrlLocalhostWarningBanner (+5) |
 | RancherSetupLoginPagePo | rancher-setup-login.po.ts | PagePo | — | super, goTo, form, bootstrapLogin, expect, hasInfoMessage, password, canSubmit (+1) |

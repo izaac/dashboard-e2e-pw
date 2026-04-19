@@ -122,8 +122,9 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
         break;
       }
 
-      // Wait before retrying
-      await page.waitForTimeout(5000);
+      // Wait before retrying - allows page to fully render/recover
+      // eslint-disable-next-line playwright/no-wait-for-timeout
+      await page.waitForTimeout(3000);
     }
 
     // Create cluster output

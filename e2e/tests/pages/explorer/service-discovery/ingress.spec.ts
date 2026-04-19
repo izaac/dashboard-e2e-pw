@@ -87,24 +87,24 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
       await page.getByTestId('name-ns-description-name').fill(ingressHeadlessName);
 
       await page.getByTestId('name-ns-description-namespace').click();
-      await page.locator('.vs__dropdown-menu').getByText(namespace, { exact: true }).click();
+      await ingressListPage.vsDropdownOption(namespace, true).click();
 
       await page.getByTestId(`rule-path-0-request-host-0`).fill('example-headless.com');
 
       await page.getByTestId('rule-path-0-path-type-0').click();
-      await page.locator('.vs__dropdown-menu').getByText('ImplementationSpecific').click();
+      await ingressListPage.vsDropdownOption('ImplementationSpecific').click();
 
       await page.getByTestId('rule-path-0-target-service-0').click();
-      await page.locator('.vs__dropdown-menu').getByText(headlessServiceName).click();
+      await ingressListPage.vsDropdownOption(headlessServiceName).click();
 
       await page.getByTestId('rule-path-0-port-0').click();
-      await page.locator('.vs__dropdown-menu').getByText('8080').click();
+      await ingressListPage.vsDropdownOption('8080').click();
 
       const createResponse = page.waitForResponse(
         (resp) => resp.url().includes('/v1/networking.k8s.io.ingresses') && resp.request().method() === 'POST',
       );
 
-      await page.locator('[data-testid="form-save"]').click();
+      await ingressListPage.formSaveButton().click();
       const resp = await createResponse;
 
       expect(resp.status()).toBe(201);

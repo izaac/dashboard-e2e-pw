@@ -22,8 +22,10 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
-      // Wait a bit for any additional requests that might fire
-      await page.waitForTimeout(1500);
+      // Wait for settings request to complete
+      await page.waitForResponse((resp) => resp.url().includes('/v1/management.cattle.io.settings'), {
+        timeout: 2000,
+      });
 
       // Should only have one settings request
       expect(settingsRequestCount).toBe(1);
@@ -53,9 +55,16 @@ test.describe('Home Page', () => {
       await expect(versionCell).not.toHaveText('—');
 
       // Extract cluster details from home page (state, name, version, provider)
+      await expect(localRow.locator('td').nth(0)).not.toHaveText('');
       const homeState = (await localRow.locator('td').nth(0).innerText()).trim();
+
+      await expect(localRow.locator('td').nth(1)).not.toHaveText('');
       const homeName = (await localRow.locator('td').nth(1).innerText()).trim();
+
+      await expect(localRow.locator('td').nth(2)).not.toHaveText('');
       const homeProvider = (await localRow.locator('td').nth(2).innerText()).trim();
+
+      await expect(localRow.locator('td').nth(3)).not.toHaveText('');
       const homeVersion = (await localRow.locator('td').nth(3).innerText()).trim();
 
       // Navigate to Cluster Management page and verify same details
@@ -80,7 +89,7 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
-      const filterInput = homePage.list().locator('[data-testid="search-box-filter-row"] input');
+      const filterInput = homePage.filterInput();
 
       // Filter with non-matching text
       await filterInput.fill('random text');
@@ -115,9 +124,7 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
-      await expect(
-        homePage.list().locator('.cluster-description').filter({ hasText: longClusterDescription }),
-      ).toBeVisible();
+      await expect(homePage.clusterDescriptions().filter({ hasText: longClusterDescription })).toBeVisible();
     });
 
     test('check table headers are visible', { tag: ['@noVai'] }, async ({ page, login }) => {
@@ -138,10 +145,11 @@ test.describe('Home Page', () => {
         'Pods',
       ];
 
-      const headers = homePage.list().locator('.table-header-container .content');
+      const headers = homePage.tableHeaders();
       const count = await headers.count();
 
       for (let i = 0; i < count && i < expectedHeaders.length; i++) {
+        await expect(headers.nth(i)).not.toHaveText('');
         const text = (await headers.nth(i).innerText()).trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
 
         expect(text).toBe(expectedHeaders[i]);

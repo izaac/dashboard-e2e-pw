@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test.beforeEach(async ({ page, login }) => {
@@ -188,9 +189,9 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       await page.goto('./c/local/explorer/workload');
       await page.waitForURL(/\/workload$/);
 
-      const sortableTable = page.locator('.sortable-table');
+      const sortableTable = new SortableTablePo(page, '.sortable-table');
 
-      await sortableTable.getByTestId('sortable-table-group-by-1').click();
+      await sortableTable.self().getByTestId('sortable-table-group-by-1').click();
 
       const namespacePicker = new NamespaceFilterPo(page);
 

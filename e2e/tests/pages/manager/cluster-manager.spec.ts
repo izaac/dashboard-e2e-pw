@@ -435,9 +435,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           await clusterCreate.goTo(`type=${driver}&rkeType=rke2`);
           await clusterCreate.waitForPage();
 
-          await expect(
-            clusterCreate.self().locator('[data-testid="credentials-banner"], .credentials-banner'),
-          ).toBeAttached();
+          await expect(clusterCreate.credentialsBannerLocator()).toBeAttached();
         });
 
         test('should show credential step when `addCloudCredential` is false', async ({ page, login }) => {
@@ -456,9 +454,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           await clusterCreate.goTo(`type=${driver}&rkeType=rke2`);
           await clusterCreate.waitForPage();
 
-          await expect(
-            clusterCreate.self().locator('[data-testid="credentials-banner"], .credentials-banner'),
-          ).toBeAttached();
+          await expect(clusterCreate.credentialsBannerLocator()).toBeAttached();
         });
       });
     }
@@ -482,9 +478,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${driver2}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(
-          clusterCreate.self().locator('[data-testid="credentials-banner"], .credentials-banner'),
-        ).toBeAttached();
+        await expect(clusterCreate.credentialsBannerLocator()).toBeAttached();
       });
 
       test('should NOT show credential step when `addCloudCredential` is false', async ({ page, login }) => {
@@ -503,9 +497,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${driver2}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(
-          clusterCreate.self().locator('[data-testid="credentials-banner"], .credentials-banner'),
-        ).not.toBeAttached();
+        await expect(clusterCreate.credentialsBannerLocator()).not.toBeAttached();
       });
     });
   });

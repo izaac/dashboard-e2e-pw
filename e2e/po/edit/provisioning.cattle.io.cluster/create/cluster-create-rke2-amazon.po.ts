@@ -44,6 +44,10 @@ export default class ClusterManagerCreateRke2AmazonPagePo extends ClusterManager
     return this.page.locator('[data-testid="ipv6-dialog-reasons"] li');
   }
 
+  ipv6DialogCancelButton(): Locator {
+    return this.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]');
+  }
+
   async create(): Promise<void> {
     await this.resourceDetail().createEditView().create();
   }

@@ -37,6 +37,18 @@ export default class HomePagePo extends PagePo {
     return this.page.locator('[data-testid="sortable-table-list-container"]');
   }
 
+  filterInput(): Locator {
+    return this.list().locator('[data-testid="search-box-filter-row"] input');
+  }
+
+  clusterDescriptions(): Locator {
+    return this.list().locator('.cluster-description');
+  }
+
+  tableHeaders(): Locator {
+    return this.list().locator('.table-header-container .content');
+  }
+
   manageClustersButton(): Locator {
     return this.page.getByTestId('home-manage-clusters-button');
   }

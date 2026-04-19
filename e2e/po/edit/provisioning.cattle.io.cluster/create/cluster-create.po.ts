@@ -95,4 +95,8 @@ export default class ClusterManagerCreatePagePo extends PagePo {
   errorsBanner(): BannersPo {
     return new BannersPo(this.page, '.banner.error', this.self());
   }
+
+  credentialsBannerLocator(): Locator {
+    return this.self().locator('[data-testid="credentials-banner"], .credentials-banner');
+  }
 }

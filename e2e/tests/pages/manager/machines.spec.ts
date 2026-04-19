@@ -29,33 +29,35 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     const machinesPage = new MachinesPagePo(page);
     const machineName = rancherApi.createE2EResourceName('machines');
 
-    await machinesPage.goTo();
-    await machinesPage.waitForPage();
-    await machinesPage.create();
-    await machinesPage.createEditMachines().waitForPage('as=yaml');
+    try {
+      await machinesPage.goTo();
+      await machinesPage.waitForPage();
+      await machinesPage.create();
+      await machinesPage.createEditMachines().waitForPage('as=yaml');
 
-    const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: any = jsyaml.load(machineDoc);
+      const machineDoc = fs.readFileSync(blueprintPath, 'utf-8');
+      const json: any = jsyaml.load(machineDoc);
 
-    json.metadata.name = machineName;
-    json.metadata.namespace = nsName;
-    json.spec.bootstrap.clusterName = 'local';
-    json.spec.bootstrap.dataSecretName = 'secretName';
-    await machinesPage.yamlEditor().set(jsyaml.dump(json));
+      json.metadata.name = machineName;
+      json.metadata.namespace = nsName;
+      json.spec.bootstrap.clusterName = 'local';
+      json.spec.bootstrap.dataSecretName = 'secretName';
+      await machinesPage.yamlEditor().set(jsyaml.dump(json));
 
-    const createResp = page.waitForResponse(
-      (r) => r.url().includes('/v1/cluster.x-k8s.io.machines') && r.request().method() === 'POST',
-    );
+      const createResp = page.waitForResponse(
+        (r) => r.url().includes('/v1/cluster.x-k8s.io.machines') && r.request().method() === 'POST',
+      );
 
-    await machinesPage.createEditMachines().saveCreateForm().resourceYaml().saveOrCreate().click();
-    const resp = await createResp;
+      await machinesPage.createEditMachines().saveCreateForm().resourceYaml().saveOrCreate().click();
+      const resp = await createResp;
 
-    expect(resp.status()).toBe(201);
+      expect(resp.status()).toBe(201);
 
-    await machinesPage.waitForPage();
-    await expect(machinesPage.list().details(machineName, 1)).toBeVisible();
-
-    await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+      await machinesPage.waitForPage();
+      await expect(machinesPage.list().details(machineName, 1)).toBeVisible();
+    } finally {
+      await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+    }
   });
 
   test('can edit a Machine', async ({ page, login, rancherApi }) => {
@@ -73,42 +75,44 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     json.spec.bootstrap.dataSecretName = 'secretName';
     const created = await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machines', json);
 
-    await machinesPage.goTo();
-    await machinesPage.waitForPage();
+    try {
+      await machinesPage.goTo();
+      await machinesPage.waitForPage();
 
-    const actionMenu = await machinesPage.list().actionMenu(machineName);
+      const actionMenu = await machinesPage.list().actionMenu(machineName);
 
-    await actionMenu.getMenuItem('Edit YAML').click();
-    await machinesPage.createEditMachines(nsName, machineName).waitForPage('mode=edit&as=yaml');
+      await actionMenu.getMenuItem('Edit YAML').click();
+      await machinesPage.createEditMachines(nsName, machineName).waitForPage('mode=edit&as=yaml');
 
-    const freshResource = await rancherApi.getRancherResource(
-      'v1',
-      'cluster.x-k8s.io.machines',
-      `${nsName}/${machineName}`,
-    );
+      const freshResource = await rancherApi.getRancherResource(
+        'v1',
+        'cluster.x-k8s.io.machines',
+        `${nsName}/${machineName}`,
+      );
 
-    const editDoc = fs.readFileSync(blueprintEditPath, 'utf-8');
-    const editJson: any = jsyaml.load(editDoc);
+      const editDoc = fs.readFileSync(blueprintEditPath, 'utf-8');
+      const editJson: any = jsyaml.load(editDoc);
 
-    editJson.spec.bootstrap.dataSecretName = 'secretName2';
-    editJson.metadata.creationTimestamp = created.body.metadata.creationTimestamp;
-    editJson.metadata.uid = created.body.metadata.uid;
-    editJson.metadata.name = machineName;
-    editJson.metadata.resourceVersion = freshResource.body.metadata.resourceVersion;
-    await machinesPage.yamlEditor().set(jsyaml.dump(editJson));
+      editJson.spec.bootstrap.dataSecretName = 'secretName2';
+      editJson.metadata.creationTimestamp = created.body.metadata.creationTimestamp;
+      editJson.metadata.uid = created.body.metadata.uid;
+      editJson.metadata.name = machineName;
+      editJson.metadata.resourceVersion = freshResource.body.metadata.resourceVersion;
+      await machinesPage.yamlEditor().set(jsyaml.dump(editJson));
 
-    const updateResp = page.waitForResponse(
-      (r) =>
-        r.url().includes(`/v1/cluster.x-k8s.io.machines/${nsName}/${machineName}`) && r.request().method() === 'PUT',
-    );
+      const updateResp = page.waitForResponse(
+        (r) =>
+          r.url().includes(`/v1/cluster.x-k8s.io.machines/${nsName}/${machineName}`) && r.request().method() === 'PUT',
+      );
 
-    await machinesPage.createEditMachines().saveCreateForm().resourceYaml().saveOrCreate().click();
-    const resp = await updateResp;
+      await machinesPage.createEditMachines().saveCreateForm().resourceYaml().saveOrCreate().click();
+      const resp = await updateResp;
 
-    expect(resp.status()).toBe(200);
-    await machinesPage.waitForPage();
-
-    await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+      expect(resp.status()).toBe(200);
+      await machinesPage.waitForPage();
+    } finally {
+      await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+    }
   });
 
   test('can delete a Machine', async ({ page, login, rancherApi }) => {
@@ -126,26 +130,28 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     json.spec.bootstrap.dataSecretName = 'secretName';
     await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machines', json);
 
-    await machinesPage.goTo();
-    await machinesPage.waitForPage();
+    try {
+      await machinesPage.goTo();
+      await machinesPage.waitForPage();
 
-    const actionMenu = await machinesPage.list().actionMenu(machineName);
+      const actionMenu = await machinesPage.list().actionMenu(machineName);
 
-    await actionMenu.getMenuItem('Delete').click();
+      await actionMenu.getMenuItem('Delete').click();
 
-    const promptRemove = new PromptRemove(page);
-    const deleteResp = page.waitForResponse(
-      (r) =>
-        r.url().includes(`cluster.x-k8s.io.machines/${nsName}/${machineName}`) && r.request().method() === 'DELETE',
-    );
+      const promptRemove = new PromptRemove(page);
+      const deleteResp = page.waitForResponse(
+        (r) =>
+          r.url().includes(`cluster.x-k8s.io.machines/${nsName}/${machineName}`) && r.request().method() === 'DELETE',
+      );
 
-    await promptRemove.remove();
-    await deleteResp;
-    await machinesPage.waitForPage();
+      await promptRemove.remove();
+      await deleteResp;
+      await machinesPage.waitForPage();
 
-    await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
-
-    await expect(machinesPage.body()).not.toContainText(machineName);
+      await expect(machinesPage.body()).not.toContainText(machineName);
+    } finally {
+      await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+    }
   });
 
   test.skip(true, 'Requires provisioned cluster with machines');

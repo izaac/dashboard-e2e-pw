@@ -441,7 +441,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(2);
 
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Toggle to k3s — should have 3 warnings
       await createRKE2ClusterPage.basicsTab().kubernetesVersions().toggle();
@@ -450,7 +450,7 @@ test.describe(
       await createRKE2ClusterPage.create();
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(3);
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Toggle off ipv6-only
       await createRKE2ClusterPage.machinePoolTab().enableIpv6().set();
@@ -459,7 +459,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(2);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('Masq');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set stack preference to IPv6
       await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('#networking');
@@ -470,7 +470,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(1);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('Stack Preference');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set to Dual — should not reintroduce the warning
       await createRKE2ClusterPage.networkTab().stackPreference().toggle();
@@ -480,7 +480,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(1);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('Stack Preference');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Toggle ipv6-only back on
       await createRKE2ClusterPage.machinePoolTab().enableIpv6().set();
@@ -489,7 +489,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(3);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toContainText('Stack Preference');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set to IPv6 — removes stack preference warning
       await createRKE2ClusterPage.networkTab().stackPreference().toggle();
@@ -499,7 +499,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(2);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('Stack Preference');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set cluster/service CIDR
       await createRKE2ClusterPage.networkTab().clusterCIDR().set('fd00:10:244::/120');
@@ -509,7 +509,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(1);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('CIDR');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set flannel masq — dialog should no longer appear
       await createRKE2ClusterPage.networkTab().flannelMasq().set();
@@ -576,7 +576,7 @@ test.describe(
       await createRKE2ClusterPage.create();
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(2);
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Toggle to k3s — 3 warnings
       await createRKE2ClusterPage.basicsTab().kubernetesVersions().toggle();
@@ -585,7 +585,7 @@ test.describe(
       await createRKE2ClusterPage.create();
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(3);
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Dual stack pref should NOT remove stack preference warning for ipv6-only
       await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('#networking');
@@ -596,7 +596,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(3);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toContainText('Stack Preference');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // IPv6 stack pref DOES remove the warning
       await createRKE2ClusterPage.networkTab().stackPreference().toggle();
@@ -606,7 +606,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(2);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('Stack Preference');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set CIDR
       await createRKE2ClusterPage.networkTab().clusterCIDR().set('fd00:10:244::/120');
@@ -616,7 +616,7 @@ test.describe(
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();
       await expect(createRKE2ClusterPage.ipv6Recommendations()).toHaveCount(1);
       await expect(createRKE2ClusterPage.ipv6Recommendations()).not.toContainText('CIDR');
-      await createRKE2ClusterPage.ipv6ConfirmationDialog().locator('[data-testid="ipv6-dialog-cancel"]').click();
+      await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set flannel masq — no dialog
       await createRKE2ClusterPage.networkTab().flannelMasq().set();

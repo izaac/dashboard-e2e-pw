@@ -29,30 +29,32 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     const mdPage = new MachineDeploymentsPagePo(page);
     const mdName = rancherApi.createE2EResourceName('machinedeployments');
 
-    await mdPage.goTo();
-    await mdPage.waitForPage();
-    await mdPage.create();
-    await mdPage.createEditMachineDeployment().waitForPage('as=yaml');
+    try {
+      await mdPage.goTo();
+      await mdPage.waitForPage();
+      await mdPage.create();
+      await mdPage.createEditMachineDeployment().waitForPage('as=yaml');
 
-    const doc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: any = jsyaml.load(doc);
+      const doc = fs.readFileSync(blueprintPath, 'utf-8');
+      const json: any = jsyaml.load(doc);
 
-    json.metadata.name = mdName;
-    json.metadata.namespace = nsName;
-    await mdPage.yamlEditor().set(jsyaml.dump(json));
+      json.metadata.name = mdName;
+      json.metadata.namespace = nsName;
+      await mdPage.yamlEditor().set(jsyaml.dump(json));
 
-    const createResp = page.waitForResponse(
-      (r) => r.url().includes('/v1/cluster.x-k8s.io.machinedeployments') && r.request().method() === 'POST',
-    );
+      const createResp = page.waitForResponse(
+        (r) => r.url().includes('/v1/cluster.x-k8s.io.machinedeployments') && r.request().method() === 'POST',
+      );
 
-    await mdPage.createEditMachineDeployment().saveCreateForm().resourceYaml().saveOrCreate().click();
-    const resp = await createResp;
+      await mdPage.createEditMachineDeployment().saveCreateForm().resourceYaml().saveOrCreate().click();
+      const resp = await createResp;
 
-    expect(resp.status()).toBe(201);
-    await mdPage.waitForPage();
-    await expect(mdPage.list().details(mdName, 1)).toBeVisible();
-
-    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+      expect(resp.status()).toBe(201);
+      await mdPage.waitForPage();
+      await expect(mdPage.list().details(mdName, 1)).toBeVisible();
+    } finally {
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    }
   });
 
   test('can edit a MachineDeployment', async ({ page, login, rancherApi }) => {
@@ -67,42 +69,44 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     json.metadata.namespace = nsName;
     const created = await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
 
-    await mdPage.goTo();
-    await mdPage.waitForPage();
+    try {
+      await mdPage.goTo();
+      await mdPage.waitForPage();
 
-    const actionMenu = await mdPage.list().actionMenu(mdName);
+      const actionMenu = await mdPage.list().actionMenu(mdName);
 
-    await actionMenu.getMenuItem('Edit YAML').click();
-    await mdPage.createEditMachineDeployment(nsName, mdName).waitForPage('mode=edit&as=yaml');
+      await actionMenu.getMenuItem('Edit YAML').click();
+      await mdPage.createEditMachineDeployment(nsName, mdName).waitForPage('mode=edit&as=yaml');
 
-    const freshResource = await rancherApi.getRancherResource(
-      'v1',
-      'cluster.x-k8s.io.machinedeployments',
-      `${nsName}/${mdName}`,
-    );
-    const editDoc = fs.readFileSync(blueprintEditPath, 'utf-8');
-    const editJson: any = jsyaml.load(editDoc);
+      const freshResource = await rancherApi.getRancherResource(
+        'v1',
+        'cluster.x-k8s.io.machinedeployments',
+        `${nsName}/${mdName}`,
+      );
+      const editDoc = fs.readFileSync(blueprintEditPath, 'utf-8');
+      const editJson: any = jsyaml.load(editDoc);
 
-    editJson.spec.template.spec.bootstrap.dataSecretName = 'secretName2';
-    editJson.metadata.creationTimestamp = created.body.metadata.creationTimestamp;
-    editJson.metadata.uid = created.body.metadata.uid;
-    editJson.metadata.name = mdName;
-    editJson.metadata.resourceVersion = freshResource.body.metadata.resourceVersion;
-    await mdPage.yamlEditor().set(jsyaml.dump(editJson));
+      editJson.spec.template.spec.bootstrap.dataSecretName = 'secretName2';
+      editJson.metadata.creationTimestamp = created.body.metadata.creationTimestamp;
+      editJson.metadata.uid = created.body.metadata.uid;
+      editJson.metadata.name = mdName;
+      editJson.metadata.resourceVersion = freshResource.body.metadata.resourceVersion;
+      await mdPage.yamlEditor().set(jsyaml.dump(editJson));
 
-    const updateResp = page.waitForResponse(
-      (r) =>
-        r.url().includes(`/v1/cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
-        r.request().method() === 'PUT',
-    );
+      const updateResp = page.waitForResponse(
+        (r) =>
+          r.url().includes(`/v1/cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
+          r.request().method() === 'PUT',
+      );
 
-    await mdPage.createEditMachineDeployment().saveCreateForm().resourceYaml().saveOrCreate().click();
-    const resp = await updateResp;
+      await mdPage.createEditMachineDeployment().saveCreateForm().resourceYaml().saveOrCreate().click();
+      const resp = await updateResp;
 
-    expect(resp.status()).toBe(200);
-    await mdPage.waitForPage();
-
-    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+      expect(resp.status()).toBe(200);
+      await mdPage.waitForPage();
+    } finally {
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    }
   });
 
   test('can clone a MachineDeployment', async ({ page, login, rancherApi }) => {
@@ -118,34 +122,36 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     json.metadata.namespace = nsName;
     await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
 
-    await mdPage.goTo();
-    await mdPage.waitForPage();
+    try {
+      await mdPage.goTo();
+      await mdPage.waitForPage();
 
-    const actionMenu = await mdPage.list().actionMenu(mdName);
+      const actionMenu = await mdPage.list().actionMenu(mdName);
 
-    await actionMenu.getMenuItem('Clone').click();
-    await mdPage.createEditMachineDeployment(nsName, mdName).waitForPage('mode=clone&as=yaml');
+      await actionMenu.getMenuItem('Clone').click();
+      await mdPage.createEditMachineDeployment(nsName, mdName).waitForPage('mode=clone&as=yaml');
 
-    const cloneDoc = fs.readFileSync(blueprintPath, 'utf-8');
-    const cloneJson: any = jsyaml.load(cloneDoc);
+      const cloneDoc = fs.readFileSync(blueprintPath, 'utf-8');
+      const cloneJson: any = jsyaml.load(cloneDoc);
 
-    cloneJson.metadata.name = cloneName;
-    cloneJson.metadata.namespace = nsName;
-    await mdPage.yamlEditor().set(jsyaml.dump(cloneJson));
+      cloneJson.metadata.name = cloneName;
+      cloneJson.metadata.namespace = nsName;
+      await mdPage.yamlEditor().set(jsyaml.dump(cloneJson));
 
-    const cloneResp = page.waitForResponse(
-      (r) => r.url().includes('/v1/cluster.x-k8s.io.machinedeployments') && r.request().method() === 'POST',
-    );
+      const cloneResp = page.waitForResponse(
+        (r) => r.url().includes('/v1/cluster.x-k8s.io.machinedeployments') && r.request().method() === 'POST',
+      );
 
-    await mdPage.createEditMachineDeployment().saveCreateForm().resourceYaml().saveOrCreate().click();
-    const resp = await cloneResp;
+      await mdPage.createEditMachineDeployment().saveCreateForm().resourceYaml().saveOrCreate().click();
+      const resp = await cloneResp;
 
-    expect(resp.status()).toBe(201);
-    await mdPage.waitForPage();
-    await expect(mdPage.list().details(cloneName, 2)).toBeVisible();
-
-    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    await cleanupMachineDeployment(rancherApi, `${nsName}/${cloneName}`);
+      expect(resp.status()).toBe(201);
+      await mdPage.waitForPage();
+      await expect(mdPage.list().details(cloneName, 2)).toBeVisible();
+    } finally {
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${cloneName}`);
+    }
   });
 
   test('can delete a MachineDeployment', async ({ page, login, rancherApi }) => {

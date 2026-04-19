@@ -23,6 +23,7 @@ test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
     const firstNodeLink = sortableTable.rowElementLink(0, 2);
 
     await expect(firstNodeLink).toBeVisible();
+    await expect(firstNodeLink).not.toHaveText('');
     const nodeName = (await firstNodeLink.textContent())?.trim();
 
     await firstNodeLink.click();

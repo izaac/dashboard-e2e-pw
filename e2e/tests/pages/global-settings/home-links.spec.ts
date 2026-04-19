@@ -231,9 +231,7 @@ test.describe('Home Links', () => {
     const link = homeLinksPage.supportLinks().filter({ hasText: customLinkName });
 
     await expect(link).not.toHaveAttribute('href', customLinkUrl);
-    const href = await link.getAttribute('href');
-
-    expect(href).toMatch(/#$/);
+    await expect(link).toHaveAttribute('href', /#$/);
 
     // Remove custom link
     await burgerMenu.toggle();

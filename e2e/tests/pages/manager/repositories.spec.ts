@@ -11,29 +11,32 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     const repoName = rancherApi.createE2EResourceName('repo');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
-    await repositoriesPage.create();
-    await repositoriesPage.createEditRepositories().waitForPage();
-    await repositoriesPage.createEditRepositories().nameNsDescription().name().set(repoName);
-    await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-description`);
-    await repositoriesPage.createEditRepositories().selectGitRepoCard();
-    await repositoriesPage.createEditRepositories().gitRepoUrl().set(gitRepoUrl);
-    await repositoriesPage.createEditRepositories().gitBranch().set('release-v2.11');
+    try {
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
+      await repositoriesPage.create();
+      await repositoriesPage.createEditRepositories().waitForPage();
+      await repositoriesPage.createEditRepositories().nameNsDescription().name().set(repoName);
+      await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-description`);
+      await repositoriesPage.createEditRepositories().selectGitRepoCard();
+      await repositoriesPage.createEditRepositories().gitRepoUrl().set(gitRepoUrl);
+      await repositoriesPage.createEditRepositories().gitBranch().set('release-v2.11');
 
-    const resp = await repositoriesPage.createEditRepositories().saveAndWaitForRequests('POST', CLUSTER_REPOS_BASE_URL);
+      const resp = await repositoriesPage
+        .createEditRepositories()
+        .saveAndWaitForRequests('POST', CLUSTER_REPOS_BASE_URL);
 
-    expect(resp.status()).toBe(201);
+      expect(resp.status()).toBe(201);
 
-    await repositoriesPage.waitForPage();
-    await expect(repositoriesPage.list().details(repoName, 2)).toBeVisible();
+      await repositoriesPage.waitForPage();
+      await expect(repositoriesPage.list().details(repoName, 2)).toBeVisible();
 
-    // Wait for repo to become active
-    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      // Wait for repo to become active
+      await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
+      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    }
   });
 
   test('can edit a repository', async ({ page, login, rancherApi }) => {
@@ -48,28 +51,29 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     });
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
+    try {
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
 
-    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
+      const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-    await actionMenu.getMenuItem('Edit Config').click();
-    await repositoriesPage.createEditRepositories(repoName).waitForPage('mode=edit');
-    await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-desc-edit`);
+      await actionMenu.getMenuItem('Edit Config').click();
+      await repositoriesPage.createEditRepositories(repoName).waitForPage('mode=edit');
+      await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-desc-edit`);
 
-    const resp = await repositoriesPage
-      .createEditRepositories()
-      .saveAndWaitForRequests('PUT', `${CLUSTER_REPOS_BASE_URL}/${repoName}`);
+      const resp = await repositoriesPage
+        .createEditRepositories()
+        .saveAndWaitForRequests('PUT', `${CLUSTER_REPOS_BASE_URL}/${repoName}`);
 
-    expect(resp.status()).toBe(200);
-    await repositoriesPage.waitForPage();
+      expect(resp.status()).toBe(200);
+      await repositoriesPage.waitForPage();
 
-    // Verify edit persisted
-    await repositoriesPage.list().details(repoName, 2).locator('a').click();
-    await expect(repositoriesPage.body()).toContainText(`${repoName}-desc-edit`);
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      // Verify edit persisted
+      await repositoriesPage.list().details(repoName, 2).locator('a').click();
+      await expect(repositoriesPage.body()).toContainText(`${repoName}-desc-edit`);
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    }
   });
 
   test('can clone a repository', async ({ page, login, rancherApi }) => {
@@ -85,25 +89,28 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     });
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
+    try {
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
 
-    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
+      const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-    await actionMenu.getMenuItem('Clone').click();
-    await repositoriesPage.createEditRepositories(repoName).waitForPage('mode=clone');
-    await repositoriesPage.createEditRepositories().nameNsDescription().name().set(cloneName);
-    await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-desc-clone`);
+      await actionMenu.getMenuItem('Clone').click();
+      await repositoriesPage.createEditRepositories(repoName).waitForPage('mode=clone');
+      await repositoriesPage.createEditRepositories().nameNsDescription().name().set(cloneName);
+      await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-desc-clone`);
 
-    const resp = await repositoriesPage.createEditRepositories().saveAndWaitForRequests('POST', CLUSTER_REPOS_BASE_URL);
+      const resp = await repositoriesPage
+        .createEditRepositories()
+        .saveAndWaitForRequests('POST', CLUSTER_REPOS_BASE_URL);
 
-    expect(resp.status()).toBe(201);
-    await repositoriesPage.waitForPage();
-    await expect(repositoriesPage.list().details(cloneName, 2)).toBeVisible();
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', cloneName, false);
+      expect(resp.status()).toBe(201);
+      await repositoriesPage.waitForPage();
+      await expect(repositoriesPage.list().details(cloneName, 2)).toBeVisible();
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', cloneName, false);
+    }
   });
 
   test('can download YAML', async ({ page, login, rancherApi }) => {
