@@ -155,6 +155,15 @@ Tests must produce the **same result** regardless of how many times they run or 
 - **Locator preference** — `getByTestId` > `getByRole` > `getByText` > CSS selectors. We use `getByTestId` to match upstream Rancher `data-testid` attributes.
 - **No manual waits around assertions** — don't wrap `expect()` in try/catch. Playwright assertions auto-retry. Only use try/finally for cleanup that MUST run after resource creation.
 
+### Blueprints (Mock Data)
+
+- Blueprints live in `e2e/blueprints/` — organized by feature area
+- **Use factory functions**, not raw JSON blobs. Gold standard: `e2e/blueprints/explorer/workloads/small-collection.ts`
+- Factory functions return minimal fields the UI needs to render (name, namespace, state) — no hardcoded URLs, no Cypress revision constants
+- Use `page.route(url, route => route.fulfill({ json }))` — the `json` param handles serialization + content-type automatically
+- `page.route()` MUST be set up BEFORE `await login()` — the route needs to be active before the page loads
+- When converting Cypress blueprints: strip `cy.intercept`/`Cypress.Chainable` wrappers, replace with exported factory functions
+
 ### Upstream Parity
 
 - **Match upstream assertions** — the same behaviors must be validated

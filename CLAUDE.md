@@ -55,7 +55,7 @@ support/
 | `.should('have.value', v)` | `await expect(loc).toHaveValue(v)` |
 | `.should('not.exist')` | `await expect(loc).not.toBeAttached()` |
 | `cy.intercept('POST', url).as('x')` | `page.waitForResponse(url)` (BEFORE action) |
-| `cy.intercept(url, mock)` | `page.route(url, route => route.fulfill({body}))` |
+| `cy.intercept(url, mock)` | `page.route(url, route => route.fulfill({ json }))` |
 | `cy.visit('/path')` | PO `goTo()` (uses `./path` relative to baseURL) |
 | `cy.login()` | `await login()` fixture |
 | `Cypress.env('x')` | `envMeta.x` |
@@ -75,6 +75,15 @@ support/
 - **Same CSS selectors and data-testid values as upstream**
 - All methods are `async` and return `Promise<void>` or `Locator`
 - Selectors live in POs only — never in spec files
+
+### Blueprints (Mock Data)
+
+- Blueprints live in `e2e/blueprints/` — organized by feature area
+- **Use factory functions**, not raw JSON blobs. Gold standard: `e2e/blueprints/explorer/workloads/small-collection.ts`
+- Factory functions return minimal fields the UI needs to render (name, namespace, state) — no hardcoded URLs, no Cypress revision constants
+- Use `page.route(url, route => route.fulfill({ json }))` — the `json` param handles serialization + content-type automatically
+- `page.route()` MUST be set up BEFORE `await login()` — the route needs to be active before the page loads
+- When converting Cypress blueprints: strip `cy.intercept`/`Cypress.Chainable` wrappers, replace with exported factory functions
 
 ### Specs
 

@@ -5,6 +5,7 @@ import {
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.fleetworkspace.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { fleetWorkspacesSmallResponse } from '@/e2e/blueprints/fleet/workspaces-get';
 
 test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai'] }, () => {
@@ -40,7 +41,22 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('pagination is hidden', async ({ page, login }) => {
-      test.skip(true, 'Requires mocking API response — blueprint intercepts not yet ported');
+      await page.route('**/v1/management.cattle.io.fleetworkspaces?**', (route) => {
+        route.fulfill({ json: fleetWorkspacesSmallResponse() });
+      });
+
+      await login();
+      const listPage = new FleetWorkspaceListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+
+      const table = listPage.list().resourceTable().sortableTable();
+
+      await table.checkVisible();
+      await table.checkLoadingIndicatorNotVisible();
+      await table.checkRowCount(false, 2);
+      await expect(table.pagination()).toBeHidden();
     });
   });
 

@@ -6,6 +6,10 @@ import {
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
+import {
+  clusterRegistrationTokensEmptyResponse,
+  clusterRegistrationTokensSmallResponse,
+} from '@/e2e/blueprints/fleet/cluster-registration-tokens-get';
 
 const defaultWorkspace = 'fleet-default';
 
@@ -198,11 +202,43 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
 
   test.describe('List', { tag: ['@noVai'] }, () => {
     test('validate cluster registration tokens table in empty state', async ({ page, login }) => {
-      test.skip(true, 'Requires mocking API response — blueprint intercepts not yet ported');
+      await page.route('**/v1/fleet.cattle.io.clusterregistrationtokens?**', (route) => {
+        route.fulfill({ json: clusterRegistrationTokensEmptyResponse() });
+      });
+
+      await login();
+      const listPage = new FleetClusterRegistrationTokenListPagePo(page);
+      const headerPo = new HeaderPo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await headerPo.selectWorkspace(defaultWorkspace);
+
+      const table = listPage.list().resourceTable().sortableTable();
+      const expectedHeaders = ['State', 'Name', 'Namespace', 'Secret-Name'];
+
+      expect(await table.headerNames()).toEqual(expectedHeaders);
+      await table.checkRowCount(true, 1);
     });
 
     test('validate cluster registration tokens table', async ({ page, login }) => {
-      test.skip(true, 'Requires mocking API response — blueprint intercepts not yet ported');
+      await page.route('**/v1/fleet.cattle.io.clusterregistrationtokens?**', (route) => {
+        route.fulfill({ json: clusterRegistrationTokensSmallResponse() });
+      });
+
+      await login();
+      const listPage = new FleetClusterRegistrationTokenListPagePo(page);
+      const headerPo = new HeaderPo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await headerPo.selectWorkspace(defaultWorkspace);
+
+      const table = listPage.list().resourceTable().sortableTable();
+      const expectedHeaders = ['State', 'Name', 'Namespace', 'Secret-Name'];
+
+      expect(await table.headerNames()).toEqual(expectedHeaders);
+      await table.checkRowCount(false, 1);
     });
 
     test('validate cluster registration tokens table headers', async ({ page, login }) => {
