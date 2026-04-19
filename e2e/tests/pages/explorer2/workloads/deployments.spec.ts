@@ -81,19 +81,15 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await detailsPage.goTo();
         await expect(detailsPage.mastheadTitle()).toContainText(deploymentName);
 
-        await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('1', { timeout: 30000 });
+        await expect(detailsPage.scaleCountText()).toContainText('1', { timeout: 30000 });
 
-        const scaleUpBtn = page.locator('[data-testid="scale-up-button"]');
+        await expect(detailsPage.scaleUpButton()).toBeEnabled();
+        await detailsPage.scaleUpButton().click();
 
-        await expect(scaleUpBtn).toBeEnabled();
-        await scaleUpBtn.click();
+        await expect(detailsPage.scaleCountText()).toContainText('2', { timeout: 30000 });
 
-        await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('2', { timeout: 30000 });
-
-        const scaleDownBtn = page.locator('[data-testid="scale-down-button"]');
-
-        await scaleDownBtn.click();
-        await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('1', { timeout: 30000 });
+        await detailsPage.scaleDownButton().click();
+        await expect(detailsPage.scaleCountText()).toContainText('1', { timeout: 30000 });
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
       }

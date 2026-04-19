@@ -242,7 +242,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | WorkloadsListPageBasePo | — | super |
-| WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog, addVolumeButton, dropdownMenu, openEmptyShowConfigurationLabelsLink (+1) |
+| WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog, addVolumeButton, dropdownMenu, openEmptyShowConfigurationLabelsLink (+4) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |

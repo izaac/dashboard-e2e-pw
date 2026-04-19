@@ -35,8 +35,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
     await ingressListPage.goTo();
     await ingressListPage.waitForPage();
-    await ingressListPage.list().masthead().actions().click();
-    await ingressListPage.list().masthead().actionMenu().getMenuItem('Create from YAML').click();
+    await ingressListPage.list().masthead().createYaml();
 
     await expect(page).toHaveURL(/mode=create&as=yaml/);
   });

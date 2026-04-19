@@ -70,4 +70,16 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
   labelsAndAnnotationsTab(): Locator {
     return this.page.getByTestId('btn-labels');
   }
+
+  scaleCountText(): Locator {
+    return this.page.getByTestId('scale-count-text');
+  }
+
+  scaleUpButton(): Locator {
+    return this.page.getByTestId('scale-up-button');
+  }
+
+  scaleDownButton(): Locator {
+    return this.page.getByTestId('scale-down-button');
+  }
 }

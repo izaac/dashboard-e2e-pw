@@ -113,28 +113,37 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
       spec: { podSelector: {} },
     });
 
-    const networkPolicyPage = new NetworkPolicyListPagePo(page);
+    try {
+      const networkPolicyPage = new NetworkPolicyListPagePo(page);
 
-    await networkPolicyPage.goTo();
-    await networkPolicyPage.waitForPage();
+      await networkPolicyPage.goTo();
+      await networkPolicyPage.waitForPage();
 
-    const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
+      const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
 
-    await sortableTable.filter(networkPolicyName);
-    await sortableTable.rowElementWithName(networkPolicyName).waitFor({ timeout: 15000 });
+      await sortableTable.filter(networkPolicyName);
+      await sortableTable.rowElementWithName(networkPolicyName).waitFor({ timeout: 15000 });
 
-    const actionMenu = await sortableTable.rowActionMenuOpen(networkPolicyName);
+      const actionMenu = await sortableTable.rowActionMenuOpen(networkPolicyName);
 
-    await actionMenu.getMenuItem('Delete').click();
+      await actionMenu.getMenuItem('Delete').click();
 
-    const deleteResponse = page.waitForResponse(
-      (resp) => resp.url().includes('networking.k8s.io.networkpolicies') && resp.request().method() === 'DELETE',
-    );
+      const deleteResponse = page.waitForResponse(
+        (resp) => resp.url().includes('networking.k8s.io.networkpolicies') && resp.request().method() === 'DELETE',
+      );
 
-    await networkPolicyPage.promptRemove().remove();
-    await deleteResponse;
+      await networkPolicyPage.promptRemove().remove();
+      await deleteResponse;
 
-    await expect(sortableTable.rowElementWithName(networkPolicyName)).not.toBeAttached({ timeout: 15000 });
+      await expect(sortableTable.rowElementWithName(networkPolicyName)).not.toBeAttached({ timeout: 15000 });
+    } finally {
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'networking.k8s.io.networkpolicies',
+        `${namespace}/${networkPolicyName}`,
+        false,
+      );
+    }
   });
 
   test('can open Edit as YAML', async ({ page, login }) => {

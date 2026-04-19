@@ -52,7 +52,7 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
       const sortableTable = new SortableTablePo(page, '.sortable-table');
 
       await sortableTable.groupByButtons(1).click();
-      await expect(sortableTable.self().locator('tr.group-row').first()).toBeVisible({ timeout: 15000 });
+      await expect(sortableTable.groupRows().first()).toBeVisible({ timeout: 15000 });
     });
   });
 });

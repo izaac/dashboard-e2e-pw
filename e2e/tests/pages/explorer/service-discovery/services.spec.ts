@@ -206,28 +206,32 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
         },
       });
 
-      const servicesPage = new ServicesPagePo(page);
+      try {
+        const servicesPage = new ServicesPagePo(page);
 
-      await servicesPage.goTo();
-      await servicesPage.waitForPage();
+        await servicesPage.goTo();
+        await servicesPage.waitForPage();
 
-      const sortableTable = servicesPage.list().resourceTable().sortableTable();
-      const actionMenu = await sortableTable.rowActionMenuOpen(serviceExternalName);
+        const sortableTable = servicesPage.list().resourceTable().sortableTable();
+        const actionMenu = await sortableTable.rowActionMenuOpen(serviceExternalName);
 
-      const deleteResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/services/${namespace}/${serviceExternalName}`) &&
-          resp.request().method() === 'DELETE',
-      );
+        const deleteResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/services/${namespace}/${serviceExternalName}`) &&
+            resp.request().method() === 'DELETE',
+        );
 
-      await actionMenu.getMenuItem('Delete').click();
+        await actionMenu.getMenuItem('Delete').click();
 
-      const promptRemove = page.getByRole('dialog');
+        const promptRemove = page.getByRole('dialog');
 
-      await promptRemove.getByRole('button', { name: 'Delete' }).click();
-      await deleteResponse;
+        await promptRemove.getByRole('button', { name: 'Delete' }).click();
+        await deleteResponse;
 
-      await expect(sortableTable.rowElementWithName(serviceExternalName)).not.toBeAttached({ timeout: 15000 });
+        await expect(sortableTable.rowElementWithName(serviceExternalName)).not.toBeAttached({ timeout: 15000 });
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
+      }
     });
   });
 

@@ -23,9 +23,9 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
 
-      const headerRow = serviceAccountsPage.list().resourceTable().sortableTable().tableHeaderRow();
+      const headerCells = serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells();
 
-      await expect(headerRow.locator('.table-header-container .content').first()).toBeVisible({ timeout: 15000 });
+      await expect(headerCells.first()).toBeVisible({ timeout: 15000 });
 
       const headers = await serviceAccountsPage.list().resourceTable().sortableTable().headerNames();
 
@@ -52,9 +52,9 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
 
-      const headerRow = serviceAccountsPage.list().resourceTable().sortableTable().tableHeaderRow();
+      const headerCells = serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells();
 
-      await expect(headerRow.locator('.table-header-container .content').first()).toBeVisible({ timeout: 15000 });
+      await expect(headerCells.first()).toBeVisible({ timeout: 15000 });
 
       const headers = await serviceAccountsPage.list().resourceTable().sortableTable().headerNames();
 
