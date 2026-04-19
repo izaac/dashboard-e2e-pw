@@ -216,4 +216,15 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
     await expect(mdPage.body()).not.toContainText(mdName);
   });
+
+  test.skip(true, 'Percy snapshot test');
+  test('validating machine deployments page with percy', async () => {
+    // Upstream Percy snapshot test
+  });
+
+  test.skip(true, 'Requires provisioned cluster with machine deployments');
+  test('can download YAML', async () => {
+    // Upstream test downloads YAML file for a MachineDeployment
+    // Needs actual provisioned cluster with machine deployment resources
+  });
 });

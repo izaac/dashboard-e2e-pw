@@ -145,12 +145,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
     await resetRetentionSettings(rancherApi);
   });
 
-  test('setup a user account that will be blocked and verify countdown timers', async ({
-    page,
-    login,
-    rancherApi,
-    envMeta,
-  }) => {
+  test('setup a user account that will be blocked', async ({ page, login, rancherApi, envMeta }) => {
     const runTimestamp = Date.now();
     const usernameBlock = `user_to_block_${runTimestamp}`;
     const userPassword = envMeta.password;
@@ -180,7 +175,49 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       // Login as the test user to activate retention tracking
       await login({ username: usernameBlock, password: userPassword });
 
-      // Now re-login as admin
+      // Re-login as admin
+      await login();
+    } finally {
+      // Cleanup: reset settings and delete users
+      await resetRetentionSettings(rancherApi);
+
+      for (const userId of userIds) {
+        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
+      }
+    }
+  });
+
+  test('verify the user account has countdown timers', async ({ page, login, rancherApi, envMeta }) => {
+    const runTimestamp = Date.now();
+    const usernameBlock = `user_to_block_${runTimestamp}`;
+    const userPassword = envMeta.password;
+    const userIds: string[] = [];
+
+    try {
+      await updateUserRetentionSetting(rancherApi, 'disable-inactive-user-after', '50h');
+      await updateUserRetentionSetting(rancherApi, 'user-retention-cron', '* * * * *');
+      await updateUserRetentionSetting(rancherApi, 'delete-inactive-user-after', '500h');
+
+      const userResp = await rancherApi.createUser(
+        {
+          username: usernameBlock,
+          globalRole: { role: 'user' },
+          projectRole: {
+            clusterId: 'local',
+            projectName: 'Default',
+            role: 'project-member',
+          },
+          password: userPassword,
+        },
+        { createNameOptions: { onlyContext: true } },
+      );
+
+      userIds.push(userResp.body.id);
+
+      // Login as the test user to activate retention tracking
+      await login({ username: usernameBlock, password: userPassword });
+
+      // Re-login as admin
       await login();
 
       const usersPo = new UsersPo(page);

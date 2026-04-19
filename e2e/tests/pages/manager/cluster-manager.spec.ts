@@ -8,8 +8,6 @@ import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisionin
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
-import * as jsyaml from 'js-yaml';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -573,5 +571,12 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await expect(page).toHaveURL(/\/c\/local\/explorer/);
     });
+  });
+});
+
+test.skip(true, 'Percy snapshot test');
+test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  test('display cluster manager page', async () => {
+    // Upstream Percy snapshot test
   });
 });

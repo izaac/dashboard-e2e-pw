@@ -76,6 +76,21 @@ test.describe(
 test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] }, () => {
   const workspace = 'fleet-local';
 
+  test('should display fleet clusters list page', async ({ page, login }) => {
+    await login();
+
+    const fleetClusterListPage = new FleetClusterListPagePo(page);
+    const header = new HeaderPo(page);
+
+    await fleetClusterListPage.goTo();
+    await fleetClusterListPage.waitForPage();
+    await header.selectWorkspace(workspace);
+
+    await fleetClusterListPage.sortableTable().checkLoadingIndicatorNotVisible();
+
+    await expect(fleetClusterListPage.mainRows()).toHaveCount(1);
+  });
+
   test('should be able to list clusters in local workspace', async ({ page, login }) => {
     await login();
 

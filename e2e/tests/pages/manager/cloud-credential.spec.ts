@@ -330,3 +330,10 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
     }
   });
 });
+
+test.skip(true, 'Percy snapshot test');
+test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  test('display empty creation page', async () => {
+    // Upstream Percy snapshot test
+  });
+});

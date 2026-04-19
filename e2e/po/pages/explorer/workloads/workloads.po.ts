@@ -1,6 +1,8 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import WorkloadPodStoragePo from '@/e2e/po/components/workloads/pod-storage.po';
+import ContainerMountPathPo from '@/e2e/po/components/workloads/container-mount-paths.po';
 
 type WorkloadType =
   | 'workload'
@@ -144,6 +146,38 @@ export class WorkloadsCreatePageBasePo extends PagePo {
 
   async save(): Promise<void> {
     await this.page.getByTestId('form-save').click();
+  }
+
+  horizontalTabs(): Locator {
+    return this.page.locator('[data-testid="workload-tabs"]');
+  }
+
+  async clickHorizontalTab(tabId: string): Promise<void> {
+    await this.horizontalTabs().locator(`li#${tabId}`).click();
+  }
+
+  podTabs(): Locator {
+    return this.page.locator('[data-testid="workload-pod-tabs"]');
+  }
+
+  async clickPodTab(tabId: string): Promise<void> {
+    await this.podTabs().locator(`li#${tabId}`).click();
+  }
+
+  nthContainerTabs(containerIndex: number): Locator {
+    return this.page.locator(`[data-testid="workload-container-tabs-${containerIndex}"]`);
+  }
+
+  async clickContainerTab(containerIndex: number, tabId: string): Promise<void> {
+    await this.nthContainerTabs(containerIndex).locator(`li#${tabId}`).click();
+  }
+
+  podStorage(): WorkloadPodStoragePo {
+    return new WorkloadPodStoragePo(this.page);
+  }
+
+  containerStorage(): ContainerMountPathPo {
+    return new ContainerMountPathPo(this.page);
   }
 
   /**

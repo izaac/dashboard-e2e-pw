@@ -57,6 +57,178 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await expect(servicesPage.errorBanner()).not.toBeAttached();
     });
+
+    test('can edit an ExternalName Service', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const serviceExternalName = `svc-edit-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'services', {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: { name: serviceExternalName, namespace },
+        spec: {
+          type: 'ExternalName',
+          externalName: 'my.database.example.com',
+        },
+      });
+
+      try {
+        const servicesPage = new ServicesPagePo(page);
+
+        await servicesPage.goTo();
+        await servicesPage.waitForPage();
+
+        const sortableTable = servicesPage.list().resourceTable().sortableTable();
+        const actionMenu = await sortableTable.rowActionMenuOpen(serviceExternalName);
+
+        await actionMenu.getMenuItem('Edit Config').click();
+
+        await servicesPage.descriptionInput().fill(`${serviceExternalName}-desc`);
+
+        const editResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/services/${namespace}/${serviceExternalName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await servicesPage.formSave().click();
+        const resp = await editResponse;
+
+        expect(resp.status()).toBe(200);
+        const body = await resp.json();
+
+        expect(body.metadata.name).toBe(serviceExternalName);
+        expect(body.metadata.annotations['field.cattle.io/description']).toBe(`${serviceExternalName}-desc`);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
+      }
+    });
+
+    test('can clone an ExternalName Service', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const serviceExternalName = `svc-clone-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'services', {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: { name: serviceExternalName, namespace },
+        spec: {
+          type: 'ExternalName',
+          externalName: 'my.database.example.com',
+        },
+      });
+
+      try {
+        const servicesPage = new ServicesPagePo(page);
+
+        await servicesPage.goTo();
+        await servicesPage.waitForPage();
+
+        const sortableTable = servicesPage.list().resourceTable().sortableTable();
+        const actionMenu = await sortableTable.rowActionMenuOpen(serviceExternalName);
+
+        await actionMenu.getMenuItem('Clone').click();
+
+        await servicesPage.nameInput().fill(`clone-${serviceExternalName}`);
+
+        const cloneResponse = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/services') && resp.request().method() === 'POST',
+        );
+
+        await servicesPage.formSave().click();
+        const resp = await cloneResponse;
+
+        expect(resp.status()).toBe(201);
+        const body = await resp.json();
+
+        expect(body.metadata.name).toBe(`clone-${serviceExternalName}`);
+
+        await servicesPage.waitForPage();
+        await sortableTable.rowElementWithName(`clone-${serviceExternalName}`).waitFor({ timeout: 15000 });
+
+        await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/clone-${serviceExternalName}`, false);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
+      }
+    });
+
+    test('can Edit Yaml', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const serviceExternalName = `svc-yaml-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'services', {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: { name: serviceExternalName, namespace },
+        spec: {
+          type: 'ExternalName',
+          externalName: 'my.database.example.com',
+        },
+      });
+
+      try {
+        const servicesPage = new ServicesPagePo(page);
+
+        await servicesPage.goTo();
+        await servicesPage.waitForPage();
+
+        const sortableTable = servicesPage.list().resourceTable().sortableTable();
+        const actionMenu = await sortableTable.rowActionMenuOpen(serviceExternalName);
+
+        await actionMenu.getMenuItem('Edit YAML').click();
+
+        await expect(page).toHaveURL(new RegExp(`mode=edit&as=yaml`));
+        await expect(servicesPage.mastheadTitle()).toContainText(`Service: ${serviceExternalName}`);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
+      }
+    });
+
+    test('can delete an ExternalName Service', async ({ page, login, rancherApi }) => {
+      await login();
+
+      const serviceExternalName = `svc-delete-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'services', {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: { name: serviceExternalName, namespace },
+        spec: {
+          type: 'ExternalName',
+          externalName: 'my.database.example.com',
+        },
+      });
+
+      const servicesPage = new ServicesPagePo(page);
+
+      await servicesPage.goTo();
+      await servicesPage.waitForPage();
+
+      const sortableTable = servicesPage.list().resourceTable().sortableTable();
+      const actionMenu = await sortableTable.rowActionMenuOpen(serviceExternalName);
+
+      const deleteResponse = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/v1/services/${namespace}/${serviceExternalName}`) &&
+          resp.request().method() === 'DELETE',
+      );
+
+      await actionMenu.getMenuItem('Delete').click();
+
+      const promptRemove = page.getByRole('dialog');
+
+      await promptRemove.getByRole('button', { name: 'Delete' }).click();
+      await deleteResponse;
+
+      await expect(sortableTable.rowElementWithName(serviceExternalName)).not.toBeAttached({ timeout: 15000 });
+    });
   });
 
   test.describe('List', { tag: ['@noVai'] }, () => {

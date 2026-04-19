@@ -171,4 +171,49 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       await expect(namespacePicker.getOptions().locator(`text=${projName}`)).not.toBeAttached({ timeout: 20000 });
     },
   );
+
+  test(
+    'can filter workloads by project/namespace from the picker dropdown',
+    { tag: ['@adminUser'] },
+    async ({ page, login, rancherApi }) => {
+      await login();
+
+      await rancherApi.setNamespaceFilter('local', 'metadata.namespace', '{"local":["all://user"]}');
+
+      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+      await clusterDashboard.goTo();
+      await clusterDashboard.waitForPage();
+
+      await page.goto('./c/local/explorer/workload');
+      await page.waitForURL(/\/workload$/);
+
+      const sortableTable = page.locator('.sortable-table');
+
+      await sortableTable.getByTestId('sortable-table-group-by-1').click();
+
+      const namespacePicker = new NamespaceFilterPo(page);
+
+      await namespacePicker.toggle();
+      await expect(namespacePicker.getOptions().locator('#ns_cattle-fleet-system')).toBeVisible();
+      await namespacePicker.clickOptionByLabel('cattle-fleet-system');
+      await namespacePicker.isChecked('cattle-fleet-system');
+      await namespacePicker.closeDropdown();
+
+      await expect(sortableTable.locator('.group-tab').filter({ hasText: 'cattle-fleet-system' })).toHaveCount(1);
+
+      await namespacePicker.toggle();
+      await namespacePicker.selectedValues().locator('i').click();
+      await namespacePicker.isChecked('Only User Namespaces');
+
+      await namespacePicker.clickOptionByLabel('Project: System');
+      await namespacePicker.isChecked('Project: System');
+      await namespacePicker.closeDropdown();
+
+      await expect(sortableTable.locator('.group-tab').filter({ hasText: 'kube-system' })).toBeVisible();
+      await expect(sortableTable.locator('.group-tab').filter({ hasText: 'cattle-fleet-system' })).toBeVisible();
+
+      await rancherApi.setNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+    },
+  );
 });

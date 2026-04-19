@@ -62,4 +62,12 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
   ) {
     super(page, workloadId, clusterId, 'apps.deployment' as WorkloadType, namespaceId, queryParams);
   }
+
+  async openEmptyShowConfigurationLabelsLink(): Promise<void> {
+    await this.self().getByTestId('empty-show-configuration_labels').click();
+  }
+
+  labelsAndAnnotationsTab(): Locator {
+    return this.page.getByTestId('btn-labels');
+  }
 }

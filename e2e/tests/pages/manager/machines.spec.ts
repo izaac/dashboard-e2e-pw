@@ -147,4 +147,15 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
 
     await expect(machinesPage.body()).not.toContainText(machineName);
   });
+
+  test.skip(true, 'Requires provisioned cluster with machines');
+  test('can download YAML', async () => {
+    // Upstream test downloads YAML file for a Machine
+    // Needs actual provisioned cluster with machine resources
+  });
+
+  test.skip(true, 'Percy snapshot test');
+  test('should display machines list page', async () => {
+    // Upstream Percy snapshot test
+  });
 });

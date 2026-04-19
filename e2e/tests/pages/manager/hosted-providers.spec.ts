@@ -57,7 +57,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
     await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
   });
 
-  test('can deactivate and reactivate a provider', async ({ page, login, rancherApi }) => {
+  test('can deactivate provider', async ({ page, login, rancherApi }) => {
     const originalAksState = await rancherApi.getRancherResource(
       'v1',
       'management.cattle.io.settings',
@@ -93,8 +93,31 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.createCluster();
       await createCluster.waitForPage();
       await createCluster.gridElementExistanceByName(AKS, 'not.toBeVisible');
+    } finally {
+      await rancherApi.setRancherResource(
+        'v1',
+        'management.cattle.io.settings',
+        'kev2-operators',
+        originalAksState.body,
+      );
+    }
+  });
 
-      // Re-activate
+  test('can activate provider', async ({ page, login, rancherApi }) => {
+    const originalAksState = await rancherApi.getRancherResource(
+      'v1',
+      'management.cattle.io.settings',
+      'kev2-operators',
+    );
+
+    try {
+      await login();
+      const providersPage = new HostedProvidersPagePo(page);
+      const clusterList = new ClusterManagerListPagePo(page);
+      const createCluster = new ClusterManagerCreatePagePo(page);
+
+      await ensureProviderState(rancherApi, 'aks', false);
+
       await providersPage.goTo();
       await providersPage.waitForPage();
       await providersPage.list().resourceTable().sortableTable().checkVisible();
@@ -103,12 +126,12 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       const activateResp = page.waitForResponse(
         (r) => r.url().includes('management.cattle.io.settings/kev2-operators') && r.request().method() === 'PUT',
       );
-      const actionMenu2 = await providersPage.list().actionMenu(AKS);
+      const actionMenu = await providersPage.list().actionMenu(AKS);
 
-      await actionMenu2.getMenuItem('Activate').click();
-      const resp2 = await activateResp;
+      await actionMenu.getMenuItem('Activate').click();
+      const resp = await activateResp;
 
-      expect(resp2.status()).toBe(200);
+      expect(resp.status()).toBe(200);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -116,7 +139,6 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await createCluster.waitForPage();
       await createCluster.gridElementExistanceByName(AKS, 'toBeVisible');
     } finally {
-      // Restore original state
       await rancherApi.setRancherResource(
         'v1',
         'management.cattle.io.settings',

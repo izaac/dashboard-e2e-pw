@@ -211,4 +211,37 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
     await psaPage.waitForPage();
     await expect(psaPage.body()).not.toContainText(psaName);
   });
+
+  test('can download YAML for a pod security admission', async ({ page, login, rancherApi }) => {
+    await login();
+    const psaPage = new PodSecurityAdmissionsPagePo(page);
+    const psaName = rancherApi.createE2EResourceName('psa');
+
+    await rancherApi.createRancherResource('v1', PSA_RESOURCE, {
+      type: 'management.cattle.io.podsecurityadmissionconfigurationtemplate',
+      metadata: { name: psaName },
+      description: `${psaName}-description`,
+      configuration: createPayloadData.configuration,
+    });
+
+    await psaPage.goTo();
+    await psaPage.waitForPage();
+
+    const downloadPromise = page.waitForEvent('download');
+    const actionMenu = await psaPage.list().actionMenu(psaName);
+
+    await actionMenu.getMenuItem('Download YAML').click({ force: true });
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toBe(`${psaName}.yaml`);
+
+    // Cleanup
+    await rancherApi.deleteRancherResource('v1', PSA_RESOURCE, psaName, false);
+  });
+});
+
+test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  test.skip('should display Pod Security Admissions list page', async () => {
+    // Percy snapshot test
+  });
 });

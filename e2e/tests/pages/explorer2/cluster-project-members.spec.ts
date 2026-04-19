@@ -3,6 +3,26 @@ import ClusterProjectMembersPo from '@/e2e/po/pages/explorer/cluster-project-mem
 import HomePagePo from '@/e2e/po/pages/home.po';
 
 test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser'] }, () => {
+  test('Should create a new user', async ({ page, login, rancherApi }) => {
+    await login();
+
+    const username = `e2e-test-${Date.now()}-new-user`;
+    const standardPassword = 'standard-password';
+
+    const userResp = await rancherApi.createUser({
+      username,
+      globalRole: { role: 'user' },
+      password: standardPassword,
+    });
+
+    try {
+      await page.goto('./auth/user?mode=edit');
+      await expect(page.getByTestId('name-ns-description-name')).toHaveValue(username);
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
+    }
+  });
+
   test('Members added to Cluster Membership should not show Loading next to their names', async ({
     page,
     login,

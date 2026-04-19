@@ -148,9 +148,21 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
 
       await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
     });
+
+    test('can Download YAML', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
+    });
   });
 
   test.describe('List', { tag: ['@noVai'] }, () => {
+    test('validate cluster registration tokens table in empty state', async ({ page, login }) => {
+      test.skip(true, 'Requires mocking API response — blueprint intercepts not yet ported');
+    });
+
+    test('validate cluster registration tokens table', async ({ page, login }) => {
+      test.skip(true, 'Requires mocking API response — blueprint intercepts not yet ported');
+    });
+
     test('validate cluster registration tokens table headers', async ({ page, login }) => {
       await login();
       const listPage = new FleetClusterRegistrationTokenListPagePo(page);

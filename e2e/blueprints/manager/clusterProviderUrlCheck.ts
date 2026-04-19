@@ -1,50 +1,42 @@
 export const providersList = [
   {
     clusterProviderQueryParam: 'amazoneks',
-    label:                     'Amazon EKS',
+    label: 'Amazon EKS',
   },
   {
     clusterProviderQueryParam: 'azureaks',
-    label:                     'Azure AKS',
+    label: 'Azure AKS',
   },
   {
     clusterProviderQueryParam: 'googlegke',
-    label:                     'Google GKE',
+    label: 'Google GKE',
   },
   {
     clusterProviderQueryParam: 'amazonec2',
-    label:                     'Amazon EC2',
+    label: 'Amazon EC2',
   },
   {
     clusterProviderQueryParam: 'azure',
-    label:                     'Azure',
+    label: 'Azure',
   },
   {
     clusterProviderQueryParam: 'digitalocean',
-    label:                     'DigitalOcean',
-  },
-  {
-    clusterProviderQueryParam: 'azureaks',
-    label:                     'Azure AKS',
+    label: 'DigitalOcean',
   },
   {
     clusterProviderQueryParam: 'harvester',
-    label:                     'Harvester',
+    label: 'Harvester',
   },
   {
     clusterProviderQueryParam: 'linode',
-    label:                     'Linode',
-  },
-  {
-    clusterProviderQueryParam: 'azure',
-    label:                     'Azure',
+    label: 'Linode',
   },
   {
     clusterProviderQueryParam: 'vmwarevsphere',
-    label:                     'VMware vSphere',
+    label: 'VMware vSphere',
   },
   {
     clusterProviderQueryParam: 'custom',
-    label:                     'Custom',
+    label: 'Custom',
   },
 ];

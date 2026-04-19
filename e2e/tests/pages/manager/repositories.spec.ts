@@ -106,6 +106,33 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', cloneName, false);
   });
 
+  test('can download YAML', async ({ page, login, rancherApi }) => {
+    await login();
+    const repoName = rancherApi.createE2EResourceName('repo');
+    const repositoriesPage = new ChartRepositoriesPagePo(page);
+
+    await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
+      type: 'catalog.cattle.io.clusterrepo',
+      metadata: { name: repoName },
+      spec: { gitRepo: gitRepoUrl, gitBranch: 'release-v2.11' },
+    });
+    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
+
+    await repositoriesPage.goTo();
+    await repositoriesPage.waitForPage();
+
+    const downloadPromise = page.waitForEvent('download');
+    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
+
+    await actionMenu.getMenuItem('Download YAML').click({ force: true });
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toBe(`${repoName}.yaml`);
+
+    // Cleanup
+    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+  });
+
   test('can refresh a repository', async ({ page, login, rancherApi }) => {
     await login();
     const repoName = rancherApi.createE2EResourceName('repo');
@@ -389,5 +416,12 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+  });
+});
+
+test.skip(true, 'Percy snapshot test');
+test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  test('validating repositories page with percy', async () => {
+    // Upstream Percy snapshot test
   });
 });

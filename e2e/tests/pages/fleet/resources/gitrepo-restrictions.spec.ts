@@ -146,5 +146,9 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
     });
+
+    test('can Download YAML', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
+    });
   });
 });

@@ -217,6 +217,33 @@ lines.push(
 );
 lines.push('');
 
+// Compute deficit/surplus for honest reporting
+let deficit = 0;
+let surplus = 0;
+
+for (const spec of upstreamSpecs) {
+  const norm = normalizeSpecPath(spec.relativePath);
+  const pw = pwByPath.get(norm);
+
+  if (!pw) {
+    deficit += spec.tests.length;
+    continue;
+  }
+
+  const delta = pw.tests.length - spec.tests.length;
+
+  if (delta < 0) {
+    deficit += Math.abs(delta);
+  } else if (delta > 0) {
+    surplus += delta;
+  }
+}
+
+lines.push(`**Missing tests (specs with fewer PW tests):** ${deficit}`);
+lines.push(`**Extra PW tests (specs with more PW tests):** ${surplus}`);
+lines.push(`**Net delta:** ${surplus - deficit >= 0 ? '+' : ''}${surplus - deficit}`);
+lines.push('');
+
 // Per-suite detail: unconverted specs
 lines.push('## Unconverted Specs');
 lines.push('');

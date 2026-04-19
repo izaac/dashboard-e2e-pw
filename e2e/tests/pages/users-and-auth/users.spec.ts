@@ -294,6 +294,32 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await expect(viewYaml.mastheadTitle()).toContainText(actualUsername);
     });
 
+    test('can Download YAML', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      const downloadPromise = page.waitForEvent('download');
+
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Download YAML');
+
+      const download = await downloadPromise;
+      const path = await download.path();
+
+      expect(path).toBeTruthy();
+
+      const fs = await import('fs');
+      const jsyaml = await import('js-yaml');
+      const content = fs.readFileSync(path!, 'utf8');
+      const obj: any = jsyaml.load(content);
+
+      expect(obj.username).toBe(actualUsername);
+      expect(obj.apiVersion).toBe('management.cattle.io/v3');
+    });
+
     test('can Delete user', async ({ page, login }) => {
       await login();
 
@@ -376,6 +402,26 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await activatePromise;
 
       await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-check/);
+    });
+
+    test('can Download YAML', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      await usersPo.list().selectAll().self().click();
+
+      const downloadPromise = page.waitForEvent('download');
+
+      await usersPo.list().bulkActionButton('Download YAML').click();
+
+      const download = await downloadPromise;
+      const path = await download.path();
+
+      expect(path).toBeTruthy();
     });
 
     test('can Delete user via bulk', async ({ page, login }) => {
@@ -638,6 +684,32 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
           await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user.id, false);
         }
       }
+    });
+  });
+
+  test.describe('List and Pagination', () => {
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('pagination is visible and user is able to navigate through users data', async () => {
+      // Upstream test creates 26 users, sets rows-per-page to 10, validates pagination UI
+      // Port when pagination infrastructure is ready
+    });
+
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('filter users', async () => {
+      // Upstream test filters by user ID and username
+      // Port when pagination infrastructure is ready
+    });
+
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('sorting changes the order of paginated users data', async () => {
+      // Upstream test sorts by name column and validates order across pages
+      // Port when pagination infrastructure is ready
+    });
+
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('pagination is hidden', async () => {
+      // Upstream test validates pagination UI hidden when user count < page size
+      // Port when pagination infrastructure is ready
     });
   });
 });

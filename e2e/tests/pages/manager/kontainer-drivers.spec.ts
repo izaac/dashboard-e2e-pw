@@ -273,7 +273,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await createCluster.gridElementExistanceByName(oracleDriver, 'not.toBeVisible');
   });
 
-  test('can deactivate and activate a single driver', async ({ page, login, rancherApi }) => {
+  test('can deactivate driver', async ({ page, login, rancherApi }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
     const clusterList = new ClusterManagerListPagePo(page);
@@ -304,7 +304,6 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       3000,
     );
 
-    // Deactivate
     await driversPage.goTo();
     await driversPage.waitForPage();
     await driversPage.list().resourceTable().sortableTable().checkVisible();
@@ -320,9 +319,9 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const deactivateDialog = new DeactivateDriverDialogPo(page);
 
     await deactivateDialog.deactivate();
-    const resp1 = await deactivateResp;
+    const resp = await deactivateResp;
 
-    expect(resp1.status()).toBe(200);
+    expect(resp.status()).toBe(200);
 
     await clusterList.goTo();
     await clusterList.waitForPage();
@@ -330,7 +329,31 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await createCluster.waitForPage();
     await createCluster.gridElementExistanceByName('example', 'not.toBeVisible');
 
-    // Activate
+    // Cleanup
+    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+  });
+
+  test('can activate driver', async ({ page, login, rancherApi }) => {
+    await login();
+    const driversPage = new KontainerDriversPagePo(page);
+    const clusterList = new ClusterManagerListPagePo(page);
+    const createCluster = new ClusterManagerCreatePagePo(page);
+
+    // Create a fresh example driver (inactive)
+    const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
+    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl);
+
+    if (found) {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+    }
+
+    const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
+      type: 'kontainerDriver',
+      active: false,
+      url: downloadUrl,
+    });
+    const driverId = created.body.id;
+
     await driversPage.goTo();
     await driversPage.waitForPage();
     await driversPage.list().resourceTable().sortableTable().checkVisible();
@@ -340,12 +363,12 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
     );
 
-    const actionMenu2 = await driversPage.list().actionMenu(exampleDriver);
+    const actionMenu = await driversPage.list().actionMenu(exampleDriver);
 
-    await actionMenu2.getMenuItem('Activate').click();
-    const resp2 = await activateResp;
+    await actionMenu.getMenuItem('Activate').click();
+    const resp = await activateResp;
 
-    expect(resp2.status()).toBe(200);
+    expect(resp.status()).toBe(200);
 
     await clusterList.goTo();
     await clusterList.waitForPage();
@@ -355,6 +378,10 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Cleanup
     await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+  });
+
+  test.skip('should display kontainer drivers list page', async () => {
+    // Percy snapshot test
   });
 
   test('can edit a cluster driver', async ({ page, login, rancherApi }) => {

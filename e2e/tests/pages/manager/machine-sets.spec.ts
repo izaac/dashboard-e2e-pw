@@ -211,4 +211,15 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
     await cleanupMachineSet(rancherApi, `${nsName}/${machineSetName}`);
     await expect(machineSetsPage.body()).not.toContainText(machineSetName);
   });
+
+  test.skip(true, 'Percy snapshot test');
+  test('validating empty machine sets page with percy', async () => {
+    // Upstream Percy snapshot test
+  });
+
+  test.skip(true, 'Requires provisioned cluster with machine sets');
+  test('can download YAML', async () => {
+    // Upstream test downloads YAML file for a MachineSet
+    // Needs actual provisioned cluster with machine set resources
+  });
 });

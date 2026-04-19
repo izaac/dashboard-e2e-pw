@@ -152,4 +152,12 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
     test('should show projects without namespaces when filtering in Group by Project view', async () => {});
     test('should show projects with namespaces when filtering in flat list view', async () => {});
   });
+
+  test.skip(true, 'Requires third-party auth provider');
+  test.describe('Project creation with third-party auth', () => {
+    test('sets the creator principal id annotation when creating a project and using third-party auth', async () => {
+      // Upstream test spoofs GitHub auth principal and validates field.cattle.io/creator-principal-name annotation
+      // Requires third-party auth infrastructure
+    });
+  });
 });

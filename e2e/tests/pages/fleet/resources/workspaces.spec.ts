@@ -22,6 +22,26 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       expect(actualHeaders).toEqual(expectedHeaders);
     });
+
+    test('pagination is visible and user is able to navigate through workspace data', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
+    });
+
+    test('filter workspace', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Requires creating multiple workspaces — expensive setup');
+    });
+
+    test('sorting changes the order of paginated workspace data', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      test.skip(true, 'Requires mocking API response — blueprint intercepts not yet ported');
+    });
   });
 
   test.describe('CRUD', () => {
@@ -84,6 +104,69 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       } finally {
         await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', wsName, false);
       }
+    });
+
+    test('can Edit Config', async ({ page, login, rancherApi }) => {
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-workspace');
+      const ociSecretName = rancherApi.createE2EResourceName('oci-secret');
+
+      await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
+        metadata: { name: customWorkspace },
+        name: customWorkspace,
+      });
+
+      await rancherApi.createRancherResource('v1', 'secrets', {
+        metadata: { name: ociSecretName, namespace: customWorkspace },
+        type: 'kubernetes.io/dockerconfigjson',
+        data: { '.dockerconfigjson': Buffer.from('{}').toString('base64') },
+      });
+
+      try {
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+        const editPage = new FleetWorkspaceCreateEditPo(page, customWorkspace);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(customWorkspace);
+
+        await actionMenu.getMenuItem('Edit Config').click();
+        await editPage.waitForPage('mode=edit', 'allowedtargetnamespaces');
+        await expect(editPage.mastheadTitle()).toContainText(`Workspace: ${customWorkspace}`);
+
+        const editView = editPage.resourceDetail().createEditView();
+
+        await editView.nameNsDescription().description().set(`${customWorkspace}-desc-edit`);
+
+        await editPage.resourceDetail().tabs().clickTabWithSelector('[data-testid="btn-ociRegistries"]');
+
+        await editPage.defaultOciRegistry().toggle();
+        await editPage.defaultOciRegistry().clickLabel(ociSecretName);
+
+        const responsePromise = page.waitForResponse(
+          (resp) => resp.url().includes(`/v3/fleetWorkspaces/${customWorkspace}`) && resp.request().method() === 'PUT',
+        );
+
+        await editPage.resourceDetail().cruResource().save();
+        const resp = await responsePromise;
+
+        expect(resp.status()).toBe(200);
+        const body = await resp.json();
+
+        expect(body.id).toEqual(customWorkspace);
+        expect(body.annotations['field.cattle.io/description']).toEqual(`${customWorkspace}-desc-edit`);
+        expect(body.annotations['ui-default-oci-registry']).toEqual(ociSecretName);
+        await listPage.waitForPage();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', `secrets/${customWorkspace}`, ociSecretName, false);
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', customWorkspace, false);
+      }
+    });
+
+    test('can Download YAML', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Download tests require file system access and cleanup — not suitable for CI');
     });
 
     test('can delete workspace', async ({ page, login, rancherApi }) => {

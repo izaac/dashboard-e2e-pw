@@ -259,4 +259,17 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       }
     });
   });
+
+  test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+    test('should display continuous delivery page git repo', async ({ page, login }) => {
+      await login();
+
+      const listPage = new FleetApplicationListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+
+      await expect(listPage.sortableTable().self()).toBeVisible();
+    });
+  });
 });

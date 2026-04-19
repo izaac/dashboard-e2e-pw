@@ -6,6 +6,7 @@ import {
 } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import { createDeploymentBlueprint } from '@/e2e/blueprints/explorer/workloads/deployments/deployment-create';
 import {
   createBulkResources,
   setTablePreferences,
@@ -94,6 +95,185 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await scaleDownBtn.click();
         await expect(page.locator('[data-testid="scale-count-text"]')).toContainText('1', { timeout: 30000 });
       } finally {
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('Should show configuration drawer with the labels/annotations tab open', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      await login();
+      const namespace = `e2e-labels-ns-${Date.now()}`;
+      const deploymentName = `e2e-labels-deploy-${Date.now()}`;
+
+      await rancherApi.createRancherResource('v1', 'namespaces', {
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: { name: namespace },
+      });
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        ...createDeploymentBlueprint,
+        metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
+      });
+
+      try {
+        const detailsPage = new WorkloadsDeploymentsDetailsPagePo(page, deploymentName, 'local', namespace);
+
+        await detailsPage.goTo();
+        await detailsPage.waitForPage();
+
+        await detailsPage.openEmptyShowConfigurationLabelsLink();
+        await expect(detailsPage.labelsAndAnnotationsTab()).toBeVisible();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('Should be able to view and edit configuration of pod volumes with no custom component', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      await login();
+      const namespace = `e2e-vol-ns-${Date.now()}`;
+      const deploymentName = `e2e-vol-deploy-${Date.now()}`;
+
+      await rancherApi.createRancherResource('v1', 'namespaces', {
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: { name: namespace },
+      });
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        ...createDeploymentBlueprint,
+        metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
+      });
+
+      try {
+        const deploymentsListPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+        const editPage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+
+        await deploymentsListPage.goTo();
+        await deploymentsListPage.waitForPage();
+        await deploymentsListPage.goToEditConfigPage(deploymentName);
+
+        await editPage.clickHorizontalTab('pod');
+        await editPage.clickPodTab('storage-pod');
+
+        const vol0Value = await editPage.podStorage().nthVolumeComponent(0).yamlEditor().value();
+
+        expect(vol0Value).toContain('name: test-vol');
+
+        const vol1Value = await editPage.podStorage().nthVolumeComponent(1).yamlEditor().value();
+
+        expect(vol1Value).toContain('name: test-vol1');
+
+        await editPage
+          .podStorage()
+          .nthVolumeComponent(0)
+          .yamlEditor()
+          .set('name: test-vol-changed\nprojected:\n    defaultMode: 420');
+
+        await editPage.clickContainerTab(0, 'storage');
+        await editPage.containerStorage().addVolumeButton().toggle();
+
+        const options = editPage.containerStorage().addVolumeButton().getOptions();
+
+        await expect(options).toContainText('test-vol-changed (projected)');
+        await expect(options).not.toContainText('test-vol (projected)');
+
+        const saveResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await editPage.save();
+        const response = await saveResponse;
+
+        expect(response.status()).toBe(200);
+        const body = await response.json();
+
+        expect(body.spec.template.spec.volumes[0]).toMatchObject({
+          name: 'test-vol-changed',
+          projected: { defaultMode: 420 },
+        });
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('should be able to add and remove container volume mounts', async ({ page, login, rancherApi }) => {
+      await login();
+      const namespace = `e2e-mount-ns-${Date.now()}`;
+      const deploymentName = `e2e-mount-deploy-${Date.now()}`;
+
+      await rancherApi.createRancherResource('v1', 'namespaces', {
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: { name: namespace },
+      });
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        ...createDeploymentBlueprint,
+        metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
+      });
+
+      try {
+        const deploymentsListPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+        const editPage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+
+        // Add a volume mount
+        await deploymentsListPage.goTo();
+        await deploymentsListPage.waitForPage();
+        await deploymentsListPage.goToEditConfigPage(deploymentName);
+
+        await editPage.clickContainerTab(0, 'storage');
+        await editPage.containerStorage().addVolume('test-vol1');
+        await editPage.containerStorage().nthVolumeMount(0).nthMountPoint(0).set('test-123');
+
+        const addResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await editPage.save();
+        const addResp = await addResponse;
+
+        expect(addResp.status()).toBe(200);
+        const addBody = await addResp.json();
+
+        expect(addBody.spec.template.spec.containers[0].volumeMounts).toEqual(
+          expect.arrayContaining([expect.objectContaining({ mountPath: 'test-123', name: 'test-vol1' })]),
+        );
+
+        // Remove the volume mount
+        await deploymentsListPage.goTo();
+        await deploymentsListPage.waitForPage();
+        await deploymentsListPage.goToEditConfigPage(deploymentName);
+
+        await editPage.clickContainerTab(0, 'storage');
+        await editPage.containerStorage().removeVolume(0);
+
+        const removeResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await editPage.save();
+        const removeResp = await removeResponse;
+
+        expect(removeResp.status()).toBe(200);
+        const removeBody = await removeResp.json();
+        const mounts = removeBody.spec.template.spec.containers[0].volumeMounts;
+
+        expect(!mounts || mounts.length === 0).toBe(true);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
       }
     });
