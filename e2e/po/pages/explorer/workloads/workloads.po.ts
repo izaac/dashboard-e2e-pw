@@ -12,7 +12,9 @@ type WorkloadType =
   | 'statefulsets'
   | 'jobs'
   | 'cronjobs'
-  | 'apps.deployment';
+  | 'apps.deployment'
+  | 'batch.job'
+  | 'batch.cronjob';
 
 /**
  * Base page object for workload list pages (Deployments, DaemonSets, etc.)

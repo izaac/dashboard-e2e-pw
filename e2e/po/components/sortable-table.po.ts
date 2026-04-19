@@ -56,8 +56,8 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   filterComponent(): Locator {
-    // The search input is within the sortable-table component
-    return this.self().locator('[data-testid="search-box-filter-row"] input').first();
+    // Search input lives in .sortable-table-header, a sibling of the <table>
+    return this.self().locator('..').locator('[data-testid="search-box-filter-row"] input').first();
   }
 
   async filter(searchText: string): Promise<void> {
@@ -316,6 +316,11 @@ export default class SortableTablePo extends ComponentPo {
 
   paginationEndButton(): Locator {
     return this.pagination().locator('button').nth(3);
+  }
+
+  /** Text like "1 - 10 of 25 Pods" shown between pagination buttons */
+  paginationText(): Locator {
+    return this.pagination().locator('span');
   }
 
   /** Returns the cell locator at a given column index (0-based) for a row */

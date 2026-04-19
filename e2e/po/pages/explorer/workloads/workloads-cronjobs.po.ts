@@ -3,6 +3,6 @@ import { WorkloadsListPageBasePo } from '@/e2e/po/pages/explorer/workloads/workl
 
 export class WorkloadsCronJobsListPagePo extends WorkloadsListPageBasePo {
   constructor(page: Page, clusterId = 'local') {
-    super(page, clusterId, 'cronjobs');
+    super(page, clusterId, 'batch.cronjob');
   }
 }

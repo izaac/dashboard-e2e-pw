@@ -244,7 +244,7 @@
 |-------|------|---------|----------|---------|
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog |
-| WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super |
+| WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, rowActionMenuClick (+17) |
 

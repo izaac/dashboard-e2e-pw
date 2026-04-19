@@ -2,6 +2,17 @@ import { test, expect } from '@/support/fixtures';
 import { WorkloadsPodsListPagePo, WorkloadsPodsDetailPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
 import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import {
+  createBulkResources,
+  setTablePreferences,
+  restoreTablePreferences,
+  assertPaginationNavigation,
+  assertPaginationSorting,
+  assertPaginationFilter,
+  assertPaginationHidden,
+  mockSmallCollection,
+  type SavedPrefs,
+} from './pagination.utils';
 
 test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('When cloning a pod', () => {
@@ -132,6 +143,110 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await expect(createPage.environmentVariableKeyInput(0)).toHaveValue('FIRST_VAR');
       await expect(createPage.environmentVariableKeyInput(1)).toHaveValue('THIRD_VAR');
+    });
+  });
+
+  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
+    test.describe.configure({ mode: 'serial' });
+    // Serial: tests share bulk resource setup (22 resources + user prefs)
+
+    let savedPrefs: SavedPrefs;
+    let ns1: string;
+    let ns2: string;
+    let bulkNames: string[];
+    let uniqueName: string;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      ns1 = `e2e-pods-list-${Date.now()}`;
+      ns2 = `e2e-pods-unique-${Date.now()}`;
+
+      await Promise.all([
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns1 },
+        }),
+        rancherApi.createRancherResource('v1', 'namespaces', {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: { name: ns2 },
+        }),
+      ]);
+
+      uniqueName = `e2e-unique-${Date.now()}`;
+
+      const [names] = await Promise.all([
+        createBulkResources(rancherApi, 'v1', 'pods', ns1, 22, (ns: string, name: string) => ({
+          apiVersion: 'v1',
+          kind: 'Pod',
+          metadata: { name, namespace: ns },
+          spec: { containers: [{ name: 'test', image: SMALL_CONTAINER.image }] },
+        })),
+        rancherApi.createRancherResource('v1', 'pods', {
+          apiVersion: 'v1',
+          kind: 'Pod',
+          metadata: { name: uniqueName, namespace: ns2 },
+          spec: { containers: [{ name: 'test', image: SMALL_CONTAINER.image }] },
+        }),
+      ]);
+
+      bulkNames = names;
+      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      await restoreTablePreferences(rancherApi, savedPrefs);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
+      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+    });
+
+    test('pagination is visible and user is able to navigate through pods data', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsPodsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = listPage.sortableTable();
+
+      await assertPaginationNavigation(table, 23);
+    });
+
+    test('sorting changes the order of paginated pods data', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsPodsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = listPage.sortableTable();
+
+      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+    });
+
+    test('filter pods', async ({ page, login }) => {
+      await login();
+      const listPage = new WorkloadsPodsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = listPage.sortableTable();
+
+      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      await login();
+
+      await mockSmallCollection(page, 'v1/pods', 'pod');
+
+      const listPage = new WorkloadsPodsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+      const table = listPage.sortableTable();
+
+      await assertPaginationHidden(table);
+
+      await page.unroute('**/v1/pods?**');
     });
   });
 });
