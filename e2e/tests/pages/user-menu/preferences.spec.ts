@@ -22,7 +22,7 @@ test.describe('User can update their preferences', () => {
 
   test(
     'Can navigate to Preferences Page',
-    { tag: ['@userMenu', '@adminUser', '@standardUser', '@flaky'] },
+    { tag: ['@userMenu', '@adminUser', '@standardUser'] },
     async ({ page, login }) => {
       await login();
 

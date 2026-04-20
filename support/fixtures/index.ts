@@ -134,16 +134,24 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
       const password = options?.password || meta.password;
 
       // With storageState pre-loaded, navigate to home and check if already authenticated
-      const hasStorageState = testInfo.project.use?.storageState !== undefined;
+      const storageState = testInfo.project.use?.storageState;
+      const hasStorageState = typeof storageState === 'string' && storageState.length > 0;
 
       if (hasStorageState && !options) {
         await page.goto('./home', { waitUntil: 'domcontentloaded' });
 
-        // If we're NOT redirected to login, storageState is valid — skip UI login
-        const isLoginPage = await page
-          .locator('[data-testid="login-submit"]')
-          .isVisible({ timeout: 3000 })
-          .catch(() => false);
+        // Race: either we land on home (storageState valid) or get redirected to login (invalid).
+        // The SPA needs time to check auth and redirect, so we wait for EITHER outcome.
+        const isLoginPage = await Promise.race([
+          page
+            .getByTestId('nav_header_showUserMenu')
+            .waitFor({ state: 'visible', timeout: 15000 })
+            .then(() => false),
+          page
+            .locator('[data-testid="login-submit"]')
+            .waitFor({ state: 'visible', timeout: 15000 })
+            .then(() => true),
+        ]);
 
         if (!isLoginPage) {
           return;
@@ -176,12 +184,19 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         await consentBanner.locator('button').click();
       }
 
-      await page.locator('[data-testid="login-submit"]').click();
+      // Listen for the login POST response BEFORE clicking submit.
+      // This mirrors Cypress `cy.wait('@loginReq')` — guarantees R_SESS cookie
+      // is set before we proceed (the URL may change before Set-Cookie is processed).
+      const loginResponse = page.waitForResponse(
+        (resp) =>
+          (resp.url().includes('/v3-public/localProviders/local') || resp.url().includes('/v1-public/login')) &&
+          resp.request().method() === 'POST',
+      );
 
-      // The login POST may take time on busy servers. Wait up to 60s for the URL
-      // to change. If the SPA router gets stuck (e.g. due to websocket reconnection
-      // loops), navigate to the home page directly after confirming we're past
-      // the initial login spinner.
+      await page.locator('[data-testid="login-submit"]').click();
+      await loginResponse;
+
+      // Wait for the SPA to navigate away from the login page
       await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
     };
 
