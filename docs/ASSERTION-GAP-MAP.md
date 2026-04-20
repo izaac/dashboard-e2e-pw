@@ -3,14 +3,13 @@
 
 Generated: 2026-04-20
 
-Upstream Cypress: 127 specs, 712 tests
-Playwright: 127 specs, 744 tests
+Upstream Cypress: 126 specs, 662 tests
+Playwright: 126 specs, 694 tests
 
 ## Summary
 
 | Suite | Upstream Specs | Upstream Tests | PW Specs | PW Tests | Converted |
 |-------|---------------|----------------|----------|----------|-----------|
-| accessibility | 1 | 50 | 1 | 50 | ✅ |
 | components | 1 | 1 | 1 | 1 | ✅ |
 | extensions/elemental | 1 | 8 | 1 | 8 | ✅ |
 | navigation | 1 | 0 | 1 | 2 | — |
@@ -43,7 +42,7 @@ Playwright: 127 specs, 744 tests
 | pages/virtualization-mgmt | 1 | 3 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 1 | 4 | ✅ |
-| **TOTAL** | **127** | **712** | **127** | **744** | **104%** |
+| **TOTAL** | **126** | **662** | **126** | **694** | **105%** |
 
 **Missing tests (specs with fewer PW tests):** 0
 **Extra PW tests (specs with more PW tests):** 32
