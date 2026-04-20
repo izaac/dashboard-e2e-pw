@@ -275,6 +275,10 @@ export default class ExtensionsPagePo extends PagePo {
     return new BannersPo(this.page, '[data-testid="extensions-new-repos-banner"]', this.self());
   }
 
+  repoBannerActionButton(): Locator {
+    return this.self().getByTestId('extensions-new-repos-banner-action-btn');
+  }
+
   // --- add repos modal ---
 
   addReposModal(): Locator {

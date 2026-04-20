@@ -19,6 +19,11 @@ export default class MgmtFeatureFlagListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().rowWithName(name).column(index);
   }
 
+  /** Lock icon in the actions column for a non-restorable feature flag */
+  lockIcon(name: string): Locator {
+    return this.details(name, 1).locator('i.icon-lock');
+  }
+
   async clickRowActionMenuItem(name: string, itemLabel: string): Promise<void> {
     const actionMenu: ActionMenuPo = await this.resourceTable().sortableTable().rowActionMenuOpen(name);
 

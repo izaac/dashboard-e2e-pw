@@ -171,7 +171,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDiv = banner.locator('div').first();
+      const innerDiv = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDiv).toHaveCSS('font-weight', settings.fontWeight);
@@ -189,7 +189,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDivReload = banner.locator('div').first();
+      const innerDivReload = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDivReload).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDivReload).toHaveCSS('font-weight', settings.fontWeight);
@@ -239,7 +239,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDiv = banner.locator('div').first();
+      const innerDiv = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDiv).toHaveCSS('font-weight', settings.fontWeight);
@@ -257,7 +257,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDivReload = banner.locator('div').first();
+      const innerDivReload = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDivReload).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDivReload).toHaveCSS('font-weight', settings.fontWeight);
@@ -319,7 +319,7 @@ test.describe('Banners', () => {
         await expect(consentBanner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
         await expect(consentBanner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-        const consentDiv = consentBanner.locator('div').first();
+        const consentDiv = bannersPage.consentBannerTextDiv();
 
         await expect(consentDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
         await expect(consentDiv).toHaveCSS('font-weight', settings.fontWeight);

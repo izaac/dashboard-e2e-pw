@@ -179,6 +179,11 @@ export class BannersPagePo extends RootClusterPage {
     return this.page.getByTestId('fixed__banner');
   }
 
+  /** Inner text div of the fixed banner (for CSS style assertions) */
+  fixedBannerTextDiv(): Locator {
+    return this.fixedBanner().locator('div').first();
+  }
+
   headerBanner(): Locator {
     return this.page.locator('#banner-header');
   }
@@ -201,6 +206,11 @@ export class BannersPagePo extends RootClusterPage {
 
   consentBannerContent(): Locator {
     return this.consentBanner().locator('.banner');
+  }
+
+  /** Inner text div of the consent banner (for CSS style assertions) */
+  consentBannerTextDiv(): Locator {
+    return this.consentBannerContent().locator('div').first();
   }
 
   loginSubmitButton(): Locator {

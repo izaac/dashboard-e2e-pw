@@ -13,7 +13,7 @@
 | BannersPo | banners.po.ts | ComponentPo | — | super, banner, bannerElement, closeButton |
 | ButtonDropdownPo | button-dropdown.po.ts | LabeledSelectPo | — | super, toggle |
 | ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, isSelected |
-| CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton |
+| CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
 | CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, isChecked, isNotChecked, uncheck, if, hasAppropriateWidth, expect (+6) |
 | CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
@@ -146,15 +146,15 @@
 | ClusterRecentEventsListPo | cluster-recent-events-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty |
 | ClusterSnapshotsListPo | cluster-snapshots-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty, clickOnSnapshotNow, checkSnapshotExist |
 | MachinePoolsListPo | machine-pools-list.po.ts | BaseResourceList | — | super, details, machinePoolReadyofDesiredCount, machineProgressBar, scaleDownButton, scaleUpButton, machineUnavailableCount, scaleButtonTooltip (+1) |
-| MgmtFeatureFlagListPo | management.cattle.io.feature.po.ts | BaseResourceList | `:scope` | super, elements, elementWithName, details, clickRowActionMenuItem, getRowActionMenuItem, getRowNoActionMenu |
+| MgmtFeatureFlagListPo | management.cattle.io.feature.po.ts | BaseResourceList | `:scope` | super, elements, elementWithName, details, lockIcon, clickRowActionMenuItem, getRowActionMenuItem, getRowNoActionMenu |
 | OidcClientsListPo | management.cattle.io.oidcclient-list.po.ts | BaseResourceList | `[data-testid=` | super, details, title, issuerURL, discoveryDocument, jwksURI |
-| RoleListPo | role-list.po.ts | BaseResourceList | — | super, downloadYaml, rowCloneYamlClick, delete, elements, elementWithName, details, checkBuiltIn (+2) |
+| RoleListPo | role-list.po.ts | BaseResourceList | — | super, downloadYaml, rowCloneYamlClick, delete, elements, elementWithName, details, detailLink (+3) |
 
 ## other-products/
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| LoggingPo | logging.po.ts | ComponentPo | `.dashboard-root` | super, mastheadCreate, nameInput, formSave, outputTargetInput, outputsTab, matchTab, flowOutputSelector (+6) |
+| LoggingPo | logging.po.ts | ComponentPo | `.dashboard-root` | super, mastheadCreate, nameInput, formSave, outputTargetInput, outputsTab, matchTab, flowOutputSelector (+7) |
 | OpaGatekeeperPo | opa-gatekeeper.po.ts | PagePo | `/c/${clusterId}/gatekeeper` | super, create, selectConstraintSubtype, createFromYaml, saveCreateForm |
 
 ## pages/
@@ -168,9 +168,9 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+44) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+45) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
-| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+19) |
+| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+21) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+20) |
@@ -274,7 +274,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, hasAppropriateWidth, expect (+32) |
+| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, hasAppropriateWidth, expect (+34) |
 | BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+13) |
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+10) |
@@ -289,7 +289,7 @@
 | OidcClientsPagePo | oidc-client.po.ts | PagePo | — | super, createOidcClient, list |
 | RolesPo | roles.po.ts | ClusterPagePo | — | super, list, tabs, waitForRequests, createGlobal, detailGlobal, createRole, detailRole (+3) |
 | UserRetentionPo | user.retention.po.ts | PagePo | — | super, saveButton, enableRegistryCheckbox, disableAfterPeriodCheckbox, disableAfterPeriodInput, deleteAfterPeriodCheckbox, deleteAfterPeriodInput, userRetentionCron (+2) |
-| MgmtUserResourceDetailPo | users.po.ts | PagePo | `/c/${clusterId}/auth/management.cattle.io.user/${userId}` | super, waitForRequests, list, createEdit, detail, userRetentionLink, create, refreshGroupMembership (+9) |
+| MgmtUserResourceDetailPo | users.po.ts | PagePo | `/c/${clusterId}/auth/management.cattle.io.user/${userId}` | super, waitForRequests, list, createEdit, detail, userRetentionLink, create, refreshGroupMembership (+12) |
 
 ## pages/virtualization-mgmt/
 

@@ -105,7 +105,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         // Confirm created role is not built-in
         await roles.list('GLOBAL').checkBuiltIn(globalRoleName, false);
 
-        await roles.list('GLOBAL').details(globalRoleName, 2).locator('a').click();
+        await roles.list('GLOBAL').detailLink(globalRoleName, 2).click();
 
         const globalRoleDetails = roles.detailGlobal(globalRoleId);
 
@@ -190,7 +190,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
         await roles.list('CLUSTER').resourceTable().sortableTable().checkRowCount(false, 1);
         await roles.list('CLUSTER').checkDefault(clusterRoleName, true);
-        await roles.list('CLUSTER').details(clusterRoleName, 2).locator('a').click();
+        await roles.list('CLUSTER').detailLink(clusterRoleName, 2).click();
 
         const clusterRoleDetails = roles.detailRole(roleId);
 
@@ -240,7 +240,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
         await roles.list('NAMESPACE').resourceTable().sortableTable().checkRowCount(false, 1);
         await roles.list('NAMESPACE').checkDefault(projectRoleName, true);
-        await roles.list('NAMESPACE').details(projectRoleName, 2).locator('a').click();
+        await roles.list('NAMESPACE').detailLink(projectRoleName, 2).click();
 
         const projectRoleDetails = roles.detailRole(roleId);
 

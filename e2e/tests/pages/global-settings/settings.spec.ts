@@ -157,7 +157,7 @@ test.describe('Settings', () => {
 
     // Check modified label
     await settingsPage.scrollToBottom();
-    await expect(settingsPage.advancedSettingRow(settingName).locator('.modified')).toBeVisible();
+    await expect(settingsPage.modifiedLabel(settingName)).toBeVisible();
 
     // Reset
     await navToSettings(page);
@@ -175,7 +175,7 @@ test.describe('Settings', () => {
     expect(resetResp.status()).toBe(200);
 
     await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-    await expect(settingsPage.advancedSettingRow(settingName).locator('.modified')).not.toBeAttached();
+    await expect(settingsPage.modifiedLabel(settingName)).not.toBeAttached();
 
     resetSettings.push(settingName);
   });

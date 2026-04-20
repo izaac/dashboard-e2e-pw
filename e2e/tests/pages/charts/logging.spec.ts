@@ -208,7 +208,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     await expect(loggingPo.tableRowByText(flowName)).toBeAttached();
 
     // Go to details page
-    await loggingPo.tableRowByText(flowName).locator('td.col-link-detail a').click();
+    await loggingPo.rowDetailLink(flowName).click();
 
     // Verify rule item is visible (the detail page shows match rules in array-list items)
     await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: 30000 });

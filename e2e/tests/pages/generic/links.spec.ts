@@ -47,7 +47,7 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         await checkbox.checkExists();
         await checkbox.checkVisible();
-        await checkbox.self().click();
+        await checkbox.set();
 
         await homeLinksPage.applyButton().click();
 
@@ -111,7 +111,7 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         await checkbox.checkExists();
         await checkbox.checkVisible();
-        await checkbox.self().click();
+        await checkbox.set();
 
         await homeLinksPage.applyButton().click();
 

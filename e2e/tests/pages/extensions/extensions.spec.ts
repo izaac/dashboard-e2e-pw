@@ -370,7 +370,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await expect(extensionsPo.loading()).not.toBeAttached();
 
     await extensionsPo.repoBanner().checkVisible();
-    await extensionsPo.repoBanner().self().getByTestId('extensions-new-repos-banner-action-btn').click();
+    await extensionsPo.repoBannerActionButton().click();
     await extensionsPo.repoBanner().checkNotExists();
 
     // Refresh the page to make sure it doesn't appear again

@@ -53,6 +53,16 @@ export default class HomePagePo extends PagePo {
     return this.page.getByTestId('home-manage-clusters-button');
   }
 
+  /** Get a cluster row by name */
+  clusterRow(name: string): Locator {
+    return this.list().locator('tr').filter({ hasText: name });
+  }
+
+  /** Get a cell from a cluster row (0-indexed) */
+  clusterRowCell(name: string, index: number): Locator {
+    return this.clusterRow(name).locator('td').nth(index);
+  }
+
   manageButton(): Locator {
     return this.page.getByTestId('cluster-management-manage-button');
   }

@@ -42,30 +42,29 @@ test.describe('Home Page', () => {
       await homePage.waitForPage();
 
       const clusterName = 'local';
-      const listContainer = homePage.list();
 
       // Verify 'local' cluster is visible with version info
-      const localRow = listContainer.locator('tr').filter({ hasText: clusterName });
+      const localRow = homePage.clusterRow(clusterName);
 
       await expect(localRow).toBeVisible();
 
       // Version column should not show dash (meaning data loaded)
-      const versionCell = localRow.locator('td').nth(3);
+      const versionCell = homePage.clusterRowCell(clusterName, 3);
 
       await expect(versionCell).not.toHaveText('—');
 
       // Extract cluster details from home page (state, name, version, provider)
-      await expect(localRow.locator('td').nth(0)).not.toHaveText('');
-      const homeState = (await localRow.locator('td').nth(0).innerText()).trim();
+      await expect(homePage.clusterRowCell(clusterName, 0)).not.toHaveText('');
+      const homeState = (await homePage.clusterRowCell(clusterName, 0).innerText()).trim();
 
-      await expect(localRow.locator('td').nth(1)).not.toHaveText('');
-      const homeName = (await localRow.locator('td').nth(1).innerText()).trim();
+      await expect(homePage.clusterRowCell(clusterName, 1)).not.toHaveText('');
+      const homeName = (await homePage.clusterRowCell(clusterName, 1).innerText()).trim();
 
-      await expect(localRow.locator('td').nth(2)).not.toHaveText('');
-      const homeProvider = (await localRow.locator('td').nth(2).innerText()).trim();
+      await expect(homePage.clusterRowCell(clusterName, 2)).not.toHaveText('');
+      const homeProvider = (await homePage.clusterRowCell(clusterName, 2).innerText()).trim();
 
-      await expect(localRow.locator('td').nth(3)).not.toHaveText('');
-      const homeVersion = (await localRow.locator('td').nth(3).innerText()).trim();
+      await expect(homePage.clusterRowCell(clusterName, 3)).not.toHaveText('');
+      const homeVersion = (await homePage.clusterRowCell(clusterName, 3).innerText()).trim();
 
       // Navigate to Cluster Management page and verify same details
       const provClusterList = new ClusterManagerListPagePo(page);
@@ -97,7 +96,7 @@ test.describe('Home Page', () => {
 
       // Filter with matching text
       await filterInput.fill('local');
-      await expect(homePage.list().locator('tr').filter({ hasText: 'local' })).toBeVisible();
+      await expect(homePage.clusterRow('local')).toBeVisible();
     });
 
     test('Should show cluster description information in the cluster list', async ({ page, login }) => {

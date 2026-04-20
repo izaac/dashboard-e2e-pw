@@ -106,7 +106,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await expect(usersPo.list().elementWithName(standardUsername)).toBeVisible();
 
     // view user's details
-    await usersPo.list().details(standardUsername, 2).locator('a').click();
+    await usersPo.list().detailLink(standardUsername, 2).click();
 
     const userDetails = usersPo.detail(userId);
 
@@ -219,7 +219,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await deactivateMenu.getMenuItem('Disable').click();
 
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-xmark/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-xmark/);
 
       // Action menu must close before opening a new one, otherwise the next click targets the old menu
       await expect(usersPo.list().actionMenuDropdown()).not.toBeAttached();
@@ -229,7 +229,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await activateMenu.getMenuItem('Enable').click();
 
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-check/);
     });
 
     test('can Refresh Group Memberships via action menu', async ({ page, login }) => {
@@ -390,8 +390,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await deactivatePromise;
 
       // admin stays active (cannot self-deactivate)
-      await expect(usersPo.list().details('admin', 1).locator('i')).toHaveClass(/icon-user-check/);
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-xmark/);
+      await expect(usersPo.list().statusIcon('admin', 1)).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-xmark/);
 
       // Activate
       const activatePromise = page.waitForResponse(
@@ -401,7 +401,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.list().activate().click();
       await activatePromise;
 
-      await expect(usersPo.list().details(actualUsername, 1).locator('i')).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-check/);
     });
 
     test('can Download YAML', async ({ page, login }) => {
@@ -432,7 +432,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().elementWithName(actualUsername).locator('td:first-child').click();
+      await usersPo.list().rowCheckbox(actualUsername).click();
       await usersPo.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
       const promptRemove = new PromptRemove(page);
@@ -548,7 +548,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.waitForPage();
 
       // Select only user1 by user ID (rendered as link in table)
-      await usersPo.list().elementWithName(user1Id).locator('td:first-child').click();
+      await usersPo.list().rowCheckbox(user1Id).click();
       await usersPo.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
       const promptRemove = new PromptRemove(page);

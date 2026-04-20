@@ -214,7 +214,7 @@ test.describe('Feature Flags', () => {
 
       // Check - No actions available (lock icon visible)
       await page.reload();
-      await expect(featureFlagsPage.list().details(flagName, 1).locator('i.icon-lock')).toBeVisible();
+      await expect(featureFlagsPage.list().lockIcon(flagName)).toBeVisible();
     },
   );
 
@@ -314,7 +314,7 @@ test.describe('Feature Flags', () => {
 
       const card = new CardPo(page);
 
-      await card.getActionButton().locator('button', { hasText: 'Activate' }).click();
+      await card.actionButtonWithText('Activate').click();
 
       // Check Updated State: should still be disabled
       await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
@@ -323,7 +323,7 @@ test.describe('Feature Flags', () => {
       await expect(card.getError()).toContainText('User does not have permission');
 
       // Press cancel
-      await card.getActionButton().locator('button', { hasText: 'Cancel' }).click();
+      await card.actionButtonWithText('Cancel').click();
 
       // Unroute and restore
       await page.unroute(`**/v1/management.cattle.io.features/${flagName}`);
@@ -372,12 +372,7 @@ test.describe('Feature Flags', () => {
 
       // check table headers are visible
       const expectedHeaders = ['State', 'Name', 'Description', 'Restart Rancher'];
-      const headers = featureFlagsPage
-        .list()
-        .resourceTable()
-        .sortableTable()
-        .self()
-        .locator('.table-header-container .content');
+      const headers = featureFlagsPage.list().resourceTable().sortableTable().headerContentCells();
 
       const count = await headers.count();
 
