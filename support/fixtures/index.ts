@@ -133,7 +133,24 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
       const username = options?.username || meta.username;
       const password = options?.password || meta.password;
 
-      await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+      // With storageState pre-loaded, navigate to home and check if already authenticated
+      const hasStorageState = testInfo.project.use?.storageState !== undefined;
+
+      if (hasStorageState && !options) {
+        await page.goto('./home', { waitUntil: 'domcontentloaded' });
+
+        // If we're NOT redirected to login, storageState is valid — skip UI login
+        const isLoginPage = await page
+          .locator('[data-testid="login-submit"]')
+          .isVisible({ timeout: 3000 })
+          .catch(() => false);
+
+        if (!isLoginPage) {
+          return;
+        }
+      } else {
+        await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+      }
 
       const useLocal = page.locator('[data-testid="login-useLocal"]');
 

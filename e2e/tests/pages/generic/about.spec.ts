@@ -68,7 +68,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'server-version');
       const rancherVersion = resp.body.value;
 
-      await expect(aboutPage.versionText(rancherVersion)).toBeVisible();
+      await expect(aboutPage.versionText(rancherVersion).first()).toBeVisible();
     });
 
     test('Rancher link points to github.com/rancher/rancher', async ({ page, login }) => {

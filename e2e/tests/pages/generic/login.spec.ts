@@ -3,6 +3,9 @@ import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
 
 test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standardUser'] }, () => {
+  // Login tests must start unauthenticated — clear storageState
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('Confirm correct number of settings requests made', async ({ page, envMeta }) => {
     const loginPage = new LoginPagePo(page);
     const settingsMatch = (resp: { url: () => string }) =>

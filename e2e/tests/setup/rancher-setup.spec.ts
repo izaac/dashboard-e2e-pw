@@ -84,8 +84,11 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     // Check server URL is visible
     await rancherSetupConfigurePage.serverUrl().checkVisible();
 
-    // Accept terms and submit
-    await rancherSetupConfigurePage.setTermsAgreement();
+    // Rancher head skips the password section when CATTLE_BOOTSTRAP_PASSWORD is set.
+    // Password stays as the bootstrap value — no interaction needed.
+
+    // Accept terms and submit (use PO .set() which clicks .checkbox-custom, not the label)
+    await rancherSetupConfigurePage.termsAgreement().set();
     expect(await rancherSetupConfigurePage.canSubmit()).toBe(true);
     await rancherSetupConfigurePage.submit();
 
@@ -99,9 +102,9 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     expect(prefsResp.status()).toBe(200);
   });
 
-  test('Create standard user', async ({ page, rancherApi, envMeta }) => {
-    // Login first via API (this spec doesn't use storageState since it's the setup flow)
-    await page.goto('/auth/login');
+  test('Create standard user', async ({ rancherApi, envMeta }) => {
+    // Re-login — the worker-scoped rancherApi token was obtained before bootstrap and is now invalid
+    await rancherApi.login(envMeta.username, envMeta.password);
 
     await rancherApi.createUser(
       {

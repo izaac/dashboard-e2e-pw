@@ -19,13 +19,12 @@ test.describe('Home Page', () => {
         }
       });
 
+      // Set up response listener BEFORE navigation (storageState makes page load fast)
+      const settingsResponse = page.waitForResponse((resp) => resp.url().includes('/v1/management.cattle.io.settings'));
+
       await homePage.goTo();
       await homePage.waitForPage();
-
-      // Wait for settings request to complete
-      await page.waitForResponse((resp) => resp.url().includes('/v1/management.cattle.io.settings'), {
-        timeout: 2000,
-      });
+      await settingsResponse;
 
       // Should only have one settings request
       expect(settingsRequestCount).toBe(1);

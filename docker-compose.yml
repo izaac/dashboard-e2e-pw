@@ -6,7 +6,7 @@ services:
       - "8080:80"
       - "8443:443"
     environment:
-      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
     volumes:
       - rancher-data:/var/lib/rancher
@@ -24,8 +24,8 @@ services:
         condition: service_healthy
     environment:
       TEST_BASE_URL: https://rancher/dashboard
-      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
-      TEST_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"

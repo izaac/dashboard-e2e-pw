@@ -45,6 +45,16 @@ const username = process.env.TEST_USERNAME || 'admin';
 const apiUrl =
   process.env.API || (rawBaseUrl.endsWith('/dashboard') ? rawBaseUrl.split('/').slice(0, -1).join('/') : rawBaseUrl);
 
+// Unique auth file per Rancher instance — prevents storageState collisions when sharding
+const authPort = (() => {
+  try {
+    return new URL(rawBaseUrl).port || '443';
+  } catch {
+    return '8005';
+  }
+})();
+const adminAuthFile = `.auth/admin-${authPort}.json`;
+
 /**
  * Test directories - mirrors Cypress specPattern
  */
@@ -194,11 +204,29 @@ export default defineConfig({
           },
         ]
       : []),
+
+    // Auth project — logs in once and saves session to .auth/admin.json
     {
-      name: 'chromium',
-      ...(process.env.CATTLE_BOOTSTRAP_PASSWORD ? { dependencies: ['setup'], testIgnore: 'e2e/tests/setup/**' } : {}),
+      name: 'auth',
+      grep: /.*/,
+      grepInvert: undefined as RegExp | undefined,
+      testMatch: 'e2e/tests/auth.setup.ts',
+      dependencies: process.env.CATTLE_BOOTSTRAP_PASSWORD ? ['setup'] : [],
       use: {
         ...devices['Desktop Chrome'],
+        launchOptions: {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+        },
+      },
+    },
+
+    {
+      name: 'chromium',
+      dependencies: ['auth'],
+      testIgnore: ['e2e/tests/setup/**', 'e2e/tests/auth.setup.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: adminAuthFile,
         launchOptions: {
           executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
         },
