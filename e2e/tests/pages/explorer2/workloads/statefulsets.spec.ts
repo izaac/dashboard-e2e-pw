@@ -1,5 +1,4 @@
 import { test, expect } from '@/support/fixtures';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { WorkloadsStatefulSetsListPagePo } from '@/e2e/po/pages/explorer/workloads-statefulsets.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
@@ -30,18 +29,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-ss-list-${Date.now()}`;
       ns2 = `e2e-ss-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -92,7 +80,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationNavigation(table, 23);
     });
@@ -103,7 +91,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
@@ -114,7 +102,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -128,7 +116,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationHidden(table);
 
@@ -157,7 +145,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: statefulSetName } },
           template: {
             metadata: { labels: { app: statefulSetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -168,7 +156,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
 
         await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
@@ -211,7 +199,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: statefulSetName } },
           template: {
             metadata: { labels: { app: statefulSetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -231,7 +219,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
 
         await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
@@ -267,7 +255,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: statefulSetName } },
           template: {
             metadata: { labels: { app: statefulSetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -286,7 +274,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
 
         await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
