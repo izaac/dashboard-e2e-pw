@@ -21,11 +21,10 @@ export default class UserMenuPo extends ComponentPo {
 
   async ensureOpen(): Promise<void> {
     await this.checkVisible();
-    await this.open();
 
-    const container = this.userMenuContainer();
+    const alreadyOpen = await this.userMenuContainer().isVisible();
 
-    if (await container.count() === 0) {
+    if (!alreadyOpen) {
       await this.open();
     }
 
