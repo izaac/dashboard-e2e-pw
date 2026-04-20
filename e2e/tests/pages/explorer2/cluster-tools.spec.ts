@@ -31,7 +31,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
     expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test.describe('Alerting Drivers chart lifecycle', { tag: '@flaky' }, () => {
+  test.describe('Alerting Drivers chart lifecycle', () => {
     test.beforeEach(async ({ rancherApi }) => {
       // Skip if chart is not available in the catalog
       const resp = await rancherApi.getRancherResource(
