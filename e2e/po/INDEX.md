@@ -220,7 +220,7 @@
 | StorageClassesPagePo | storage-classes.po.ts | PagePo | — | super, urlPath, list, listElementWithName, clickCreate, createStorageClassesForm |
 | UiPluginsPagePo | uiplugins.po.ts | PagePo | — | super, resourceTable, cacheState, goToDetailsPage, clickCreate, createPath |
 | WorkloadsDaemonsetsListPagePo | workloads-daemonsets.po.ts | PagePo | — | super, baseResourceList, redeployDialog, resourceDetail, containerImageInput, clickTab, ScalingUpgradePolicyRadioBtn, scalingUpgradePolicyRadioBtn (+2) |
-| WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, searchBox, filterBySearchBox, flatListButton |
+| WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, searchBox, filterBySearchBox, flatListButton (+1) |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |
 
 ## pages/explorer/charts/

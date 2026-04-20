@@ -1,9 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
-import { WorkloadsPodsListPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
+import { WorkloadsPodsListPagePo, WorkloadsPodsDetailPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
 import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
@@ -33,18 +29,7 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-pods-list-${Date.now()}`;
       ns2 = `e2e-pods-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -139,11 +124,11 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await rancherApi.createPod(namespace, origPodName, 'nginx:alpine');
 
       try {
-        const clonePage = new PagePo(page, `/c/local/explorer/pod/${namespace}/${origPodName}`);
+        const detailPage = new WorkloadsPodsDetailPagePo(page, namespace, origPodName);
 
-        await page.goto(`.${clonePage['path']}?mode=clone`, { waitUntil: 'domcontentloaded' });
+        await detailPage.goToClone();
 
-        const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+        const cruResource = detailPage.createEditView();
 
         await cruResource.nameNsDescription().name().set(clonePodName);
 
@@ -157,11 +142,11 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         expect(response.status()).toBe(201);
 
-        const podsPage = new PagePo(page, '/c/local/explorer/pod');
+        const listPage = new WorkloadsPodsListPagePo(page);
 
-        await podsPage.waitForPage();
+        await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTable();
 
         await sortableTable.filter(clonePodName);
         await expect(sortableTable.rowElementWithPartialName(clonePodName)).toBeVisible();
@@ -176,18 +161,14 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
     test('should have the default input units displayed', async ({ page, login, rancherApi }) => {
       await login();
       const podName = `e2e-pod-units-${Date.now()}`;
+      const listPage = new WorkloadsPodsListPagePo(page);
 
-      const podsPage = new PagePo(page, '/c/local/explorer/pod');
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await listPage.masthead().create();
 
-      await podsPage.goTo();
-      await podsPage.waitForPage();
-
-      const masthead = new ResourceListMastheadPo(page, ':scope');
-
-      await masthead.create();
-
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
       const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pod');
+      const cruResource = listPage.createEditView();
 
       await cruResource.nameNsDescription().name().set(podName);
       await createPage.containerImage().set(SMALL_CONTAINER.image);
@@ -203,11 +184,8 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       expect(response.status()).toBe(201);
 
       try {
-        await podsPage.waitForPage();
-
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
-
-        await expect(sortableTable.rowElementWithPartialName(podName)).toBeVisible();
+        await listPage.waitForPage();
+        await expect(listPage.sortableTable().rowElementWithPartialName(podName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', 'pods/default', podName, false);
       }
@@ -215,14 +193,11 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test('should properly add container tabs to the tablist', async ({ page, login }) => {
       await login();
-      const podsPage = new PagePo(page, '/c/local/explorer/pod');
+      const listPage = new WorkloadsPodsListPagePo(page);
 
-      await podsPage.goTo();
-      await podsPage.waitForPage();
-
-      const masthead = new ResourceListMastheadPo(page, ':scope');
-
-      await masthead.create();
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await listPage.masthead().create();
 
       const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pod');
 
@@ -236,14 +211,11 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test('should remove the correct environment variable from the workload form', async ({ page, login }) => {
       await login();
-      const podsPage = new PagePo(page, '/c/local/explorer/pod');
+      const listPage = new WorkloadsPodsListPagePo(page);
 
-      await podsPage.goTo();
-      await podsPage.waitForPage();
-
-      const masthead = new ResourceListMastheadPo(page, ':scope');
-
-      await masthead.create();
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await listPage.masthead().create();
 
       const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'pod');
 
@@ -265,7 +237,8 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await expect(createPage.environmentVariableKeyInput(1)).toHaveValue('THIRD_VAR');
     });
 
-    test.skip(true, 'Footer controls YAML Editor test requires viewport measurement not available in headless');
-    test('Footer controls should stick to bottom in YAML Editor', async () => {});
+    test('Footer controls should stick to bottom in YAML Editor', async () => {
+      test.skip(true, 'Footer controls YAML Editor test requires viewport measurement not available in headless');
+    });
   });
 });
