@@ -1,8 +1,4 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import {
   WorkloadsDaemonsetsListPagePo,
   WorkLoadsDaemonsetsCreatePagePo,
@@ -44,17 +40,15 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     try {
-      const listPage = new PagePo(page, '/c/local/explorer/apps.daemonset');
+      const listPage = new WorkloadsDaemonsetsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
-
-      await masthead.create();
+      await listPage.baseResourceList().masthead().create();
 
       const createPage = new WorkLoadsDaemonsetsCreatePagePo(page);
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = createPage.resourceDetail().createEditView();
 
       await cruResource.nameNsDescription().name().set(daemonsetName);
       await createPage.containerImageInput().set('nginx');
@@ -62,7 +56,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.waitForPage();
 
-      const sortableTable = new SortableTablePo(page, '.sortable-table');
+      const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
 
       await expect(sortableTable.rowElementWithPartialName(daemonsetName)).toBeVisible();
 
@@ -77,7 +71,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await editPage.scalingUpgradePolicyRadioBtn().getOptionByIndex(1).click();
 
-      await cruResource.formSave().click();
+      await editPage.resourceDetail().createEditView().formSave().click();
     } finally {
       await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
       await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
@@ -98,18 +92,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-ds-list-${Date.now()}`;
       ns2 = `e2e-ds-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -158,33 +141,33 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test('pagination is visible and user is able to navigate through daemonsets data', async ({ page, login }) => {
       await login();
-      const listPage = new PagePo(page, '/c/local/explorer/apps.daemonset');
+      const listPage = new WorkloadsDaemonsetsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationNavigation(table, 23);
     });
 
     test('sorting changes the order of paginated daemonsets data', async ({ page, login }) => {
       await login();
-      const listPage = new PagePo(page, '/c/local/explorer/apps.daemonset');
+      const listPage = new WorkloadsDaemonsetsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
 
     test('filter daemonsets', async ({ page, login }) => {
       await login();
-      const listPage = new PagePo(page, '/c/local/explorer/apps.daemonset');
+      const listPage = new WorkloadsDaemonsetsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -194,11 +177,11 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await mockSmallCollection(page, 'v1/apps.daemonsets', 'apps.daemonset');
 
-      const listPage = new PagePo(page, '/c/local/explorer/apps.daemonset');
+      const listPage = new WorkloadsDaemonsetsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationHidden(table);
 
@@ -224,7 +207,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: daemonsetName } },
           template: {
             metadata: { labels: { app: daemonsetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -273,7 +256,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: daemonsetName } },
           template: {
             metadata: { labels: { app: daemonsetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -324,7 +307,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: daemonsetName } },
           template: {
             metadata: { labels: { app: daemonsetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
