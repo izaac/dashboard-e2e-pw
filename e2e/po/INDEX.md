@@ -29,10 +29,10 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, checkVisible, checkNotVisible |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, link, checkVisible, checkNotVisible |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
-| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton, selectedValues (+7) |
+| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton, selectedValues (+11) |
 | NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, checkAllRead, checkHasUnread, checkOpen, checkClosed, getNotificationByName (+4) |
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, checkRead, checkUnread, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
@@ -45,7 +45,7 @@
 | ResourceYamlPo | resource-yaml.po.ts | ComponentPo | `.resource-yaml` | super, body, footer, codeMirror, cancel, saveOrCreate |
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, createBasicAuth, createRKEAuth, waitForNotLoading |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+51) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+52) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, getTab, tabNames (+1) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
@@ -84,7 +84,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterManagerDetailRke2AmazonEc2PagePo | cluster-detail-rke2-amazon.po.ts | PagePo | — | super, resourceDetail, poolsList, snapshotsList, recentEventsList, selectTab, title, eventsTab (+17) |
+| ClusterManagerDetailRke2AmazonEc2PagePo | cluster-detail-rke2-amazon.po.ts | PagePo | — | super, resourceDetail, poolsList, snapshotsList, recentEventsList, selectTab, title, eventsTab (+21) |
 
 ## edit/auth/
 
@@ -98,7 +98,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, helmUrlInput, ociUrlInput, ociCaBundleInput (+25) |
+| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, helmUrlInput, ociUrlInput, ociCaBundleInput (+27) |
 | CloudCredentialsCreateEditPo | cloud-credentials-amazon.po.ts | PagePo | — | super, cloudServiceOptions, nameNsDescription, accessKey, secretKey, defaultRegion, saveCreateForm, saveButton |
 | DigitalOceanCloudCredentialsCreateEditPo | cloud-credentials-digitalocean.po.ts | PagePo | `/c/${clusterId}/manager/cloudCredential/create` | super, credentialName, accessToken, saveCreateForm |
 | KontainerDriverCreateEditPo | kontainer-driver.po.ts | PagePo | — | super, downloadUrl, customUiUrl, checksum, saveCreateForm |
@@ -120,7 +120,7 @@
 | ClusterManagerCreateAKSPagePo | cluster-create-aks.po.ts | ClusterManagerCreatePagePo | — | super, resourceDetail, clusterNameInput, clusterResourceGroup, dnsPrefixInput, regionSelect, kubernetesVersionSelect, cloudCredentialSelect (+1) |
 | ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup, getClusterName, getClusterDescription (+15) |
 | ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+4) |
-| ClusterManagerCreateRke2AzurePagePo | cluster-create-rke2-azure.po.ts | ClusterManagerCreatePagePo | — | super, nameNsDescription, azureEnvironmentSelect, azureDropdownOption, subscriptionIdInput, clientIdInput, clientSecretInput, poolNameInput (+8) |
+| ClusterManagerCreateRke2AzurePagePo | cluster-create-rke2-azure.po.ts | ClusterManagerCreatePagePo | — | super, nameNsDescription, azureEnvironmentSelect, azureDropdownOption, subscriptionIdInput, clientIdInput, clientSecretInput, poolNameInput (+9) |
 | ClusterManagerCreateRke2CustomPagePo | cluster-create-rke2-custom.po.ts | ClusterManagerCreatePagePo | — | super, goToCustomClusterCreation, goToDigitalOceanCreation, title, clusterConfigurationTabs, registries, nameNsDescription, resourceDetail (+4) |
 | ClusterManagerCreatePagePo | cluster-create.po.ts | PagePo | — | super, resourceDetail, rke2PageTitle, gridElementExistanceByName, if, gridElementGroupTitles, selectKubeProvider, selectCreate (+13) |
 
@@ -145,7 +145,7 @@
 | BaseResourceList | base-resource-list.po.ts | ComponentPo | — | super, masthead, resourceTable, actionMenu, rowWithName, state, actionMenuClose, details (+4) |
 | ClusterRecentEventsListPo | cluster-recent-events-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty |
 | ClusterSnapshotsListPo | cluster-snapshots-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty, clickOnSnapshotNow, checkSnapshotExist |
-| MachinePoolsListPo | machine-pools-list.po.ts | BaseResourceList | — | super, details, machinePoolReadyofDesiredCount, machineProgressBar, scaleDownButton, scaleUpButton, machineUnavailableCount, scaleButtonTooltip (+1) |
+| MachinePoolsListPo | machine-pools-list.po.ts | BaseResourceList | — | super, details, machinePoolReadyofDesiredCount, machineProgressBar, machineProgressBarError, scaleDownButton, scaleUpButton, machineUnavailableCount (+2) |
 | MgmtFeatureFlagListPo | management.cattle.io.feature.po.ts | BaseResourceList | `:scope` | super, elements, elementWithName, details, lockIcon, clickRowActionMenuItem, getRowActionMenuItem, getRowNoActionMenu |
 | OidcClientsListPo | management.cattle.io.oidcclient-list.po.ts | BaseResourceList | `[data-testid=` | super, details, title, issuerURL, discoveryDocument, jwksURI |
 | RoleListPo | role-list.po.ts | BaseResourceList | — | super, downloadYaml, rowCloneYamlClick, delete, elements, elementWithName, details, detailLink (+3) |
