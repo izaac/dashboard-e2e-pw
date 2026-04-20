@@ -37,8 +37,8 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     const capiRow = clusterList.list().resourceTable().sortableTable().rowWithName(clusterName);
     const localRow = clusterList.list().resourceTable().sortableTable().rowWithName('local');
 
-    await expect(capiRow.link()).not.toBeAttached();
-    await expect(localRow.link()).toBeAttached();
+    await expect(capiRow.nameLink()).not.toBeAttached();
+    await expect(localRow.nameLink()).toBeAttached();
   });
 
   test('should not allow editing CAPI cluster configs', async ({ page }) => {
@@ -69,8 +69,7 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     await expect(capiProvider).toHaveText(/ RKE2/);
 
     const localProvider = clusterList.list().resourceTable().sortableTable().rowWithName('local').column(4);
-    const localText = (await localProvider.innerText()).replace(/\s+/g, ' ').trim();
 
-    expect(localText).toMatch(/^Local (K3s|RKE2)$/);
+    await expect(localProvider).toHaveText(/Local (K3s|RKE2)/);
   });
 });

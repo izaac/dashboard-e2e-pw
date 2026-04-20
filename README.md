@@ -2,7 +2,13 @@
 
 Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/dashboard), migrated from the upstream Cypress suite.
 
-This is not just a framework swap. Every test is rewritten to be **atomic** and **idempotent** — each test sets up its own state, runs independently of other tests, and cleans up after itself. Tests produce the same result whether run once, ten times, or after a partial failure. The goal is a stable, parallelizable suite that can run reliably against shared Rancher instances without flaky ordering dependencies.
+This isn't a find-and-replace from Cypress to Playwright. Every test has been rewritten to actually work reliably against a shared Rancher instance — no more "works on my machine" or "just re-run it":
+
+- **Atomic** — each test sets up what it needs, does its thing, and cleans up. No test depends on another test running first.
+- **Idempotent** — run a test once or fifty times, pass or fail midway through — it still works the next time. State is never assumed, always checked and set explicitly.
+- **Web-first assertions** — we use Playwright's auto-retrying assertions everywhere (`await expect(loc).toBeVisible()` instead of `expect(await loc.isVisible()).toBe(true)`). This is the single biggest difference from Cypress — it eliminates an entire class of flaky failures caused by reading the DOM too early.
+- **No raw selectors in specs** — every CSS selector and `data-testid` lives in a Page Object. Spec files read like plain English.
+- **Explicit cleanup** — every resource a test creates gets cleaned up in `try/finally` or a Playwright fixture. We don't rely on "the next test will reset it".
 
 ## Quick Start
 
@@ -48,7 +54,30 @@ scripts/          # Developer tooling (gap-map, po-index, po-diff)
 docs/             # Conversion roadmap, assertion gap map
 ```
 
-## Developer Tools
+## Test Design
+
+### Why not just swap `cy.get()` for `page.locator()`?
+
+Cypress queues every command and adds invisible waits between steps. That's convenient, but it also hides timing bugs — your tests pass because they're accidentally slow enough. Playwright runs at full speed, so those hidden races blow up immediately. That's a good thing, but it means you can't just transliterate Cypress tests line by line.
+
+Here's what we do differently:
+
+1. **Web-first assertions instead of snapshot reads.** When Cypress does `cy.get('.row').should('be.visible')`, it retries automatically. A naive Playwright translation like `expect(await loc.isVisible()).toBe(true)` reads the DOM exactly once — if the element hasn't rendered yet, the test fails. Instead we write `await expect(loc).toBeVisible()`, which keeps polling until the condition is true or timeout expires.
+
+2. **Every test stands on its own.** The upstream Cypress suite uses `testIsolation: 'off'` — one test navigates somewhere, the next test picks up from there. That's fragile and prevents running tests individually. Every Playwright test starts fresh: login, navigate, assert, clean up.
+
+3. **Vue debounce handling.** Rancher Dashboard components debounce form changes (typically 500ms before emitting to the parent). Cypress is slow enough that it never notices. Playwright clicks Save before the debounce fires, so the form data never reaches the API. Our Page Objects have `waitFor*Debounce()` methods for affected components.
+
+### Web-first assertions at a glance
+
+| ❌ Reads DOM once (flaky) | ✅ Retries automatically (stable) |
+|---|---|
+| `expect(await loc.isVisible()).toBe(true)` | `await expect(loc).toBeVisible()` |
+| `expect(await loc.innerText()).toBe('x')` | `await expect(loc).toHaveText('x')` |
+| `expect(await loc.inputValue()).toBe('x')` | `await expect(loc).toHaveValue('x')` |
+| `expect(await loc.count()).toBe(3)` | `await expect(loc).toHaveCount(3)` |
+
+
 
 ```bash
 yarn po-index            # Regenerate PO index

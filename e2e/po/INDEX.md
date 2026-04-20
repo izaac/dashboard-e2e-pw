@@ -29,7 +29,7 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, link, checkVisible, checkNotVisible |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkVisible, checkNotVisible |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton, selectedValues (+11) |

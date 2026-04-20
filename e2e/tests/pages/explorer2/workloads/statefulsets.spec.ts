@@ -164,6 +164,8 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.waitForPage();
 
         const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+        await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -225,6 +227,8 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.waitForPage();
 
         const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+        await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -278,6 +282,8 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.waitForPage();
 
         const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+        await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();

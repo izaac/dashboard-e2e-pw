@@ -28,8 +28,8 @@ export default class ListRowPo {
     return this.rowLocator.locator(selector);
   }
 
-  link(): Locator {
-    return this.rowLocator.locator('a');
+  nameLink(): Locator {
+    return this.rowLocator.locator('td.col-link-detail a');
   }
 
   async checkVisible(): Promise<void> {

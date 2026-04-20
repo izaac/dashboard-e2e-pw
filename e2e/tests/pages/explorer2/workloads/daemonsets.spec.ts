@@ -231,6 +231,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -288,6 +289,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -337,6 +339,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();

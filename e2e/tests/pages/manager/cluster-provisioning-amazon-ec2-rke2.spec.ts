@@ -91,6 +91,8 @@ test.describe(
         // Get K8s versions from dropdown
         await createRKE2ClusterPage.basicsTab().kubernetesVersions().toggle();
         const options = createRKE2ClusterPage.basicsTab().kubernetesVersions().getOptions();
+
+        await expect(options.first()).toBeVisible();
         const allTexts = await options.allInnerTexts();
 
         // index 0 is the RKE2 header, actual versions start at 1
@@ -302,6 +304,8 @@ test.describe(
       // Open k8s version dropdown and pick the latest version (index 1 = first after header)
       await editClusterPage.basicsTab().kubernetesVersions().toggle();
       const options = editClusterPage.basicsTab().kubernetesVersions().getOptions();
+
+      await expect(options.first()).toBeVisible();
       const allTexts = await options.allInnerTexts();
       const latestK8sVersion = allTexts[1]?.trim() || '';
 

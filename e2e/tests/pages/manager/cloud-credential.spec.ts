@@ -47,9 +47,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
     await cloudCredentialsPage.createEditCloudCreds().secretKey().set(secret);
     await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(name);
 
-    const nameValue = await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().value();
-
-    expect(nameValue).toBe(name);
+    await expect(cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().input()).toHaveValue(name);
 
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
@@ -85,9 +83,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
     await cloudCredentialsPage.createEditCloudCreds().secretKey().set(secret);
     await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(name);
 
-    const nameValue = await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().value();
-
-    expect(nameValue).toBe(name);
+    await expect(cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().input()).toHaveValue(name);
 
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
