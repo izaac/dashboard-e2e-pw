@@ -5,6 +5,7 @@ import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
+import RedeployDialogPo from '@/e2e/po/components/workloads/redeploy-dialog.po';
 
 export class WorkloadsDaemonsetsListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -19,8 +20,8 @@ export class WorkloadsDaemonsetsListPagePo extends PagePo {
     return new BaseResourceList(this.page, '.dashboard-root');
   }
 
-  redeployDialog(): Locator {
-    return this.page.locator('#modal-container-element');
+  redeployDialog(): RedeployDialogPo {
+    return new RedeployDialogPo(this.page);
   }
 }
 

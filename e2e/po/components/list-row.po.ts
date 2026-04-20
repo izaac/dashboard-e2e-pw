@@ -28,6 +28,10 @@ export default class ListRowPo {
     return this.rowLocator.locator(selector);
   }
 
+  link(): Locator {
+    return this.rowLocator.locator('a');
+  }
+
   async checkVisible(): Promise<void> {
     await expect(this.rowLocator).toBeVisible();
   }

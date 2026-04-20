@@ -1,5 +1,6 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { WorkloadsListPageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
+import RedeployDialogPo from '@/e2e/po/components/workloads/redeploy-dialog.po';
 
 type WorkloadType = 'apps.statefulset';
 
@@ -8,7 +9,7 @@ export class WorkloadsStatefulSetsListPagePo extends WorkloadsListPageBasePo {
     super(page, clusterId, 'apps.statefulset' as WorkloadType, queryParams);
   }
 
-  redeployDialog(): Locator {
-    return this.page.getByTestId('redeploy-dialog').or(this.page.locator('.prompt-modal'));
+  redeployDialog(): RedeployDialogPo {
+    return new RedeployDialogPo(this.page);
   }
 }

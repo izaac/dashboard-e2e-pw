@@ -81,6 +81,18 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
     return this.page.locator('[data-testid="detail-drawer"], .side-panel');
   }
 
+  drawerSaveButton(): Locator {
+    return this.configurationDrawer().locator('button:has-text("Save")');
+  }
+
+  drawerConfigTab(): Locator {
+    return this.configurationDrawer().locator('[data-testid="tab-config"], button:has-text("Config")');
+  }
+
+  drawerYamlTab(): Locator {
+    return this.configurationDrawer().locator('[data-testid="tab-yaml"], button:has-text("YAML")');
+  }
+
   clusterNamespaceLink(): Locator {
     return this.page.getByTestId('cluster-namespace');
   }
@@ -95,6 +107,10 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
 
   kubectlShell(): Locator {
     return this.page.locator('.terminal, [data-testid="kubectl-shell"]');
+  }
+
+  kubectlConnectedText(): Locator {
+    return this.kubectlShell().locator('text=Connected');
   }
 
   closeShellButton(): Locator {

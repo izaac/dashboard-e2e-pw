@@ -54,7 +54,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await namespacePicker.clickOptionByLabel('default');
     await namespacePicker.isChecked('default');
 
-    const clearBtn = namespacePicker.selectedValues().locator('i');
+    const clearBtn = namespacePicker.clearIcon();
 
     await clearBtn.click();
 
@@ -70,7 +70,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await namespacePicker.isChecked('Project: Default');
 
     await namespacePicker.searchByName('default');
-    const options = namespacePicker.getOptions().locator('.ns-option');
+    const options = namespacePicker.namespaceOptions();
 
     await expect(options).not.toHaveCount(0);
   });
@@ -81,7 +81,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await namespacePicker.toggle();
 
     await namespacePicker.searchByName('default');
-    const options = namespacePicker.getOptions().locator('.ns-option');
+    const options = namespacePicker.namespaceOptions();
 
     await expect(options).not.toHaveCount(0);
 
@@ -123,8 +123,8 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         const namespacePicker = new NamespaceFilterPo(page);
 
         await namespacePicker.toggle();
-        await expect(namespacePicker.getOptions().locator(`text=${projName}`)).toBeVisible({ timeout: 15000 });
-        await expect(namespacePicker.getOptions().locator(`text=${nsName}`)).toBeVisible();
+        await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
+        await expect(namespacePicker.optionByText(nsName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
         await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
@@ -162,14 +162,14 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       const namespacePicker = new NamespaceFilterPo(page);
 
       await namespacePicker.toggle();
-      await expect(namespacePicker.getOptions().locator(`text=${projName}`)).toBeVisible({ timeout: 15000 });
+      await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
 
       await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
       await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
 
       await namespacePicker.toggle();
       await namespacePicker.toggle();
-      await expect(namespacePicker.getOptions().locator(`text=${projName}`)).not.toBeAttached({ timeout: 20000 });
+      await expect(namespacePicker.optionByText(projName)).not.toBeAttached({ timeout: 20000 });
     },
   );
 
@@ -191,28 +191,28 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
       const sortableTable = new SortableTablePo(page, '.sortable-table');
 
-      await sortableTable.self().getByTestId('sortable-table-group-by-1').click();
+      await sortableTable.groupByButtons(1).click();
 
       const namespacePicker = new NamespaceFilterPo(page);
 
       await namespacePicker.toggle();
-      await expect(namespacePicker.getOptions().locator('#ns_cattle-fleet-system')).toBeVisible();
+      await expect(namespacePicker.optionById('ns_cattle-fleet-system')).toBeVisible();
       await namespacePicker.clickOptionByLabel('cattle-fleet-system');
       await namespacePicker.isChecked('cattle-fleet-system');
       await namespacePicker.closeDropdown();
 
-      await expect(sortableTable.locator('.group-tab').filter({ hasText: 'cattle-fleet-system' })).toHaveCount(1);
+      await expect(sortableTable.groupTab('cattle-fleet-system')).toHaveCount(1);
 
       await namespacePicker.toggle();
-      await namespacePicker.selectedValues().locator('i').click();
+      await namespacePicker.clearIcon().click();
       await namespacePicker.isChecked('Only User Namespaces');
 
       await namespacePicker.clickOptionByLabel('Project: System');
       await namespacePicker.isChecked('Project: System');
       await namespacePicker.closeDropdown();
 
-      await expect(sortableTable.locator('.group-tab').filter({ hasText: 'kube-system' })).toBeVisible();
-      await expect(sortableTable.locator('.group-tab').filter({ hasText: 'cattle-fleet-system' })).toBeVisible();
+      await expect(sortableTable.groupTab('kube-system')).toBeVisible();
+      await expect(sortableTable.groupTab('cattle-fleet-system')).toBeVisible();
 
       await rancherApi.setNamespaceFilter('local', 'none', '{"local":["all://user"]}');
     },

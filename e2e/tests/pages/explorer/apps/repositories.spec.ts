@@ -94,8 +94,8 @@ test.describe('Apps', () => {
 
         await appRepoCreate.ociUrlInput().fill('oci://test.rancher.io/charts/mychart');
         await appRepoCreate.ociCaBundleInput().fill('test');
-        await appRepoCreate.ociMinWaitInput().locator('input').fill('2');
-        await appRepoCreate.ociMaxWaitInput().locator('input').fill('2');
+        await appRepoCreate.ociMinWaitField().fill('2');
+        await appRepoCreate.ociMaxWaitField().fill('2');
         await appRepoCreate.ociMaxRetriesInput().fill('2');
 
         await expect(appRepoCreate.ociUrlInput()).toHaveValue('oci://test.rancher.io/charts/mychart');
@@ -106,8 +106,8 @@ test.describe('Apps', () => {
 
         await expect(appRepoCreate.ociUrlInput()).toHaveValue('');
         await expect(appRepoCreate.ociCaBundleInput()).toHaveValue('');
-        await expect(appRepoCreate.ociMinWaitInput().locator('input')).toHaveValue('');
-        await expect(appRepoCreate.ociMaxWaitInput().locator('input')).toHaveValue('');
+        await expect(appRepoCreate.ociMinWaitField()).toHaveValue('');
+        await expect(appRepoCreate.ociMaxWaitField()).toHaveValue('');
         await expect(appRepoCreate.ociMaxRetriesInput()).toHaveValue('');
       });
     });

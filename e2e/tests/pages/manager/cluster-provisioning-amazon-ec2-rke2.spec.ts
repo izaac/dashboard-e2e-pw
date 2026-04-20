@@ -217,7 +217,7 @@ test.describe(
 
       expect(scaleUpResp.status()).toBe(200);
 
-      await expect(clusterDetails.poolsList('machine').machineProgressBar(poolName).locator('.bg-error')).toBeAttached({
+      await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).toBeAttached({
         timeout: LONG_TIMEOUT,
       });
       await expect(clusterDetails.poolsList('machine').scaleDownButton(poolName)).toBeEnabled({
@@ -246,9 +246,7 @@ test.describe(
           .list()
           .resourceTable()
           .sortableTable()
-          .rowWithName(clusterName)
-          .self()
-          .locator('.cluster-link a')
+          .detailsPageLinkWithName(clusterName, '.cluster-link a')
           .click();
         await clusterDetails.waitForPage(undefined, 'machine-pools');
 
@@ -275,9 +273,9 @@ test.describe(
 
         expect(scaleDownResp.status()).toBe(200);
 
-        await expect(
-          clusterDetails.poolsList('machine').machineProgressBar(poolName).locator('.bg-error'),
-        ).toBeAttached({ timeout: LONG_TIMEOUT });
+        await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).toBeAttached({
+          timeout: LONG_TIMEOUT,
+        });
         await expect(clusterDetails.poolsList('machine').scaleDownButton(poolName)).toBeDisabled({
           timeout: VERY_LONG_TIMEOUT,
         });
@@ -342,7 +340,7 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      await clusterList.list().resourceTable().resourceTableDetails(clusterName, 2).locator('a').click();
+      await clusterList.list().resourceTable().sortableTable().detailsPageLinkWithName(clusterName).click();
       await clusterDetails.waitForPage(undefined, 'machine-pools');
       await clusterDetails.selectTab(tabbedPo, '[data-testid="btn-snapshots"]');
       await clusterDetails.waitForPage(undefined, 'snapshots');
@@ -354,7 +352,7 @@ test.describe(
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: VERY_LONG_TIMEOUT });
 
-      await clusterList.list().resourceTable().resourceTableDetails(clusterName, 2).locator('a').click();
+      await clusterList.list().resourceTable().sortableTable().detailsPageLinkWithName(clusterName).click();
       await clusterDetails.waitForPage(undefined, 'machine-pools');
       await clusterDetails.selectTab(tabbedPo, '[data-testid="btn-snapshots"]');
       await clusterDetails.waitForPage(undefined, 'snapshots');

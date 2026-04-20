@@ -262,6 +262,10 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('tr.group-row').filter({ hasText: name });
   }
 
+  groupTab(name: string): Locator {
+    return this.self().locator('.group-tab').filter({ hasText: name });
+  }
+
   tableHeaderRow(): Locator {
     return this.self().locator('thead tr');
   }

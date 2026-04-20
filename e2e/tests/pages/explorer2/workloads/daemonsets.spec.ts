@@ -237,7 +237,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const dialog = listPage.redeployDialog();
 
-        await expect(dialog).toBeVisible();
+        await expect(dialog.self()).toBeVisible();
 
         const responsePromise = page.waitForResponse(
           (resp) =>
@@ -245,7 +245,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
             resp.request().method() === 'PUT',
         );
 
-        await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
+        await dialog.confirmRedeploy();
         const response = await responsePromise;
 
         expect(response.status()).toBe(200);
@@ -294,9 +294,9 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const dialog = listPage.redeployDialog();
 
-        await expect(dialog).toBeVisible();
-        await dialog.locator('button').filter({ hasText: 'Cancel' }).click();
-        await expect(dialog).toBeHidden();
+        await expect(dialog.self()).toBeVisible();
+        await dialog.cancel();
+        await expect(dialog.self()).toBeHidden();
         expect(redeployCallCount).toBe(0);
       } finally {
         await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
@@ -343,9 +343,9 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const dialog = listPage.redeployDialog();
 
-        await expect(dialog).toBeVisible();
-        await dialog.locator('button').filter({ hasText: 'Redeploy' }).click();
-        await expect(dialog.locator('.banner.error')).toBeVisible();
+        await expect(dialog.self()).toBeVisible();
+        await dialog.confirmRedeploy();
+        await expect(dialog.errorBanner()).toBeVisible();
       } finally {
         await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
         await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);

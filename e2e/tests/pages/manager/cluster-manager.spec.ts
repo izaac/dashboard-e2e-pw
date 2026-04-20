@@ -58,9 +58,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(
-        clusterCreatePage.self().locator('[data-testid*="azure-aks"], .item:has-text("Azure AKS")'),
-      ).not.toBeAttached();
+      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).not.toBeAttached();
 
       // Re-enable AKS
       const reactivateResponse = page.waitForResponse(
@@ -82,9 +80,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(
-        clusterCreatePage.self().locator('[data-testid*="azure-aks"], .item:has-text("Azure AKS")'),
-      ).toBeAttached();
+      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached();
     } finally {
       if (reenableAKS) {
         // Restore AKS to active state if test failed mid-way
@@ -206,7 +202,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await homePage.goTo();
     await burgerMenu.toggle();
 
-    const clusterManagementNavItem = burgerMenu.self().locator('text=Cluster Management');
+    const clusterManagementNavItem = burgerMenu.burgerMenuGetNavMenuByLabel('Cluster Management');
 
     await expect(clusterManagementNavItem).toBeVisible();
     await clusterManagementNavItem.click();
@@ -298,13 +294,13 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
-      await expect(drawer.locator('button:has-text("Save")')).toBeVisible();
+      await expect(clusterDetail.drawerSaveButton()).toBeVisible();
 
-      await expect(drawer.locator('[data-testid="tab-config"], button:has-text("Config")')).toBeVisible();
-      await expect(drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")')).toBeVisible();
+      await expect(clusterDetail.drawerConfigTab()).toBeVisible();
+      await expect(clusterDetail.drawerYamlTab()).toBeVisible();
 
-      await drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")').click();
-      await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
+      await clusterDetail.drawerYamlTab().click();
+      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
     });
 
     test('can navigate to namespace from cluster detail view', async ({ page, login }) => {
@@ -409,7 +405,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await shellMenu.getMenuItem('Kubectl Shell').click();
 
     await expect(clusterDetail.kubectlShell()).toBeVisible();
-    await expect(clusterDetail.kubectlShell().locator('text=Connected')).toBeVisible();
+    await expect(clusterDetail.kubectlConnectedText()).toBeVisible();
 
     await clusterDetail.closeShellButton().click();
   });
@@ -514,7 +510,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
     await homePage.goTo();
     await burgerMenu.toggle();
 
-    const clusterManagementNavItem = burgerMenu.self().locator('text=Cluster Management');
+    const clusterManagementNavItem = burgerMenu.burgerMenuGetNavMenuByLabel('Cluster Management');
 
     await expect(clusterManagementNavItem).toBeVisible();
     await clusterManagementNavItem.click();
@@ -545,13 +541,13 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
-      await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
+      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
 
-      await expect(drawer.locator('[data-testid="tab-config"], button:has-text("Config")')).toBeVisible();
-      await expect(drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")')).toBeVisible();
+      await expect(clusterDetail.drawerConfigTab()).toBeVisible();
+      await expect(clusterDetail.drawerYamlTab()).toBeVisible();
 
-      await drawer.locator('[data-testid="tab-yaml"], button:has-text("YAML")').click();
-      await expect(drawer.locator('button:has-text("Save")')).not.toBeAttached();
+      await clusterDetail.drawerYamlTab().click();
+      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
     });
 
     test('Shows the explore button and navigates to the cluster explorer when clicked', async ({ page, login }) => {

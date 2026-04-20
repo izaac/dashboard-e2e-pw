@@ -37,8 +37,8 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     const capiRow = clusterList.list().resourceTable().sortableTable().rowWithName(clusterName);
     const localRow = clusterList.list().resourceTable().sortableTable().rowWithName('local');
 
-    await expect(capiRow.self().locator('a')).not.toBeAttached();
-    await expect(localRow.self().locator('a')).toBeAttached();
+    await expect(capiRow.link()).not.toBeAttached();
+    await expect(localRow.link()).toBeAttached();
   });
 
   test('should not allow editing CAPI cluster configs', async ({ page }) => {

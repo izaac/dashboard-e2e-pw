@@ -49,8 +49,16 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return this.page.getByTestId('clusterrepo-oci-min-wait-input');
   }
 
+  ociMinWaitField(): Locator {
+    return this.ociMinWaitInput().locator('input');
+  }
+
   ociMaxWaitInput(): Locator {
     return this.page.getByTestId('clusterrepo-oci-max-wait-input');
+  }
+
+  ociMaxWaitField(): Locator {
+    return this.ociMaxWaitInput().locator('input');
   }
 
   ociMaxRetriesInput(): Locator {
