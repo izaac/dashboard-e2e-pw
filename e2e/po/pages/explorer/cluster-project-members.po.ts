@@ -69,7 +69,7 @@ export default class ClusterProjectMembersPo extends PagePo {
   }
 
   sortableTable(): SortableTablePo {
-    return this.resourcesList().resourceTable().sortableTable();
+    return new SortableTablePo(this.page, '#cluster-membership .sortable-table');
   }
 
   listElementWithName(name: string): Locator {
