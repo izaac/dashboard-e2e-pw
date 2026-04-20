@@ -10,6 +10,14 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await clusterDashboard.goTo();
     await clusterDashboard.waitForPage();
+
+    // Reset namespace picker to default state (like upstream beforeEach)
+    const namespacePicker = new NamespaceFilterPo(page);
+
+    await namespacePicker.toggle();
+    await namespacePicker.clickOptionByLabel('Only User Namespaces');
+    await namespacePicker.isChecked('Only User Namespaces');
+    await namespacePicker.closeDropdown();
   });
 
   test(
@@ -167,7 +175,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
       await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
 
-      await namespacePicker.toggle();
+      await namespacePicker.closeDropdown();
       await namespacePicker.toggle();
       await expect(namespacePicker.optionByText(projName)).not.toBeAttached({ timeout: 20000 });
     },
@@ -176,18 +184,12 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test(
     'can filter workloads by project/namespace from the picker dropdown',
     { tag: ['@adminUser'] },
-    async ({ page, login, rancherApi }) => {
-      await login();
+    async ({ page, rancherApi }) => {
+      await rancherApi.updateNamespaceFilter('local', 'metadata.namespace', '{"local":["all://user"]}');
 
-      await rancherApi.setNamespaceFilter('local', 'metadata.namespace', '{"local":["all://user"]}');
-
-      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
-
-      await clusterDashboard.goTo();
-      await clusterDashboard.waitForPage();
-
-      await page.goto('./c/local/explorer/workload');
-      await page.waitForURL(/\/workload$/);
+      // Navigate to pods list (upstream uses WorkloadsPodsListPagePo)
+      await page.goto('./c/local/explorer/pod');
+      await page.waitForURL(/\/pod$/);
 
       const sortableTable = new SortableTablePo(page, '.sortable-table');
 
@@ -214,7 +216,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       await expect(sortableTable.groupTab('kube-system')).toBeVisible();
       await expect(sortableTable.groupTab('cattle-fleet-system')).toBeVisible();
 
-      await rancherApi.setNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
     },
   );
 });

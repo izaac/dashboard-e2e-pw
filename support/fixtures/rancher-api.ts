@@ -421,6 +421,27 @@ export class RancherApi {
     return this.setRancherResource('v1', 'userpreferences', update.id, update);
   }
 
+  /**
+   * Update namespace filter — sets groupBy and namespace filter via user preferences.
+   * Mirrors upstream cy.updateNamespaceFilter().
+   */
+  async updateNamespaceFilter(clusterName: string, groupBy: string, namespaceFilter: string) {
+    const selfUser = await this.getRancherResource('v1', 'ext.cattle.io.selfuser', undefined, 201);
+    const userId = selfUser.body.status.userID;
+
+    const payload = {
+      id: userId,
+      type: 'userpreference',
+      data: {
+        cluster: clusterName,
+        'group-by': groupBy,
+        'ns-by-cluster': namespaceFilter,
+      },
+    };
+
+    return this.setRancherResource('v1', 'userpreferences', userId, payload);
+  }
+
   async applyDefaultTestTheme() {
     await this.setRancherResource('v3', 'settings', 'ui-brand', { value: 'modern' });
     await this.setUserPreference({ theme: 'ui-light' });
