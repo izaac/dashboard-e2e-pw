@@ -3,6 +3,8 @@
  * pagination is hidden when total rows fit on one page.
  */
 export function smallCollectionResponse(resourceType: string) {
+  const isPod = resourceType === 'pod';
+
   const items = Array.from({ length: 3 }, (_, i) => ({
     id: `default/small-item-${i}`,
     type: resourceType,
@@ -13,8 +15,8 @@ export function smallCollectionResponse(resourceType: string) {
       uid: `uid-small-${i}`,
       state: { error: false, message: '', name: 'active', transitioning: false },
     },
-    spec: {},
-    status: {},
+    spec: isPod ? { containers: [{ name: 'test', image: 'k8s.gcr.io/pause' }] } : {},
+    status: isPod ? { phase: 'Running' } : {},
   }));
 
   return {

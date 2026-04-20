@@ -61,4 +61,8 @@ export class WorkloadsPodsDetailPagePo extends PagePo {
   createEditView(): CreateEditViewPo {
     return new CreateEditViewPo(this.page, '.dashboard-root');
   }
+
+  async goToClone(): Promise<void> {
+    await this.goTo('mode=clone');
+  }
 }
