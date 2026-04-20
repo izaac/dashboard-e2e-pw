@@ -8,7 +8,15 @@ export class NamespaceFilterPo extends ComponentPo {
   }
 
   async toggle(): Promise<void> {
-    await this.namespaceDropdown().click({ force: true });
+    // Click the chevron icon to avoid hitting selected value tags
+    const isOpen = await this.getOptions().isVisible();
+    const chevronClass = isOpen ? '.icon-chevron-up' : '.icon-chevron-down';
+
+    await this.namespaceDropdown().locator(chevronClass).click();
+
+    if (!isOpen) {
+      await expect(this.getOptions()).toBeVisible();
+    }
   }
 
   getOptions(): Locator {
@@ -39,7 +47,7 @@ export class NamespaceFilterPo extends ComponentPo {
   }
 
   clearIcon(): Locator {
-    return this.selectedValues().locator('i');
+    return this.selectedValues().locator('[data-testid^="namespaces-values-close"]').first();
   }
 
   namespaceOptions(): Locator {
@@ -58,7 +66,7 @@ export class NamespaceFilterPo extends ComponentPo {
   async isChecked(label: string): Promise<void> {
     const option = this.getOptions().getByText(new RegExp(` ${label} `));
 
-    await expect(option.locator('i')).toHaveClass(/icon-checkmark/);
+    await expect(option.locator('i.icon-checkmark')).toBeAttached();
   }
 
   /** Get checkmark icon */
