@@ -32,9 +32,13 @@
     "branch-diff": "sh scripts/branch-backport.sh",
     "api-diff": "npx tsx scripts/api-diff.ts",
     "local:up": "docker compose up rancher -d",
+    "local:up:nix": "docker compose -f docker-compose.yml -f docker-compose.nix.yml up rancher -d",
     "local:test": "docker compose up tests",
+    "local:test:nix": "docker compose -f docker-compose.yml -f docker-compose.nix.yml up tests",
     "local:test:sharded": "docker compose -f docker-compose.sharded.yml up",
+    "local:test:sharded:nix": "docker compose -f docker-compose.sharded.yml -f docker-compose.nix.yml up",
     "local:down": "docker compose down",
+    "local:down:nix": "docker compose -f docker-compose.yml -f docker-compose.nix.yml down",
     "local:down:sharded": "docker compose -f docker-compose.sharded.yml down -v",
     "local:report": "npx playwright show-report",
     "prepare": "husky"

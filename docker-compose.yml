@@ -2,19 +2,20 @@ services:
   rancher:
     image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
     privileged: true
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    volumes:
+      - rancher-data:/var/lib/rancher
     healthcheck:
       test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login"]
       interval: 15s
       timeout: 5s
       retries: 40
-      start_period: 60s
+      start_period: 120s
 
   tests:
     build: .
@@ -31,3 +32,6 @@ services:
     volumes:
       - ./test-results:/app/test-results
       - ./playwright-report:/app/playwright-report
+
+volumes:
+  rancher-data:

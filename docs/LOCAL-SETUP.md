@@ -155,6 +155,30 @@ npx playwright show-trace test-results/<test-folder>/trace.zip
 
 Or open the HTML report — traces are embedded and viewable in the browser.
 
+## NixOS
+
+NixOS kernels ship nftables only — the legacy `iptable_nat` / `iptable_filter` kernel modules are not compiled in. The stock Rancher image bundles `iptables-legacy` which crashes immediately on NixOS.
+
+Use the NixOS compose override to build a patched Rancher image that swaps `iptables-legacy` for `iptables-nft` (translates iptables calls to the nftables kernel API):
+
+```bash
+# Single Rancher
+docker compose -f docker-compose.yml -f docker-compose.nix.yml up
+
+# Sharded (4 Ranchers)
+docker compose -f docker-compose.sharded.yml -f docker-compose.nix.yml up
+
+# With tag filtering
+GREP_TAGS="@generic" docker compose -f docker-compose.yml -f docker-compose.nix.yml up tests
+```
+
+The override builds `Dockerfile.rancher-nix` which:
+1. Copies the `nft` binary + shared libs from Debian into the SLES-based Rancher image
+2. Copies `xtables-nft-multi` and all xtables extension `.so` files
+3. Symlinks `iptables` → `xtables-nft-multi` so all iptables calls use the nft backend
+
+This is **not needed** on distros that ship legacy iptables kernel modules (Ubuntu, Fedora, SLES, etc.).
+
 ## Troubleshooting
 
 ### Rancher takes too long to start
