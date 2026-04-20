@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 import ListRowPo from '@/e2e/po/components/list-row.po';
 
@@ -16,6 +17,10 @@ export default class BaseResourceList extends ComponentPo {
 
   resourceTable(): ResourceTablePo {
     return new ResourceTablePo(this.page, ':scope', this.self());
+  }
+
+  createEditView(): CreateEditViewPo {
+    return new CreateEditViewPo(this.page, ':scope', this.self());
   }
 
   async actionMenu(rowLabel: string): Promise<ActionMenuPo> {
