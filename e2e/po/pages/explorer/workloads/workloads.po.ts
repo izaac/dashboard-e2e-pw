@@ -1,6 +1,8 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import WorkloadPodStoragePo from '@/e2e/po/components/workloads/pod-storage.po';
 import ContainerMountPathPo from '@/e2e/po/components/workloads/container-mount-paths.po';
 
@@ -33,6 +35,10 @@ export class WorkloadsListPageBasePo extends PagePo {
 
   sortableTable(): Locator {
     return this.self().locator('.sortable-table');
+  }
+
+  sortableTablePo(): SortableTablePo {
+    return new SortableTablePo(this.page, '.sortable-table');
   }
 
   listElementWithName(name: string): Locator {
@@ -86,10 +92,10 @@ export class WorkloadsCreatePageBasePo extends PagePo {
   }
 
   async selectNamespace(label: string): Promise<void> {
-    const nsSelect = this.page.getByTestId('namespaces-dropdown');
+    const nsSelect = new LabeledSelectPo(this.page, '[data-testid="name-ns-description-namespace"]');
 
-    await nsSelect.click();
-    await this.page.locator(`.vs__dropdown-menu`).getByRole('option', { name: label, exact: true }).click();
+    await nsSelect.toggle();
+    await nsSelect.clickOptionWithLabel(label);
   }
 
   containerImage(): LabeledInputPo {
@@ -149,27 +155,27 @@ export class WorkloadsCreatePageBasePo extends PagePo {
   }
 
   horizontalTabs(): Locator {
-    return this.page.locator('[data-testid="workload-tabs"]');
+    return this.page.getByTestId('workload-horizontal-tabs');
   }
 
   async clickHorizontalTab(tabId: string): Promise<void> {
-    await this.horizontalTabs().locator(`li#${tabId}`).click();
+    await this.horizontalTabs().getByTestId(tabId).click();
   }
 
   podTabs(): Locator {
-    return this.page.locator('[data-testid="workload-pod-tabs"]');
+    return this.page.getByTestId('workload-pod-tabs');
   }
 
   async clickPodTab(tabId: string): Promise<void> {
-    await this.podTabs().locator(`li#${tabId}`).click();
+    await this.podTabs().getByTestId(tabId).click();
   }
 
   nthContainerTabs(containerIndex: number): Locator {
-    return this.page.locator(`[data-testid="workload-container-tabs-${containerIndex}"]`);
+    return this.page.getByTestId(`workload-container-tabs-${containerIndex}`);
   }
 
   async clickContainerTab(containerIndex: number, tabId: string): Promise<void> {
-    await this.nthContainerTabs(containerIndex).locator(`li#${tabId}`).click();
+    await this.nthContainerTabs(containerIndex).getByTestId(tabId).click();
   }
 
   podStorage(): WorkloadPodStoragePo {

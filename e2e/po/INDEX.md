@@ -244,11 +244,11 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | WorkloadsListPageBasePo | — | super |
-| WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog, addVolumeButton, dropdownMenu, openEmptyShowConfigurationLabelsLink (+5) |
+| WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog, addVolumeButton, dropdownMenu, openEmptyShowConfigurationLabelsLink (+6) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |
-| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, nameInput, selectNamespace (+24) |
+| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI, nameInput (+25) |
 
 ## pages/extensions/
 
