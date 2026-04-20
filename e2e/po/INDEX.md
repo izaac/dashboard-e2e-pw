@@ -20,7 +20,7 @@
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled, checkVisible, checkNotVisible, checkExists, checkNotExists (+2) |
 | CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard, exists |
-| CreateEditViewPo | create-edit-view.po.ts | ComponentPo | — | nameNsDescription, errorBanner, formSave, createButton, create, save, cancel, saveAndWait (+11) |
+| CreateEditViewPo | create-edit-view.po.ts | ComponentPo | — | nameNsDescription, errorBanner, formSave, createButton, create, save, cancel, saveAndWait (+12) |
 | CruResourcePo | cru-resource.po.ts | ComponentPo | — | super, saveOrCreate, cancel, findSubTypeByName, selectSubType, selectSubTypeByIndex, saveAndWaitForRequests |
 | DialogPo | dialog.po.ts | ComponentPo | — | super, getActionButton |
 | HeaderPo | header.po.ts | ComponentPo | `[data-testid=` | super, projectNamespaceFilter, selectNamespaceFilterOption, selectWorkspace, checkCurrentWorkspace, importYamlHeaderAction, importYaml, kubectlShell (+10) |
@@ -215,7 +215,7 @@
 | NodesPagePo | nodes.po.ts | PagePo | — | super, list |
 | PersistentVolumeClaimsPagePo | persistent-volume-claims.po.ts | PagePo | — | super, list |
 | PersistentVolumesPagePo | persistent-volumes.po.ts | PagePo | — | super, list |
-| ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, baseResourceList, createNamespaceButton, projectSelect, resourceDetail, tabResourceQuotas, btnAddResource (+11) |
+| ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, masthead, createEditView, createNamespaceButton, projectSelect, resourceDetail, tabResourceQuotas (+11) |
 | RoleBindingsPagePo | role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | RolesPagePo | roles.po.ts | PagePo | — | super, list, clickCreate |
 | SecretsListPagePo | secrets.po.ts | PagePo | — | super, title, createButton, createButtonTitle, list, resourceDetail |

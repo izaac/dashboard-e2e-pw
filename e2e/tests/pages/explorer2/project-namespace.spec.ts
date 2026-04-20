@@ -1,8 +1,5 @@
 import { test, expect } from '@/support/fixtures';
 import { ProjectsNamespacesListPagePo } from '@/e2e/po/pages/explorer/projects-namespaces.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
 test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -15,14 +12,15 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
     await projectsNamespacesPage.goTo();
     await projectsNamespacesPage.waitForPage();
 
-    const sortableTable = new SortableTablePo(page, '.sortable-table');
+    const sortableTable = projectsNamespacesPage.list().resourceTable().sortableTable();
 
     await sortableTable.groupByButtons(0).click();
 
-    const mastheadPo = new ResourceListMastheadPo(page, ':scope');
-
     await expect(projectsNamespacesPage.createNamespaceButton()).toBeAttached();
-    await expect(mastheadPo.createButton()).toContainText('Create Project');
+
+    const masthead = projectsNamespacesPage.masthead();
+
+    await expect(masthead.createButton()).toContainText('Create Project');
   });
 
   test('create namespace screen should have a projects dropdown', async ({ page }) => {
@@ -42,17 +40,16 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       rancherApi,
     }) => {
       const projectName = `e2e-proj-${Date.now()}`;
-
       const projectsNamespacesPage = new ProjectsNamespacesListPagePo(page);
 
       await projectsNamespacesPage.goTo();
       await projectsNamespacesPage.waitForPage();
 
-      const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+      const masthead = projectsNamespacesPage.masthead();
 
-      await mastheadPo.create();
+      await masthead.create();
 
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = projectsNamespacesPage.createEditView();
 
       await cruResource.nameNsDescription().name().set(projectName);
 
@@ -65,9 +62,11 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       const response = await responsePromise;
       const body = await response.json();
 
-      expect(body.annotations).not.toHaveProperty('field.cattle.io/creator-principal-name');
-
-      await rancherApi.deleteRancherResource('v3', 'projects', body.id, false);
+      try {
+        expect(body.annotations).not.toHaveProperty('field.cattle.io/creator-principal-name');
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'projects', body.id, false);
+      }
     });
   });
 
@@ -78,11 +77,11 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await projectsNamespacesPage.goTo();
       await projectsNamespacesPage.waitForPage();
 
-      const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+      const masthead = projectsNamespacesPage.masthead();
 
-      await mastheadPo.create();
+      await masthead.create();
 
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = projectsNamespacesPage.createEditView();
 
       await cruResource.formSave().expectToBeDisabled();
       await cruResource.nameNsDescription().name().set('test-1234');
@@ -95,16 +94,17 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await projectsNamespacesPage.goTo();
       await projectsNamespacesPage.waitForPage();
 
-      const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+      const masthead = projectsNamespacesPage.masthead();
 
-      await mastheadPo.create();
+      await masthead.create();
 
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = projectsNamespacesPage.createEditView();
 
       await cruResource.nameNsDescription().name().set('test-1234');
 
       await cruResource.tabResourceQuotas().click();
       await cruResource.btnAddResource().click();
+      await cruResource.selectResourceType(1);
       await cruResource.inputProjectLimit().set('50');
 
       await cruResource.formSave().click();
@@ -117,16 +117,17 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await projectsNamespacesPage.goTo();
       await projectsNamespacesPage.waitForPage();
 
-      const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+      const masthead = projectsNamespacesPage.masthead();
 
-      await mastheadPo.create();
+      await masthead.create();
 
-      const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+      const cruResource = projectsNamespacesPage.createEditView();
 
       await cruResource.nameNsDescription().name().set('test-1234');
 
       await cruResource.tabResourceQuotas().click();
       await cruResource.btnAddResource().click();
+      await cruResource.selectResourceType(1);
       await cruResource.inputProjectLimit().set('50');
 
       await cruResource.formSave().click();

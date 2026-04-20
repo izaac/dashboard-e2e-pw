@@ -63,7 +63,7 @@ export default class CreateEditViewPo extends ComponentPo {
   }
 
   tabResourceQuotas(): Locator {
-    return this.page.getByTestId('tab-resource-quotas').or(this.page.locator('#resource-quotas'));
+    return this.page.getByTestId('tab-resource-quotas').or(this.page.locator('li#resource-quotas'));
   }
 
   btnAddResource(): Locator {
@@ -72,6 +72,13 @@ export default class CreateEditViewPo extends ComponentPo {
 
   inputProjectLimit(): LabeledInputPo {
     return new LabeledInputPo(this.page, '[data-testid="projectrow-project-quota-input"]');
+  }
+
+  async selectResourceType(index: number): Promise<void> {
+    const combo = this.page.locator('[data-testid="projectrow-type-input"]');
+
+    await combo.click();
+    await this.page.locator('.vs__dropdown-menu > li').nth(index).click();
   }
 
   yamlEditor(): Locator {

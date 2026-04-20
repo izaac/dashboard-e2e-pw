@@ -1,7 +1,9 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
+import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import GenericPrompt from '@/e2e/po/prompts/genericPrompt.po';
 
@@ -18,8 +20,12 @@ export class ProjectsNamespacesListPagePo extends PagePo {
     return new BaseResourceList(this.page, '[data-testid="sortable-table-list-container"]');
   }
 
-  baseResourceList(): BaseResourceList {
-    return new BaseResourceList(this.page, '.dashboard-root');
+  masthead(): ResourceListMastheadPo {
+    return new ResourceListMastheadPo(this.page, ':scope', this.self());
+  }
+
+  createEditView(): CreateEditViewPo {
+    return new CreateEditViewPo(this.page, '.dashboard-root');
   }
 
   createNamespaceButton(): Locator {
@@ -80,10 +86,6 @@ export class ProjectCreateEditPagePo extends PagePo {
 
   inputMemoryLimit(): LabeledInputPo {
     return new LabeledInputPo(this.page, '[data-testid="memory-limit"]');
-  }
-
-  selectResourceType(): Locator {
-    return this.page.locator('[data-testid="projectrow-type-input"]');
   }
 
   bannerError(n: number): Locator {
