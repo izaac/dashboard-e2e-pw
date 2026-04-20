@@ -8,7 +8,7 @@ export default class ResourceTablePo extends ComponentPo {
   }
 
   sortableTable(): SortableTablePo {
-    return new SortableTablePo(this.page, ':scope', this.self());
+    return new SortableTablePo(this.page, '.sortable-table', this.self());
   }
 
   downloadYamlButton(): Locator {
