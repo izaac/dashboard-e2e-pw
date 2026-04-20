@@ -1,8 +1,7 @@
 import { test, expect } from '@/support/fixtures';
+import { NodesPagePo } from '@/e2e/po/pages/explorer/nodes.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { dummyNode } from '@/e2e/blueprints/explorer2/nodes';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 
 test.describe('Nodes list', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('should show the nodes list page with dummy node', async ({ page, login, rancherApi }) => {
@@ -16,21 +15,22 @@ test.describe('Nodes list', { tag: ['@explorer2', '@adminUser'] }, () => {
       const nodesResp = await rancherApi.getRancherResource('v1', 'nodes');
       const nodeCount = nodesResp.body.count;
 
-      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+      const nodesPage = new NodesPagePo(page);
 
-      await clusterDashboard.goTo();
-      await clusterDashboard.waitForPage();
-      await clusterDashboard.navToSideMenuEntryByLabel('Nodes');
+      await nodesPage.goTo();
+      await nodesPage.waitForPage();
 
-      const masthead = new ResourceListMastheadPo(page, ':scope');
+      const masthead = nodesPage.list().masthead();
 
       await expect(masthead.title()).toContainText('Nodes');
 
-      const sortableTable = new SortableTablePo(page, '[data-testid="cluster-node-list"] .sortable-table');
+      const sortableTable = nodesPage.list().resourceTable().sortableTable();
 
       await sortableTable.checkVisible();
       await expect(sortableTable.rowElements()).toHaveCount(nodeCount);
       await expect(sortableTable.self()).toContainText(nodeName);
+
+      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
       await sortableTable.rowElementLink(0, 2).click();
       await expect(clusterDashboard.mastheadTitle()).toContainText('Node:');

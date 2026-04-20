@@ -1,10 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
-
-const configMapListPath = '/c/local/explorer/configmap';
+import { ConfigMapsPagePo } from '@/e2e/po/pages/explorer/configmaps.po';
 
 test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -12,11 +7,11 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test('has the correct title', async ({ page, rancherApi }) => {
-    const configMapListPage = new PagePo(page, configMapListPath);
+    const configMapListPage = new ConfigMapsPagePo(page);
 
     await configMapListPage.goTo();
 
-    const masthead = new ResourceListMastheadPo(page, ':scope');
+    const masthead = configMapListPage.list().masthead();
 
     await expect(masthead.title()).toContainText('ConfigMaps');
 
@@ -31,16 +26,14 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
     const configMapName = `e2e-test-${Date.now()}-custom-config-map`;
     const namespace = 'default';
 
-    const configMapListPage = new PagePo(page, configMapListPath);
+    const configMapListPage = new ConfigMapsPagePo(page);
 
     await configMapListPage.goTo();
     await configMapListPage.waitForPage();
 
-    const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+    await configMapListPage.list().masthead().create();
 
-    await mastheadPo.create();
-
-    const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+    const cruResource = configMapListPage.list().createEditView();
 
     await cruResource.nameNsDescription().name().set(configMapName);
 
@@ -63,7 +56,7 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
     try {
       await configMapListPage.waitForPage();
 
-      const sortableTable = new SortableTablePo(page, '.sortable-table');
+      const sortableTable = configMapListPage.list().resourceTable().sortableTable();
 
       await sortableTable.filter(configMapName);
       await expect(sortableTable.rowElements()).toHaveCount(1);
@@ -73,16 +66,14 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test('should show an error banner if the api call sends back an error', async ({ page }) => {
-    const configMapListPage = new PagePo(page, configMapListPath);
+    const configMapListPage = new ConfigMapsPagePo(page);
 
     await configMapListPage.goTo();
     await configMapListPage.waitForPage();
 
-    const mastheadPo = new ResourceListMastheadPo(page, ':scope');
+    await configMapListPage.list().masthead().create();
 
-    await mastheadPo.create();
-
-    const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+    const cruResource = configMapListPage.list().createEditView();
 
     await cruResource.nameNsDescription().name().set('$^$^"£%');
     await cruResource.formSave().click();

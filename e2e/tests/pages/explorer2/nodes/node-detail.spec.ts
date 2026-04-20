@@ -1,22 +1,20 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import { NodesPagePo } from '@/e2e/po/pages/explorer/nodes.po';
 
 test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('should still show the node detail view when the page is refreshed', async ({ page, login }) => {
     await login();
-    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+    const nodesPage = new NodesPagePo(page);
 
-    await clusterDashboard.goTo();
-    await clusterDashboard.waitForPage();
-    await clusterDashboard.navToSideMenuEntryByLabel('Nodes');
+    await nodesPage.goTo();
+    await nodesPage.waitForPage();
 
-    const masthead = new ResourceListMastheadPo(page, ':scope');
+    const masthead = nodesPage.list().masthead();
 
     await expect(masthead.title()).toContainText('Nodes');
 
-    const sortableTable = new SortableTablePo(page, '[data-testid="cluster-node-list"] .sortable-table');
+    const sortableTable = nodesPage.list().resourceTable().sortableTable();
 
     await sortableTable.checkVisible();
 
@@ -27,6 +25,8 @@ test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
     const nodeName = (await firstNodeLink.textContent())?.trim();
 
     await firstNodeLink.click();
+
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
     await expect(page).toHaveURL(/\/explorer\/node\//);
     await expect(clusterDashboard.mastheadTitle()).toContainText(nodeName!, { timeout: 15000 });
