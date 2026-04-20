@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterProjectMembersPo from '@/e2e/po/pages/explorer/cluster-project-members.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
+import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 
 test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('Should create a new user', async ({ page, login, rancherApi }) => {
@@ -16,8 +17,16 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
     });
 
     try {
-      await page.goto('./auth/user?mode=edit');
-      await expect(page.getByTestId('name-ns-description-name')).toHaveValue(username);
+      const usersPage = new UsersPo(page);
+
+      await usersPage.waitForRequests();
+      await usersPage.waitForPage();
+
+      const actualUsername = userResp.body.username;
+      const sortableTable = usersPage.list().resourceTable().sortableTable();
+
+      await sortableTable.checkVisible();
+      await expect(sortableTable.rowElementWithName(actualUsername)).toBeVisible({ timeout: 15000 });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }
@@ -36,6 +45,8 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       password: 'standard-password',
     });
 
+    const actualUsername = userResp.body.username;
+
     try {
       const homePage = new HomePagePo(page);
 
@@ -48,7 +59,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       await clusterMembership.navToSideMenuEntryByLabel('Cluster and Project Members');
       await clusterMembership.triggerAddClusterOrProjectMemberAction();
 
-      await clusterMembership.selectClusterOrProjectMember(username);
+      await clusterMembership.selectClusterOrProjectMember(actualUsername);
 
       const responsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/clusterroletemplatebindings') && resp.request().method() === 'POST',
@@ -59,7 +70,15 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
 
       await clusterMembership.waitForPageWithExactUrl();
 
-      await expect(clusterMembership.listElementWithName(username)).toBeVisible({ timeout: 15000 });
+      // Navigate fresh to ensure the list has the new binding (avoids stale WebSocket state)
+      await clusterMembership.goTo();
+      await clusterMembership.waitForPage();
+
+      // Member list shows "{username} {clusterDisplayName}" — use partial match
+      const sortableTable = clusterMembership.sortableTable();
+
+      await sortableTable.checkVisible();
+      await expect(sortableTable.rowElementWithPartialName(actualUsername)).toBeVisible({ timeout: 15000 });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }
@@ -90,6 +109,8 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       password: 'standard-password',
     });
 
+    const actualUsername = userResp.body.username;
+
     try {
       const projectMembership = new ClusterProjectMembersPo(page, 'local', 'project-membership');
 
@@ -97,7 +118,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       await projectMembership.waitForPageWithSpecificUrl('/c/local/explorer/members#project-membership');
       await projectMembership.triggerAddProjectMemberAction('default');
       await projectMembership.selectProjectCustomPermission();
-      await projectMembership.selectClusterOrProjectMember(username);
+      await projectMembership.selectClusterOrProjectMember(actualUsername);
       await projectMembership.checkTheseProjectCustomPermissions([0, 1]);
 
       const responsePromise = page.waitForResponse(
