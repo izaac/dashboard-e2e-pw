@@ -6,6 +6,7 @@ import {
   createBulkResources,
   setTablePreferences,
   restoreTablePreferences,
+  resetNamespaceFilter,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
@@ -136,6 +137,10 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Redeploy Dialog', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      await resetNamespaceFilter(rancherApi);
+    });
+
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();
       const namespace = `e2e-sts-ns-${Date.now()}`;

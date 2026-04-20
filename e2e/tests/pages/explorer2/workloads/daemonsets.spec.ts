@@ -13,6 +13,7 @@ import {
   createBulkResources,
   setTablePreferences,
   restoreTablePreferences,
+  resetNamespaceFilter,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
@@ -206,6 +207,10 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Redeploy dialog', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      await resetNamespaceFilter(rancherApi);
+    });
+
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();
       const daemonsetName = `e2e-ds-redeploy-${Date.now()}`;

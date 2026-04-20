@@ -80,6 +80,11 @@ export async function restoreTablePreferences(rancherApi: RancherApi, saved: Sav
   });
 }
 
+/** Reset namespace filter to show all user namespaces */
+export async function resetNamespaceFilter(rancherApi: RancherApi): Promise<void> {
+  await rancherApi.setUserPreference({ 'ns-by-cluster': '{"local":["all://user"]}' });
+}
+
 /**
  * Full pagination navigation test.
  * Verifies: pagination visible, button states, text, navigate right/left/end/beginning.

@@ -32,13 +32,15 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     await clusterList.waitForPage();
   });
 
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  });
+
   test('should not provide a link to capi cluster details', async ({ page }) => {
     const clusterList = new ClusterManagerListPagePo(page);
-    const capiRow = clusterList.list().resourceTable().sortableTable().rowWithName(clusterName);
-    const localRow = clusterList.list().resourceTable().sortableTable().rowWithName('local');
 
-    await expect(capiRow.nameLink()).not.toBeAttached();
-    await expect(localRow.nameLink()).toBeAttached();
+    await expect(clusterList.clusterLink(clusterName)).not.toBeAttached();
+    await expect(clusterList.clusterLink('local')).toBeAttached();
   });
 
   test('should not allow editing CAPI cluster configs', async ({ page }) => {
