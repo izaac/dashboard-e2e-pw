@@ -138,26 +138,135 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await expect(cruResource.errorBanner()).toHaveCount(1);
     });
 
-    test.skip(
-      true,
-      'Test for multiple error resolution requires complex form interaction with resource quotas and container limits',
-    );
-    test('displays the most recent error after resolving a single error in a form with multiple errors', async () => {});
+    test('displays the most recent error after resolving a single error in a form with multiple errors', async () => {
+      test.skip(
+        true,
+        'Test for multiple error resolution requires complex form interaction with resource quotas and container limits',
+      );
+    });
   });
 
   test.describe('Filtering projects with same name in groupBy list view', () => {
-    test.skip(true, 'Test requires creating 3 projects with same name via API — complex setup');
+    const projectName = `samename-${Date.now()}`;
 
-    test('should show all projects with same name when filtering in Group by Project view', async () => {});
-    test('should show projects without namespaces when filtering in Group by Project view', async () => {});
-    test('should show projects with namespaces when filtering in flat list view', async () => {});
+    test('should show all projects with same name when filtering in Group by Project view', async ({
+      page,
+      rancherApi,
+    }) => {
+      const projectIds: string[] = [];
+      const nsNames: string[] = [];
+
+      try {
+        for (let i = 0; i < 3; i++) {
+          const resp = await rancherApi.createProject(projectName);
+
+          projectIds.push(resp.body.id);
+
+          if (i < 2) {
+            const nsName = `e2e-sn-${Date.now()}-${i}`;
+
+            nsNames.push(nsName);
+            await rancherApi.createNamespaceInProject(nsName, resp.body.id);
+          }
+        }
+
+        const projectsNamespacesPage = new ProjectsNamespacesListPagePo(page);
+
+        await projectsNamespacesPage.goTo();
+        await projectsNamespacesPage.waitForPage();
+
+        const sortableTable = projectsNamespacesPage.list().resourceTable().sortableTable();
+
+        await sortableTable.groupByButtons(1).click();
+        await sortableTable.filter(projectName);
+
+        await expect(sortableTable.groupElementsWithName(projectName)).toHaveCount(3);
+        await expect(sortableTable.rowElementWithName(nsNames[0])).toBeVisible();
+        await expect(sortableTable.rowElementWithName(nsNames[1])).toBeVisible();
+      } finally {
+        for (const id of projectIds) {
+          await rancherApi.deleteRancherResource('v3', 'projects', id, false);
+        }
+      }
+    });
+
+    test('should show projects without namespaces when filtering in Group by Project view', async ({
+      page,
+      rancherApi,
+    }) => {
+      const projectIds: string[] = [];
+
+      try {
+        for (let i = 0; i < 3; i++) {
+          const resp = await rancherApi.createProject(projectName);
+
+          projectIds.push(resp.body.id);
+
+          if (i < 2) {
+            await rancherApi.createNamespaceInProject(`e2e-sn2-${Date.now()}-${i}`, resp.body.id);
+          }
+        }
+
+        const projectsNamespacesPage = new ProjectsNamespacesListPagePo(page);
+
+        await projectsNamespacesPage.goTo();
+        await projectsNamespacesPage.waitForPage();
+
+        const sortableTable = projectsNamespacesPage.list().resourceTable().sortableTable();
+
+        await sortableTable.groupByButtons(1).click();
+        await sortableTable.filter(projectName);
+
+        // 3rd project has no namespaces but should still appear as a group
+        await expect(sortableTable.groupElementsWithName(projectName)).toHaveCount(3);
+      } finally {
+        for (const id of projectIds) {
+          await rancherApi.deleteRancherResource('v3', 'projects', id, false);
+        }
+      }
+    });
+
+    test('should show projects with namespaces when filtering in flat list view', async ({ page, rancherApi }) => {
+      const projectIds: string[] = [];
+      const nsNames: string[] = [];
+
+      try {
+        for (let i = 0; i < 3; i++) {
+          const resp = await rancherApi.createProject(projectName);
+
+          projectIds.push(resp.body.id);
+
+          if (i < 2) {
+            const nsName = `e2e-sn3-${Date.now()}-${i}`;
+
+            nsNames.push(nsName);
+            await rancherApi.createNamespaceInProject(nsName, resp.body.id);
+          }
+        }
+
+        const projectsNamespacesPage = new ProjectsNamespacesListPagePo(page);
+
+        await projectsNamespacesPage.goTo();
+        await projectsNamespacesPage.waitForPage();
+
+        const sortableTable = projectsNamespacesPage.list().resourceTable().sortableTable();
+
+        await sortableTable.groupByButtons(0).click();
+        await sortableTable.filter(nsNames[0].slice(0, 6));
+
+        await expect(sortableTable.rowElementWithName(nsNames[0])).toBeVisible();
+        await expect(sortableTable.rowElementWithName(nsNames[1])).toBeVisible();
+      } finally {
+        for (const id of projectIds) {
+          await rancherApi.deleteRancherResource('v3', 'projects', id, false);
+        }
+      }
+    });
   });
 
-  test.skip(true, 'Requires third-party auth provider');
   test.describe('Project creation with third-party auth', () => {
     test('sets the creator principal id annotation when creating a project and using third-party auth', async () => {
-      // Upstream test spoofs GitHub auth principal and validates field.cattle.io/creator-principal-name annotation
-      // Requires third-party auth infrastructure
+      test.skip(true, 'Requires third-party auth provider');
     });
   });
 });

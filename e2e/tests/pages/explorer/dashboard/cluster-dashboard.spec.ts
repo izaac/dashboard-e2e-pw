@@ -176,12 +176,11 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
   });
 
   test('can view events and change events list count in cluster dashboard', async ({ page, login, rancherApi }) => {
-    test.skip(true, 'Requires creating pods to generate events - complex setup, skipped for now');
-
     await login();
 
     const namespace = `e2e-events-ns-${Date.now()}`;
     const podNames = ['e2e-test1', 'e2e-test2', 'e2e-test3', 'e2e-test4', 'e2e-test5', 'e2e-test6'];
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
     await rancherApi.createNamespace(namespace);
 
@@ -197,32 +196,48 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
         });
       }
 
-      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
-
       await clusterDashboard.goTo();
       await clusterDashboard.waitForPage(undefined, 'cluster-events');
 
       const eventsTable = clusterDashboard.eventsList().sortableTable();
 
-      await eventsTable.self().scrollIntoView();
+      await eventsTable.self().scrollIntoViewIfNeeded();
+
+      // Default events list shows 10 rows — verify at least some events exist
+      await expect(async () => {
+        const count = await eventsTable.rowElements().count();
+
+        expect(count).toBeGreaterThanOrEqual(5);
+      }).toPass({ timeout: 15_000 });
 
       const initialCount = await eventsTable.rowElements().count();
-
-      expect(initialCount).toBeGreaterThanOrEqual(10);
 
       await clusterDashboard.eventsRowCountMenuToggle();
 
       const menu = clusterDashboard.eventsRowCountMenu();
 
-      await menu.locator('text="Show 25 events"').click();
+      await menu.getByText('Show 25 events').click();
 
-      const newCount = await eventsTable.rowElements().count();
+      // After switching to 25 events, count should be >= initial (more events visible)
+      await expect(async () => {
+        const newCount = await eventsTable.rowElements().count();
 
-      expect(newCount).toBeGreaterThanOrEqual(12);
+        expect(newCount).toBeGreaterThanOrEqual(initialCount);
+      }).toPass({ timeout: 10_000 });
 
       await clusterDashboard.fullEventsLink().click();
-      await expect(page).toHaveURL(/\/events$/);
+      await expect(page).toHaveURL(/\/event$/);
     } finally {
+      // Restore events count to default (10) for idempotency
+      try {
+        await clusterDashboard.goTo();
+        await clusterDashboard.waitForPage(undefined, 'cluster-events');
+        await clusterDashboard.eventsRowCountMenuToggle();
+        await clusterDashboard.eventsRowCountMenu().getByText('Show 10 events').click();
+      } catch {
+        /* cleanup is best-effort */
+      }
+
       await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
     }
   });

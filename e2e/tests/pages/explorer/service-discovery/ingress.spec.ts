@@ -41,15 +41,10 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
   });
 
   test.describe('Create/Edit', () => {
-    test.skip(true, 'CRUD tests require createManyNamespacedResources helper — skipped for now');
+    test.skip(true, 'Requires IngressCreateEditPo with rule/certificate form methods — PO not yet ported');
 
-    test('can select rules and certificates in Create mode', async () => {
-      // requires complex setup with secrets and services
-    });
-
-    test('can select rules and certificates in Edit mode', async () => {
-      // requires complex setup with secrets and services
-    });
+    test('can select rules and certificates in Create mode', async () => {});
+    test('can select rules and certificates in Edit mode', async () => {});
   });
 
   test('can create an Ingress targeting a headless service and wait for Active state', async ({

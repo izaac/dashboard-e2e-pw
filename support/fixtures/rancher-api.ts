@@ -487,4 +487,25 @@ export class RancherApi {
 
     return result.body?.spec?.value ?? result.body?.status?.default;
   }
+
+  async createProject(name: string, clusterId = 'local') {
+    return this.createRancherResource('v3', 'projects', {
+      type: 'project',
+      name,
+      clusterId,
+    });
+  }
+
+  async createNamespaceInProject(nsName: string, projectId: string) {
+    return this.createRancherResource('v1', 'namespaces', {
+      type: 'namespace',
+      metadata: {
+        annotations: {
+          'field.cattle.io/projectId': projectId,
+          'field.cattle.io/containerDefaultResourceLimit': '{}',
+        },
+        name: nsName,
+      },
+    });
+  }
 }
