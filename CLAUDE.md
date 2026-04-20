@@ -123,6 +123,19 @@ These rules are verified against Playwright's official best practices documentat
 
 `baseURL` ends with `/` (e.g. `https://host/dashboard/`). Page objects use `./auth/login` so Playwright resolves to `https://host/dashboard/auth/login`. Using `/auth/login` would resolve to `https://host/auth/login` (wrong).
 
+### Rancher Vue Debounce Traps
+
+Rancher Dashboard Vue components often **debounce** `$emit('update:value')` calls (typically 500ms). Playwright is fast enough to click Save before the debounce fires, causing form values to be visible in the DOM but **missing from the submitted request body**.
+
+**Known debounced components:**
+- `RulePath.vue` (ingress rules) — `debounce(this.update, 500)` and `debounce(this.updatePathTypeAndPath, 500)`
+
+**Rule:** After the last form field interaction in a debounced component, wait before saving. POs should expose a `waitFor*Debounce()` method (e.g. `IngressCreateEditPo.waitForRulePathDebounce()`).
+
+**Why Cypress doesn't hit this:** Cypress command queue serializes actions with implicit waits between `.click()` / `.type()` calls. The cumulative delay exceeds the debounce naturally. Playwright executes faster.
+
+**How to detect:** If form values show correctly in the DOM/screenshot but are missing from the request body, check the source component for `debounce` in `created()` or `setup()`. The Dashboard source is at `~/repos/dashboard`.
+
 ## Running Tests
 
 ```bash

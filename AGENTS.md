@@ -171,6 +171,15 @@ Tests must produce the **same result** regardless of how many times they run or 
 - API-based state setup is the **correct** approach for idempotent tests, even when upstream relies on natural defaults
 - If upstream skips cleanup because "the next test resets it", we still clean up explicitly
 
+### Rancher Vue Debounce Traps
+
+Rancher Dashboard Vue components often **debounce** `$emit('update:value')` calls (typically 500ms). Playwright is fast enough to click Save before the debounce fires, causing form values to be visible in the DOM but **missing from the submitted request body**.
+
+- **Known:** `RulePath.vue` (ingress rules) — 500ms debounce on `update()` and `updatePathTypeAndPath()`
+- **Rule:** After the last field interaction in a debounced component, call the PO's `waitFor*Debounce()` method before `save()`
+- **Detection:** If values show in DOM/screenshot but are missing from the request body, check the Vue source (`~/repos/dashboard`) for `debounce` in the component's `created()` or `setup()`
+- **Why Cypress is immune:** Cypress command queue serializes with implicit waits; cumulative delay exceeds debounce naturally
+
 ---
 
 ## TEST EXECUTION RULES
