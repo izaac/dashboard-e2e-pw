@@ -67,9 +67,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       const rows = crdsPage.sortableTable().rowElementWithPartialName(filterTerm);
 
       await expect(rows.first()).toBeVisible();
-      const rowCount = await rows.count();
-
-      expect(rowCount).toBeGreaterThan(0);
+      await expect(rows).not.toHaveCount(0);
     });
 
     test('sorting changes the order of CRDs data', async ({ page, login }) => {
@@ -87,10 +85,10 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       await crdsPage.sortableTable().filter(filter);
       await crdsPage.sortableTable().checkNoRowsNotVisible();
 
-      const firstRowBefore = await crdsPage
-        .sortableTable()
-        .rowCell(crdsPage.sortableTable().rowElements().first(), 2)
-        .innerText();
+      const firstCell = crdsPage.sortableTable().rowCell(crdsPage.sortableTable().rowElements().first(), 2);
+
+      await expect(firstCell).toBeVisible();
+      const firstRowBefore = await firstCell.innerText();
 
       expect(firstRowBefore.length).toBeGreaterThan(0);
 

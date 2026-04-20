@@ -7,6 +7,7 @@ import {
   createBulkResources,
   setTablePreferences,
   restoreTablePreferences,
+  resetNamespaceFilter,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
@@ -74,6 +75,10 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Redeploy dialog', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      await resetNamespaceFilter(rancherApi);
+    });
+
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();
       const daemonsetName = `e2e-ds-redeploy-${Date.now()}`;
@@ -99,6 +104,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
         const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -155,6 +161,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(listPage.sortableTable().rowElementWithName(daemonsetName)).toBeVisible();
         const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -203,6 +210,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(listPage.sortableTable().rowElementWithName(daemonsetName)).toBeVisible();
         const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
 
         await actionMenu.getMenuItem('Redeploy').click();

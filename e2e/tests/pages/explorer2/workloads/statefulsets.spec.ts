@@ -4,6 +4,7 @@ import {
   createBulkResources,
   setTablePreferences,
   restoreTablePreferences,
+  resetNamespaceFilter,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
@@ -15,6 +16,10 @@ import { SMALL_CONTAINER } from './workload.utils';
 
 test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('Redeploy Dialog', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      await resetNamespaceFilter(rancherApi);
+    });
+
     test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
       await login();
       const namespace = `e2e-sts-ns-${Date.now()}`;
@@ -42,6 +47,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(listPage.sortableTable().rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -102,6 +108,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(listPage.sortableTable().rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -154,6 +161,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
+        await expect(listPage.sortableTable().rowElementWithName(statefulSetName)).toBeVisible();
         const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
 
         await actionMenu.getMenuItem('Redeploy').click();
