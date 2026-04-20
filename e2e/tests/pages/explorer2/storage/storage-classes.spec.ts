@@ -11,6 +11,9 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       await storageClassesPage.waitForPage();
 
       const sortableTable = storageClassesPage.list().resourceTable().sortableTable();
+
+      await sortableTable.checkVisible();
+
       const expectedHeaders = ['State', 'Name', 'Provisioner', 'Default', 'Age'];
       const headerNames = await sortableTable.headerNames();
 

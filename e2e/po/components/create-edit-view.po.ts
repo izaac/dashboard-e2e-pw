@@ -75,7 +75,7 @@ export default class CreateEditViewPo extends ComponentPo {
   }
 
   yamlEditor(): Locator {
-    return this.page.locator('.resource-yaml .CodeMirror, .resource-yaml .code-mirror');
+    return this.page.locator('.resource-yaml').getByTestId('yaml-editor-code-mirror');
   }
 
   async saveAndWaitForRequests(method: string, endpoint: string): Promise<void> {
