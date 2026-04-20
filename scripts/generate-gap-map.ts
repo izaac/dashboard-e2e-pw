@@ -99,7 +99,9 @@ if (!fs.existsSync(UPSTREAM_TEST_ROOT)) {
 
 // Collect specs
 const pwSpecs = collectSpecs(PW_TEST_ROOT, PW_TEST_ROOT);
-const upstreamSpecs = collectSpecs(UPSTREAM_TEST_ROOT, UPSTREAM_TEST_ROOT);
+const upstreamSpecs = collectSpecs(UPSTREAM_TEST_ROOT, UPSTREAM_TEST_ROOT).filter(
+  (s) => !s.suite.startsWith('accessibility'),
+);
 
 // Extract test names
 const itPattern = /\bit\(\s*['"`]([^'"`]+)['"`]/g;
