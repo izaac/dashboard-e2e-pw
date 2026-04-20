@@ -1,6 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { WorkloadsCronJobsListPagePo } from '@/e2e/po/pages/explorer/workloads-cronjobs.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
@@ -22,36 +21,36 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       const cronJobName = `e2e-cj-${Date.now()}`;
       const namespace = 'default';
 
-      await rancherApi.createRancherResource('v1', 'batch.cronjobs', {
-        apiVersion: 'batch/v1',
-        kind: 'CronJob',
-        metadata: { name: cronJobName, namespace },
-        spec: {
-          schedule: '1 1 1 1 1',
-          concurrencyPolicy: 'Allow',
-          failedJobsHistoryLimit: 1,
-          successfulJobsHistoryLimit: 3,
-          suspend: false,
-          jobTemplate: {
-            spec: {
-              template: {
-                spec: {
-                  containers: [SMALL_CONTAINER],
-                  restartPolicy: 'Never',
+      try {
+        await rancherApi.createRancherResource('v1', 'batch.cronjobs', {
+          apiVersion: 'batch/v1',
+          kind: 'CronJob',
+          metadata: { name: cronJobName, namespace },
+          spec: {
+            schedule: '1 1 1 1 1',
+            concurrencyPolicy: 'Allow',
+            failedJobsHistoryLimit: 1,
+            successfulJobsHistoryLimit: 3,
+            suspend: false,
+            jobTemplate: {
+              spec: {
+                template: {
+                  spec: {
+                    containers: [SMALL_CONTAINER],
+                    restartPolicy: 'Never',
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
 
-      try {
-        const listPage = new PagePo(page, '/c/local/explorer/batch.cronjob');
+        const listPage = new WorkloadsCronJobsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
         const actionMenu = await sortableTable.rowActionMenuOpen(cronJobName);
 
         const responsePromise = page.waitForResponse(
@@ -84,16 +83,8 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns2 = `e2e-cj-unique-${Date.now()}`;
 
       await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
+        rancherApi.createNamespace(ns1),
+        rancherApi.createNamespace(ns2),
       ]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
@@ -151,33 +142,33 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test('pagination is visible and user is able to navigate through cronjobs data', async ({ page, login }) => {
       await login();
-      const listPage = new PagePo(page, '/c/local/explorer/batch.cronjob');
+      const listPage = new WorkloadsCronJobsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationNavigation(table, 23);
     });
 
     test('sorting changes the order of paginated cronjobs data', async ({ page, login }) => {
       await login();
-      const listPage = new PagePo(page, '/c/local/explorer/batch.cronjob');
+      const listPage = new WorkloadsCronJobsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
 
     test('filter cronjobs', async ({ page, login }) => {
       await login();
-      const listPage = new PagePo(page, '/c/local/explorer/batch.cronjob');
+      const listPage = new WorkloadsCronJobsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -187,11 +178,11 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await mockSmallCollection(page, 'v1/batch.cronjobs', 'batch.cronjob');
 
-      const listPage = new PagePo(page, '/c/local/explorer/batch.cronjob');
+      const listPage = new WorkloadsCronJobsListPagePo(page);
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationHidden(table);
 
