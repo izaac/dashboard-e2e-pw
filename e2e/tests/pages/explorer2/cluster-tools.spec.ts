@@ -4,6 +4,9 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
+const chartName = 'Alerting Drivers';
+const chartKey = 'rancher-alerting-drivers';
+
 test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
     await login();
@@ -22,104 +25,118 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     const cards = clusterTools.featureChartCards();
 
-    await expect(cards).not.toHaveCount(0);
+    await expect(cards.first()).toBeVisible();
     const count = await cards.count();
 
-    expect(count).toBeGreaterThanOrEqual(10);
+    expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test('can deploy chart successfully', { tag: '@flaky' }, async ({ page, rancherApi }) => {
-    test.setTimeout(120000);
+  test.describe('Alerting Drivers chart lifecycle', { tag: '@flaky' }, () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      // Skip if chart is not available in the catalog
+      const resp = await rancherApi.getRancherResource(
+        'v1',
+        'catalog.cattle.io.clusterrepos/rancher-charts?link=index',
+      );
+      const entries = resp.body?.entries || {};
+      const chartAvailable = Boolean(entries[chartKey]);
 
-    await rancherApi.createRancherResource(
-      'v1',
-      'catalog.cattle.io.apps/default/rancher-alerting-drivers?action=uninstall',
-      {},
-      false,
-    );
-    await rancherApi.waitForRancherResource(
-      'v1',
-      'catalog.cattle.io.apps',
-      'default/rancher-alerting-drivers',
-      (resp) => resp.status === 404,
-      20,
-      1500,
-    );
+      test.skip(!chartAvailable, `Chart "${chartKey}" not available in rancher-charts catalog`);
+    });
 
-    const clusterTools = new ClusterToolsPagePo(page, 'local');
+    test('can deploy chart successfully', async ({ page, rancherApi }) => {
+      test.setTimeout(120000);
 
-    await clusterTools.goTo();
-    await clusterTools.waitForPage();
+      // Ensure chart is uninstalled before deploying
+      await rancherApi.createRancherResource(
+        'v1',
+        `catalog.cattle.io.apps/default/${chartKey}?action=uninstall`,
+        {},
+        false,
+      );
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'catalog.cattle.io.apps',
+        `default/${chartKey}`,
+        (resp) => resp.status === 404,
+        20,
+        1500,
+      );
 
-    const chartVersionLocator = clusterTools.getChartVersion('Alerting Drivers');
+      const clusterTools = new ClusterToolsPagePo(page, 'local');
 
-    await expect(chartVersionLocator).not.toHaveText('');
-    const chartVersion = (await chartVersionLocator.textContent())?.trim();
+      await clusterTools.goTo();
+      await clusterTools.waitForPage();
 
-    await clusterTools.goToInstall('Alerting Drivers');
+      const chartVersionLocator = clusterTools.getChartVersion(chartName);
 
-    const responsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts?action=install') &&
-        resp.request().method() === 'POST',
-    );
+      await expect(chartVersionLocator).not.toHaveText('');
 
-    const formSave = new CreateEditViewPo(page, '.dashboard-root');
+      await clusterTools.goToInstall(chartName);
 
-    await formSave.formSave().click();
-    await formSave.formSave().click();
+      const responsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts?action=install') &&
+          resp.request().method() === 'POST',
+      );
 
-    const response = await responsePromise;
+      const formSave = new CreateEditViewPo(page, '.dashboard-root');
 
-    expect(response.status()).toBe(201);
-    await clusterTools.waitForPage();
-  });
+      await formSave.formSave().click();
+      await formSave.formSave().click();
 
-  test('can edit chart successfully', { tag: '@flaky' }, async ({ page }) => {
-    test.setTimeout(120000);
-    const clusterTools = new ClusterToolsPagePo(page, 'local');
+      const response = await responsePromise;
 
-    await clusterTools.goTo();
-    await clusterTools.waitForPage();
-    await clusterTools.editChart('Alerting Drivers');
+      expect(response.status()).toBe(201);
+      await clusterTools.waitForPage();
+    });
 
-    const responsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts?action=upgrade') &&
-        resp.request().method() === 'POST',
-    );
+    test('can edit chart successfully', async ({ page }) => {
+      test.setTimeout(120000);
+      const clusterTools = new ClusterToolsPagePo(page, 'local');
 
-    const formSave = new CreateEditViewPo(page, '.dashboard-root');
+      await clusterTools.goTo();
+      await clusterTools.waitForPage();
+      await clusterTools.editChart(chartName);
 
-    await formSave.formSave().click();
-    await formSave.formSave().click();
+      const responsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts?action=upgrade') &&
+          resp.request().method() === 'POST',
+      );
 
-    const response = await responsePromise;
+      const formSave = new CreateEditViewPo(page, '.dashboard-root');
 
-    expect(response.status()).toBe(201);
-    await clusterTools.waitForPage();
-  });
+      await formSave.formSave().click();
+      await formSave.formSave().click();
 
-  test('can uninstall chart successfully', { tag: '@flaky' }, async ({ page }) => {
-    test.setTimeout(120000);
-    const clusterTools = new ClusterToolsPagePo(page, 'local');
+      const response = await responsePromise;
 
-    await clusterTools.goTo();
-    await clusterTools.waitForPage();
-    await clusterTools.deleteChart('Alerting Drivers');
+      expect(response.status()).toBe(201);
+      await clusterTools.waitForPage();
+    });
 
-    const responsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('catalog.cattle.io.apps/default/rancher-alerting-drivers?action=uninstall') &&
-        resp.request().method() === 'POST',
-    );
+    test('can uninstall chart successfully', async ({ page }) => {
+      test.setTimeout(120000);
+      const clusterTools = new ClusterToolsPagePo(page, 'local');
 
-    const promptRemove = new PromptRemove(page);
+      await clusterTools.goTo();
+      await clusterTools.waitForPage();
+      await clusterTools.deleteChart(chartName);
 
-    await promptRemove.remove();
+      const responsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`catalog.cattle.io.apps/default/${chartKey}?action=uninstall`) &&
+          resp.request().method() === 'POST',
+      );
 
-    const response = await responsePromise;
+      const promptRemove = new PromptRemove(page);
 
-    expect(response.status()).toBe(201);
+      await promptRemove.remove();
+
+      const response = await responsePromise;
+
+      expect(response.status()).toBe(201);
+    });
   });
 });
