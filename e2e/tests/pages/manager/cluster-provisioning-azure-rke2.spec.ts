@@ -13,7 +13,7 @@ import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
 test.describe(
   'Deploy RKE2 cluster using node driver on Azure',
   {
-    tag: ['@manager', '@adminUser', '@standardUser', '@jenkins', '@provisioning'],
+    tag: ['@manager', '@adminUser', '@standardUser', '@jenkins', '@provisioning', '@needsInfra'],
   },
   () => {
     test.beforeEach(async ({ envMeta }) => {

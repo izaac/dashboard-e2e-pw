@@ -8,7 +8,7 @@ import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.clu
  */
 test.describe(
   'Deploy GKE cluster with default settings',
-  { tag: ['@manager', '@adminUser', '@jenkins', '@provisioning'] },
+  { tag: ['@manager', '@adminUser', '@jenkins', '@provisioning', '@needsInfra'] },
   () => {
     test.beforeEach(async ({ envMeta }) => {
       test.skip(

@@ -118,7 +118,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
   });
 
   test.describe('Created', () => {
-    test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning'] }, () => {
+    test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning', '@needsInfra'] }, () => {
       test('can create new cluster', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (custom node SSH access)');
       });
@@ -174,7 +174,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     });
   });
 
-  test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning'] }, () => {
+  test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning', '@needsInfra'] }, () => {
     test.describe('Generic', () => {
       test('can create new cluster', async () => {
         test.skip(

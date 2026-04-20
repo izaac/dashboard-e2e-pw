@@ -1,0 +1,7 @@
+# Ignore test artifacts and local config
+test-results/
+playwright-report/
+node_modules/
+.env
+.git/
+*.log

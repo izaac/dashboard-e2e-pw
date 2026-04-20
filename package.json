@@ -31,6 +31,12 @@
     "gap-map": "npx tsx scripts/generate-gap-map.ts",
     "branch-diff": "sh scripts/branch-backport.sh",
     "api-diff": "npx tsx scripts/api-diff.ts",
+    "local:up": "docker compose up rancher -d",
+    "local:test": "docker compose up tests",
+    "local:test:sharded": "docker compose -f docker-compose.sharded.yml up",
+    "local:down": "docker compose down",
+    "local:down:sharded": "docker compose -f docker-compose.sharded.yml down -v",
+    "local:report": "npx playwright show-report",
     "prepare": "husky"
   },
   "dependencies": {
@@ -49,10 +55,10 @@
     "@typescript-eslint/parser": "8.32.0",
     "eslint": "9.26.0",
     "eslint-plugin-playwright": "2.2.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
     "prettier": "3.5.3",
-    "tsx": "^4.21.0"
+    "tsx": "4.21.0"
   },
   "lint-staged": {
     "*.ts": [

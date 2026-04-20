@@ -18,7 +18,7 @@ const eksSettings = {
   launchTemplate: 'Default (One will be created automatically)',
 };
 
-test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning'] }, () => {
+test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
     // Clean up test-prefixed Amazon cloud credentials from previous runs
     const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);

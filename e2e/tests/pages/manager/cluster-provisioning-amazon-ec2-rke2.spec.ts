@@ -15,7 +15,7 @@ const VERY_LONG_TIMEOUT = 900_000;
 // Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
 test.describe(
   'Deploy RKE2 cluster using node driver on Amazon EC2',
-  { tag: ['@manager', '@adminUser', '@provisioning'] },
+  { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] },
   () => {
     test.beforeAll(async ({ rancherApi }) => {
       // Clean up only test-prefixed Amazon cloud credentials from previous runs

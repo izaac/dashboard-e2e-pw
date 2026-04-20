@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 
-test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
+test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfra'] }, () => {
   test('can see error when authentication fails', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
 
