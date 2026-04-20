@@ -70,7 +70,7 @@ test.describe('User can update their preferences', () => {
         (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
       );
 
-      await themeContainer.getByRole('button', { name: key }).click();
+      await prefPage.themeButtons().set(key);
 
       const resp = await prefUpdatePromise;
 
@@ -446,7 +446,7 @@ test.describe('User can update their preferences', () => {
           (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
         );
 
-        await keymapContainer.getByRole('button', { name: key }).click();
+        await prefPage.keymapButtons().set(key);
 
         const resp = await prefUpdatePromise;
 
@@ -486,7 +486,7 @@ test.describe('User can update their preferences', () => {
           (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
         );
 
-        await helmContainer.getByRole('button', { name: key }).click();
+        await prefPage.helmButtons().set(key);
 
         const resp = await prefUpdatePromise;
 

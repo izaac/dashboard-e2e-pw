@@ -9,17 +9,14 @@ test.describe('User can logout of Rancher', { tag: ['@userMenu', '@adminUser', '
     const userMenu = new UserMenuPo(page);
     const loginPage = new LoginPagePo(page);
 
-    // Wait for home page to be ready after login
-    await expect(page.getByTestId('nav_header_showUserMenu')).toBeVisible({ timeout: 15000 });
-
-    // Logout
+    await userMenu.checkVisible();
     await userMenu.clickMenuItem('Log Out');
 
     await loginPage.waitForPage();
     await loginPage.username().checkVisible();
     await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
 
-    // Attempt to navigate to Home without logging in
+    // Verify unauthenticated navigation redirects back to login
     await page.goto('./home');
     await expect(loginPage.loginPageMessage()).toContainText('Log in again to continue.');
     await loginPage.waitForPage();
@@ -60,11 +57,10 @@ test.describe('User can logout of Rancher', { tag: ['@userMenu', '@adminUser', '
       });
     });
 
-    // Reload to pick up the principals mock (triggers SPA to read mocked principals)
+    // Reload to pick up the principals mock
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('nav_header_showUserMenu')).toBeVisible({ timeout: 15000 });
+    await userMenu.checkVisible();
 
-    // Logout with SSO mock active
     await userMenu.clickMenuItem('Log Out');
 
     await loginPage.waitForPage();
