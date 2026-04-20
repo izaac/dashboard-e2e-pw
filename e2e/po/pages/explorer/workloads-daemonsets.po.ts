@@ -75,10 +75,10 @@ export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
   }
 
   daemonSetTab(): Locator {
-    return this.page.getByTestId('btn-DaemonSet').or(this.page.locator('#DaemonSet'));
+    return this.page.getByTestId('btn-DaemonSet');
   }
 
   upgradingTab(): Locator {
-    return this.page.getByTestId('tab-upgrading').or(this.page.locator('#upgrading'));
+    return this.page.getByTestId('btn-upgrading');
   }
 }
