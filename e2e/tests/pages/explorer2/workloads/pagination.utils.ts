@@ -19,7 +19,7 @@ export async function createBulkResources(
   namespace: string,
   count: number,
   payloadFn: (ns: string, name: string) => object,
-  concurrency = 5,
+  concurrency = 2,
 ): Promise<string[]> {
   const ts = Date.now();
   const names = Array.from({ length: count }, (_, i) => `e2e-${ts}-${i}`);
@@ -30,7 +30,15 @@ export async function createBulkResources(
     await Promise.all(
       chunk.map((name) => rancherApi.createRancherResource(prefix, resourceType, payloadFn(namespace, name))),
     );
+
+    // Let the API server breathe between chunks
+    if (i + concurrency < names.length) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
   }
+
+  // Wait for all resources to be registered before returning
+  await rancherApi.waitForRancherResources(prefix, resourceType, count - 1, true);
 
   return names.sort();
 }
