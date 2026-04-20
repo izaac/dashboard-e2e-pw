@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@/support/fixtures';
 import {
   WorkloadsListPageBasePo,
   WorkloadsCreatePageBasePo,
@@ -86,5 +87,12 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
 
   scaleDownButton(): Locator {
     return this.scaler().getByTestId('scaler-decrease');
+  }
+
+  /** Wait for scale buttons to be enabled and no pending indicators visible */
+  async waitForScaleComplete(): Promise<void> {
+    await expect(this.scaleUpButton()).toBeEnabled({ timeout: 30000 });
+    await expect(this.scaleDownButton()).toBeEnabled({ timeout: 30000 });
+    await expect(this.page.locator('.plus-minus').filter({ hasText: 'Pending' })).not.toBeVisible();
   }
 }

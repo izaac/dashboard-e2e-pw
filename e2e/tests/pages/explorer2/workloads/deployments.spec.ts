@@ -4,7 +4,6 @@ import {
   WorkloadsDeploymentsCreatePagePo,
   WorkloadsDeploymentsDetailsPagePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import { createDeploymentBlueprint } from '@/e2e/blueprints/explorer/workloads/deployments/deployment-create';
 import {
@@ -82,12 +81,35 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
 
+        // Wait for PUT response so Vue store gets the new resourceVersion before next scale action
+        const scaleUpResp = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/apps.deployments/') && resp.request().method() === 'PUT',
+        );
+
         await expect(detailsPage.scaleUpButton()).toBeEnabled();
         await detailsPage.scaleUpButton().click();
+        await scaleUpResp;
 
         await expect(detailsPage.scalerValue()).toContainText('2', { timeout: 30000 });
 
+        // Wait for rollout to fully complete (readyReplicas === replicas) before scaling down
+        await rancherApi.waitForRancherResource(
+          'v1',
+          'apps.deployments',
+          `${namespace}/${deploymentName}`,
+          (resp) => resp.body.status?.readyReplicas === resp.body.spec?.replicas,
+        );
+        await detailsPage.waitForScaleComplete();
+
+        const scaleDownResp = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/apps.deployments/') && resp.request().method() === 'PUT',
+        );
+
         await detailsPage.scaleDownButton().click();
+        const scaleDownResponse = await scaleDownResp;
+
+        expect(scaleDownResponse.status()).toBe(200);
+
         await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
@@ -103,11 +125,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       const namespace = `e2e-labels-ns-${Date.now()}`;
       const deploymentName = `e2e-labels-deploy-${Date.now()}`;
 
-      await rancherApi.createRancherResource('v1', 'namespaces', {
-        apiVersion: 'v1',
-        kind: 'Namespace',
-        metadata: { name: namespace },
-      });
+      await rancherApi.createNamespace(namespace);
       await rancherApi.createRancherResource('v1', 'apps.deployments', {
         ...createDeploymentBlueprint,
         metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
@@ -136,15 +154,12 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       const namespace = `e2e-vol-ns-${Date.now()}`;
       const deploymentName = `e2e-vol-deploy-${Date.now()}`;
 
-      await rancherApi.createRancherResource('v1', 'namespaces', {
-        apiVersion: 'v1',
-        kind: 'Namespace',
-        metadata: { name: namespace },
-      });
+      await rancherApi.createNamespace(namespace);
       await rancherApi.createRancherResource('v1', 'apps.deployments', {
         ...createDeploymentBlueprint,
         metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
       });
+      await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
 
       try {
         const deploymentsListPage = new WorkloadsDeploymentsListPagePo(page, 'local');
@@ -171,13 +186,14 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
           .yamlEditor()
           .set('name: test-vol-changed\nprojected:\n    defaultMode: 420');
 
+        await editPage.clickHorizontalTab('container-0');
         await editPage.clickContainerTab(0, 'storage');
         await editPage.containerStorage().addVolumeButton().toggle();
 
         const options = editPage.containerStorage().addVolumeButton().getOptions();
 
-        await expect(options).toContainText('test-vol-changed (projected)');
-        await expect(options).not.toContainText('test-vol (projected)');
+        await expect(options.filter({ hasText: 'test-vol-changed (projected)' })).toBeVisible();
+        await expect(options.filter({ hasText: /^test-vol \(projected\)$/ })).not.toBeAttached();
 
         const saveResponse = page.waitForResponse(
           (resp) =>
@@ -206,15 +222,12 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       const namespace = `e2e-mount-ns-${Date.now()}`;
       const deploymentName = `e2e-mount-deploy-${Date.now()}`;
 
-      await rancherApi.createRancherResource('v1', 'namespaces', {
-        apiVersion: 'v1',
-        kind: 'Namespace',
-        metadata: { name: namespace },
-      });
+      await rancherApi.createNamespace(namespace);
       await rancherApi.createRancherResource('v1', 'apps.deployments', {
         ...createDeploymentBlueprint,
         metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
       });
+      await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
 
       try {
         const deploymentsListPage = new WorkloadsDeploymentsListPagePo(page, 'local');
@@ -245,7 +258,8 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
           expect.arrayContaining([expect.objectContaining({ mountPath: 'test-123', name: 'test-vol1' })]),
         );
 
-        // Remove the volume mount
+        // Remove the volume mount — wait for resource to stabilize after add
+        await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
         await deploymentsListPage.goTo();
         await deploymentsListPage.waitForPage();
         await deploymentsListPage.goToEditConfigPage(deploymentName);
@@ -266,7 +280,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         const removeBody = await removeResp.json();
         const mounts = removeBody.spec.template.spec.containers[0].volumeMounts;
 
-        expect(!mounts || mounts.length === 0).toBe(true);
+        expect(mounts ?? []).toHaveLength(0);
       } finally {
         await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
@@ -367,18 +381,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-deploy-list-${Date.now()}`;
       ns2 = `e2e-deploy-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -427,7 +430,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationNavigation(table, 23);
     });
@@ -438,7 +441,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
@@ -449,7 +452,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -463,7 +466,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = new SortableTablePo(page, '.sortable-table');
+      const table = listPage.sortableTablePo();
 
       await assertPaginationHidden(table);
 
@@ -486,7 +489,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: deploymentName } },
           template: {
             metadata: { labels: { app: deploymentName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -497,7 +500,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -536,7 +539,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: deploymentName } },
           template: {
             metadata: { labels: { app: deploymentName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -556,7 +559,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
 
         await actionMenu.getMenuItem('Redeploy').click();
@@ -589,7 +592,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
           selector: { matchLabels: { app: deploymentName } },
           template: {
             metadata: { labels: { app: deploymentName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
+            spec: { containers: [SMALL_CONTAINER] },
           },
         },
       });
@@ -611,7 +614,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = listPage.sortableTablePo();
         const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
 
         await actionMenu.getMenuItem('Redeploy').click();
