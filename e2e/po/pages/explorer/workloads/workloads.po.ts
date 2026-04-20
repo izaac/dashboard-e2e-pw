@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import WorkloadPodStoragePo from '@/e2e/po/components/workloads/pod-storage.po';
 import ContainerMountPathPo from '@/e2e/po/components/workloads/container-mount-paths.po';
 
@@ -39,6 +40,10 @@ export class WorkloadsListPageBasePo extends PagePo {
 
   sortableTablePo(): SortableTablePo {
     return new SortableTablePo(this.page, '.sortable-table');
+  }
+
+  masthead(): ResourceListMastheadPo {
+    return new ResourceListMastheadPo(this.page, ':scope', this.self());
   }
 
   listElementWithName(name: string): Locator {
