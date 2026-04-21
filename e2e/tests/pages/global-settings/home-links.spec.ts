@@ -170,29 +170,6 @@ test.describe('Home Links', () => {
     await expect(homeLinksPage.supportLinks().filter({ hasText: customLinkName })).not.toBeAttached();
   });
 
-  test(
-    'standard user has only read access to Home Links page',
-    { tag: ['@globalSettings', '@standardUser'] },
-    async ({ page, login }) => {
-      await login();
-      const homePage = new HomePagePo(page);
-
-      await homePage.goTo();
-
-      const burgerMenu = new BurgerMenuPo(page);
-      const sideNav = new ProductNavPo(page);
-
-      // Navigate to Home Links page
-      await burgerMenu.toggle();
-      await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
-      await sideNav.navToSideMenuEntryByLabel('Home Links');
-
-      // verify action buttons/checkboxes are hidden for standard user
-      await expect(homeLinksPage.defaultLinkCheckboxes().first()).not.toBeAttached();
-      await expect(homeLinksPage.saveButton().self()).not.toBeAttached();
-    },
-  );
-
   test('cleans custom links', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     const burgerMenu = new BurgerMenuPo(page);
     const sideNav = new ProductNavPo(page);
@@ -255,5 +232,22 @@ test.describe('Home Links', () => {
     await page.goto('./home', { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
     await expect(homeLinksPage.supportLinks().filter({ hasText: customLinkName })).not.toBeAttached();
+  });
+});
+
+test.describe('Home Links - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {
+  test('standard user has only read access to Home Links page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
+
+    const homeLinksPage = new HomeLinksPagePo(page);
+    const burgerMenu = new BurgerMenuPo(page);
+    const sideNav = new ProductNavPo(page);
+
+    await burgerMenu.toggle();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    await sideNav.navToSideMenuEntryByLabel('Home Links');
+
+    await expect(homeLinksPage.defaultLinkCheckboxes().first()).not.toBeAttached();
+    await expect(homeLinksPage.saveButton().self()).not.toBeAttached();
   });
 });

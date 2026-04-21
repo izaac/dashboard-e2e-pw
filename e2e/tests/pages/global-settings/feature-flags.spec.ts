@@ -327,39 +327,6 @@ test.describe('Feature Flags', () => {
     },
   );
 
-  test(
-    'standard user has only read access to Feature Flag page',
-    { tag: ['@globalSettings', '@standardUser'] },
-    async ({ page, login }) => {
-      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
-      await login();
-      const homePage = new HomePagePo(page);
-
-      await homePage.goTo();
-
-      const featureFlagsPage = new FeatureFlagsPagePo(page);
-
-      const featureFlags = [
-        'continuous-delivery',
-        'harvester',
-        'harvester-baremetal-container-workload',
-        'istio-virtual-service-ui',
-        'legacy',
-        'multi-cluster-management',
-        'rke1-custom-node-cleanup',
-        'rke2',
-        'token-hashing',
-        'unsupported-storage-drivers',
-      ];
-
-      await featureFlagsPage.navTo();
-
-      for (const flag of featureFlags) {
-        await expect(featureFlagsPage.list().details(flag, 4)).not.toBeAttached();
-      }
-    },
-  );
-
   test.describe('List', { tag: ['@noVai', '@globalSettings', '@adminUser', '@standardUser'] }, () => {
     test('validate feature flags table header content', async ({ page, rancherApi }) => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
@@ -389,5 +356,32 @@ test.describe('Feature Flags', () => {
 
       expect(rowCount).toBe(featureCount);
     });
+  });
+});
+
+test.describe('Feature Flags - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {
+  test('standard user has only read access to Feature Flag page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
+
+    const featureFlagsPage = new FeatureFlagsPagePo(page);
+
+    const featureFlags = [
+      'continuous-delivery',
+      'harvester',
+      'harvester-baremetal-container-workload',
+      'istio-virtual-service-ui',
+      'legacy',
+      'multi-cluster-management',
+      'rke1-custom-node-cleanup',
+      'rke2',
+      'token-hashing',
+      'unsupported-storage-drivers',
+    ];
+
+    await featureFlagsPage.navTo();
+
+    for (const flag of featureFlags) {
+      await expect(featureFlagsPage.list().details(flag, 4)).not.toBeAttached();
+    }
   });
 });

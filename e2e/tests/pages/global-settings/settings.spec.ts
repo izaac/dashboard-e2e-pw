@@ -560,19 +560,20 @@ test.describe('Settings', () => {
     expect(resetResp.status()).toBe(200);
     expect(resetResp.request().postDataJSON().value).toBe(settingsOriginal[settingName].default);
   });
+});
 
-  test(
-    'standard user has only read access to Settings page',
-    { tag: ['@globalSettings', '@standardUser'] },
-    async ({ page, login }) => {
-      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
-      await login();
-      const homePage = new HomePagePo(page);
+test.describe('Settings - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {
+  test('standard user has only read access to Settings page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
 
-      await homePage.goTo();
+    const settingsPage = new SettingsPagePo(page, '_');
+    const burgerMenu = new BurgerMenuPo(page);
+    const sideNav = new ProductNavPo(page);
 
-      await navToSettings(page);
-      await expect(settingsPage.actionButtonByLabel('password-min-length')).not.toBeAttached();
-    },
-  );
+    await burgerMenu.toggle();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    await sideNav.navToSideMenuEntryByLabel('Settings');
+
+    await expect(settingsPage.actionButtonByLabel('password-min-length')).not.toBeAttached();
+  });
 });
