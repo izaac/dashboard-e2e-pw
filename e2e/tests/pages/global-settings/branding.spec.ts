@@ -582,24 +582,25 @@ test.describe('Branding', () => {
     await brandingPage.linkColorCheckbox().set();
     await brandingPage.applyAndWait('ui-link-color', 200);
   });
+});
 
-  test(
-    'standard user has only read access to Branding page',
-    { tag: ['@globalSettings', '@standardUser'] },
-    async ({ page }) => {
-      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
+test.describe('Branding - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {
+  test('standard user has only read access to Branding page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
 
-      const brandingPage = new BrandingPagePo(page);
+    const brandingPage = new BrandingPagePo(page);
+    const burgerMenu = new BurgerMenuPo(page);
+    const sideNav = new ProductNavPo(page);
 
-      await navToBranding(page);
+    await burgerMenu.toggle();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    await sideNav.navToSideMenuEntryByLabel('Branding');
 
-      // verify action buttons/checkboxes etc. are disabled/hidden for standard user
-      await expect(brandingPage.privateLabel().self()).toBeDisabled();
-      await brandingPage.customLogoCheckbox().checkDisabled();
-      await brandingPage.customFaviconCheckbox().checkDisabled();
-      await brandingPage.primaryColorCheckbox().checkDisabled();
-      await brandingPage.linkColorCheckbox().checkDisabled();
-      await brandingPage.applyButton().checkNotExists();
-    },
-  );
+    await expect(brandingPage.privateLabel().self()).toBeDisabled();
+    await brandingPage.customLogoCheckbox().checkDisabled();
+    await brandingPage.customFaviconCheckbox().checkDisabled();
+    await brandingPage.primaryColorCheckbox().checkDisabled();
+    await brandingPage.linkColorCheckbox().checkDisabled();
+    await brandingPage.applyButton().checkNotExists();
+  });
 });
