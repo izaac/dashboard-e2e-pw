@@ -50,6 +50,8 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
   });
 
   test.skip('port value is sent correctly in request payload', async ({ page, login, rancherApi }) => {
+    // Debounce trap: port input value not propagated to request body before save.
+    // Needs waitForDebounce() or PO fix — same pattern as ingress RulePath.
     await login();
 
     const networkPolicyName = `np-port-${Date.now()}`;
