@@ -33,7 +33,7 @@
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+12) |
-| NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, checkAllRead, checkHasUnread, checkOpen, checkClosed, getNotificationByName (+4) |
+| NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, checkAllRead, checkHasUnread, checkOpen, checkClosed, getNotificationByName (+6) |
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, checkRead, checkUnread, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
 | ProductNavPo | product-nav.po.ts | ComponentPo | `.side-nav` | super, groups, navToSideMenuGroupByLabel, sideMenuEntryByLabel, navToSideMenuEntryByLabel |

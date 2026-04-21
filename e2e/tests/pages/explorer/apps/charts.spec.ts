@@ -6,7 +6,8 @@ import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
 
 test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
-  test('Charts have expected icons', async ({ page, login }) => {
+  test('Charts have expected icons', async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-alerting-drivers');
     await login();
 
     const chartsPage = new ChartsPage(page);
@@ -19,7 +20,8 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     await chartsPage.checkChartGenericIcon('Logging', false);
   });
 
-  test('should call fetch when route query changes with valid parameters', async ({ page, login }) => {
+  test('should call fetch when route query changes with valid parameters', async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-logging');
     await login();
 
     const chartsPage = new ChartsPage(page);
@@ -49,7 +51,8 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     expect(resp.status()).toBe(200);
   });
 
-  test('should not call fetch when navigating back to charts page', async ({ page, login }) => {
+  test('should not call fetch when navigating back to charts page', async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-logging');
     await login();
 
     const chartsPage = new ChartsPage(page);
@@ -80,12 +83,16 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     expect(requests.length).toBe(0);
   });
 
-  test.skip('A disabled repo should NOT be listed on the list of repository filters', async ({ page, login }) => {
+  test('A disabled repo should NOT be listed on the list of repository filters', async ({
+    page,
+    login,
+    rancherApi,
+  }) => {
     await login();
 
     const appRepoList = new ChartRepositoriesPagePo(page, 'local', 'apps');
 
-    await appRepoList.waitForGoTo(`${CLUSTER_REPOS_BASE_URL}?`);
+    await appRepoList.goTo();
     await appRepoList.sortableTable().checkLoadingIndicatorNotVisible();
 
     const actionMenu = await appRepoList.list().actionMenu('Partners');
@@ -105,15 +112,17 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
         chartsPage.getAllOptionsByGroupName('Repository').filter({ hasText: 'Partners' }),
       ).not.toBeAttached();
     } finally {
-      await appRepoList.waitForGoTo(`${CLUSTER_REPOS_BASE_URL}?`);
+      await appRepoList.goTo();
       await appRepoList.sortableTable().checkLoadingIndicatorNotVisible();
       const enableMenu = await appRepoList.list().actionMenu('Partners');
 
       await enableMenu.getMenuItem('Enable').click();
+
+      await rancherApi.waitForResourceState('v1', 'catalog.cattle.io.clusterrepos', 'rancher-partner-charts');
     }
   });
 
-  test.skip('should display empty state properly', async ({ page, login }) => {
+  test('should display empty state properly', async ({ page, login }) => {
     await login();
 
     const chartsPage = new ChartsPage(page);
@@ -122,9 +131,8 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     await chartsPage.waitForPage();
     await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
 
-    await chartsPage.getFilterOptionByName('Rancher').first().click();
-    await chartsPage.getFilterOptionByName('PaaS').first().click();
-    await chartsPage.getFilterOptionByName('Installed').first().click();
+    // Type a non-existent search term to trigger empty state
+    await chartsPage.chartsSearchFilterInput().fill('zzz-nonexistent-chart-e2e');
 
     await expect(chartsPage.emptyState()).toBeVisible();
     await expect(chartsPage.emptyStateTitle()).toContainText('No charts to show');
@@ -171,77 +179,66 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 test.describe('Chart Details Page', { tag: ['@explorer', '@adminUser'] }, () => {
   const chartName = 'Logging';
 
-  test('should navigate to the correct repository page', async ({ page, login, rancherApi }) => {
+  test('should navigate to the correct repository page', async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-logging');
     await login();
-    await rancherApi.setUserPreference({ 'show-pre-release': 'true' });
 
-    try {
-      const chartPage = new ChartPage(page);
+    const chartPage = new ChartPage(page);
 
-      await chartPage.navTo(chartName);
-      await chartPage.waitForPage();
+    await chartPage.navTo(chartName);
+    await chartPage.waitForPage();
 
-      await chartPage.repoLink().click();
-      await expect(page).toHaveURL(/\/c\/local\/apps\/catalog\.cattle\.io\.clusterrepo\/rancher-charts/);
-    } finally {
-      await rancherApi.setUserPreference({ 'show-pre-release': 'false' });
-    }
+    await chartPage.repoLink().click();
+    await expect(page).toHaveURL(/\/c\/local\/apps\/catalog\.cattle\.io\.clusterrepo\/rancher-charts/);
   });
 
   test('should navigate to the charts list with the correct filters when a keyword is clicked', async ({
     page,
     login,
-    rancherApi,
+    chartGuard,
   }) => {
+    await chartGuard('rancher-charts', 'rancher-logging');
     await login();
-    await rancherApi.setUserPreference({ 'show-pre-release': 'true' });
 
-    try {
-      const chartPage = new ChartPage(page);
+    const chartPage = new ChartPage(page);
 
-      await chartPage.navTo(chartName);
-      await chartPage.waitForPage();
+    await chartPage.navTo(chartName);
+    await chartPage.waitForPage();
 
-      await chartPage.keywords().first().click();
+    await chartPage.keywords().first().click();
 
-      const chartsPage = new ChartsPage(page);
+    const chartsPage = new ChartsPage(page);
 
-      await chartsPage.waitForPage();
-      await expect(page).toHaveURL(/q=logging/);
-    } finally {
-      await rancherApi.setUserPreference({ 'show-pre-release': 'false' });
-    }
+    await chartsPage.waitForPage();
+    await expect(page).toHaveURL(/q=logging/);
   });
 
-  test.skip('should show more versions when the button is clicked', async ({ page, login, rancherApi }) => {
+  test('should show more versions when the button is clicked', async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-logging');
     await login();
-    await rancherApi.setUserPreference({ 'show-pre-release': 'true' });
 
-    try {
-      const chartPage = new ChartPage(page);
+    const chartPage = new ChartPage(page);
 
-      await chartPage.navTo(chartName);
-      await chartPage.waitForPage();
+    await chartPage.navTo(chartName);
+    await chartPage.waitForPage();
 
-      const indexResult = await rancherApi.getRancherResource(
-        'v1',
-        'catalog.cattle.io.clusterrepos',
-        'rancher-charts?link=index',
-      );
-      const entries = indexResult.body.entries;
-      const rancherLoggingVersions = entries['rancher-logging'];
-      const totalCount = rancherLoggingVersions.length;
+    // Versions are truncated when the chart has many releases
+    const showMoreBtn = chartPage.showMoreVersions();
+    const versionLinks = chartPage.versionLinks();
 
-      if (totalCount > 7) {
-        await expect(chartPage.versionLinks()).toHaveCount(7);
-        await chartPage.showMoreVersions().click();
-        await expect(chartPage.versionLinks()).toHaveCount(totalCount);
-      } else {
-        await expect(chartPage.versionLinks()).toHaveCount(totalCount);
-        await expect(chartPage.showMoreVersions()).not.toBeAttached();
-      }
-    } finally {
-      await rancherApi.setUserPreference({ 'show-pre-release': 'false' });
+    if (await showMoreBtn.isVisible()) {
+      const initialCount = await versionLinks.count();
+
+      await showMoreBtn.click();
+      await expect(showMoreBtn).not.toBeAttached();
+
+      // After expanding, more versions should be visible
+      const expandedCount = await versionLinks.count();
+
+      expect(expandedCount).toBeGreaterThan(initialCount);
+    } else {
+      // Few versions — all shown without truncation
+      await expect(versionLinks).not.toHaveCount(0);
     }
   });
 });

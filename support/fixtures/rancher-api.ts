@@ -14,6 +14,7 @@ export class RancherApi {
   private csrfToken: string;
   private csrfCookie: string;
   private runTimestamp: number;
+  private chartPresenceCache = new Map<string, 'available' | 'filtered' | 'catalog-error'>();
 
   constructor(request: APIRequestContext, apiUrl: string, csrfToken = '') {
     this.request = request;
@@ -528,5 +529,51 @@ export class RancherApi {
         name: nsName,
       },
     });
+  }
+
+  /**
+   * Check whether a chart is present in the catalog index.
+   *
+   * Uses the filtered index (`?link=index`) which applies server-side version constraints —
+   * the same index the Charts UI renders. Results are cached per worker since the catalog
+   * doesn't change mid-run.
+   *
+   * Returns:
+   * - `'available'` — chart exists in the filtered index, test can run
+   * - `'filtered'` — catalog has entries but this chart is absent (version constraints or not in repo)
+   * - `'catalog-error'` — index is empty or fetch failed (repo not synced / broken)
+   */
+  async checkChartPresence(repo: string, chartId: string): Promise<'available' | 'filtered' | 'catalog-error'> {
+    const key = `${repo}/${chartId}`;
+
+    if (this.chartPresenceCache.has(key)) {
+      return this.chartPresenceCache.get(key)!;
+    }
+
+    const resp = await this.request.fetch(
+      `${this.apiUrl}/v1/catalog.cattle.io.clusterrepos/${repo}?link=index`,
+      this.opts(),
+    );
+
+    if (!resp.ok()) {
+      this.chartPresenceCache.set(key, 'catalog-error');
+
+      return 'catalog-error';
+    }
+
+    const json = await resp.json().catch(() => ({}));
+    const entries = json?.entries;
+
+    if (!entries || Object.keys(entries).length === 0) {
+      this.chartPresenceCache.set(key, 'catalog-error');
+
+      return 'catalog-error';
+    }
+
+    const result = entries[chartId] ? ('available' as const) : ('filtered' as const);
+
+    this.chartPresenceCache.set(key, result);
+
+    return result;
   }
 }

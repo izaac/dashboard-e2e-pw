@@ -4,9 +4,12 @@ import type { TestEnvMetadata } from '@/globals';
 import * as fs from 'fs';
 import * as path from 'path';
 
+type ChartGuardFn = (repo: string, chartId: string) => Promise<void>;
+
 type RancherTestFixtures = {
   envMeta: TestEnvMetadata;
   login: (options?: { username?: string; password?: string }) => Promise<void>;
+  chartGuard: ChartGuardFn;
 };
 
 type RancherWorkerFixtures = {
@@ -203,6 +206,37 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
     };
 
     await use(doLogin);
+  },
+
+  /**
+   * Chart availability guard — sets `show-pre-release` preference, checks the catalog
+   * index, and skips/fails the test based on chart presence.
+   *
+   * Usage: `await chartGuard('rancher-charts', 'rancher-backup');`
+   *
+   * - Chart available → test proceeds
+   * - Chart filtered by catalog rules → test.skip()
+   * - Catalog empty/broken → throws (hard fail)
+   *
+   * Preference is restored on teardown. Index results are cached on the worker-scoped
+   * rancherApi instance so the catalog is fetched at most once per repo per worker.
+   */
+  chartGuard: async ({ rancherApi }, use) => {
+    await rancherApi.setUserPreference({ 'show-pre-release': 'true' });
+
+    const guard: ChartGuardFn = async (repo: string, chartId: string) => {
+      const presence = await rancherApi.checkChartPresence(repo, chartId);
+
+      if (presence === 'catalog-error') {
+        throw new Error(`Catalog index for '${repo}' is empty or unavailable — repo may not be synced`);
+      }
+
+      base.skip(presence === 'filtered', `Chart '${chartId}' not in filtered catalog for this environment`);
+    };
+
+    await use(guard);
+
+    await rancherApi.setUserPreference({ 'show-pre-release': 'false' });
   },
 });
 
