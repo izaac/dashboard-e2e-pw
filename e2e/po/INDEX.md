@@ -281,7 +281,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, hasAppropriateWidth, expect (+34) |
+| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, isDisabled, hasAppropriateWidth (+35) |
 | BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+13) |
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+10) |

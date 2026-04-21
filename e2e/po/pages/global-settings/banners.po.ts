@@ -48,6 +48,10 @@ export class BannerCheckboxPo {
     await expect(this.container).toBeVisible();
   }
 
+  async isDisabled(): Promise<void> {
+    await expect(this.container.locator('span.checkbox-custom')).toHaveAttribute('aria-disabled', 'true');
+  }
+
   async hasAppropriateWidth(): Promise<void> {
     const width = await this.container.locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).width);
 
