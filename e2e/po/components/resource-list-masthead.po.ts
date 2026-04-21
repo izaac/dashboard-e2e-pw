@@ -15,11 +15,11 @@ export default class ResourceListMastheadPo extends ComponentPo {
   }
 
   createButton(): Locator {
-    return this.self().getByTestId('masthead-create');
+    return this.page.getByTestId('masthead-create');
   }
 
   async createYaml(): Promise<void> {
-    await this.self().getByTestId('masthead-create-yaml').click();
+    await this.page.getByTestId('masthead-create-yaml').click();
   }
 
   async create(): Promise<void> {

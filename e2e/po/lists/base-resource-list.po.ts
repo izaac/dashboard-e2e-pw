@@ -12,7 +12,7 @@ export default class BaseResourceList extends ComponentPo {
   }
 
   masthead(): ResourceListMastheadPo {
-    return new ResourceListMastheadPo(this.page, ':scope', this.self());
+    return new ResourceListMastheadPo(this.page, ':scope');
   }
 
   resourceTable(): ResourceTablePo {
