@@ -157,6 +157,8 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
           return;
         }
       } else {
+        // Clear existing auth state when logging in as a different user
+        await page.context().clearCookies();
         await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       }
 
