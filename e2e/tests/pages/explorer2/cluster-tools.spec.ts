@@ -33,6 +33,8 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Alerting Drivers chart lifecycle', () => {
+    test.describe.configure({ mode: 'serial' });
+
     test.beforeEach(async ({ chartGuard }) => {
       await chartGuard('rancher-charts', chartKey);
     });
@@ -41,12 +43,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       test.setTimeout(120000);
 
       // Ensure chart is uninstalled before deploying
-      await rancherApi.createRancherResource(
-        'v1',
-        `catalog.cattle.io.apps/default/${chartKey}?action=uninstall`,
-        {},
-        false,
-      );
+      await rancherApi.uninstallChart('default', chartKey);
       await rancherApi.waitForRancherResource(
         'v1',
         'catalog.cattle.io.apps',
@@ -87,8 +84,14 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       await clusterTools.waitForPage();
     });
 
-    test('can edit chart successfully', async ({ page }) => {
+    test('can edit chart successfully', async ({ page, rancherApi }) => {
       test.setTimeout(120000);
+
+      // Verify chart is deployed — skip if not (avoids hard dependency on deploy test)
+      const appResp = await rancherApi.getRancherResource('v1', 'catalog.cattle.io.apps', `default/${chartKey}`, 0);
+
+      test.skip(appResp.status !== 200, `Chart "${chartKey}" is not installed — cannot edit`);
+
       const clusterTools = new ClusterToolsPagePo(page, 'local');
       const installChartPage = new InstallChartPage(page);
       const terminal = new KubectlPo(page);
@@ -116,8 +119,14 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       await clusterTools.waitForPage();
     });
 
-    test('can uninstall chart successfully', async ({ page }) => {
+    test('can uninstall chart successfully', async ({ page, rancherApi }) => {
       test.setTimeout(120000);
+
+      // Verify chart is deployed — skip if not (avoids hard dependency on deploy test)
+      const appResp = await rancherApi.getRancherResource('v1', 'catalog.cattle.io.apps', `default/${chartKey}`, 0);
+
+      test.skip(appResp.status !== 200, `Chart "${chartKey}" is not installed — cannot uninstall`);
+
       const clusterTools = new ClusterToolsPagePo(page, 'local');
       const terminal = new KubectlPo(page);
 
@@ -144,13 +153,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test.afterAll(async ({ rancherApi }) => {
-      // Cleanup: ensure chart is uninstalled regardless of test outcome
-      await rancherApi.createRancherResource(
-        'v1',
-        `catalog.cattle.io.apps/default/${chartKey}?action=uninstall`,
-        {},
-        false,
-      );
+      await rancherApi.uninstallChart('default', chartKey);
     });
   });
 });

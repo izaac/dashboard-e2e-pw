@@ -576,4 +576,26 @@ export class RancherApi {
 
     return result;
   }
+
+  /**
+   * Uninstall a Helm chart via API. Safe to call when the chart is not installed.
+   * When crdName is provided, uninstalls the app first, then the CRD (order matters).
+   */
+  async uninstallChart(namespace: string, name: string, crdName?: string): Promise<void> {
+    const base = `catalog.cattle.io.apps/${namespace}`;
+
+    const appResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${name}`, 0);
+
+    if (appResp.status === 200) {
+      await this.createRancherResource('v1', `${base}/${name}?action=uninstall`, {}, false);
+    }
+
+    if (crdName) {
+      const crdResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${crdName}`, 0);
+
+      if (crdResp.status === 200) {
+        await this.createRancherResource('v1', `${base}/${crdName}?action=uninstall`, {}, false);
+      }
+    }
+  }
 }
