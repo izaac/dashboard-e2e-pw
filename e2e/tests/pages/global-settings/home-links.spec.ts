@@ -14,9 +14,6 @@ test.describe('Home Links', () => {
 
   test.beforeEach(async ({ login, page, rancherApi }) => {
     await login();
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
     homeLinksPage = new HomeLinksPagePo(page);
 
     // Save original custom links setting for cleanup

@@ -82,7 +82,7 @@ test.describe('Branding', () => {
   test.describe.configure({ mode: 'serial' });
   let savedBrandingValues: Record<string, { value: string; resourceVersion: string }> = {};
 
-  test.beforeEach(async ({ login, page, rancherApi }) => {
+  test.beforeEach(async ({ login, rancherApi }) => {
     savedBrandingValues = {};
 
     for (const setting of BRANDING_SETTINGS) {
@@ -101,9 +101,6 @@ test.describe('Branding', () => {
     }
 
     await login();
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
   });
 
   test.afterEach(async ({ rancherApi }) => {
