@@ -88,6 +88,7 @@ yarn summarize-failures  # Classify test failures after a run
 
 ## License
 
+Copyright 2024-2026 Izaac Zavaleta
 Copyright 2024-2026 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
