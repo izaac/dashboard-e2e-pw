@@ -25,7 +25,8 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     outputName = rancherApi.createE2EResourceName('logging-output');
   });
 
-  test.beforeEach(async ({ login }) => {
+  test.beforeEach(async ({ login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-logging');
     await login();
   });
 

@@ -15,7 +15,8 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
     repo: 'rancher-charts',
   };
 
-  test.beforeEach(async ({ page, login }) => {
+  test.beforeEach(async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-monitoring');
     await login();
     await page.setViewportSize({ width: 1280, height: 720 });
   });

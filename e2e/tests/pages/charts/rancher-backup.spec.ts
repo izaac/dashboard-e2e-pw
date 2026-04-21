@@ -12,7 +12,8 @@ const STORAGE_CLASS_RESOURCE = 'storage.k8s.io.storageclasses';
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
   test.describe('Rancher Backups', () => {
-    test.beforeEach(async ({ login }) => {
+    test.beforeEach(async ({ login, chartGuard }) => {
+      await chartGuard('rancher-charts', 'rancher-backup');
       await login();
     });
 

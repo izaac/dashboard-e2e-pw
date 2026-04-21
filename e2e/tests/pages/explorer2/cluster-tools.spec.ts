@@ -2,7 +2,8 @@ import { test, expect } from '@/support/fixtures';
 import ClusterToolsPagePo from '@/e2e/po/pages/explorer/cluster-tools.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
+import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
+import KubectlPo from '@/e2e/po/components/kubectl.po';
 
 const chartName = 'Alerting Drivers';
 const chartKey = 'rancher-alerting-drivers';
@@ -32,16 +33,8 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Alerting Drivers chart lifecycle', () => {
-    test.beforeEach(async ({ rancherApi }) => {
-      // Skip if chart is not available in the catalog
-      const resp = await rancherApi.getRancherResource(
-        'v1',
-        'catalog.cattle.io.clusterrepos/rancher-charts?link=index',
-      );
-      const entries = resp.body?.entries || {};
-      const chartAvailable = Boolean(entries[chartKey]);
-
-      test.skip(!chartAvailable, `Chart "${chartKey}" not available in rancher-charts catalog`);
+    test.beforeEach(async ({ chartGuard }) => {
+      await chartGuard('rancher-charts', chartKey);
     });
 
     test('can deploy chart successfully', async ({ page, rancherApi }) => {
@@ -64,6 +57,8 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       );
 
       const clusterTools = new ClusterToolsPagePo(page, 'local');
+      const installChartPage = new InstallChartPage(page);
+      const terminal = new KubectlPo(page);
 
       await clusterTools.goTo();
       await clusterTools.waitForPage();
@@ -73,6 +68,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       await expect(chartVersionLocator).not.toHaveText('');
 
       await clusterTools.goToInstall(chartName);
+      await installChartPage.nextPage();
 
       const responsePromise = page.waitForResponse(
         (resp) =>
@@ -80,24 +76,28 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
           resp.request().method() === 'POST',
       );
 
-      const formSave = new CreateEditViewPo(page, '.dashboard-root');
-
-      await formSave.formSave().click();
-      await formSave.formSave().click();
+      await installChartPage.installChart();
 
       const response = await responsePromise;
 
       expect(response.status()).toBe(201);
+
+      await terminal.waitForTerminalStatus('Disconnected', 60000);
+      await terminal.closeTerminal();
       await clusterTools.waitForPage();
     });
 
     test('can edit chart successfully', async ({ page }) => {
       test.setTimeout(120000);
       const clusterTools = new ClusterToolsPagePo(page, 'local');
+      const installChartPage = new InstallChartPage(page);
+      const terminal = new KubectlPo(page);
 
       await clusterTools.goTo();
       await clusterTools.waitForPage();
       await clusterTools.editChart(chartName);
+
+      await installChartPage.nextPage();
 
       const responsePromise = page.waitForResponse(
         (resp) =>
@@ -105,20 +105,21 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
           resp.request().method() === 'POST',
       );
 
-      const formSave = new CreateEditViewPo(page, '.dashboard-root');
-
-      await formSave.formSave().click();
-      await formSave.formSave().click();
+      await installChartPage.installChart();
 
       const response = await responsePromise;
 
       expect(response.status()).toBe(201);
+
+      await terminal.waitForTerminalStatus('Disconnected', 60000);
+      await terminal.closeTerminal();
       await clusterTools.waitForPage();
     });
 
     test('can uninstall chart successfully', async ({ page }) => {
       test.setTimeout(120000);
       const clusterTools = new ClusterToolsPagePo(page, 'local');
+      const terminal = new KubectlPo(page);
 
       await clusterTools.goTo();
       await clusterTools.waitForPage();
@@ -137,6 +138,19 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       const response = await responsePromise;
 
       expect(response.status()).toBe(201);
+
+      await terminal.waitForTerminalStatus('Disconnected', 60000);
+      await terminal.closeTerminal();
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      // Cleanup: ensure chart is uninstalled regardless of test outcome
+      await rancherApi.createRancherResource(
+        'v1',
+        `catalog.cattle.io.apps/default/${chartKey}?action=uninstall`,
+        {},
+        false,
+      );
     });
   });
 });
