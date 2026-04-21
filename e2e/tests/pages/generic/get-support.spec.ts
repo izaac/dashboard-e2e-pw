@@ -19,9 +19,22 @@ test.describe('Support Page', () => {
     await supportPage.waitForPage();
   });
 
-  test('standard user does not have access to Support page', { tag: ['@generic', '@standardUser'] }, async () => {
-    test.skip(true, 'Requires a standard user account — not available in this environment');
-  });
+  test(
+    'standard user does not have access to Support page',
+    { tag: ['@generic', '@standardUser'] },
+    async ({ page, login, envMeta }) => {
+      await login({ username: 'standard_user', password: envMeta.password });
+
+      const homePage = new HomePagePo(page);
+      const burgerMenu = new BurgerMenuPo(page);
+
+      await homePage.goTo();
+      await homePage.waitForPage();
+
+      await burgerMenu.toggle();
+      await expect(burgerMenu.support()).not.toBeAttached();
+    },
+  );
 
   test.describe('Support Links', { tag: ['@generic', '@adminUser'] }, () => {
     test('Suse Rancher Support link has correct href', { tag: ['@noPrime'] }, async ({ page, login }) => {
