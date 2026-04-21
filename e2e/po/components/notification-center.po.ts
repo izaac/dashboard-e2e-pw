@@ -55,6 +55,15 @@ export default class NotificationsCenterPo extends ComponentPo {
     await expect(this.self().getByTestId('notifications-center-item')).toHaveCount(count);
   }
 
+  /** Assert at least `min` notifications (exact count may vary). */
+  async checkCountAtLeast(min: number): Promise<void> {
+    await expect(async () => {
+      const count = await this.self().getByTestId('notifications-center-item').count();
+
+      expect(count).toBeGreaterThanOrEqual(min);
+    }).toPass();
+  }
+
   /** Get a notification by ID */
   getNotification(id: string): NotificationPo {
     const selector = `[data-testid="notifications-center-item-${id}"]`;

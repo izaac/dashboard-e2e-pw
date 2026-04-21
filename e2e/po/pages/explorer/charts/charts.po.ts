@@ -92,11 +92,14 @@ export class ChartsPage extends PagePo {
   }
 
   getFilterOptionByName(name: string): Locator {
-    return this.self().locator('.filter-panel .filter-group .filter').filter({ hasText: name });
+    return this.self().getByTestId('filter-panel-filter-checkbox').filter({ hasText: name });
   }
 
   getAllOptionsByGroupName(name: string): Locator {
-    return this.self().locator('.filter-panel .filter-group').filter({ hasText: name }).locator('.filter');
+    return this.self()
+      .getByTestId('filter-panel-filter-group')
+      .filter({ hasText: name })
+      .getByTestId('filter-panel-filter-checkbox');
   }
 
   scrollContainer(): Locator {
