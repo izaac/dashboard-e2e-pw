@@ -47,12 +47,37 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     expect(rowCount).toBeGreaterThanOrEqual(2);
   });
 
-  test.skip("show correct 'expired' states", async () => {
-    // This test requires intercepting /v1/secrets responses to inject an expired cert.
-    // The UI computes cert expiry from the TLS cert data itself. The upstream Cypress test
-    // uses cy.intercept to modify responses in-flight, but the Rancher dashboard loads
-    // secrets via both REST and websocket, making reliable interception complex in Playwright.
-    // TODO: Revisit when page.route() can intercept websocket-based data loading.
+  test("show correct 'expired' states", async ({ page, login }) => {
+    // Intercept secrets REST endpoint and inject expired cert into response
+    await page.route(/\/v1\/secrets\?/, async (route) => {
+      const response = await route.fetch();
+      const json = await response.json();
+
+      json.data.push(expiredCert);
+      json.count = (json.count || json.data.length - 1) + 1;
+
+      await route.fulfill({ response, json });
+    });
+
+    await login();
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+    await clusterDashboard.goTo();
+    await clusterDashboard.waitForPage();
+    await clusterDashboard.clickCertificatesTab();
+
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible({ timeout: 15000 });
+
+    // Verify expired banner
+    await expect(clusterDashboard.expiredBanner()).toBeVisible();
+    await expect(clusterDashboard.expiredBanner()).toContainText('1 Certificate has expired');
+
+    // Verify the expired cert row shows "Expired" state
+    const certRow = clusterDashboard.certificatesList().sortableTable().rowWithName(expiredCertName);
+
+    await certRow.self().scrollIntoViewIfNeeded();
+    await certRow.checkVisible();
+    await expect(certRow.column(1)).toContainText('Expired');
   });
 
   test('validate link to full secrets list', async ({ page, login }) => {

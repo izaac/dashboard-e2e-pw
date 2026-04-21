@@ -33,6 +33,14 @@ export default class ClusterDashboardPagePo extends PagePo {
     return this.page.locator('.certificates');
   }
 
+  expiredBanner(): Locator {
+    return this.page.locator('#cluster-certs .banner.error');
+  }
+
+  expiringBanner(): Locator {
+    return this.page.locator('#cluster-certs .banner.warning');
+  }
+
   async clickCertificatesTab(): Promise<void> {
     await this.tabs().self().scrollIntoViewIfNeeded();
     await this.tabs().clickNthTab(2);
