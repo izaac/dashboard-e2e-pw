@@ -14,9 +14,8 @@ browser-logs/
 .env.local
 .env.*.local
 
-# Claude Code (user-local settings — not version controlled)
-.claude/settings.local.json
-.claude/projects/
+# Claude Code
+.claude/
 
 # IDE
 .idea/
