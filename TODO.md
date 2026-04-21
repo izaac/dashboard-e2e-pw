@@ -4,9 +4,9 @@
 
 ### AWS credentials (`awsAccessKey` / `awsSecretKey`)
 
-- [ ] `cloud-credentials.spec.ts` — 6 tests (CRUD, edit, clone, delete)
-- [ ] `cloud-credential.spec.ts` — 4 tests (create, edit, clone, delete)
-- [ ] `jwt-authentication.spec.ts` — 8 tests (all require AWS for S3 endpoint)
+- [x] `cloud-credentials.spec.ts` — 7 pass (CRUD, edit, clone, delete) ✅
+- [x] `cloud-credential.spec.ts` — 4 tests (create, edit, clone, delete — skipped: Azure/GKE creds) ✅
+- [x] `jwt-authentication.spec.ts` — 7 pass, 2 skipped (bulk selection upstream bug) ✅
 - [ ] `cluster-provisioning-amazon-ec2-rke2.spec.ts` — 8 tests (full provision lifecycle)
 
 ### Azure credentials (`azureSubscriptionId` / `azureClientId` / `azureClientSecret`)
