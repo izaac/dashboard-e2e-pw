@@ -78,7 +78,7 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   configurationDrawer(): Locator {
-    return this.page.locator('[data-testid="detail-drawer"], .side-panel');
+    return this.page.locator('aside.slide-in');
   }
 
   drawerSaveButton(): Locator {
@@ -86,11 +86,11 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   drawerConfigTab(): Locator {
-    return this.configurationDrawer().locator('[data-testid="tab-config"], button:has-text("Config")');
+    return this.configurationDrawer().getByRole('tab', { name: 'Config' });
   }
 
   drawerYamlTab(): Locator {
-    return this.configurationDrawer().locator('[data-testid="tab-yaml"], button:has-text("YAML")');
+    return this.configurationDrawer().getByRole('tab', { name: 'YAML' });
   }
 
   clusterNamespaceLink(): Locator {

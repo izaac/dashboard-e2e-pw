@@ -500,9 +500,8 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 });
 
 test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standardUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-  test('can navigate to Cluster Management Page', async ({ page, login }) => {
-    await login();
+  test('can navigate to Cluster Management Page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
 
     const homePage = new HomePagePo(page);
     const burgerMenu = new BurgerMenuPo(page);
@@ -524,8 +523,9 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
     test('Show Configuration allows to view but not edit config and yaml for local cluster', async ({
       page,
       login,
+      envMeta,
     }) => {
-      await login();
+      await login({ username: 'standard_user', password: envMeta.password });
 
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
@@ -534,7 +534,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
+      await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/fleet-local\/local/);
 
       await clusterDetail.showConfigurationButton().click();
 
@@ -550,8 +550,12 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
     });
 
-    test('Shows the explore button and navigates to the cluster explorer when clicked', async ({ page, login }) => {
-      await login();
+    test('Shows the explore button and navigates to the cluster explorer when clicked', async ({
+      page,
+      login,
+      envMeta,
+    }) => {
+      await login({ username: 'standard_user', password: envMeta.password });
 
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
@@ -560,7 +564,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
+      await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/fleet-local\/local/);
 
       await expect(clusterDetail.exploreButton()).toBeVisible();
       await clusterDetail.exploreButton().click();
@@ -570,8 +574,8 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
   });
 });
 
-test.skip(true, 'Percy snapshot test');
 test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  test.skip(true, 'Percy snapshot test');
   test('display cluster manager page', async () => {
     // Upstream Percy snapshot test
   });
