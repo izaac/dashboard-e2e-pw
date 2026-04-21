@@ -11,7 +11,7 @@ import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credent
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 
-test.describe('Cloud Credential', { tag: ['@manager', '@adminUser'] }, () => {
+test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
     // Clean up test-prefixed Amazon cloud credentials from previous runs
     const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
