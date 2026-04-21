@@ -1,22 +1,57 @@
 # TODO
 
-## Testing
+## Not yet validated (need credentials or infra)
 
-- [ ] Run full suite against fresh Rancher 2.15 — fix remaining failures
-- [ ] Run AWS provisioning specs via ansible pipeline
-- [ ] Test release-2.14 branch against Rancher 2.14.x
-- [ ] Test release-2.13 branch against Rancher 2.13.x
+### AWS credentials (`awsAccessKey` / `awsSecretKey`)
+
+- [ ] `cloud-credentials.spec.ts` — 6 tests (CRUD, edit, clone, delete)
+- [ ] `cloud-credential.spec.ts` — 4 tests (create, edit, clone, delete)
+- [ ] `jwt-authentication.spec.ts` — 8 tests (all require AWS for S3 endpoint)
+- [ ] `cluster-provisioning-amazon-ec2-rke2.spec.ts` — 8 tests (full provision lifecycle)
+
+### Azure credentials (`azureSubscriptionId` / `azureClientId` / `azureClientSecret`)
+
+- [ ] `cluster-provisioning-azure-rke2.spec.ts` — full spec skipped
+- [ ] `aks-cluster-provisioning.spec.ts` — full spec skipped
+
+### GKE credentials (`gkeServiceAccount`)
+
+- [ ] `gke-cluster-provisioning.spec.ts` — full spec skipped
+
+### Provisioning infrastructure (custom nodes, downstream clusters)
+
+- [ ] `cluster-manager.spec.ts` — 9 tests need live RKE2 custom cluster or imported cluster
+- [ ] `machine-sets.spec.ts` — 1 test needs provisioned cluster with machine sets
+
+### Standard user account
+
+- [ ] `branding.spec.ts` — 1 test (standard user visibility)
+- [ ] `settings.spec.ts` — 1 test (standard user restrictions)
+- [ ] `feature-flags.spec.ts` — 1 test (standard user restrictions)
+- [ ] `banners.spec.ts` — 1 test (standard user visibility)
+- [ ] `settings-p2.spec.ts` — 1 test (standard user restrictions)
+- [ ] `cluster-dashboard.spec.ts` — 1 test (project role access)
+- [ ] `get-support.spec.ts` — 1 test (standard user view)
+
+### Elemental operator
+
+- [ ] `elemental.spec.ts` — 4 tests need elemental-operator CRDs installed
+
+### WebSocket / shell access
+
+- [ ] `pods.spec.ts` — 1 test (pod shell exec, needs running pod)
+- [ ] `connection.spec.ts` — 1 test (WebSocket folder creation, needs TLS helper)
 
 ## Specs to debug
 
-- [ ] `e2e/tests/pages/virtualization-mgmt/harvester.spec.ts` — extension install/uninstall state
-- [ ] `e2e/tests/pages/explorer/more-resources/api/custom-resource-definitions.spec.ts` — sequential run causes API server stress
+- [ ] `harvester.spec.ts` — extension install/uninstall state management
+- [ ] `custom-resource-definitions.spec.ts` — sequential run causes API server stress
 
-## Remaining test gaps (~10%)
+## Disabled upstream (not our problem)
 
-- [ ] Skipped tests needing `page.waitForEvent('download')` (5+ tests)
-- [ ] Skipped pagination tests needing `createManyNamespacedResources` helper
-- [ ] Skipped pod shell/exec tests (WebSocket TLS issues)
+- `node-drivers.spec.ts` — blocked by rancher/dashboard#10275
+- `pod-security-policy-templates.spec.ts` — blocked by rancher/dashboard#10187
+- `agent-configuration-rke2.spec.ts` — Vue3 skip upstream
 
 ## CI / Infra
 
