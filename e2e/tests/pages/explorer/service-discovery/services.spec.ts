@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { ServicesPagePo } from '@/e2e/po/pages/explorer/services.po';
+import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import {
   servicesGetReponseEmpty,
   servicesGetResponseSmallSet,
@@ -223,9 +224,9 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
 
         await actionMenu.getMenuItem('Delete').click();
 
-        const promptRemove = page.getByRole('dialog');
+        const promptRemove = new PromptRemove(page);
 
-        await promptRemove.getByRole('button', { name: 'Delete' }).click();
+        await promptRemove.remove();
         await deleteResponse;
 
         await expect(sortableTable.rowElementWithName(serviceExternalName)).not.toBeAttached({ timeout: 15000 });

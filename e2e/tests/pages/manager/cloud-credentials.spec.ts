@@ -27,7 +27,9 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
     await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
-    await expect(page.locator('body')).toContainText('Authentication test failed, please check your credentials');
+    await expect(cloudCredentialsPage.createEditCloudCreds().errorBanner().banner()).toContainText(
+      'Authentication test failed, please check your credentials',
+    );
   });
 
   test('can create aws cloud credentials', async ({ login, page, rancherApi, envMeta }) => {

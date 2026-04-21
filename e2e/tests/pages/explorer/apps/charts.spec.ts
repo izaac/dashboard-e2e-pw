@@ -65,16 +65,18 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     await chartPage.waitForPage();
 
     const requests: string[] = [];
-
-    page.on('request', (req) => {
+    const handler = (req: import('@playwright/test').Request) => {
       if (req.url().includes(CLUSTER_REPOS_BASE_URL)) {
         requests.push(req.url());
       }
-    });
+    };
+
+    page.on('request', handler);
 
     await page.goBack();
     await chartsPage.waitForPage();
 
+    page.off('request', handler);
     expect(requests.length).toBe(0);
   });
 

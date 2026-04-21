@@ -187,36 +187,38 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     async ({ page, rancherApi }) => {
       await rancherApi.updateNamespaceFilter('local', 'metadata.namespace', '{"local":["all://user"]}');
 
-      // Navigate to pods list (upstream uses WorkloadsPodsListPagePo)
-      await page.goto('./c/local/explorer/pod');
-      await page.waitForURL(/\/pod$/);
+      try {
+        // Navigate to pods list (upstream uses WorkloadsPodsListPagePo)
+        await page.goto('./c/local/explorer/pod');
+        await page.waitForURL(/\/pod$/);
 
-      const sortableTable = new SortableTablePo(page, '.sortable-table');
+        const sortableTable = new SortableTablePo(page, '.sortable-table');
 
-      await sortableTable.groupByButtons(1).click();
+        await sortableTable.groupByButtons(1).click();
 
-      const namespacePicker = new NamespaceFilterPo(page);
+        const namespacePicker = new NamespaceFilterPo(page);
 
-      await namespacePicker.toggle();
-      await expect(namespacePicker.optionById('ns_cattle-fleet-system')).toBeVisible();
-      await namespacePicker.clickOptionByLabel('cattle-fleet-system');
-      await namespacePicker.isChecked('cattle-fleet-system');
-      await namespacePicker.closeDropdown();
+        await namespacePicker.toggle();
+        await expect(namespacePicker.optionById('ns_cattle-fleet-system')).toBeVisible();
+        await namespacePicker.clickOptionByLabel('cattle-fleet-system');
+        await namespacePicker.isChecked('cattle-fleet-system');
+        await namespacePicker.closeDropdown();
 
-      await expect(sortableTable.groupTab('cattle-fleet-system')).toHaveCount(1);
+        await expect(sortableTable.groupTab('cattle-fleet-system')).toHaveCount(1);
 
-      await namespacePicker.toggle();
-      await namespacePicker.clearIcon().click();
-      await namespacePicker.isChecked('Only User Namespaces');
+        await namespacePicker.toggle();
+        await namespacePicker.clearIcon().click();
+        await namespacePicker.isChecked('Only User Namespaces');
 
-      await namespacePicker.clickOptionByLabel('Project: System');
-      await namespacePicker.isChecked('Project: System');
-      await namespacePicker.closeDropdown();
+        await namespacePicker.clickOptionByLabel('Project: System');
+        await namespacePicker.isChecked('Project: System');
+        await namespacePicker.closeDropdown();
 
-      await expect(sortableTable.groupTab('kube-system')).toBeVisible();
-      await expect(sortableTable.groupTab('cattle-fleet-system')).toBeVisible();
-
-      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+        await expect(sortableTable.groupTab('kube-system')).toBeVisible();
+        await expect(sortableTable.groupTab('cattle-fleet-system')).toBeVisible();
+      } finally {
+        await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+      }
     },
   );
 });
