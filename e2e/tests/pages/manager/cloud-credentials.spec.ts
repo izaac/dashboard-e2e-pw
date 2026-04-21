@@ -112,7 +112,6 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
     let credId = '';
 
     try {
-      // Create a credential first
       const createResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
         type: 'provisioning.cattle.io/cloud-credential',
         metadata: { generateName: 'cc-', namespace: 'fleet-default' },
@@ -146,7 +145,10 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
         .nameNsDescription()
         .description()
         .set(`${cloudCredentialName}-description-edit`);
-      await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
+
+      // Edit page shows Key-Value form (hide-sensitive pref defaults to true)
+      // Row order for Amazon EC2: accessKey=0, defaultRegion=1, secretKey=2
+      await cloudCredentialsPage.createEditCloudCreds().kvValueByIndex(2).fill(envMeta.awsSecretKey!);
 
       const putResponsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'PUT',
@@ -200,8 +202,11 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser'] }, () => {
       await cloudCredentialsPage.createEditCloudCreds(createResp.body.id).waitForPage('mode=clone');
 
       await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(`${cloudCredentialName}-clone`);
-      await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
-      await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
+
+      // Clone page shows Key-Value form (hide-sensitive pref defaults to true)
+      // Row order for Amazon EC2: accessKey=0, defaultRegion=1, secretKey=2
+      await cloudCredentialsPage.createEditCloudCreds().kvValueByIndex(0).fill(envMeta.awsAccessKey!);
+      await cloudCredentialsPage.createEditCloudCreds().kvValueByIndex(2).fill(envMeta.awsSecretKey!);
 
       const postResponsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',

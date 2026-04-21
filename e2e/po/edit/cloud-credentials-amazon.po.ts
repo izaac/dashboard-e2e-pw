@@ -35,6 +35,14 @@ export default class CloudCredentialsCreateEditPo extends PagePo {
     return LabeledInputPo.byLabel(this.page, this.self(), 'Secret Key');
   }
 
+  /**
+   * When hide-sensitive pref is on (default), edit/clone pages show a Key-Value form
+   * instead of LabeledInput fields. Row order for Amazon EC2: accessKey=0, defaultRegion=1, secretKey=2.
+   */
+  kvValueByIndex(rowIndex: number): Locator {
+    return this.self().getByTestId(`kv-item-value-${rowIndex}`).locator('[data-testid="value-multiline"]');
+  }
+
   defaultRegion(): LabeledSelectPo {
     return new LabeledSelectPo(this.page, '.vs__dropdown-toggle', this.self());
   }
