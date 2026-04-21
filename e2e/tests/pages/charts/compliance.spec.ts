@@ -14,7 +14,8 @@ const chartNamespace = 'compliance-operator-system';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-  test.beforeEach(async ({ login }) => {
+  test.beforeEach(async ({ login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-compliance');
     await login();
   });
 

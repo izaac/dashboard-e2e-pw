@@ -130,7 +130,8 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
     test(
       'should persist custom registry when changing chart version',
       { timeout: 180000 },
-      async ({ page, rancherApi }) => {
+      async ({ page, rancherApi, chartGuard }) => {
+        await chartGuard('rancher-charts', 'rancher-backup');
         const namespacePicker = new NamespaceFilterPo(page);
         const installChartPage = new InstallChartPage(page);
         const chartPage = new ChartPage(page);
