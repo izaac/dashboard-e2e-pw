@@ -101,6 +101,10 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         );
         await detailsPage.waitForScaleComplete();
 
+        // Reload to pick up latest resourceVersion — avoids 409 Conflict on scale-down PUT
+        await detailsPage.goTo();
+        await expect(detailsPage.scalerValue()).toContainText('2', { timeout: 15000 });
+
         const scaleDownResp = page.waitForResponse(
           (resp) => resp.url().includes('/v1/apps.deployments/') && resp.request().method() === 'PUT',
         );
@@ -109,7 +113,6 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         const scaleDownResponse = await scaleDownResp;
 
         expect(scaleDownResponse.status()).toBe(200);
-
         await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
