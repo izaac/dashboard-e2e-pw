@@ -94,6 +94,7 @@ See [Writing Tests](docs/WRITING-TESTS.md) for details on each tool.
 
 ## License
 
+Copyright 2024-2026 Izaac Zavaleta
 Copyright 2024-2026 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
