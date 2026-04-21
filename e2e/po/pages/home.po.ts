@@ -58,6 +58,10 @@ export default class HomePagePo extends PagePo {
     return this.list().locator('tr').filter({ hasText: name });
   }
 
+  noResultsMessage(): Locator {
+    return this.list().locator('.no-results');
+  }
+
   /** Get a cell from a cluster row (0-indexed) */
   clusterRowCell(name: string, index: number): Locator {
     return this.clusterRow(name).locator('td').nth(index);

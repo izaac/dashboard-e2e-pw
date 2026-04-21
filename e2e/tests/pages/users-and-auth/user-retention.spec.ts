@@ -68,81 +68,82 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
     // Reset to defaults before starting
     await resetRetentionSettings(rancherApi);
 
-    await login();
+    try {
+      await login();
 
-    const userRetentionPo = new UserRetentionPo(page);
+      const userRetentionPo = new UserRetentionPo(page);
 
-    await userRetentionPo.goTo();
-    await userRetentionPo.waitForPage();
+      await userRetentionPo.goTo();
+      await userRetentionPo.waitForPage();
 
-    // Ensure checkboxes are unchecked before starting
-    await userRetentionPo.disableAfterPeriodCheckbox().uncheck();
-    await userRetentionPo.deleteAfterPeriodCheckbox().uncheck();
+      // Ensure checkboxes are unchecked before starting
+      await userRetentionPo.disableAfterPeriodCheckbox().uncheck();
+      await userRetentionPo.deleteAfterPeriodCheckbox().uncheck();
 
-    await userRetentionPo.disableAfterPeriodInput().expectToBeDisabled();
-    await userRetentionPo.disableAfterPeriodCheckbox().set();
-    await userRetentionPo.disableAfterPeriodInput().expectToBeEnabled();
-    await userRetentionPo.disableAfterPeriodInput().set('300h');
-    await userRetentionPo.deleteAfterPeriodInput().expectToBeDisabled();
-    await userRetentionPo.deleteAfterPeriodCheckbox().set();
-    await userRetentionPo.deleteAfterPeriodInput().expectToBeEnabled();
-    await userRetentionPo.deleteAfterPeriodInput().set('600h');
-    await userRetentionPo.userRetentionCron().set('0 0 1 1 *');
-    await userRetentionPo.userLastLoginDefault().set('1718744536000');
+      await userRetentionPo.disableAfterPeriodInput().expectToBeDisabled();
+      await userRetentionPo.disableAfterPeriodCheckbox().set();
+      await userRetentionPo.disableAfterPeriodInput().expectToBeEnabled();
+      await userRetentionPo.disableAfterPeriodInput().set('300h');
+      await userRetentionPo.deleteAfterPeriodInput().expectToBeDisabled();
+      await userRetentionPo.deleteAfterPeriodCheckbox().set();
+      await userRetentionPo.deleteAfterPeriodInput().expectToBeEnabled();
+      await userRetentionPo.deleteAfterPeriodInput().set('600h');
+      await userRetentionPo.userRetentionCron().set('0 0 1 1 *');
+      await userRetentionPo.userLastLoginDefault().set('1718744536000');
 
-    await userRetentionPo.saveButton().expectToBeEnabled();
+      await userRetentionPo.saveButton().expectToBeEnabled();
 
-    // The save fires multiple PUTs — collect them all before asserting
-    let resolveAll: () => void;
-    const allDone = new Promise<void>((r) => {
-      resolveAll = r;
-    });
-    let count = 0;
+      // The save fires multiple PUTs — collect them all before asserting
+      let resolveAll: () => void;
+      const allDone = new Promise<void>((r) => {
+        resolveAll = r;
+      });
+      let count = 0;
 
-    page.on('response', (resp) => {
-      if (resp.url().includes('/v1/management.cattle.io.settings/') && resp.request().method() === 'PUT') {
-        count++;
+      page.on('response', (resp) => {
+        if (resp.url().includes('/v1/management.cattle.io.settings/') && resp.request().method() === 'PUT') {
+          count++;
 
-        if (count >= 5) {
-          resolveAll();
+          if (count >= 5) {
+            resolveAll();
+          }
+        }
+      });
+
+      await userRetentionPo.saveButton().click();
+
+      await Promise.race([allDone, new Promise((r) => setTimeout(r, 30000))]);
+
+      const usersPo = new UsersPo(page);
+
+      // Wait for any in-progress SPA navigation to settle
+      // The save may trigger a route change; retry goto if ERR_ABORTED
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await page.goto('./c/_/auth/management.cattle.io.user', { waitUntil: 'domcontentloaded', timeout: 15000 });
+          break;
+        } catch {
+          await page.waitForLoadState('domcontentloaded').catch(() => {
+            /* page may have already navigated */
+          });
         }
       }
-    });
 
-    await userRetentionPo.saveButton().click();
+      await usersPo.waitForPage();
 
-    await Promise.race([allDone, new Promise((r) => setTimeout(r, 30000))]);
+      await expect(usersPo.userRetentionLink()).toBeVisible();
+      await usersPo.userRetentionLink().click();
 
-    const usersPo = new UsersPo(page);
-
-    // Wait for any in-progress SPA navigation to settle
-    // The save may trigger a route change; retry goto if ERR_ABORTED
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        await page.goto('./c/_/auth/management.cattle.io.user', { waitUntil: 'domcontentloaded', timeout: 15000 });
-        break;
-      } catch {
-        await page.waitForLoadState('domcontentloaded').catch(() => {
-          /* page may have already navigated */
-        });
-      }
+      await userRetentionPo.disableAfterPeriodCheckbox().checkExists();
+      await userRetentionPo.disableAfterPeriodCheckbox().isChecked();
+      expect(await userRetentionPo.disableAfterPeriodInput().value()).toBe('300h');
+      await userRetentionPo.deleteAfterPeriodCheckbox().isChecked();
+      expect(await userRetentionPo.deleteAfterPeriodInput().value()).toBe('600h');
+      expect(await userRetentionPo.userRetentionCron().value()).toBe('0 0 1 1 *');
+      expect(await userRetentionPo.userLastLoginDefault().value()).toBe('1718744536000');
+    } finally {
+      await resetRetentionSettings(rancherApi);
     }
-
-    await usersPo.waitForPage();
-
-    await expect(usersPo.userRetentionLink()).toBeVisible();
-    await usersPo.userRetentionLink().click();
-
-    await userRetentionPo.disableAfterPeriodCheckbox().checkExists();
-    await userRetentionPo.disableAfterPeriodCheckbox().isChecked();
-    expect(await userRetentionPo.disableAfterPeriodInput().value()).toBe('300h');
-    await userRetentionPo.deleteAfterPeriodCheckbox().isChecked();
-    expect(await userRetentionPo.deleteAfterPeriodInput().value()).toBe('600h');
-    expect(await userRetentionPo.userRetentionCron().value()).toBe('0 0 1 1 *');
-    expect(await userRetentionPo.userLastLoginDefault().value()).toBe('1718744536000');
-
-    // Cleanup - reset settings
-    await resetRetentionSettings(rancherApi);
   });
 
   test('setup a user account that will be blocked', async ({ page, login, rancherApi, envMeta }) => {
