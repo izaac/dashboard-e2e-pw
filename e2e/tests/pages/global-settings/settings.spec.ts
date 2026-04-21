@@ -1,6 +1,5 @@
 import { test, expect } from '@/support/fixtures';
 import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
-import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 
@@ -35,10 +34,6 @@ test.describe('Settings', () => {
 
   test.beforeEach(async ({ login, page, rancherApi }) => {
     await login();
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
-
     settingsPage = new SettingsPagePo(page, settingsClusterId);
 
     // Get all settings

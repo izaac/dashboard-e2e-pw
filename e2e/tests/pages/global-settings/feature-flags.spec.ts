@@ -1,7 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import HomePagePo from '@/e2e/po/pages/home.po';
 import CardPo from '@/e2e/po/components/card.po';
 
 /**
@@ -34,11 +33,8 @@ async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boo
 
 test.describe('Feature Flags', () => {
   test.describe.configure({ mode: 'serial' });
-  test.beforeEach(async ({ login, page }) => {
+  test.beforeEach(async ({ login }) => {
     await login();
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
   });
 
   test(

@@ -39,9 +39,6 @@ test.describe('Settings (Part 2)', () => {
 
   test.beforeEach(async ({ login, page, rancherApi }) => {
     await login();
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
 
     settingsPage = new SettingsPagePo(page, settingsClusterId);
 
