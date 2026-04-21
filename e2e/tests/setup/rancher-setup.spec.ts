@@ -22,10 +22,13 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
 
     await homePage.goTo();
-    // SPA redirects unauthed users to /auth/setup or /auth/login
+    // SPA redirects unauthed users to /auth/login (both bootstrap and regular login use same URL)
     await expect(page).not.toHaveURL(/\/home/, { timeout: 10000 });
 
-    if (page.url().includes('/auth/login')) {
+    // Username field only appears on the real login page, not the bootstrap page
+    const usernameField = page.locator('[data-testid="local-login-username"]');
+
+    if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
       test.skip(true, 'Rancher already bootstrapped');
     }
 
@@ -38,11 +41,13 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
     const rancherSetupConfigurePage = new RancherSetupConfigurePage(page);
 
-    // Check if already bootstrapped
+    // Check if already bootstrapped — username field only exists on real login page
     await rancherSetupLoginPage.goTo();
     await page.waitForLoadState('domcontentloaded');
 
-    if (page.url().includes('/auth/login')) {
+    const usernameField = page.locator('[data-testid="local-login-username"]');
+
+    if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
       test.skip(true, 'Rancher already bootstrapped');
     }
 
@@ -85,8 +90,10 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     await rancherSetupLoginPage.goTo();
     await page.waitForLoadState('domcontentloaded');
 
-    // If we land on login, Rancher is already bootstrapped
-    if (page.url().includes('/auth/login')) {
+    // Username field only exists on real login page, not bootstrap page
+    const usernameField = page.locator('[data-testid="local-login-username"]');
+
+    if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
       test.skip(true, 'Rancher already bootstrapped');
     }
 
@@ -130,7 +137,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     // Check if standard_user already exists
     const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-    const existingUser = usersResp.body.data.find((u: { username: string }) => u.username.includes('standard_user'));
+    const existingUser = usersResp.body.data.find((u: { username?: string }) => u.username?.includes('standard_user'));
 
     if (existingUser) {
       test.skip(true, 'Standard user already exists');
