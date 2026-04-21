@@ -92,7 +92,7 @@ test.describe('Home Page', () => {
 
       // Filter with non-matching text
       await filterInput.fill('random text');
-      await expect(homePage.list().getByText('There are no rows which match your search query.')).toBeVisible();
+      await expect(homePage.noResultsMessage()).toBeVisible();
 
       // Filter with matching text
       await filterInput.fill('local');

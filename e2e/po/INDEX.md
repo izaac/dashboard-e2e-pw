@@ -170,7 +170,7 @@
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
 | InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+45) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
-| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+21) |
+| HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+20) |

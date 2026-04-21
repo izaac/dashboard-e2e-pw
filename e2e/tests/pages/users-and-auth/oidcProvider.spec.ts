@@ -392,6 +392,8 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     await deleteResponse;
 
     await oidcClientsPage.waitForPage();
-    await expect(page.locator('body')).not.toContainText(OIDC_CREATE_DATA.APP_NAME);
+    await expect(
+      oidcClientsPage.list().resourceTable().sortableTable().rowWithName(OIDC_CREATE_DATA.APP_NAME).self(),
+    ).not.toBeAttached();
   });
 });
