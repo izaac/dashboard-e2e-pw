@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
@@ -6,6 +6,7 @@ import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import CruResourcePo from '@/e2e/po/components/cru-resource.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
+import BannersPo from '@/e2e/po/components/banners.po';
 
 export default class CloudCredentialsCreateEditPo extends PagePo {
   private static createPath(clusterId: string, id?: string): string {
@@ -44,5 +45,9 @@ export default class CloudCredentialsCreateEditPo extends PagePo {
 
   saveButton(): AsyncButtonPo {
     return new AsyncButtonPo(this.page, '[data-testid="form-save"]', this.self());
+  }
+
+  errorBanner(): BannersPo {
+    return new BannersPo(this.page, '.banner.error', this.self());
   }
 }
