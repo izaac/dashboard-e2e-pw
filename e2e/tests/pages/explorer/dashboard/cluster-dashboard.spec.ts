@@ -3,10 +3,11 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import { eventsGetEmptyEventsSet } from '@/e2e/blueprints/explorer/cluster/events';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 
+const configMapName = `e2e-test-${Date.now()}`;
 const configMapYaml = `apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: e2e-test-${+new Date()}
+  name: ${configMapName}
   annotations:
     {}
   labels:
@@ -52,7 +53,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await expect(clusterDashboard.fleetStatus()).toBeAttached();
   });
 
-  test('can import a YAML successfully', async ({ page, login }) => {
+  test('can import a YAML successfully', async ({ page, login, rancherApi }) => {
     await login();
 
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
@@ -65,14 +66,19 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await header.importYamlHeaderAction().click();
     await header.importYaml().importYamlEditor().set(configMapYaml);
     await header.importYaml().importYamlImportClick();
-    await header.importYaml().importYamlSuccessTitleCheck();
 
-    await expect(
-      header.importYaml().importYamlSortableTable().tableHeaderRowElementWithPartialName('State'),
-    ).not.toBeAttached();
-    await expect(header.importYaml().importYamlSortableTable().subRows()).not.toBeAttached();
+    try {
+      await header.importYaml().importYamlSuccessTitleCheck();
 
-    await header.importYaml().importYamlCloseClick();
+      await expect(
+        header.importYaml().importYamlSortableTable().tableHeaderRowElementWithPartialName('State'),
+      ).not.toBeAttached();
+      await expect(header.importYaml().importYamlSortableTable().subRows()).not.toBeAttached();
+
+      await header.importYaml().importYamlCloseClick();
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'configmaps', `default/${configMapName}`, false);
+    }
   });
 
   test('can open the kubectl shell from header', async ({ page, login }) => {

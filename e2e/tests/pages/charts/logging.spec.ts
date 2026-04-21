@@ -32,8 +32,8 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
   test('is installed and a rule created', async ({ page, rancherApi }) => {
     test.setTimeout(300000);
-    // Reset namespace filter
-    await rancherApi.setUserPreference({ local: JSON.stringify({ local: [] }) });
+    // Set namespace filter to show all namespaces (logging installs to a system namespace)
+    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":[]}');
 
     // Ensure logging is installed and deployed
     const appResp = await rancherApi.getRancherResource(
@@ -47,18 +47,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     if (!isDeployed) {
       // If app exists in non-deployed state (e.g., uninstalling), wait for it to be gone
       if (appResp.status === 200) {
-        await rancherApi.createRancherResource(
-          'v1',
-          `catalog.cattle.io.apps/${chartNamespace}/${chartApp}?action=uninstall`,
-          {},
-          false,
-        );
-        await rancherApi.createRancherResource(
-          'v1',
-          `catalog.cattle.io.apps/${chartNamespace}/${chartCrd}?action=uninstall`,
-          {},
-          false,
-        );
+        await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
         // Poll until apps are fully removed (404)
         await rancherApi.waitForRancherResource(
           'v1',
@@ -227,16 +216,10 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     );
     const loggingInstalled = appResp.status === 200 && appResp.body?.metadata?.state?.name === 'deployed';
 
-    test.skip(
-      !loggingInstalled,
-      'Logging chart is not installed — run the "is installed and a rule created" test first',
-    );
-
-    // Set namespace filter to show all namespaces
-    await rancherApi.setUserPreference({ local: JSON.stringify({ local: [] }) });
+    test.skip(!loggingInstalled, 'Logging chart is not deployed — cannot test uninstall');
 
     // Set namespace filter to show all namespaces (logging installs to a system namespace)
-    await rancherApi.setUserPreference({ local: JSON.stringify({ local: [] }) });
+    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":[]}');
 
     const clusterTools = new ClusterToolsPagePo(page, 'local');
     const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
@@ -325,18 +308,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   });
 
   test.afterAll(async ({ rancherApi }) => {
-    // Final cleanup: uninstall logging if still present
-    await rancherApi.createRancherResource(
-      'v1',
-      `catalog.cattle.io.apps/${chartNamespace}/${chartApp}?action=uninstall`,
-      {},
-      false,
-    );
-    await rancherApi.createRancherResource(
-      'v1',
-      `catalog.cattle.io.apps/${chartNamespace}/${chartCrd}?action=uninstall`,
-      {},
-      false,
-    );
+    await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
+    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
   });
 });

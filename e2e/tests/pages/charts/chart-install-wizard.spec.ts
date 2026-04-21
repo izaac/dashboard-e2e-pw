@@ -112,19 +112,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
     const chartCrd = 'rancher-backup-crd';
 
     test.afterEach(async ({ rancherApi }) => {
-      // Always clean up installed charts
-      await rancherApi.createRancherResource(
-        'v1',
-        `catalog.cattle.io.apps/${chartNamespace}/${chartApp}?action=uninstall`,
-        {},
-        false,
-      );
-      await rancherApi.createRancherResource(
-        'v1',
-        `catalog.cattle.io.apps/${chartNamespace}/${chartCrd}?action=uninstall`,
-        {},
-        false,
-      );
+      await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
     });
 
     test(
@@ -138,18 +126,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
         const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
 
         // Ensure charts are uninstalled before starting
-        await rancherApi.createRancherResource(
-          'v1',
-          `catalog.cattle.io.apps/${chartNamespace}/${chartApp}?action=uninstall`,
-          {},
-          false,
-        );
-        await rancherApi.createRancherResource(
-          'v1',
-          `catalog.cattle.io.apps/${chartNamespace}/${chartCrd}?action=uninstall`,
-          {},
-          false,
-        );
+        await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
 
         // Set namespace filter
         await rancherApi.setUserPreference({ local: JSON.stringify({ local: ['all://user'] }) });
