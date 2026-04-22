@@ -117,6 +117,8 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
       if (meta.password) {
         await api.login(meta.username, meta.password);
+        await api.waitForReady();
+        await api.ensureStandardUser(meta.password);
       }
 
       await use(api);
