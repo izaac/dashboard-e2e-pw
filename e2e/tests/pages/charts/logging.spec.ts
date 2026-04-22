@@ -9,6 +9,7 @@ import CardPo from '@/e2e/po/components/card.po';
 import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
@@ -168,7 +169,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     // Scroll the match section to reveal the namespace select below nodes/containers
     const nsSelectContainer = loggingPo.matchNamespaceSelector();
 
-    await expect(nsSelectContainer).toBeAttached({ timeout: 15000 });
+    await expect(nsSelectContainer).toBeAttached(SHORT_TIMEOUT_OPT);
     await nsSelectContainer.scrollIntoViewIfNeeded();
     await nsSelectContainer.click();
 

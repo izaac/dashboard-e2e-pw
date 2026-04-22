@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterProjectMembersPo from '@/e2e/po/pages/explorer/cluster-project-members.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('Should create a new user', async ({ page, login, rancherApi }) => {
@@ -26,7 +27,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       const sortableTable = usersPage.list().resourceTable().sortableTable();
 
       await sortableTable.checkVisible();
-      await expect(sortableTable.rowElementWithName(actualUsername)).toBeVisible({ timeout: 15000 });
+      await expect(sortableTable.rowElementWithName(actualUsername)).toBeVisible(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }
@@ -78,7 +79,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       const sortableTable = clusterMembership.sortableTable();
 
       await sortableTable.checkVisible();
-      await expect(sortableTable.rowElementWithPartialName(actualUsername)).toBeVisible({ timeout: 15000 });
+      await expect(sortableTable.rowElementWithPartialName(actualUsername)).toBeVisible(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }
@@ -128,7 +129,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       await projectMembership.submitProjectCreateButton();
       await responsePromise;
 
-      await expect(projectMembership.modalOverlay()).not.toBeAttached({ timeout: 15000 });
+      await expect(projectMembership.modalOverlay()).not.toBeAttached(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }

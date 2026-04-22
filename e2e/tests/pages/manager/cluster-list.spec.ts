@@ -3,6 +3,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
 import { promptModal } from '@/e2e/po/prompts/modalInstances.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
   test('can group clusters by namespace', async ({ login, page, rancherApi }) => {
@@ -42,7 +43,7 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
 
       const clusterCreateResponsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       const yamlVal = await createPage.resourceDetail().resourceYaml().codeMirror().value();

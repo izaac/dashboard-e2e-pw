@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
@@ -631,7 +632,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await usersPo.goTo();
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(standardUsername)).toBeAttached({ timeout: 15000 });
+      await expect(usersPo.list().elementWithName(standardUsername)).toBeAttached(SHORT_TIMEOUT_OPT);
 
       // Logout admin and login as the standard user
       await page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
@@ -655,7 +656,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const adminBindingFail = page.waitForResponse(
         (resp) =>
           resp.url().includes('/v3/globalrolebindings') && resp.request().method() === 'POST' && resp.status() === 403,
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await adminCreate.resourceDetail().cruResource().saveOrCreate().click();
@@ -672,7 +673,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await usersPo.goTo();
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(adminUsername)).toBeAttached({ timeout: 15000 });
+      await expect(usersPo.list().elementWithName(adminUsername)).toBeAttached(SHORT_TIMEOUT_OPT);
 
       // Cleanup: delete both test users via API (rancherApi is logged in as admin)
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');

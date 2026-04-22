@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test.beforeEach(async ({ page, login }) => {
@@ -131,7 +132,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         const namespacePicker = new NamespaceFilterPo(page);
 
         await namespacePicker.toggle();
-        await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
+        await expect(namespacePicker.optionByText(projName)).toBeVisible(SHORT_TIMEOUT_OPT);
         await expect(namespacePicker.optionByText(nsName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
@@ -170,7 +171,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       const namespacePicker = new NamespaceFilterPo(page);
 
       await namespacePicker.toggle();
-      await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
+      await expect(namespacePicker.optionByText(projName)).toBeVisible(SHORT_TIMEOUT_OPT);
 
       await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
       await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);

@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const namespace = 'fleet-default';
 
@@ -206,7 +207,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
       const enableResponsePromise = page.waitForResponse(
         (resp: any) =>
           resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await jwtAuthPage
@@ -262,7 +263,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
       const disableResponsePromise = page.waitForResponse(
         (resp: any) =>
           resp.url().includes('/v1/management.cattle.io.clusterproxyconfigs') && resp.request().method() === 'PUT',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await jwtAuthPage

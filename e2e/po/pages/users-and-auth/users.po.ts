@@ -4,6 +4,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import MgmtUserEditPo from '@/e2e/po/edit/management.cattle.io.user.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Detail page object for a single user resource.
@@ -28,7 +29,7 @@ export default class UsersPo extends ClusterPagePo {
   async waitForRequests(): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.status() === 200,
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await this.goTo();

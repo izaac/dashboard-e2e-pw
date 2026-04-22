@@ -1,4 +1,5 @@
 import { test as setup, expect } from '@playwright/test';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const authFile = '.auth/user.json';
 
@@ -21,14 +22,17 @@ setup('authenticate', async ({ page }) => {
   }
 
   // Fill credentials
-  await page.locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]').last().fill(username);
+  await page
+    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+    .last()
+    .fill(username);
   await page.locator('[data-testid="local-login-password"] input').fill(password);
 
   // Submit
   await page.locator('[data-testid="login-submit"]').click();
 
   // Wait for navigation away from login
-  await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
+  await expect(page).not.toHaveURL(/\/auth\/login/, SHORT_TIMEOUT_OPT);
 
   // Save signed-in state
   await page.context().storageState({ path: authFile });

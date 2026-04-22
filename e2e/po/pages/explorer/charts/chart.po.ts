@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Page object for a single Chart detail/install page.
@@ -41,7 +42,7 @@ export class ChartPage extends PagePo {
     });
 
     // Wait for filtered chart card to appear
-    await expect(chartsPage.getChartByName(chartName)).toBeVisible({ timeout: 15000 });
+    await expect(chartsPage.getChartByName(chartName)).toBeVisible(SHORT_TIMEOUT_OPT);
     await chartsPage.clickChart(chartName);
   }
 
@@ -60,7 +61,7 @@ export class ChartPage extends PagePo {
   async goToInstall(): Promise<void> {
     const btn = this.self().locator('.chart-header .btn.role-primary');
 
-    await expect(btn).toBeVisible({ timeout: 15000 });
+    await expect(btn).toBeVisible(SHORT_TIMEOUT_OPT);
     await btn.click();
   }
 

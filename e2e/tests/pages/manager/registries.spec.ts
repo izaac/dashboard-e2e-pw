@@ -5,6 +5,7 @@ import {
   machineSelectorConfigPayload,
   registriesWithSecretPayload,
 } from '@/e2e/blueprints/manager/registries-rke2-payload';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const registryHost = 'docker.io';
 const registryAuthHost = 'a.registry.com';
@@ -60,11 +61,11 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
 
     const secretResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/secrets/fleet-default') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
     const clusterResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await createPage.nameNsDescription().name().set(clusterName);
@@ -143,11 +144,11 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
 
     const secretResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/secrets/fleet-default') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
     const clusterResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await createPage.nameNsDescription().name().set(clusterName);

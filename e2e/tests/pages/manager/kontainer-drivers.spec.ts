@@ -5,6 +5,7 @@ import DeactivateDriverDialogPo from '@/e2e/po/prompts/deactivateDriverDialog.po
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const downloadUrl =
   'https://github.com/rancher-plugins/kontainer-engine-driver-example/releases/download/v0.2.3/kontainer-engine-driver-example-copy1-linux-amd64';
@@ -363,7 +364,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     const activateResp = page.waitForResponse(
       (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
-      { timeout: 60_000 },
+      LONG_TIMEOUT_OPT,
     );
 
     // Inactive drivers show API-generated name, not "Example" — find row by URL
@@ -493,7 +494,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     expect(resp.status()).toBe(200);
     await driversPage.waitForPage();
     await expect(driversPage.list().resourceTable().sortableTable().rowElementWithName(exampleDriver)).not.toBeAttached(
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
   });
 });

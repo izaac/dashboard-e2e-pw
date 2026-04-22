@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const expiredCertName = 'expired';
 const expiredCertNs = 'default';
@@ -36,12 +37,12 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     await clusterDashboard.waitForPage();
     await clusterDashboard.clickCertificatesTab();
 
-    await expect(clusterDashboard.certsSectionLocator()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible(SHORT_TIMEOUT_OPT);
     await clusterDashboard.certificatesList().sortableTable().checkLoadingIndicatorNotVisible();
 
     const rows = clusterDashboard.certificatesList().sortableTable().rowElements();
 
-    await expect(rows.first()).toBeVisible({ timeout: 15000 });
+    await expect(rows.first()).toBeVisible(SHORT_TIMEOUT_OPT);
     const rowCount = await rows.count();
 
     expect(rowCount).toBeGreaterThanOrEqual(2);
@@ -66,7 +67,7 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     await clusterDashboard.waitForPage();
     await clusterDashboard.clickCertificatesTab();
 
-    await expect(clusterDashboard.certsSectionLocator()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible(SHORT_TIMEOUT_OPT);
 
     // Verify expired banner
     await expect(clusterDashboard.expiredBanner()).toBeVisible();
@@ -88,12 +89,12 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     await clusterDashboard.waitForPage();
     await clusterDashboard.clickCertificatesTab();
 
-    await expect(clusterDashboard.certsSectionLocator()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible(SHORT_TIMEOUT_OPT);
 
-    await expect(clusterDashboard.fullSecretsListLink()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.fullSecretsListLink()).toBeVisible(SHORT_TIMEOUT_OPT);
     await clusterDashboard.fullSecretsListLink().scrollIntoViewIfNeeded();
     await clusterDashboard.fullSecretsListLink().click();
 
-    await expect(page).toHaveURL(/\/c\/local\/explorer\/secret/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/c\/local\/explorer\/secret/, SHORT_TIMEOUT_OPT);
   });
 });

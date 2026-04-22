@@ -3,6 +3,7 @@ import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-man
 import ClusterManagerCreateEKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-eks.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import * as eksDefaultSettings from '@/e2e/blueprints/cluster_management/eks-default-settings';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const eksSettings = {
   eksRegion: eksDefaultSettings.DEFAULT_REGION,
@@ -55,7 +56,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
@@ -70,7 +71,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       const credCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
       const pageLoadPromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
@@ -86,7 +87,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       cloudCredId = credBody.id;
 
       await pageLoadPromise;
-      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
       // Set cluster name and description
@@ -96,7 +97,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       // Create cluster
       const clusterCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createEKSClusterPage.create();
@@ -155,7 +156,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
@@ -190,7 +191,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       const clusterCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createEKSClusterPage.create();

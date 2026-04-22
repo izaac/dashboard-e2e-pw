@@ -5,6 +5,7 @@ import {
   servicesGetReponseEmpty,
   servicesGetResponseSmallSet,
 } from '@/e2e/blueprints/explorer/workloads/service-discovery/services-get';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('CRUD', () => {
@@ -41,7 +42,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
         await servicesPage.waitForPage();
         const sortableTable = servicesPage.list().resourceTable().sortableTable();
 
-        await sortableTable.rowElementWithName(serviceExternalName).waitFor({ timeout: 15000 });
+        await sortableTable.rowElementWithName(serviceExternalName).waitFor(SHORT_TIMEOUT_OPT);
       } finally {
         await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
       }
@@ -149,7 +150,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
         expect(body.metadata.name).toBe(`clone-${serviceExternalName}`);
 
         await servicesPage.waitForPage();
-        await sortableTable.rowElementWithName(`clone-${serviceExternalName}`).waitFor({ timeout: 15000 });
+        await sortableTable.rowElementWithName(`clone-${serviceExternalName}`).waitFor(SHORT_TIMEOUT_OPT);
 
         await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/clone-${serviceExternalName}`, false);
       } finally {
@@ -229,7 +230,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
         await promptRemove.remove();
         await deleteResponse;
 
-        await expect(sortableTable.rowElementWithName(serviceExternalName)).not.toBeAttached({ timeout: 15000 });
+        await expect(sortableTable.rowElementWithName(serviceExternalName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
       } finally {
         await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
       }

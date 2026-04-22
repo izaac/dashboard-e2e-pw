@@ -10,6 +10,7 @@ import ClusterManagerEditGenericPagePo from '@/e2e/po/edit/provisioning.cattle.i
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
@@ -73,7 +74,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
     await clusterCreate.goTo();
     await clusterCreate.waitForPage();
     await clusterCreate.selectCreate(0);
-    await expect(clusterCreate.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+    await expect(clusterCreate.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
     await expect(clusterCreate.rke2PageTitle()).toContainText('Create Amazon EC2');
     await clusterCreate.waitForPage('type=amazonec2&rkeType=rke2');
 
@@ -179,7 +180,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
         (resp) =>
           resp.url().includes(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`) &&
           resp.request().method() === 'PUT',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await editClusterPage.resourceDetail().createEditView().save();

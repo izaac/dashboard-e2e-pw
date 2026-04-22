@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { NetworkPolicyListPagePo, NetworkPolicyCreateEditPagePo } from '@/e2e/po/pages/explorer/network-policy.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
   test('creates a network policy and displays it in the list', async ({ page, login, rancherApi }) => {
@@ -38,7 +39,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
       const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
 
       await sortableTable.filter(customNetworkPolicyName);
-      await sortableTable.rowElementWithName(customNetworkPolicyName).waitFor({ timeout: 15000 });
+      await sortableTable.rowElementWithName(customNetworkPolicyName).waitFor(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource(
         'v1',
@@ -124,7 +125,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
       const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
 
       await sortableTable.filter(networkPolicyName);
-      await sortableTable.rowElementWithName(networkPolicyName).waitFor({ timeout: 15000 });
+      await sortableTable.rowElementWithName(networkPolicyName).waitFor(SHORT_TIMEOUT_OPT);
 
       const actionMenu = await sortableTable.rowActionMenuOpen(networkPolicyName);
 
@@ -137,7 +138,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
       await networkPolicyPage.promptRemove().remove();
       await deleteResponse;
 
-      await expect(sortableTable.rowElementWithName(networkPolicyName)).not.toBeAttached({ timeout: 15000 });
+      await expect(sortableTable.rowElementWithName(networkPolicyName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource(
         'v1',

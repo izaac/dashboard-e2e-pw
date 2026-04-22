@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
 
@@ -42,7 +43,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     const firstVersion = await chartPage.versionLinks().first().innerText();
     const fetchPromise = page.waitForResponse(
       (resp) => resp.url().includes(CLUSTER_REPOS_BASE_URL) && resp.request().method() === 'GET',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await chartPage.selectVersion(firstVersion.trim());
@@ -172,7 +173,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
       await page.waitForTimeout(300);
     }
 
-    await expect(chartsPage.chartCards()).toHaveCount(totalCharts, { timeout: 15000 });
+    await expect(chartsPage.chartCards()).toHaveCount(totalCharts, SHORT_TIMEOUT_OPT);
   });
 });
 
