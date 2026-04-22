@@ -220,7 +220,7 @@
 | RolesPagePo | roles.po.ts | PagePo | — | super, list, clickCreate |
 | SecretsListPagePo | secrets.po.ts | PagePo | — | super, title, createButton, createButtonTitle, list, resourceDetail |
 | ServiceAccountsPagePo | service-accounts.po.ts | PagePo | — | super, list, clickCreate |
-| ServicesPagePo | services.po.ts | PagePo | — | super, list, clickCreate, mastheadTitle, nameInput, descriptionInput, formSave, errorBanner (+2) |
+| ServicesPagePo | services.po.ts | PagePo | — | super, list, clickCreate, mastheadTitle, nameNsDescription, nameInput, descriptionInput, formSave (+3) |
 | StorageClassesPagePo | storage-classes.po.ts | PagePo | — | super, urlPath, list, listElementWithName, clickCreate, createStorageClassesForm |
 | UiPluginsPagePo | uiplugins.po.ts | PagePo | — | super, resourceTable, cacheState, goToDetailsPage, clickCreate, createPath |
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | PagePo | — | super, baseResourceList, runNow |

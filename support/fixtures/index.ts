@@ -157,7 +157,26 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         ]);
 
         if (!isLoginPage) {
-          return;
+          // DOM says we're logged in, but the SPA can render from cached Vuex state
+          // even when R_SESS is expired. Verify with a real API call from the browser.
+          const isSessionValid = await page.evaluate(async () => {
+            try {
+              const resp = await fetch('./v1/management.cattle.io.settings/server-version', {
+                credentials: 'include',
+              });
+
+              return resp.ok;
+            } catch {
+              return false;
+            }
+          });
+
+          if (isSessionValid) {
+            return;
+          }
+
+          // Session expired — fall through to re-login
+          await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
         }
       } else {
         // Clear existing auth state when logging in as a different user

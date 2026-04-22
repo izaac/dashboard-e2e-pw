@@ -7,6 +7,7 @@ import {
 import FleetApplicationDetailsPo from '@/e2e/po/detail/fleet/fleet.cattle.io.application.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
+import { MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const localWorkspace = 'fleet-local';
 const gitRepoUrl = 'https://github.com/rancher/fleet-test-data';
@@ -258,6 +259,8 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       const cardsPanel = workspaceCard.expandedPanel().cardsPanel();
       const activeStatePanel = cardsPanel.statePanel('Active');
 
+      // GitRepo may still be progressing — wait for Active panel to appear
+      await expect(activeStatePanel.title()).toBeVisible(MEDIUM_TIMEOUT_OPT);
       await activeStatePanel.title().click();
       await expect(activeStatePanel.card(repoName)).toBeVisible();
       await activeStatePanel.card(repoName).click();
