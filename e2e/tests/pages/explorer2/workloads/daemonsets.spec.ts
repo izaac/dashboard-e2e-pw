@@ -212,6 +212,16 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         },
       });
 
+      // Wait for controller to reconcile (avoids 409 Conflict on redeploy PUT)
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'apps.daemonsets',
+        `${namespace}/${daemonsetName}`,
+        (resp) => resp.body?.status?.observedGeneration >= 1,
+        10,
+        1000,
+      );
+
       try {
         const listPage = new WorkloadsDaemonsetsListPagePo(page);
         const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();

@@ -247,6 +247,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     expect(installResp.status()).toBe(201);
 
+    // Navigate explicitly — page does not auto-navigate after install
+    await extensionsPo.goTo();
     await extensionsPo.waitForPage(undefined, 'installed');
 
     await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });

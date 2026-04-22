@@ -157,16 +157,13 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const createCluster = new ClusterManagerCreatePagePo(page);
 
     // Ensure both drivers are inactive via API
+    // v3 API: `id` is the full name, `name` is the display name (e.g. id=opentelekomcloudcontainerengine, name=otccce)
     const drivers = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const otcDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
-    );
-    const okeDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
-    );
+    const otcDriver = drivers.body?.data?.find((d: any) => d.id === 'opentelekomcloudcontainerengine');
+    const okeDriver = drivers.body?.data?.find((d: any) => d.id === 'oraclecontainerengine');
 
     for (const driver of [otcDriver, okeDriver]) {
-      if (driver) {
+      if (driver && driver.active !== false) {
         await rancherApi.createRancherResource('v3', `kontainerDrivers/${driver.id}?action=deactivate`, {}, false);
         await rancherApi.waitForRancherResource(
           'v3',
@@ -222,16 +219,20 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Ensure both drivers are active via API
     const drivers = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const otcDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
-    );
-    const okeDriver = drivers.body?.data?.find(
-      (d: any) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
-    );
+    const otcDriver = drivers.body?.data?.find((d: any) => d.id === 'opentelekomcloudcontainerengine');
+    const okeDriver = drivers.body?.data?.find((d: any) => d.id === 'oraclecontainerengine');
 
     for (const driver of [otcDriver, okeDriver]) {
       if (driver && !driver.active) {
         await rancherApi.createRancherResource('v3', `kontainerDrivers/${driver.id}?action=activate`, {}, false);
+        await rancherApi.waitForRancherResource(
+          'v3',
+          'kontainerDrivers',
+          driver.id,
+          (resp) => resp.body?.active === true,
+          30,
+          2000,
+        );
       }
     }
 
@@ -279,12 +280,13 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const clusterList = new ClusterManagerListPagePo(page);
     const createCluster = new ClusterManagerCreatePagePo(page);
 
-    // Create a fresh example driver
+    // Create a fresh example driver — clean up existing first and wait for removal
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
     const found = existing.body?.data?.find((d: any) => d.url === downloadUrl);
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
@@ -361,9 +363,15 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     const activateResp = page.waitForResponse(
       (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
+      { timeout: 60_000 },
     );
 
-    const actionMenu = await driversPage.list().actionMenu(exampleDriver);
+    // Inactive drivers show API-generated name, not "Example" — find row by URL
+    const table = driversPage.list().resourceTable().sortableTable();
+    const driverRow = table.rowElementWithPartialName('kontainer-engine-driver-example');
+
+    await driverRow.locator('[data-testid*="action-button"]').click();
+    const actionMenu = driversPage.list().resourceTable().sortableTable().rowActionMenu();
 
     await actionMenu.getMenuItem('Activate').click();
     const resp = await activateResp;
@@ -389,12 +397,13 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const driversPage = new KontainerDriversPagePo(page);
     const createDriverPage = new KontainerDriverCreateEditPo(page);
 
-    // Create driver via API
+    // Create driver via API — clean up any existing one first and wait for removal
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
     const found = existing.body?.data?.find((d: any) => d.url === downloadUrl || d.url === downloadUrlUpdated);
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
@@ -440,12 +449,13 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
 
-    // Create driver via API
+    // Create driver via API — clean up any existing one first and wait for removal
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
     const found = existing.body?.data?.find((d: any) => d.url === downloadUrl || d.url === downloadUrlUpdated);
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {

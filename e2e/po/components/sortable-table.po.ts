@@ -21,11 +21,12 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   bulkActionButton(label: string): Locator {
-    return this.self().locator('.fixed-header-actions .bulk button').filter({ hasText: label });
+    // Bulk action buttons live in .sortable-table-header (sibling of .sortable-table)
+    return this.self().locator('..').locator('.fixed-header-actions .bulk button').filter({ hasText: label });
   }
 
   bulkActionDropDown(): Locator {
-    return this.self().locator('.fixed-header-actions .bulk .bulk-actions-dropdown');
+    return this.self().locator('..').locator('.fixed-header-actions .bulk .bulk-actions-dropdown');
   }
 
   async bulkActionDropDownOpen(): Promise<void> {

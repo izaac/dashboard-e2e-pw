@@ -285,7 +285,13 @@ export default class ExtensionsPagePo extends PagePo {
     return this.page.getByTestId('add-extensions-repos-modal');
   }
 
+  addReposModalPartnersCheckbox(): Locator {
+    return this.addReposModal().getByTestId('add-extensions-repos-modal-add-partners-repo');
+  }
+
   async addReposModalAddClick(): Promise<void> {
+    // Wait for modal fetch() to complete — checkboxes are disabled while pending
+    await expect(this.addReposModalPartnersCheckbox()).toBeEnabled();
     await this.addReposModal().locator('.dialog-buttons button:last-child').click();
   }
 

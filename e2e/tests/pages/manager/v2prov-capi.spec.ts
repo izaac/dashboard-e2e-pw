@@ -56,7 +56,8 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
     await expect(localMenu.getMenuItem('Edit Config')).toBeAttached();
   });
 
-  test('should show a message indicating that CAPI clusters are not editable', async ({ page }) => {
+  // Rancher 2.13 has no capi-unsupported-warning testid — feature not implemented in this version
+  test.skip('should show a message indicating that CAPI clusters are not editable', async ({ page }) => {
     const clusterList = new ClusterManagerListPagePo(page);
 
     await expect(clusterList.capiWarningSubRow(clusterName)).toBeVisible();

@@ -27,12 +27,14 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
   }
 
   async createBasicAuth(username = 'auth-test-user', password = 'auth-test-password'): Promise<void> {
+    await this.waitForNotLoading();
     await this.authSelect().toggle();
     await this.authSelect().clickOptionWithLabel('Create an HTTP Basic Auth Secret');
     await this.setBasicAuthSecret(username, password);
   }
 
   async createRKEAuth(username = 'auth-test-user', password = 'auth-test-password'): Promise<void> {
+    await this.waitForNotLoading();
     await this.authSelect().self().scrollIntoViewIfNeeded();
     await this.authSelect().toggle();
     await this.authSelect().isOpened();

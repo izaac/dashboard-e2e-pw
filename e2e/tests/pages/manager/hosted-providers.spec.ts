@@ -43,6 +43,18 @@ async function ensureProvidersState(rancherApi: any, providers: Record<string, b
   }
 }
 
+// Re-fetch fresh resourceVersion before restoring the original value
+async function restoreOperators(rancherApi: any, originalValue: string) {
+  const fresh = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators');
+
+  if (fresh.body.value !== originalValue) {
+    await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators', {
+      ...fresh.body,
+      value: originalValue,
+    });
+  }
+}
+
 test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
   // Tests mutate same global setting 'kev2-operators' - serial prevents conflicts
   test.describe.configure({ mode: 'serial' });
@@ -58,11 +70,12 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
   });
 
   test('can deactivate provider', async ({ page, login, rancherApi }) => {
-    const originalAksState = await rancherApi.getRancherResource(
+    const originalSetting = await rancherApi.getRancherResource(
       'v1',
       'management.cattle.io.settings',
       'kev2-operators',
     );
+    const originalValue = originalSetting.body.value;
 
     try {
       await login();
@@ -94,21 +107,17 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await createCluster.waitForPage();
       await createCluster.gridElementExistanceByName(AKS, 'not.toBeVisible');
     } finally {
-      await rancherApi.setRancherResource(
-        'v1',
-        'management.cattle.io.settings',
-        'kev2-operators',
-        originalAksState.body,
-      );
+      await restoreOperators(rancherApi, originalValue);
     }
   });
 
   test('can activate provider', async ({ page, login, rancherApi }) => {
-    const originalAksState = await rancherApi.getRancherResource(
+    const originalSetting = await rancherApi.getRancherResource(
       'v1',
       'management.cattle.io.settings',
       'kev2-operators',
     );
+    const originalValue = originalSetting.body.value;
 
     try {
       await login();
@@ -139,21 +148,17 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await createCluster.waitForPage();
       await createCluster.gridElementExistanceByName(AKS, 'toBeVisible');
     } finally {
-      await rancherApi.setRancherResource(
-        'v1',
-        'management.cattle.io.settings',
-        'kev2-operators',
-        originalAksState.body,
-      );
+      await restoreOperators(rancherApi, originalValue);
     }
   });
 
   test('can deactivate providers in bulk', async ({ page, login, rancherApi }) => {
-    const originalEksGkeState = await rancherApi.getRancherResource(
+    const originalSetting = await rancherApi.getRancherResource(
       'v1',
       'management.cattle.io.settings',
       'kev2-operators',
     );
+    const originalValue = originalSetting.body.value;
 
     try {
       await login();
@@ -195,22 +200,17 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       // Restore
       await ensureProvidersState(rancherApi, { eks: true, gke: true });
     } finally {
-      // Restore original state
-      await rancherApi.setRancherResource(
-        'v1',
-        'management.cattle.io.settings',
-        'kev2-operators',
-        originalEksGkeState.body,
-      );
+      await restoreOperators(rancherApi, originalValue);
     }
   });
 
   test('can activate providers in bulk', async ({ page, login, rancherApi }) => {
-    const originalEksGkeState = await rancherApi.getRancherResource(
+    const originalSetting = await rancherApi.getRancherResource(
       'v1',
       'management.cattle.io.settings',
       'kev2-operators',
     );
+    const originalValue = originalSetting.body.value;
 
     try {
       await login();
@@ -249,13 +249,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await createCluster.gridElementExistanceByName(EKS, 'toBeVisible');
       await createCluster.gridElementExistanceByName(GKE, 'toBeVisible');
     } finally {
-      // Restore original state
-      await rancherApi.setRancherResource(
-        'v1',
-        'management.cattle.io.settings',
-        'kev2-operators',
-        originalEksGkeState.body,
-      );
+      await restoreOperators(rancherApi, originalValue);
     }
   });
 });
