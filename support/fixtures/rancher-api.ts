@@ -14,6 +14,8 @@ export class RancherApi {
   private csrfToken: string;
   private csrfCookie: string;
   private runTimestamp: number;
+  private chartPresenceCache = new Map<string, 'available' | 'filtered' | 'catalog-error'>();
+  private credentials?: { username: string; password: string };
 
   constructor(request: APIRequestContext, apiUrl: string, csrfToken = '') {
     this.request = request;
@@ -29,6 +31,8 @@ export class RancherApi {
 
   /** Authenticate via API and store the token for subsequent requests */
   async login(username: string, password: string): Promise<void> {
+    this.credentials = { username, password };
+
     // Step 1: Native fetch for login — avoids CSRF cookie conflicts from Playwright's cookie jar
     const resp = await fetch(`${this.apiUrl}/v3-public/localProviders/local?action=login`, {
       method: 'POST',
@@ -60,6 +64,133 @@ export class RancherApi {
     }
   }
 
+  /**
+   * Pre-login health gate: verify Rancher API is responsive.
+   * Retries with backoff to ride out transient instability from controller churn.
+   */
+  async waitForReady(): Promise<void> {
+    if (!this.credentials) {
+      return;
+    }
+
+    const { username, password } = this.credentials;
+    const maxRetries = 5;
+    const backoffMs = 10_000;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const loginResp = await fetch(`${this.apiUrl}/v3-public/localProviders/local?action=login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, responseType: 'cookie' }),
+          signal: AbortSignal.timeout(5_000),
+        });
+
+        if (!loginResp.ok) {
+          throw new Error(`Login returned ${loginResp.status}`);
+        }
+
+        const cookie = loginResp.headers.getSetCookie?.().find((c) => c.startsWith('R_SESS='));
+
+        if (!cookie) {
+          throw new Error('No R_SESS cookie in login response');
+        }
+
+        const countsResp = await fetch(`${this.apiUrl}/v1/counts`, {
+          headers: { Cookie: cookie.split(';')[0] },
+          signal: AbortSignal.timeout(5_000),
+        });
+
+        if (!countsResp.ok) {
+          throw new Error(`/v1/counts returned ${countsResp.status}`);
+        }
+
+        return;
+      } catch (err) {
+        if (attempt === maxRetries) {
+          throw new Error(
+            `Rancher API unresponsive after ${maxRetries} attempts (${(maxRetries * backoffMs) / 1000}s). ` +
+              `Last error: ${err instanceof Error ? err.message : err}. ` +
+              'Likely cause: controller churn from feature flag toggles or helm operations.',
+          );
+        }
+
+        await new Promise((r) => setTimeout(r, backoffMs));
+      }
+    }
+  }
+
+  /**
+   * Ensure standard_user exists with global 'user' role and project-member on local/Default.
+   * Idempotent: skips if user already exists.
+   */
+  async ensureStandardUser(password: string): Promise<void> {
+    const headers = this.headers();
+
+    try {
+      const usersResp = await this.getRancherResource('v1', 'management.cattle.io.users');
+      const existing = usersResp.body.data?.find((u: { username?: string }) => u.username === 'standard_user');
+
+      if (existing) {
+        return;
+      }
+    } catch {
+      console.warn('[RancherApi] Could not list users, skipping standard_user ensure');
+
+      return;
+    }
+
+    console.log('[RancherApi] Creating standard_user...');
+
+    const userResp = await this.createRancherResource('v1', 'management.cattle.io.users', {
+      type: 'user',
+      enabled: true,
+      mustChangePassword: false,
+      username: 'standard_user',
+    });
+
+    const userId = userResp.body.id;
+
+    await new Promise((r) => setTimeout(r, MEDIUM_API_DELAY));
+
+    // Set password
+    await this.createRancherResource('v1', 'secrets', {
+      type: 'secret',
+      metadata: { namespace: 'cattle-local-user-passwords', name: userId },
+      data: { password: Buffer.from(password).toString('base64') },
+    });
+
+    // Global role binding: 'user'
+    await this.request.post(`${this.apiUrl}/v3/globalrolebindings`, {
+      ...this.opts({ data: { type: 'globalRoleBinding', globalRoleId: 'user', userId } }),
+    });
+
+    // Project role binding: project-member on local/Default
+    const userData = await this.getRancherResource('v1', 'management.cattle.io.users', userId);
+    const principalId = userData.body.principalIds?.[0];
+
+    if (principalId) {
+      try {
+        const project = await this.getProjectByName('local', 'Default');
+
+        await this.request.post(`${this.apiUrl}/v3/projectroletemplatebindings`, {
+          ...this.opts({
+            data: {
+              type: 'projectroletemplatebinding',
+              roleTemplateId: 'project-member',
+              userPrincipalId: principalId,
+              projectId: project.id,
+            },
+          }),
+        });
+      } catch {
+        console.warn('[RancherApi] Could not set project role — Default project may not exist');
+      }
+    }
+
+    console.log('[RancherApi] standard_user created');
+  }
+
   private headers() {
     const h: Record<string, string> = { Accept: 'application/json' };
 
@@ -76,6 +207,23 @@ export class RancherApi {
   /** Common request options — headers + ignoreHTTPSErrors */
   private opts(extra: Record<string, any> = {}) {
     return { headers: this.headers(), ignoreHTTPSErrors: true, ...extra };
+  }
+
+  /**
+   * Execute an API request with automatic re-auth on 401.
+   * Worker-scoped tokens can expire mid-suite; this transparently refreshes once.
+   */
+  private async fetchWithReauth(fn: () => Promise<import('@playwright/test').APIResponse>) {
+    const resp = await fn();
+
+    if (resp.status() === 401 && this.credentials) {
+      console.warn('[RancherApi] 401 received — re-authenticating...');
+      await this.login(this.credentials.username, this.credentials.password);
+
+      return fn();
+    }
+
+    return resp;
   }
 
   /** Generate a unique E2E resource name */
@@ -110,10 +258,7 @@ export class RancherApi {
       expectedStatusCode = 201;
     }
 
-    const resp = await this.request.fetch(url, {
-      method,
-      ...this.opts({ data: body }),
-    });
+    const resp = await this.fetchWithReauth(() => this.request.fetch(url, { method, ...this.opts({ data: body }) }));
 
     if (expectedStatusCode) {
       expect(resp.status()).toBe(expectedStatusCode);
@@ -125,9 +270,9 @@ export class RancherApi {
   }
 
   async createRancherResource(prefix: string, resourceType: string, body: any, failOnStatusCode = true) {
-    const resp = await this.request.post(`${this.apiUrl}/${prefix}/${resourceType}`, {
-      ...this.opts({ data: body }),
-    });
+    const resp = await this.fetchWithReauth(() =>
+      this.request.post(`${this.apiUrl}/${prefix}/${resourceType}`, { ...this.opts({ data: body }) }),
+    );
 
     if (failOnStatusCode) {
       expect([200, 201]).toContain(resp.status());
@@ -136,20 +281,28 @@ export class RancherApi {
     return { status: resp.status(), body: await resp.json().catch(() => ({})) };
   }
 
-  async setRancherResource(prefix: string, resourceType: string, resourceId: string, body: any) {
-    const resp = await this.request.put(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, {
-      ...this.opts({ data: body }),
-    });
+  async setRancherResource(
+    prefix: string,
+    resourceType: string,
+    resourceId: string,
+    body: any,
+    failOnStatusCode = true,
+  ) {
+    const resp = await this.fetchWithReauth(() =>
+      this.request.put(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { ...this.opts({ data: body }) }),
+    );
 
-    expect(resp.status()).toBe(200);
+    if (failOnStatusCode) {
+      expect(resp.status()).toBe(200);
+    }
 
-    return { status: resp.status(), body: await resp.json() };
+    return { status: resp.status(), body: await resp.json().catch(() => ({})) };
   }
 
   async deleteRancherResource(prefix: string, resourceType: string, resourceId: string, failOnStatusCode = true) {
-    const resp = await this.request.delete(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, {
-      ...this.opts(),
-    });
+    const resp = await this.fetchWithReauth(() =>
+      this.request.delete(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { ...this.opts() }),
+    );
 
     if (failOnStatusCode) {
       expect([200, 204]).toContain(resp.status());
@@ -220,6 +373,100 @@ export class RancherApi {
       },
       retries,
     );
+  }
+
+  /**
+   * Poll a newly-created cluster and fail early if it enters a sustained error state.
+   *
+   * During provisioning, clusters can briefly hiccup into an error state before recovering.
+   * This method only throws if the error persists for `sustainedErrorMs` consecutive milliseconds,
+   * avoiding false positives from transient blips.
+   *
+   * @param api - 'v3' for EKS/AKS/GKE clusters (uses transitioning field),
+   *              'v1' for RKE2/K3s provisioning clusters (uses metadata.state)
+   * @param clusterId - For v3: management cluster ID (e.g. 'c-xxxxx').
+   *                    For v1: 'namespace/name' (e.g. 'fleet-default/my-cluster').
+   * @param pollIntervalMs - How often to poll (default 10s)
+   * @param maxPollMs - Total polling window (default 5 min)
+   * @param sustainedErrorMs - How long error must persist before failing (default 2 min)
+   */
+  async assertClusterProvisioningNotStuck(
+    api: 'v1' | 'v3',
+    clusterId: string,
+    {
+      pollIntervalMs = 10_000,
+      maxPollMs = 300_000,
+      sustainedErrorMs = 120_000,
+    }: { pollIntervalMs?: number; maxPollMs?: number; sustainedErrorMs?: number } = {},
+  ): Promise<void> {
+    const start = Date.now();
+    let errorSince: number | null = null;
+    let lastErrorMsg = '';
+
+    while (Date.now() - start < maxPollMs) {
+      try {
+        const isError =
+          api === 'v3' ? await this.isV3ClusterErrored(clusterId) : await this.isV1ClusterErrored(clusterId);
+
+        if (isError.errored) {
+          lastErrorMsg = isError.message;
+
+          if (!errorSince) {
+            errorSince = Date.now();
+          } else if (Date.now() - errorSince >= sustainedErrorMs) {
+            throw new Error(
+              `Cluster ${clusterId} stuck in error state for ${Math.round((Date.now() - errorSince) / 1000)}s: ${lastErrorMsg}`,
+            );
+          }
+        } else {
+          // Error cleared — reset counter (transient hiccup)
+          errorSince = null;
+          lastErrorMsg = '';
+        }
+      } catch (e) {
+        // Re-throw our own assertion errors, ignore fetch failures
+        if (e instanceof Error && e.message.startsWith('Cluster ')) {
+          throw e;
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
+    }
+  }
+
+  private async isV3ClusterErrored(clusterId: string): Promise<{ errored: boolean; message: string }> {
+    const result = await this.getRancherResource('v3', 'clusters', clusterId, 0);
+
+    if (result.status !== 200) {
+      return { errored: false, message: '' };
+    }
+
+    const { transitioning, transitioningMessage, state } = result.body;
+
+    if (transitioning === 'error' || state === 'error') {
+      return { errored: true, message: transitioningMessage || state || 'unknown error' };
+    }
+
+    return { errored: false, message: '' };
+  }
+
+  private async isV1ClusterErrored(clusterId: string): Promise<{ errored: boolean; message: string }> {
+    const result = await this.getRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, 0);
+
+    if (result.status !== 200) {
+      return { errored: false, message: '' };
+    }
+
+    const metaState = result.body.metadata?.state;
+    const stalled = (result.body.status?.conditions || []).find(
+      (c: any) => c.type === 'Stalled' && c.status === 'True',
+    );
+
+    if (metaState?.error === true || stalled) {
+      return { errored: true, message: metaState?.message || stalled?.message || 'unknown error' };
+    }
+
+    return { errored: false, message: '' };
   }
 
   /** User management */
@@ -421,6 +668,27 @@ export class RancherApi {
     return this.setRancherResource('v1', 'userpreferences', update.id, update);
   }
 
+  /**
+   * Update namespace filter — sets groupBy and namespace filter via user preferences.
+   * Mirrors upstream cy.updateNamespaceFilter().
+   */
+  async updateNamespaceFilter(clusterName: string, groupBy: string, namespaceFilter: string) {
+    const selfUser = await this.getRancherResource('v1', 'ext.cattle.io.selfuser', undefined, 201);
+    const userId = selfUser.body.status.userID;
+
+    const payload = {
+      id: userId,
+      type: 'userpreference',
+      data: {
+        cluster: clusterName,
+        'group-by': groupBy,
+        'ns-by-cluster': namespaceFilter,
+      },
+    };
+
+    return this.setRancherResource('v1', 'userpreferences', userId, payload);
+  }
+
   async applyDefaultTestTheme() {
     await this.setRancherResource('v3', 'settings', 'ui-brand', { value: 'modern' });
     await this.setUserPreference({ theme: 'ui-light' });
@@ -486,5 +754,94 @@ export class RancherApi {
     }
 
     return result.body?.spec?.value ?? result.body?.status?.default;
+  }
+
+  async createProject(name: string, clusterId = 'local') {
+    return this.createRancherResource('v3', 'projects', {
+      type: 'project',
+      name,
+      clusterId,
+    });
+  }
+
+  async createNamespaceInProject(nsName: string, projectId: string) {
+    return this.createRancherResource('v1', 'namespaces', {
+      type: 'namespace',
+      metadata: {
+        annotations: {
+          'field.cattle.io/projectId': projectId,
+          'field.cattle.io/containerDefaultResourceLimit': '{}',
+        },
+        name: nsName,
+      },
+    });
+  }
+
+  /**
+   * Check whether a chart is present in the catalog index.
+   *
+   * Uses the filtered index (`?link=index`) which applies server-side version constraints —
+   * the same index the Charts UI renders. Results are cached per worker since the catalog
+   * doesn't change mid-run.
+   *
+   * Returns:
+   * - `'available'` — chart exists in the filtered index, test can run
+   * - `'filtered'` — catalog has entries but this chart is absent (version constraints or not in repo)
+   * - `'catalog-error'` — index is empty or fetch failed (repo not synced / broken)
+   */
+  async checkChartPresence(repo: string, chartId: string): Promise<'available' | 'filtered' | 'catalog-error'> {
+    const key = `${repo}/${chartId}`;
+
+    if (this.chartPresenceCache.has(key)) {
+      return this.chartPresenceCache.get(key)!;
+    }
+
+    const resp = await this.request.fetch(
+      `${this.apiUrl}/v1/catalog.cattle.io.clusterrepos/${repo}?link=index`,
+      this.opts(),
+    );
+
+    if (!resp.ok()) {
+      this.chartPresenceCache.set(key, 'catalog-error');
+
+      return 'catalog-error';
+    }
+
+    const json = await resp.json().catch(() => ({}));
+    const entries = json?.entries;
+
+    if (!entries || Object.keys(entries).length === 0) {
+      this.chartPresenceCache.set(key, 'catalog-error');
+
+      return 'catalog-error';
+    }
+
+    const result = entries[chartId] ? ('available' as const) : ('filtered' as const);
+
+    this.chartPresenceCache.set(key, result);
+
+    return result;
+  }
+
+  /**
+   * Uninstall a Helm chart via API. Safe to call when the chart is not installed.
+   * When crdName is provided, uninstalls the app first, then the CRD (order matters).
+   */
+  async uninstallChart(namespace: string, name: string, crdName?: string): Promise<void> {
+    const base = `catalog.cattle.io.apps/${namespace}`;
+
+    const appResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${name}`, 0);
+
+    if (appResp.status === 200) {
+      await this.createRancherResource('v1', `${base}/${name}?action=uninstall`, {}, false);
+    }
+
+    if (crdName) {
+      const crdResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${crdName}`, 0);
+
+      if (crdResp.status === 200) {
+        await this.createRancherResource('v1', `${base}/${crdName}?action=uninstall`, {}, false);
+      }
+    }
   }
 }
