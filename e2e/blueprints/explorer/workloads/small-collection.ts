@@ -1,29 +1,28 @@
 /**
- * Generic small-collection mock response for pagination-hidden tests.
- * Each workload type reuses this factory — only the resourceType differs.
- *
- * Includes spec.containers + status so the Rancher UI doesn't crash
- * when rendering pod image columns or status badges.
+ * Mock API response with a small collection (3 items) — used to verify
+ * pagination is hidden when total rows fit on one page.
  */
-export function smallCollectionResponse(resourceType: string, count = 3) {
+export function smallCollectionResponse(resourceType: string) {
+  const isPod = resourceType === 'pod';
+
+  const items = Array.from({ length: 3 }, (_, i) => ({
+    id: `default/small-item-${i}`,
+    type: resourceType,
+    metadata: {
+      name: `small-item-${i}`,
+      namespace: 'default',
+      creationTimestamp: new Date().toISOString(),
+      uid: `uid-small-${i}`,
+      state: { error: false, message: '', name: 'active', transitioning: false },
+    },
+    spec: isPod ? { containers: [{ name: 'test', image: 'k8s.gcr.io/pause' }] } : {},
+    status: isPod ? { phase: 'Running' } : {},
+  }));
+
   return {
     type: 'collection',
     resourceType,
-    count,
-    data: Array.from({ length: count }, (_, i) => ({
-      id: `default/mock-${i + 1}`,
-      type: resourceType,
-      metadata: {
-        name: `mock-${i + 1}`,
-        namespace: 'default',
-        resourceVersion: '1',
-      },
-      spec: {
-        containers: [{ name: 'mock', image: 'nginx:latest' }],
-        template: { spec: { containers: [{ name: 'mock', image: 'nginx:latest' }] } },
-      },
-      status: { phase: 'Running' },
-      state: { name: 'active', error: false, transitioning: false, message: '' },
-    })),
+    count: items.length,
+    data: items,
   };
 }

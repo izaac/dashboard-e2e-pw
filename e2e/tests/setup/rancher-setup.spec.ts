@@ -3,24 +3,19 @@ import { RancherSetupLoginPagePo } from '@/e2e/po/pages/rancher-setup-login.po';
 import { RancherSetupConfigurePage } from '@/e2e/po/pages/rancher-setup-configure.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Rancher setup — equivalent of cypress/e2e/tests/setup/rancher-setup.spec.ts
  *
- * NOTE: This spec is NOT needed when Rancher is provisioned via Ansible
- * (~/repo/qa-infra-automation/ansible/testing/dashboard-e2e-pw).
- * The Ansible playbook creates the instance with admin + standard_user
- * accounts (same passwords), so bootstrap + user creation is already done.
- * Only run this spec against a fresh, unconfigured Rancher instance.
- *
- * Tags mirror the Cypress grep tags for filtering:
- * @adminUserSetup @standardUserSetup @setup
+ * Idempotent: safe to re-run against an already-bootstrapped Rancher.
+ * Bootstrap tests skip when Rancher is already configured;
+ * standard user creation skips when the user already exists.
  */
 test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUserSetup'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
   test.beforeEach(async ({ envMeta }) => {
-    test.skip(!envMeta.bootstrapPassword, 'Requires CATTLE_BOOTSTRAP_PASSWORD and a fresh Rancher instance');
+    test.skip(!envMeta.bootstrapPassword, 'Requires CATTLE_BOOTSTRAP_PASSWORD');
   });
 
   test('Requires initial setup', async ({ page }) => {
@@ -28,7 +23,16 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
 
     await homePage.goTo();
-    await rancherSetupLoginPage.goTo();
+    // SPA redirects unauthed users to /auth/login (both bootstrap and regular login use same URL)
+    await expect(page).not.toHaveURL(/\/home/, { timeout: 10000 });
+
+    // Username field only appears on the real login page, not the bootstrap page
+    const usernameField = page.locator('[data-testid="local-login-username"]');
+
+    if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
+      test.skip(true, 'Rancher already bootstrapped');
+    }
+
     await rancherSetupLoginPage.waitForPage();
     await rancherSetupLoginPage.hasInfoMessage();
   });
@@ -37,6 +41,16 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     const settingsUrl = '**/v1/management.cattle.io.settings?exclude=metadata.managedFields';
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
     const rancherSetupConfigurePage = new RancherSetupConfigurePage(page);
+
+    // Check if already bootstrapped — username field only exists on real login page
+    await rancherSetupLoginPage.goTo();
+    await page.waitForLoadState('domcontentloaded');
+
+    const usernameField = page.locator('[data-testid="local-login-username"]');
+
+    if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
+      test.skip(true, 'Rancher already bootstrapped');
+    }
 
     // Collect settings responses
     const settingsResponses: any[] = [];
@@ -74,10 +88,19 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
     const rancherSetupConfigurePage = new RancherSetupConfigurePage(page);
 
+    await rancherSetupLoginPage.goTo();
+    await page.waitForLoadState('domcontentloaded');
+
+    // Username field only exists on real login page, not bootstrap page
+    const usernameField = page.locator('[data-testid="local-login-username"]');
+
+    if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
+      test.skip(true, 'Rancher already bootstrapped');
+    }
+
     // Intercept bootstrap login
     const loginPromise = page.waitForResponse('**/v1-public/login');
 
-    await rancherSetupLoginPage.goTo();
     await rancherSetupLoginPage.waitForPage();
     await rancherSetupLoginPage.bootstrapLogin(envMeta.bootstrapPassword!);
 
@@ -91,24 +114,35 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     // Check server URL is visible
     await rancherSetupConfigurePage.serverUrl().checkVisible();
 
-    // Accept terms and submit
-    await rancherSetupConfigurePage.setTermsAgreement();
+    // Rancher head skips the password section when CATTLE_BOOTSTRAP_PASSWORD is set.
+    // Password stays as the bootstrap value — no interaction needed.
+
+    // Accept terms and submit (use PO .set() which clicks .checkbox-custom, not the label)
+    await rancherSetupConfigurePage.termsAgreement().set();
     expect(await rancherSetupConfigurePage.canSubmit()).toBe(true);
     await rancherSetupConfigurePage.submit();
 
     // Wait for first login preferences
     const prefsPromise = page.waitForResponse('**/v1/userpreferences/*');
 
-    await expect(page).toHaveURL(/\/home/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/home/, SHORT_TIMEOUT_OPT);
 
     const prefsResp = await prefsPromise;
 
     expect(prefsResp.status()).toBe(200);
   });
 
-  test('Create standard user', async ({ page, rancherApi, envMeta }) => {
-    // Login first via API (this spec doesn't use storageState since it's the setup flow)
-    await page.goto('/auth/login');
+  test('Create standard user', async ({ rancherApi, envMeta }) => {
+    // Re-login — the worker-scoped rancherApi token may have been invalidated by bootstrap
+    await rancherApi.login(envMeta.username, envMeta.password);
+
+    // Check if standard_user already exists
+    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+    const existingUser = usersResp.body.data.find((u: { username?: string }) => u.username?.includes('standard_user'));
+
+    if (existingUser) {
+      test.skip(true, 'Standard user already exists');
+    }
 
     await rancherApi.createUser(
       {

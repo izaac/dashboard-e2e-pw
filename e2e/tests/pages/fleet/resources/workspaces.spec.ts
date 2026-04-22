@@ -5,6 +5,9 @@ import {
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.fleetworkspace.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { fleetWorkspacesSmallResponse } from '@/e2e/blueprints/fleet/workspaces-get';
+import * as jsyaml from 'js-yaml';
+import * as fs from 'fs';
 
 test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai'] }, () => {
@@ -22,12 +25,47 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       expect(actualHeaders).toEqual(expectedHeaders);
     });
+
+    test('pagination is visible and user is able to navigate through workspace data', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
+    });
+
+    test('filter workspace', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Requires creating multiple workspaces — expensive setup');
+    });
+
+    test('sorting changes the order of paginated workspace data', async ({ page, login, rancherApi }) => {
+      test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      await page.route('**/v1/management.cattle.io.fleetworkspaces?**', (route) => {
+        route.fulfill({ json: fleetWorkspacesSmallResponse() });
+      });
+
+      await login();
+      const listPage = new FleetWorkspaceListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+
+      const table = listPage.list().resourceTable().sortableTable();
+
+      await table.checkVisible();
+      await table.checkLoadingIndicatorNotVisible();
+      await table.checkRowCount(false, 2);
+      await expect(table.pagination()).toBeHidden();
+    });
   });
 
   test.describe('CRUD', () => {
     test('can create a fleet workspace', async ({ page, login, rancherApi }) => {
       await login();
-      const customWorkspace = rancherApi.createE2EResourceName('fleet-workspace');
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-ws-create');
       const listPage = new FleetWorkspaceListPagePo(page);
       const createPage = new FleetWorkspaceCreateEditPo(page);
 
@@ -86,6 +124,111 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       }
     });
 
+    test('can Edit Config', async ({ page, login, rancherApi }) => {
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-ws-edit');
+      const ociSecretName = rancherApi.createE2EResourceName('oci-secret');
+
+      await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
+        metadata: { name: customWorkspace },
+        name: customWorkspace,
+      });
+
+      await rancherApi.createRancherResource('v1', 'secrets', {
+        metadata: { name: ociSecretName, namespace: customWorkspace },
+        type: 'fleet.cattle.io/bundle-oci-storage/v1alpha1',
+        apiVersion: 'v1',
+        kind: 'Secret',
+        data: {
+          agentPassword: 'Zm9v',
+          agentUsername: 'ZmxlZXQtY2k=',
+          basicHTTP: 'ZmFsc2U=',
+          insecure: 'dHJ1ZQ==',
+          password: 'Zm9v',
+          reference: '',
+          username: 'ZmxlZXQtY2k=',
+        },
+      });
+
+      try {
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+        const editPage = new FleetWorkspaceCreateEditPo(page, customWorkspace);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(customWorkspace);
+
+        await actionMenu.getMenuItem('Edit Config').click();
+        await editPage.waitForPage('mode=edit', 'allowedtargetnamespaces');
+        await expect(editPage.mastheadTitle()).toContainText(`Workspace: ${customWorkspace}`);
+
+        const editView = editPage.resourceDetail().createEditView();
+
+        await editView.nameNsDescription().description().set(`${customWorkspace}-desc-edit`);
+
+        await editPage.resourceDetail().tabs().clickTabWithName('ociRegistries');
+
+        await editPage.defaultOciRegistry().toggle();
+        await editPage.defaultOciRegistry().clickLabel(ociSecretName);
+
+        const responsePromise = page.waitForResponse(
+          (resp) => resp.url().includes(`/v3/fleetWorkspaces/${customWorkspace}`) && resp.request().method() === 'PUT',
+        );
+
+        await editPage.resourceDetail().cruResource().saveOrCreate().click();
+        const resp = await responsePromise;
+
+        expect(resp.status()).toBe(200);
+        const body = await resp.json();
+
+        expect(body.id).toEqual(customWorkspace);
+        expect(body.annotations['field.cattle.io/description']).toEqual(`${customWorkspace}-desc-edit`);
+        expect(body.annotations['ui-default-oci-registry']).toEqual(ociSecretName);
+        await listPage.waitForPage();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', `secrets/${customWorkspace}`, ociSecretName, false);
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', customWorkspace, false);
+      }
+    });
+
+    test('can Download YAML', async ({ page, login, rancherApi }) => {
+      const customWorkspace = rancherApi.createE2EResourceName('fleet-ws-dl');
+
+      await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
+        metadata: { name: customWorkspace },
+        name: customWorkspace,
+      });
+
+      try {
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(customWorkspace);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${customWorkspace}.yaml`);
+
+        const downloadPath = await download.path();
+        const yamlContent = fs.readFileSync(downloadPath!, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('FleetWorkspace');
+        expect(parsed.metadata.name).toBe(customWorkspace);
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', customWorkspace, false);
+      }
+    });
+
     test('can delete workspace', async ({ page, login, rancherApi }) => {
       const deleteName = rancherApi.createE2EResourceName('fleet-ws-del');
 
@@ -97,26 +240,34 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       await login();
       const listPage = new FleetWorkspaceListPagePo(page);
 
-      await listPage.goTo();
-      await listPage.waitForPage();
-      await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+      try {
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).toBeVisible();
 
-      const actionMenu = await listPage.list().actionMenu(deleteName);
+        const actionMenu = await listPage.list().actionMenu(deleteName);
 
-      await actionMenu.getMenuItem('Delete').click();
+        await actionMenu.getMenuItem('Delete').click();
 
-      const responsePromise = page.waitForResponse(
-        (resp) => resp.url().includes(`/v3/fleetWorkspaces/${deleteName}`) && resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) => resp.url().includes(`/v3/fleetWorkspaces/${deleteName}`) && resp.request().method() === 'DELETE',
+        );
 
-      const prompt = new PromptRemove(page);
+        const prompt = new PromptRemove(page);
 
-      await prompt.confirmField().set(deleteName);
-      await prompt.remove();
-      await responsePromise;
-      await listPage.waitForPage();
+        await prompt.confirmField().set(deleteName);
+        await prompt.remove();
+        await responsePromise;
 
-      await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+        // Fleet lists update via websocket — navigate fresh to ensure data after delete
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', deleteName, false);
+      }
     });
   });
 });

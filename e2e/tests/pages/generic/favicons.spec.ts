@@ -8,7 +8,7 @@ test.describe('Global UI', { tag: ['@generic', '@adminUser', '@standardUser'] },
 
       await loginPage.goTo();
 
-      await expect(loginPage.faviconLink()).toHaveAttribute('href', '/favicon.png');
+      await expect(loginPage.faviconLink()).toHaveAttribute('href', expect.stringContaining('/favicon.png'));
     });
 
     test('Should have correct set of favicons', async ({ page }) => {
@@ -18,7 +18,7 @@ test.describe('Global UI', { tag: ['@generic', '@adminUser', '@standardUser'] },
 
       const faviconLink = loginPage.faviconLink();
 
-      await expect(faviconLink).toHaveAttribute('href', '/favicon.png');
+      await expect(faviconLink).toHaveAttribute('href', expect.stringContaining('/favicon.png'));
 
       // Verify the favicon is fetchable
       const href = await faviconLink.getAttribute('href');

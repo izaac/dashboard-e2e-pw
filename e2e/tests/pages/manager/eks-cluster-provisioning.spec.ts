@@ -1,7 +1,9 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateEKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-eks.po';
+import TabbedPo from '@/e2e/po/components/tabbed.po';
 import * as eksDefaultSettings from '@/e2e/blueprints/cluster_management/eks-default-settings';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const eksSettings = {
   eksRegion: eksDefaultSettings.DEFAULT_REGION,
@@ -17,7 +19,7 @@ const eksSettings = {
   launchTemplate: 'Default (One will be created automatically)',
 };
 
-test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning'] }, () => {
+test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
     // Clean up test-prefixed Amazon cloud credentials from previous runs
     const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
@@ -54,7 +56,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
@@ -69,7 +71,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       const credCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
       const pageLoadPromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
@@ -85,7 +87,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       cloudCredId = credBody.id;
 
       await pageLoadPromise;
-      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
       // Set cluster name and description
@@ -95,7 +97,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       // Create cluster
       const clusterCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createEKSClusterPage.create();
@@ -111,9 +113,18 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Provisioning');
+
+      // Fail early if cloud credentials are bad instead of waiting for a long timeout
+      await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
     } finally {
       if (clusterId) {
-        await rancherApi.deleteRancherResource('v1', `provisioning.cattle.io.clusters/fleet-default`, clusterId, false);
+        await rancherApi.deleteRancherResource(
+          'v1',
+          'provisioning.cattle.io.clusters',
+          `fleet-default/${clusterName}`,
+          false,
+        );
+        await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
       }
       if (cloudCredId) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudCredId, false);
@@ -154,7 +165,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createEKSClusterPage.selectKubeProvider(0);
-      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
@@ -189,7 +200,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       const clusterCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createEKSClusterPage.create();
@@ -215,9 +226,18 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Provisioning');
+
+      // Fail early if cloud credentials are bad instead of waiting for a long timeout
+      await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
     } finally {
       if (clusterId) {
-        await rancherApi.deleteRancherResource('v1', `provisioning.cattle.io.clusters/fleet-default`, clusterId, false);
+        await rancherApi.deleteRancherResource(
+          'v1',
+          'provisioning.cattle.io.clusters',
+          `fleet-default/${clusterName}`,
+          false,
+        );
+        await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
       }
       if (cloudCredId) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudCredId, false);

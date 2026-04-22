@@ -2,11 +2,13 @@ import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { eventsGetEmptyEventsSet } from '@/e2e/blueprints/explorer/cluster/events';
 import { HeaderPo } from '@/e2e/po/components/header.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
+const configMapName = `e2e-test-${Date.now()}`;
 const configMapYaml = `apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: e2e-test-${+new Date()}
+  name: ${configMapName}
   annotations:
     {}
   labels:
@@ -52,7 +54,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await expect(clusterDashboard.fleetStatus()).toBeAttached();
   });
 
-  test('can import a YAML successfully', async ({ page, login }) => {
+  test('can import a YAML successfully', async ({ page, login, rancherApi }) => {
     await login();
 
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
@@ -65,14 +67,19 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await header.importYamlHeaderAction().click();
     await header.importYaml().importYamlEditor().set(configMapYaml);
     await header.importYaml().importYamlImportClick();
-    await header.importYaml().importYamlSuccessTitleCheck();
 
-    await expect(
-      header.importYaml().importYamlSortableTable().tableHeaderRowElementWithPartialName('State'),
-    ).not.toBeAttached();
-    await expect(header.importYaml().importYamlSortableTable().subRows()).not.toBeAttached();
+    try {
+      await header.importYaml().importYamlSuccessTitleCheck();
 
-    await header.importYaml().importYamlCloseClick();
+      await expect(
+        header.importYaml().importYamlSortableTable().tableHeaderRowElementWithPartialName('State'),
+      ).not.toBeAttached();
+      await expect(header.importYaml().importYamlSortableTable().subRows()).not.toBeAttached();
+
+      await header.importYaml().importYamlCloseClick();
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'configmaps', `default/${configMapName}`, false);
+    }
   });
 
   test('can open the kubectl shell from header', async ({ page, login }) => {
@@ -99,14 +106,27 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
 
     const header = new HeaderPo(page);
     const copyResponse = page.waitForResponse(
-      (resp) =>
-        (resp.url().includes('/v1/ext.cattle.io.kubeconfigs') || resp.url().includes('generateKubeconfig')) &&
-        resp.request().method() === 'POST',
+      (resp) => resp.url().includes('/v1/ext.cattle.io.kubeconfigs') && resp.request().method() === 'POST',
     );
 
     await header.copyKubeconfig().click();
     await copyResponse;
     await expect(header.copyKubeConfigCheckmark()).toBeVisible();
+  });
+
+  test('can download kubeconfig from header', async ({ page, login }) => {
+    await login();
+
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+    await clusterDashboard.goTo();
+    await clusterDashboard.waitForPage();
+
+    const header = new HeaderPo(page);
+
+    const [download] = await Promise.all([page.waitForEvent('download'), header.downloadKubeconfig().click()]);
+
+    expect(download.suggestedFilename()).toBe('local.yaml');
   });
 
   test('can view deployments', async ({ page, login, rancherApi }) => {
@@ -160,6 +180,73 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await clusterDashboard.waitForPage(undefined, 'cluster-events');
 
     await clusterDashboard.eventsList().sortableTable().checkRowCount(true, 1);
+  });
+
+  test('can view events and change events list count in cluster dashboard', async ({ page, login, rancherApi }) => {
+    await login();
+
+    const namespace = `e2e-events-ns-${Date.now()}`;
+    const podNames = ['e2e-test1', 'e2e-test2', 'e2e-test3', 'e2e-test4', 'e2e-test5', 'e2e-test6'];
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+    await rancherApi.createNamespace(namespace);
+
+    try {
+      for (const podName of podNames) {
+        await rancherApi.createRancherResource('v1', 'pods', {
+          apiVersion: 'v1',
+          kind: 'Pod',
+          metadata: { name: podName, namespace },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:latest' }],
+          },
+        });
+      }
+
+      await clusterDashboard.goTo();
+      await clusterDashboard.waitForPage(undefined, 'cluster-events');
+
+      const eventsTable = clusterDashboard.eventsList().sortableTable();
+
+      await eventsTable.self().scrollIntoViewIfNeeded();
+
+      // Default events list shows 10 rows — verify at least some events exist
+      await expect(async () => {
+        const count = await eventsTable.rowElements().count();
+
+        expect(count).toBeGreaterThanOrEqual(5);
+      }).toPass(SHORT_TIMEOUT_OPT);
+
+      const initialCount = await eventsTable.rowElements().count();
+
+      await clusterDashboard.eventsRowCountMenuToggle();
+
+      const menu = clusterDashboard.eventsRowCountMenu();
+
+      await menu.getByText('Show 25 events').click();
+
+      // After switching to 25 events, count should be >= initial (more events visible)
+      await expect(async () => {
+        const newCount = await eventsTable.rowElements().count();
+
+        expect(newCount).toBeGreaterThanOrEqual(initialCount);
+      }).toPass({ timeout: 10_000 });
+
+      await clusterDashboard.fullEventsLink().click();
+      await expect(page).toHaveURL(/\/event$/);
+    } finally {
+      // Restore events count to default (10) for idempotency
+      try {
+        await clusterDashboard.goTo();
+        await clusterDashboard.waitForPage(undefined, 'cluster-events');
+        await clusterDashboard.eventsRowCountMenuToggle();
+        await clusterDashboard.eventsRowCountMenu().getByText('Show 10 events').click();
+      } catch {
+        /* cleanup is best-effort */
+      }
+
+      await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+    }
   });
 
   test.describe('Cluster dashboard with limited permissions', () => {

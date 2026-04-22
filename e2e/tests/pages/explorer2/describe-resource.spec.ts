@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
 import SlideInPo from '@/e2e/po/side-bars/slide-in.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Can describe resource', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test('Can open describe resource', async ({ page, login }) => {
@@ -20,6 +21,6 @@ test.describe('Can describe resource', { tag: ['@explorer2', '@adminUser', '@sta
     await slideIn.checkExists();
     await slideIn.checkVisible();
     await slideIn.closeButton().click({ force: true });
-    await expect(slideIn.self()).not.toHaveClass(/slide-in-open/, { timeout: 15000 });
+    await expect(slideIn.self()).not.toHaveClass(/slide-in-open/, SHORT_TIMEOUT_OPT);
   });
 });

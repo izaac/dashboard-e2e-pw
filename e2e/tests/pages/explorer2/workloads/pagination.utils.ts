@@ -4,7 +4,7 @@
  */
 import { expect } from '@/support/fixtures';
 import type { Page } from '@playwright/test';
-import type RancherApi from '@/support/fixtures/rancher-api';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { smallCollectionResponse } from '@/e2e/blueprints/explorer/workloads/small-collection';
 

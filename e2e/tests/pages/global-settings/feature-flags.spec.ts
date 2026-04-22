@@ -1,15 +1,13 @@
 import { test, expect } from '@/support/fixtures';
-import type { RancherApi } from '@/support/fixtures/rancher-api';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import HomePagePo from '@/e2e/po/pages/home.po';
 import CardPo from '@/e2e/po/components/card.po';
 
 /**
  * Helper: get the current spec.value of a feature flag via API.
  * Returns the boolean value (true = active, false = disabled).
  */
-async function getFeatureFlagValue(rancherApi: RancherApi, flagName: string): Promise<boolean> {
+async function getFeatureFlagValue(rancherApi: any, flagName: string): Promise<boolean> {
   const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
   const spec = resp.body.spec || {};
 
@@ -24,7 +22,7 @@ async function getFeatureFlagValue(rancherApi: RancherApi, flagName: string): Pr
 /**
  * Helper: set a feature flag to a specific value via API.
  */
-async function setFeatureFlagValue(rancherApi: RancherApi, flagName: string, value: boolean): Promise<void> {
+async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boolean): Promise<void> {
   const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
   const body = resp.body;
 
@@ -33,14 +31,61 @@ async function setFeatureFlagValue(rancherApi: RancherApi, flagName: string, val
   await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flagName, body);
 }
 
+// Flags that trigger helm operations or controller restarts when toggled.
+// afterAll resets them to default to prevent poisoning later specs.
+const DANGEROUS_FLAGS = ['oidc-provider', 'harvester', 'istio-virtual-service-ui'];
+
+/**
+ * Wait for Rancher to stabilize after flag resets that trigger controller churn.
+ * /v1/counts is the canary: it hangs when controllers are thrashing.
+ */
+async function waitForCountsSettle(rancherApi: any, maxAttempts = 6, intervalMs = 15_000): Promise<void> {
+  for (let i = 1; i <= maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+
+    try {
+      const resp = await rancherApi.getRancherResource('v1', 'counts');
+
+      if (resp.status === 200) {
+        return;
+      }
+    } catch (err: unknown) {
+      console.warn(`waitForCountsSettle attempt ${i}/${maxAttempts} failed:`, err);
+    }
+  }
+
+  console.warn(
+    `Rancher did not stabilize after ${(maxAttempts * intervalMs) / 1000}s — subsequent specs may be affected`,
+  );
+}
+
 test.describe('Feature Flags', () => {
   test.describe.configure({ mode: 'serial' });
-
-  test.beforeEach(async ({ login, page }) => {
+  test.beforeEach(async ({ login }) => {
     await login();
-    const homePage = new HomePagePo(page);
+  });
 
-    await homePage.goTo();
+  test.afterAll(async ({ rancherApi }) => {
+    let resetCount = 0;
+
+    for (const flag of DANGEROUS_FLAGS) {
+      try {
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flag);
+        const body = resp.body;
+
+        if (body.spec?.value !== undefined && body.spec.value !== null) {
+          body.spec.value = null;
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flag, body);
+          resetCount++;
+        }
+      } catch (err) {
+        console.warn(`Failed to reset feature flag '${flag}':`, err);
+      }
+    }
+
+    if (resetCount > 0) {
+      await waitForCountsSettle(rancherApi);
+    }
   });
 
   test(
@@ -50,7 +95,6 @@ test.describe('Feature Flags', () => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const burgerMenu = new BurgerMenuPo(page);
 
-      // Save original state and ensure flag starts as Active
       const originalValue = await getFeatureFlagValue(rancherApi, 'harvester');
 
       await setFeatureFlagValue(rancherApi, 'harvester', true);
@@ -63,7 +107,6 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem('harvester', 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', 'harvester', false);
 
-        // Check Updated State: should be disabled
         await expect(featureFlagsPage.list().details('harvester', 0)).toContainText('Disabled');
 
         // Check side nav
@@ -75,13 +118,10 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem('harvester', 'Activate');
         await featureFlagsPage.clickCardActionButtonAndWait('Activate', 'harvester', true);
 
-        // Check Updated State: should be active
         await expect(featureFlagsPage.list().details('harvester', 0)).toContainText('Active');
 
-        // we now need to reload the page in order to catch the update of the product on the side-nav
         await page.reload();
 
-        // Check side nav
         await burgerMenu.toggle();
         await expect(burgerMenu.links().filter({ hasText: 'Virtualization Management' })).toBeVisible();
       } finally {
@@ -97,7 +137,6 @@ test.describe('Feature Flags', () => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'harvester-baremetal-container-workload';
 
-      // Save original state and ensure flag starts as Disabled
       const originalValue = await getFeatureFlagValue(rancherApi, flagName);
 
       await setFeatureFlagValue(rancherApi, flagName, false);
@@ -110,14 +149,15 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
         await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
 
-        // Check Updated State: should be active
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
+
+        // Reload to stabilize DOM — store update re-renders table and detaches action menus
+        await featureFlagsPage.navTo();
 
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
 
-        // Check Updated State: should be disabled
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
       } finally {
         await setFeatureFlagValue(rancherApi, flagName, originalValue);
@@ -132,7 +172,6 @@ test.describe('Feature Flags', () => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'istio-virtual-service-ui';
 
-      // Save original state and ensure flag starts as Active
       const originalValue = await getFeatureFlagValue(rancherApi, flagName);
 
       await setFeatureFlagValue(rancherApi, flagName, true);
@@ -145,14 +184,15 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
 
-        // Check Updated State: should be disabled
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
+
+        // Reload to stabilize DOM — store update re-renders table and detaches action menus
+        await featureFlagsPage.navTo();
 
         // Activate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
         await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
 
-        // Check Updated State: should be active
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
       } finally {
         await setFeatureFlagValue(rancherApi, flagName, originalValue);
@@ -167,7 +207,6 @@ test.describe('Feature Flags', () => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'rke1-custom-node-cleanup';
 
-      // Save original state and ensure flag starts as Active
       const originalValue = await getFeatureFlagValue(rancherApi, flagName);
 
       await setFeatureFlagValue(rancherApi, flagName, true);
@@ -180,14 +219,15 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
 
-        // Check Updated State: should be disabled
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
+
+        // Reload to stabilize DOM — store update re-renders table and detaches action menus
+        await featureFlagsPage.navTo();
 
         // Activate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
         await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
 
-        // Check Updated State: should be active
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
       } finally {
         await setFeatureFlagValue(rancherApi, flagName, originalValue);
@@ -199,14 +239,12 @@ test.describe('Feature Flags', () => {
     'can toggle token-hashing feature flag',
     { tag: ['@globalSettings', '@adminUser'] },
     async ({ page, rancherApi }) => {
+      // token-hashing is a one-way flag: once activated, it cannot be deactivated.
+      // Running this test permanently mutates the Rancher instance.
+      test.skip(true, 'token-hashing is a one-way flag — activating it permanently changes the Rancher instance');
+
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'token-hashing';
-
-      // token-hashing is a one-way flag: once activated, it cannot be deactivated.
-      // Skip this test if it's already been activated (not idempotent safe to re-run).
-      const currentValue = await getFeatureFlagValue(rancherApi, flagName);
-
-      test.skip(currentValue === true, 'token-hashing is already activated and cannot be deactivated — one-way flag');
 
       await featureFlagsPage.navTo();
       await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
@@ -220,7 +258,7 @@ test.describe('Feature Flags', () => {
 
       // Check - No actions available (lock icon visible)
       await page.reload();
-      await expect(featureFlagsPage.list().details(flagName, 1).locator('i.icon-lock')).toBeVisible();
+      await expect(featureFlagsPage.list().lockIcon(flagName)).toBeVisible();
     },
   );
 
@@ -231,7 +269,6 @@ test.describe('Feature Flags', () => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'unsupported-storage-drivers';
 
-      // Save original state and ensure flag starts as Disabled
       const originalValue = await getFeatureFlagValue(rancherApi, flagName);
 
       await setFeatureFlagValue(rancherApi, flagName, false);
@@ -251,7 +288,6 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
         await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
 
-        // Check Updated State: should be active
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
 
         // Deactivate
@@ -266,7 +302,6 @@ test.describe('Feature Flags', () => {
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
 
-        // Check Updated State: should be disabled
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
       } finally {
         await setFeatureFlagValue(rancherApi, flagName, originalValue);
@@ -281,7 +316,6 @@ test.describe('Feature Flags', () => {
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'unsupported-storage-drivers';
 
-      // Ensure flag starts as Disabled so we can try to Activate it
       const originalValue = await getFeatureFlagValue(rancherApi, flagName);
 
       await setFeatureFlagValue(rancherApi, flagName, false);
@@ -322,7 +356,7 @@ test.describe('Feature Flags', () => {
 
         const card = new CardPo(page);
 
-        await card.getActionButton().locator('button', { hasText: 'Activate' }).click();
+        await card.actionButtonWithText('Activate').click();
 
         // Check Updated State: should still be disabled
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
@@ -331,43 +365,11 @@ test.describe('Feature Flags', () => {
         await expect(card.getError()).toContainText('User does not have permission');
 
         // Press cancel
-        await card.getActionButton().locator('button', { hasText: 'Cancel' }).click();
-      } finally {
+        await card.actionButtonWithText('Cancel').click();
+
         await page.unroute(`**/v1/management.cattle.io.features/${flagName}`);
+      } finally {
         await setFeatureFlagValue(rancherApi, flagName, originalValue);
-      }
-    },
-  );
-
-  test(
-    'standard user has only read access to Feature Flag page',
-    { tag: ['@globalSettings', '@standardUser'] },
-    async ({ page, login }) => {
-      test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
-      await login();
-      const homePage = new HomePagePo(page);
-
-      await homePage.goTo();
-
-      const featureFlagsPage = new FeatureFlagsPagePo(page);
-
-      const featureFlags = [
-        'continuous-delivery',
-        'harvester',
-        'harvester-baremetal-container-workload',
-        'istio-virtual-service-ui',
-        'legacy',
-        'multi-cluster-management',
-        'rke1-custom-node-cleanup',
-        'rke2',
-        'token-hashing',
-        'unsupported-storage-drivers',
-      ];
-
-      await featureFlagsPage.navTo();
-
-      for (const flag of featureFlags) {
-        await expect(featureFlagsPage.list().details(flag, 4)).not.toBeAttached();
       }
     },
   );
@@ -391,10 +393,39 @@ test.describe('Feature Flags', () => {
       await expect(featureFlagsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features');
-      const rowCount = await featureFlagsPage.list().resourceTable().sortableTable().rowElements().count();
+      // UI hides certain flags (see shell/list/management.cattle.io.feature.vue)
+      const hiddenFlags = ['fleet', 'ui-sql-cache'];
+      const hiddenCount = resp.body.data.filter((f: { id: string }) => hiddenFlags.includes(f.id)).length;
+      const featureCount = resp.body.count - hiddenCount;
 
-      // Row count must match API count — filtering hidden flags varies by Rancher version
-      expect(rowCount).toBe(resp.body.count);
+      await expect(featureFlagsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(featureCount);
     });
+  });
+});
+
+test.describe('Feature Flags - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {
+  test('standard user has only read access to Feature Flag page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
+
+    const featureFlagsPage = new FeatureFlagsPagePo(page);
+
+    const featureFlags = [
+      'continuous-delivery',
+      'harvester',
+      'harvester-baremetal-container-workload',
+      'istio-virtual-service-ui',
+      'legacy',
+      'multi-cluster-management',
+      'rke1-custom-node-cleanup',
+      'rke2',
+      'token-hashing',
+      'unsupported-storage-drivers',
+    ];
+
+    await featureFlagsPage.navTo();
+
+    for (const flag of featureFlags) {
+      await expect(featureFlagsPage.list().details(flag, 4)).not.toBeAttached();
+    }
   });
 });

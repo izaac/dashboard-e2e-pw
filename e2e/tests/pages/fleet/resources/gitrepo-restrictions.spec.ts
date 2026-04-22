@@ -6,6 +6,7 @@ import {
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
+import * as fs from 'fs';
 
 const defaultWorkspace = 'fleet-default';
 
@@ -28,7 +29,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(createPage.mastheadTitle()).toContainText('GitRepoRestriction: Create');
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: Record<string, unknown> = jsyaml.load(val);
+        const json: any = jsyaml.load(val);
 
         json.metadata.name = customRestrictionName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
@@ -81,7 +82,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
         );
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: Record<string, unknown> = jsyaml.load(val);
+        const json: any = jsyaml.load(val);
 
         json.metadata.name = cloneName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
@@ -124,27 +125,85 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
       const listPage = new FleetGitRepoRestrictionListPagePo(page);
       const headerPo = new HeaderPo(page);
 
-      await listPage.goTo();
-      await listPage.waitForPage();
-      await headerPo.selectWorkspace(defaultWorkspace);
+      try {
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(defaultWorkspace);
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).toBeVisible();
 
-      const actionMenu = await listPage.list().actionMenu(deleteName);
+        const actionMenu = await listPage.list().actionMenu(deleteName);
 
-      await actionMenu.getMenuItem('Delete').click();
+        await actionMenu.getMenuItem('Delete').click();
 
-      const responsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/fleet.cattle.io.gitreporestrictions/${defaultWorkspace}/${deleteName}`) &&
-          resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/fleet.cattle.io.gitreporestrictions/${defaultWorkspace}/${deleteName}`) &&
+            resp.request().method() === 'DELETE',
+        );
 
-      const prompt = new PromptRemove(page);
+        const prompt = new PromptRemove(page);
 
-      await prompt.remove();
-      await responsePromise;
-      await listPage.waitForPage();
+        await prompt.remove();
+        await responsePromise;
 
-      await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+        // Fleet lists update via websocket — navigate fresh to ensure data after delete
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(defaultWorkspace);
+
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource(
+          'v1',
+          `fleet.cattle.io.gitreporestrictions/${defaultWorkspace}`,
+          deleteName,
+          false,
+        );
+      }
+    });
+
+    test('can Download YAML', async ({ page, login, rancherApi }) => {
+      const defaultWorkspace = 'fleet-default';
+      const restrictionName = rancherApi.createE2EResourceName('restriction');
+
+      await rancherApi.createRancherResource('v1', 'fleet.cattle.io.gitreporestrictions', {
+        metadata: { name: restrictionName, namespace: defaultWorkspace },
+        allowedTargetNamespaces: [],
+      });
+
+      try {
+        await login();
+        const listPage = new FleetGitRepoRestrictionListPagePo(page);
+        const headerPo = new HeaderPo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(defaultWorkspace);
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(restrictionName);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${restrictionName}.yaml`);
+
+        const downloadPath = await download.path();
+        const yamlContent = fs.readFileSync(downloadPath!, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('GitRepoRestriction');
+        expect(parsed.metadata.name).toBe(restrictionName);
+      } finally {
+        await rancherApi.deleteRancherResource(
+          'v1',
+          `fleet.cattle.io.gitreporestrictions/${defaultWorkspace}`,
+          restrictionName,
+          false,
+        );
+      }
     });
   });
 });

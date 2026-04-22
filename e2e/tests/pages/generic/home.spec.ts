@@ -18,10 +18,12 @@ test.describe('Home Page', () => {
         }
       });
 
+      // Set up response listener BEFORE navigation (storageState makes page load fast)
+      const settingsResponse = page.waitForResponse((resp) => resp.url().includes('/v1/management.cattle.io.settings'));
+
       await homePage.goTo();
       await homePage.waitForPage();
-
-      await expect(homePage.list().self()).toBeVisible();
+      await settingsResponse;
 
       // Should only have one settings request
       expect(settingsRequestCount).toBe(1);
@@ -39,19 +41,28 @@ test.describe('Home Page', () => {
 
       const clusterName = 'local';
 
-      await expect(homePage.list().self()).toBeVisible();
+      // Verify 'local' cluster is visible with version info
       const localRow = homePage.clusterRow(clusterName);
 
-      await expect(localRow.self()).toBeVisible();
+      await expect(localRow).toBeVisible();
 
       // Version column should not show dash (meaning data loaded)
-      await expect(localRow.column(3)).not.toHaveText('—');
+      const versionCell = homePage.clusterRowCell(clusterName, 3);
+
+      await expect(versionCell).not.toHaveText('—');
 
       // Extract cluster details from home page (state, name, version, provider)
-      const homeState = (await localRow.column(0).innerText()).trim();
-      const homeName = (await localRow.column(1).innerText()).trim();
-      const homeProvider = (await localRow.column(2).innerText()).trim();
-      const homeVersion = (await localRow.column(3).innerText()).trim();
+      await expect(homePage.clusterRowCell(clusterName, 0)).not.toHaveText('');
+      const homeState = (await homePage.clusterRowCell(clusterName, 0).innerText()).trim();
+
+      await expect(homePage.clusterRowCell(clusterName, 1)).not.toHaveText('');
+      const homeName = (await homePage.clusterRowCell(clusterName, 1).innerText()).trim();
+
+      await expect(homePage.clusterRowCell(clusterName, 2)).not.toHaveText('');
+      const homeProvider = (await homePage.clusterRowCell(clusterName, 2).innerText()).trim();
+
+      await expect(homePage.clusterRowCell(clusterName, 3)).not.toHaveText('');
+      const homeVersion = (await homePage.clusterRowCell(clusterName, 3).innerText()).trim();
 
       // Navigate to Cluster Management page and verify same details
       const provClusterList = new ClusterManagerListPagePo(page);
@@ -75,17 +86,15 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
-      await expect(homePage.list().self()).toBeVisible();
+      const filterInput = homePage.filterInput();
 
       // Filter with non-matching text
-      await homePage.list().filter('random text');
-      await expect(homePage.list().rowElements().first()).toContainText(
-        'There are no rows which match your search query.',
-      );
+      await filterInput.fill('random text');
+      await expect(homePage.noResultsMessage()).toBeVisible();
 
       // Filter with matching text
-      await homePage.list().filter('local');
-      await expect(homePage.clusterRow('local').self()).toBeVisible();
+      await filterInput.fill('local');
+      await expect(homePage.clusterRow('local')).toBeVisible();
     });
 
     test('Should show cluster description information in the cluster list', async ({ page, login }) => {
@@ -98,7 +107,7 @@ test.describe('Home Page', () => {
         const response = await route.fetch();
         const json = await response.json();
 
-        const localIndex = json.data.findIndex((item: Record<string, string>) => item.id.includes('/local'));
+        const localIndex = json.data.findIndex((item: any) => item.id.includes('/local'));
 
         if (localIndex >= 0) {
           json.data[localIndex].metadata.annotations['field.cattle.io/description'] = longClusterDescription;
@@ -112,7 +121,7 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
-      await expect(homePage.clusterDescription().filter({ hasText: longClusterDescription })).toBeVisible();
+      await expect(homePage.clusterDescriptions().filter({ hasText: longClusterDescription })).toBeVisible();
     });
 
     test('check table headers are visible', { tag: ['@noVai'] }, async ({ page, login }) => {
@@ -133,13 +142,11 @@ test.describe('Home Page', () => {
         'Pods',
       ];
 
-      await expect(homePage.list().self()).toBeVisible();
+      const headers = homePage.tableHeaders();
 
-      const actualHeaders = (await homePage.list().headerNames()).map((h) =>
-        h.replace(/\n/g, ' ').replace(/\s+/g, ' '),
-      );
-
-      expect(actualHeaders).toEqual(expectedHeaders);
+      for (let i = 0; i < expectedHeaders.length; i++) {
+        await expect(headers.nth(i)).toHaveText(expectedHeaders[i]);
+      }
     });
   });
 
@@ -262,7 +269,7 @@ test.describe('Home Page', () => {
     });
 
     test.afterEach(async ({ rancherApi }) => {
-      const restore: Record<string, string> = {};
+      const restore: Record<string, any> = {};
 
       if (savedWhatsnew !== undefined) {
         restore['read-whatsnew'] = savedWhatsnew;

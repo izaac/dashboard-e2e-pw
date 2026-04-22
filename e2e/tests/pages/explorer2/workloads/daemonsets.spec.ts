@@ -1,8 +1,10 @@
 import { test, expect } from '@/support/fixtures';
 import {
   WorkloadsDaemonsetsListPagePo,
+  WorkLoadsDaemonsetsCreatePagePo,
   WorkLoadsDaemonsetsEditPagePo,
 } from '@/e2e/po/pages/explorer/workloads-daemonsets.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
   setTablePreferences,
@@ -15,7 +17,6 @@ import {
   mockSmallCollection,
   type SavedPrefs,
 } from './pagination.utils';
-import { SMALL_CONTAINER } from './workload.utils';
 
 test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('modifying Scaling and Upgrade Policy to On Delete should use correct property OnDelete', async ({
@@ -44,187 +45,37 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.goTo();
       await listPage.waitForPage();
 
-      await listPage.masthead().create();
+      await listPage.baseResourceList().masthead().create();
 
-      const cruResource = listPage.createEditView();
+      const createPage = new WorkLoadsDaemonsetsCreatePagePo(page);
+      const cruResource = createPage.resourceDetail().createEditView();
 
       await cruResource.nameNsDescription().name().set(daemonsetName);
-      const editPage = new WorkLoadsDaemonsetsEditPagePo(page, daemonsetName, 'local', namespace);
-
-      await editPage.containerImageInput().set('nginx');
+      await createPage.containerImageInput().set('nginx');
       await cruResource.formSave().click();
 
       await listPage.waitForPage();
 
-      await expect(listPage.sortableTable().rowElementWithPartialName(daemonsetName)).toBeVisible();
+      const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
 
-      const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
+      await expect(sortableTable.rowElementWithPartialName(daemonsetName)).toBeVisible();
+
+      const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
       await actionMenu.getMenuItem('Edit Config').click();
+
+      const editPage = new WorkLoadsDaemonsetsEditPagePo(page, daemonsetName);
 
       await editPage.daemonSetTab().click();
       await editPage.upgradingTab().click();
 
-      await editPage.ScalingUpgradePolicyRadioBtn().set(1);
+      await editPage.scalingUpgradePolicyRadioBtn().getOptionByIndex(1).click();
 
-      await cruResource.formSave().click();
+      await editPage.resourceDetail().createEditView().formSave().click();
     } finally {
       await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
       await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
     }
-  });
-
-  test.describe('Redeploy dialog', () => {
-    test.beforeEach(async ({ rancherApi }) => {
-      await resetNamespaceFilter(rancherApi);
-    });
-
-    test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
-      await login();
-      const daemonsetName = `e2e-ds-redeploy-${Date.now()}`;
-      const namespace = 'default';
-
-      await rancherApi.createRancherResource('v1', 'apps.daemonsets', {
-        apiVersion: 'apps/v1',
-        kind: 'DaemonSet',
-        metadata: { name: daemonsetName, namespace },
-        spec: {
-          selector: { matchLabels: { app: daemonsetName } },
-          template: {
-            metadata: { labels: { app: daemonsetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      try {
-        const listPage = new WorkloadsDaemonsetsListPagePo(page);
-        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
-        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const dialog = listPage.redeployDialog();
-
-        await expect(dialog).toBeVisible();
-
-        const responsePromise = page.waitForResponse(
-          (resp) =>
-            resp.url().includes(`/v1/apps.daemonsets/${namespace}/${daemonsetName}`) &&
-            resp.request().method() === 'PUT',
-        );
-
-        await listPage.redeployDialogConfirmButton().click();
-        const response = await responsePromise;
-
-        expect(response.status()).toBe(200);
-      } finally {
-        await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
-      }
-    });
-
-    test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
-      await login();
-      const daemonsetName = `e2e-ds-cancel-${Date.now()}`;
-      const namespace = 'default';
-
-      await rancherApi.createRancherResource('v1', 'apps.daemonsets', {
-        apiVersion: 'apps/v1',
-        kind: 'DaemonSet',
-        metadata: { name: daemonsetName, namespace },
-        spec: {
-          selector: { matchLabels: { app: daemonsetName } },
-          template: {
-            metadata: { labels: { app: daemonsetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      let redeployCallCount = 0;
-
-      await page.route(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`, async (route) => {
-        if (route.request().method() === 'PUT') {
-          redeployCallCount++;
-        }
-        await route.continue();
-      });
-
-      try {
-        const listPage = new WorkloadsDaemonsetsListPagePo(page);
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        await expect(listPage.sortableTable().rowElementWithName(daemonsetName)).toBeVisible();
-        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const dialog = listPage.redeployDialog();
-
-        await expect(dialog).toBeVisible();
-        await listPage.redeployDialogCancelButton().click();
-        await expect(dialog).toBeHidden();
-        expect(redeployCallCount).toBe(0);
-      } finally {
-        await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
-        await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
-      }
-    });
-
-    test('displays error banner on failure', async ({ page, login, rancherApi }) => {
-      await login();
-      const daemonsetName = `e2e-ds-err-${Date.now()}`;
-      const namespace = 'default';
-
-      await rancherApi.createRancherResource('v1', 'apps.daemonsets', {
-        apiVersion: 'apps/v1',
-        kind: 'DaemonSet',
-        metadata: { name: daemonsetName, namespace },
-        spec: {
-          selector: { matchLabels: { app: daemonsetName } },
-          template: {
-            metadata: { labels: { app: daemonsetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      await page.route(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`, async (route) => {
-        if (route.request().method() === 'PUT') {
-          await route.fulfill({ status: 500, body: JSON.stringify({ type: 'error', message: 'simulated failure' }) });
-        } else {
-          await route.continue();
-        }
-      });
-
-      try {
-        const listPage = new WorkloadsDaemonsetsListPagePo(page);
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        await expect(listPage.sortableTable().rowElementWithName(daemonsetName)).toBeVisible();
-        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(daemonsetName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const dialog = listPage.redeployDialog();
-
-        await expect(dialog).toBeVisible();
-        await listPage.redeployDialogConfirmButton().click();
-        await expect(listPage.redeployDialogErrorBanner()).toBeVisible();
-      } finally {
-        await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
-        await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
-      }
-    });
   });
 
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
@@ -241,18 +92,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-ds-list-${Date.now()}`;
       ns2 = `e2e-ds-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -305,7 +145,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationNavigation(table, 23);
     });
@@ -316,7 +156,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
@@ -327,7 +167,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -341,11 +181,176 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationHidden(table);
 
       await page.unroute('**/v1/apps.daemonsets?**');
+    });
+  });
+
+  test.describe('Redeploy dialog', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      await resetNamespaceFilter(rancherApi);
+    });
+
+    test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
+      await login();
+      const daemonsetName = `e2e-ds-redeploy-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'apps.daemonsets', {
+        apiVersion: 'apps/v1',
+        kind: 'DaemonSet',
+        metadata: { name: daemonsetName, namespace },
+        spec: {
+          selector: { matchLabels: { app: daemonsetName } },
+          template: {
+            metadata: { labels: { app: daemonsetName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      // Wait for controller to reconcile (avoids 409 Conflict on redeploy PUT)
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'apps.daemonsets',
+        `${namespace}/${daemonsetName}`,
+        (resp) => resp.body?.status?.observedGeneration >= 1,
+        10,
+        1000,
+      );
+
+      try {
+        const listPage = new WorkloadsDaemonsetsListPagePo(page);
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
+        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const dialog = listPage.redeployDialog();
+
+        await expect(dialog.self()).toBeVisible();
+
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.daemonsets/${namespace}/${daemonsetName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await dialog.confirmRedeploy();
+        const response = await responsePromise;
+
+        expect(response.status()).toBe(200);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
+      }
+    });
+
+    test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
+      await login();
+      const daemonsetName = `e2e-ds-cancel-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'apps.daemonsets', {
+        apiVersion: 'apps/v1',
+        kind: 'DaemonSet',
+        metadata: { name: daemonsetName, namespace },
+        spec: {
+          selector: { matchLabels: { app: daemonsetName } },
+          template: {
+            metadata: { labels: { app: daemonsetName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      let redeployCallCount = 0;
+
+      await page.route(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`, async (route) => {
+        if (route.request().method() === 'PUT') {
+          redeployCallCount++;
+        }
+        await route.continue();
+      });
+
+      try {
+        const listPage = new WorkloadsDaemonsetsListPagePo(page);
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
+        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const dialog = listPage.redeployDialog();
+
+        await expect(dialog.self()).toBeVisible();
+        await dialog.cancel();
+        await expect(dialog.self()).toBeHidden();
+        expect(redeployCallCount).toBe(0);
+      } finally {
+        await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
+        await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
+      }
+    });
+
+    test('displays error banner on failure', async ({ page, login, rancherApi }) => {
+      await login();
+      const daemonsetName = `e2e-ds-err-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'apps.daemonsets', {
+        apiVersion: 'apps/v1',
+        kind: 'DaemonSet',
+        metadata: { name: daemonsetName, namespace },
+        spec: {
+          selector: { matchLabels: { app: daemonsetName } },
+          template: {
+            metadata: { labels: { app: daemonsetName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      await page.route(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`, async (route) => {
+        if (route.request().method() === 'PUT') {
+          await route.fulfill({ status: 500, body: JSON.stringify({ type: 'error', message: 'simulated failure' }) });
+        } else {
+          await route.continue();
+        }
+      });
+
+      try {
+        const listPage = new WorkloadsDaemonsetsListPagePo(page);
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
+        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const dialog = listPage.redeployDialog();
+
+        await expect(dialog.self()).toBeVisible();
+        await dialog.confirmRedeploy();
+        await expect(dialog.errorBanner()).toBeVisible();
+      } finally {
+        await page.unroute(`**/v1/apps.daemonsets/${namespace}/${daemonsetName}`);
+        await rancherApi.deleteRancherResource('v1', 'apps.daemonsets', `${namespace}/${daemonsetName}`, false);
+      }
     });
   });
 });

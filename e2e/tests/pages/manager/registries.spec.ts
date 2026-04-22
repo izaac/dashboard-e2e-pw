@@ -5,6 +5,7 @@ import {
   machineSelectorConfigPayload,
   registriesWithSecretPayload,
 } from '@/e2e/blueprints/manager/registries-rke2-payload';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const registryHost = 'docker.io';
 const registryAuthHost = 'a.registry.com';
@@ -60,11 +61,11 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
 
     const secretResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/secrets/fleet-default') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
     const clusterResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await createPage.nameNsDescription().name().set(clusterName);
@@ -103,26 +104,26 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
     expect(clusterResponse.status()).toBe(201);
     const clusterReqBody = clusterResponse.request().postDataJSON();
     const createdClusterBody = await clusterResponse.json();
+
+    expect(clusterReqBody.spec.rkeConfig.machineSelectorConfig).toEqual(machineSelectorConfigPayload(registryHost));
+    expect(clusterReqBody.spec.rkeConfig.registries).toEqual(
+      registriesWithSecretPayload(registryAuthHost, registrySecret),
+    );
+    expect(clusterReqBody.spec.rkeConfig.registries.configs[registryHost]).toBeUndefined();
+
+    // Cleanup
     const createdClusterName = createdClusterBody.metadata?.name;
 
-    try {
-      expect(clusterReqBody.spec.rkeConfig.machineSelectorConfig).toEqual(machineSelectorConfigPayload(registryHost));
-      expect(clusterReqBody.spec.rkeConfig.registries).toEqual(
-        registriesWithSecretPayload(registryAuthHost, registrySecret),
+    if (createdClusterName) {
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters/fleet-default',
+        createdClusterName,
+        false,
       );
-      expect(clusterReqBody.spec.rkeConfig.registries.configs[registryHost]).toBeUndefined();
-    } finally {
-      if (createdClusterName) {
-        await rancherApi.deleteRancherResource(
-          'v1',
-          'provisioning.cattle.io.clusters/fleet-default',
-          createdClusterName,
-          false,
-        );
-      }
-      if (registrySecret) {
-        await rancherApi.deleteRancherResource('v1', 'secrets/fleet-default', registrySecret, false);
-      }
+    }
+    if (registrySecret) {
+      await rancherApi.deleteRancherResource('v1', 'secrets/fleet-default', registrySecret, false);
     }
   });
 
@@ -143,11 +144,11 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
 
     const secretResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/secrets/fleet-default') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
     const clusterResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await createPage.nameNsDescription().name().set(clusterName);
@@ -184,25 +185,23 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
     expect(clusterResponse.status()).toBe(201);
     const clusterReqBody = clusterResponse.request().postDataJSON();
     const createdClusterBody = await clusterResponse.json();
+
+    expect(clusterReqBody.spec.rkeConfig.machineSelectorConfig).toEqual(machineSelectorConfigPayload(registryHost));
+    expect(clusterReqBody.spec.rkeConfig.registries).toEqual(registriesWithSecretPayload(registryHost, registrySecret));
+
+    // Cleanup
     const createdClusterName = createdClusterBody.metadata?.name;
 
-    try {
-      expect(clusterReqBody.spec.rkeConfig.machineSelectorConfig).toEqual(machineSelectorConfigPayload(registryHost));
-      expect(clusterReqBody.spec.rkeConfig.registries).toEqual(
-        registriesWithSecretPayload(registryHost, registrySecret),
+    if (createdClusterName) {
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters/fleet-default',
+        createdClusterName,
+        false,
       );
-    } finally {
-      if (createdClusterName) {
-        await rancherApi.deleteRancherResource(
-          'v1',
-          'provisioning.cattle.io.clusters/fleet-default',
-          createdClusterName,
-          false,
-        );
-      }
-      if (registrySecret) {
-        await rancherApi.deleteRancherResource('v1', 'secrets/fleet-default', registrySecret, false);
-      }
+    }
+    if (registrySecret) {
+      await rancherApi.deleteRancherResource('v1', 'secrets/fleet-default', registrySecret, false);
     }
   });
 });

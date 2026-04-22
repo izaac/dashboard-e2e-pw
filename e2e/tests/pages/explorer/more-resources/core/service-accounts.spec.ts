@@ -4,6 +4,7 @@ import {
   serviceAccGetResponseEmpty,
   serviceAcctResponseSmallSet,
 } from '@/e2e/blueprints/explorer/core/service-accounts-get';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
@@ -23,9 +24,9 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
 
-      await expect(serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells().first()).toBeVisible(
-        { timeout: 15000 },
-      );
+      const headerCells = serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells();
+
+      await expect(headerCells.first()).toBeVisible(SHORT_TIMEOUT_OPT);
 
       const headers = await serviceAccountsPage.list().resourceTable().sortableTable().headerNames();
 
@@ -52,9 +53,9 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
 
-      await expect(serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells().first()).toBeVisible(
-        { timeout: 15000 },
-      );
+      const headerCells = serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells();
+
+      await expect(headerCells.first()).toBeVisible(SHORT_TIMEOUT_OPT);
 
       const headers = await serviceAccountsPage.list().resourceTable().sortableTable().headerNames();
 

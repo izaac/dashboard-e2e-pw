@@ -88,9 +88,8 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       const firstCell = crdsPage.sortableTable().rowCell(crdsPage.sortableTable().rowElements().first(), 2);
 
       await expect(firstCell).toBeVisible();
+      await expect(firstCell).not.toHaveText('');
       const firstRowBefore = await firstCell.innerText();
-
-      expect(firstRowBefore.length).toBeGreaterThan(0);
 
       await crdsPage.sortableTable().sort(2).click();
 
@@ -132,7 +131,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
 
         const crdYamlPath = path.resolve('e2e/blueprints/explorer/more-resources/api/custom-resource-definition.yml');
         const crdYaml = fs.readFileSync(crdYamlPath, 'utf-8');
-        const json: Record<string, unknown> = jsyaml.load(crdYaml);
+        const json: any = jsyaml.load(crdYaml);
 
         json.metadata.name = crdName;
         json.spec.group = crdGroup;

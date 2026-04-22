@@ -40,3 +40,6 @@ npm-debug.log*
 
 # Devenv
 .devenv/
+
+.direnv/
+devenv.lock

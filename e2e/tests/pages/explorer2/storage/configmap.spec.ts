@@ -1,5 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import { ConfigMapsListPagePo } from '@/e2e/po/pages/explorer/storage/configmaps.po';
+import { ConfigMapsPagePo } from '@/e2e/po/pages/explorer/configmaps.po';
 
 test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -7,11 +7,13 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test('has the correct title', async ({ page, rancherApi }) => {
-    const configMapListPage = new ConfigMapsListPagePo(page);
+    const configMapListPage = new ConfigMapsPagePo(page);
 
     await configMapListPage.goTo();
 
-    await expect(configMapListPage.masthead().title()).toContainText('ConfigMaps');
+    const masthead = configMapListPage.list().masthead();
+
+    await expect(masthead.title()).toContainText('ConfigMaps');
 
     const version = await rancherApi.getRancherVersion();
     const expectedTitle =
@@ -24,18 +26,18 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
     const configMapName = `e2e-test-${Date.now()}-custom-config-map`;
     const namespace = 'default';
 
-    const configMapListPage = new ConfigMapsListPagePo(page);
+    const configMapListPage = new ConfigMapsPagePo(page);
 
     await configMapListPage.goTo();
     await configMapListPage.waitForPage();
 
-    await configMapListPage.masthead().create();
+    await configMapListPage.list().masthead().create();
 
-    const cruResource = configMapListPage.createEditView();
+    const cruResource = configMapListPage.list().createEditView();
 
     await cruResource.nameNsDescription().name().set(configMapName);
 
-    await cruResource.keyInput(0).first().fill('managerApiConfiguration.properties');
+    await cruResource.keyInput(0).fill('managerApiConfiguration.properties');
     await cruResource.nameNsDescription().description().set('Custom Config Map Description');
 
     const responsePromise = page.waitForResponse(
@@ -54,22 +56,24 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
     try {
       await configMapListPage.waitForPage();
 
-      await configMapListPage.filterBySearchBox(configMapName);
-      await expect(configMapListPage.sortableTable().rowElements()).toHaveCount(1);
+      const sortableTable = configMapListPage.list().resourceTable().sortableTable();
+
+      await sortableTable.filter(configMapName);
+      await expect(sortableTable.rowElements()).toHaveCount(1);
     } finally {
       await rancherApi.deleteRancherResource('v1', `configmaps/${namespace}`, configMapName, false);
     }
   });
 
   test('should show an error banner if the api call sends back an error', async ({ page }) => {
-    const configMapListPage = new ConfigMapsListPagePo(page);
+    const configMapListPage = new ConfigMapsPagePo(page);
 
     await configMapListPage.goTo();
     await configMapListPage.waitForPage();
 
-    await configMapListPage.masthead().create();
+    await configMapListPage.list().masthead().create();
 
-    const cruResource = configMapListPage.createEditView();
+    const cruResource = configMapListPage.list().createEditView();
 
     await cruResource.nameNsDescription().name().set('$^$^"£%');
     await cruResource.formSave().click();

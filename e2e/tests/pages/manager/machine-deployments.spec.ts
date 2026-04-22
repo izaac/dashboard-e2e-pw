@@ -1,5 +1,4 @@
 import { test, expect } from '@/support/fixtures';
-import type { RancherApi } from '@/support/fixtures/rancher-api';
 import MachineDeploymentsPagePo from '@/e2e/po/pages/cluster-manager/machine-deployments.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
@@ -10,7 +9,7 @@ const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machine-deployments.yml');
 const blueprintEditPath = path.resolve('e2e/blueprints/cluster_management/machine-deployments-edit.yml');
 
-async function cleanupMachineDeployment(rancherApi: RancherApi, fullName: string) {
+async function cleanupMachineDeployment(rancherApi: any, fullName: string) {
   try {
     await rancherApi.deleteRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', fullName, false);
     const resource = await rancherApi.getRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', fullName, 0);
@@ -37,7 +36,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
       await mdPage.createEditMachineDeployment().waitForPage('as=yaml');
 
       const doc = fs.readFileSync(blueprintPath, 'utf-8');
-      const json: Record<string, unknown> = jsyaml.load(doc);
+      const json: any = jsyaml.load(doc);
 
       json.metadata.name = mdName;
       json.metadata.namespace = nsName;
@@ -64,7 +63,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     const mdName = rancherApi.createE2EResourceName('md-edit');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: Record<string, unknown> = jsyaml.load(doc);
+    const json: any = jsyaml.load(doc);
 
     json.metadata.name = mdName;
     json.metadata.namespace = nsName;
@@ -85,7 +84,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
         `${nsName}/${mdName}`,
       );
       const editDoc = fs.readFileSync(blueprintEditPath, 'utf-8');
-      const editJson: Record<string, unknown> = jsyaml.load(editDoc);
+      const editJson: any = jsyaml.load(editDoc);
 
       editJson.spec.template.spec.bootstrap.dataSecretName = 'secretName2';
       editJson.metadata.creationTimestamp = created.body.metadata.creationTimestamp;
@@ -117,7 +116,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     const cloneName = `${mdName}-clone`;
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: Record<string, unknown> = jsyaml.load(doc);
+    const json: any = jsyaml.load(doc);
 
     json.metadata.name = mdName;
     json.metadata.namespace = nsName;
@@ -133,7 +132,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
       await mdPage.createEditMachineDeployment(nsName, mdName).waitForPage('mode=clone&as=yaml');
 
       const cloneDoc = fs.readFileSync(blueprintPath, 'utf-8');
-      const cloneJson: Record<string, unknown> = jsyaml.load(cloneDoc);
+      const cloneJson: any = jsyaml.load(cloneDoc);
 
       cloneJson.metadata.name = cloneName;
       cloneJson.metadata.namespace = nsName;
@@ -161,37 +160,32 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     const mdName = rancherApi.createE2EResourceName('md-del');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: Record<string, unknown> = jsyaml.load(doc);
+    const json: any = jsyaml.load(doc);
 
     json.metadata.name = mdName;
     json.metadata.namespace = nsName;
     await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
 
-    try {
-      await mdPage.goTo();
-      await mdPage.waitForPage();
+    await mdPage.goTo();
+    await mdPage.waitForPage();
 
-      const actionMenu = await mdPage.list().actionMenu(mdName);
+    const actionMenu = await mdPage.list().actionMenu(mdName);
 
-      await actionMenu.getMenuItem('Delete').click();
+    await actionMenu.getMenuItem('Delete').click();
 
-      const promptRemove = new PromptRemove(page);
-      const deleteResp = page.waitForResponse(
-        (r) =>
-          r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
-          r.request().method() === 'DELETE',
-      );
+    const promptRemove = new PromptRemove(page);
+    const deleteResp = page.waitForResponse(
+      (r) =>
+        r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
+        r.request().method() === 'DELETE',
+    );
 
-      await promptRemove.remove();
-      await deleteResp;
-      await mdPage.waitForPage();
+    await promptRemove.remove();
+    await deleteResp;
+    await mdPage.waitForPage();
 
-      // Remove finalizers so resource actually disappears from the list
-      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-      await expect(mdPage.body()).not.toContainText(mdName);
-    } finally {
-      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    }
+    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    await expect(mdPage.body()).not.toContainText(mdName);
   });
 
   test('can delete MachineDeployments via bulk actions', async ({ page, login, rancherApi }) => {
@@ -200,37 +194,43 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     const mdName = rancherApi.createE2EResourceName('md-bulk');
 
     const doc = fs.readFileSync(blueprintPath, 'utf-8');
-    const json: Record<string, unknown> = jsyaml.load(doc);
+    const json: any = jsyaml.load(doc);
 
     json.metadata.name = mdName;
     json.metadata.namespace = nsName;
     await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
 
-    try {
-      await mdPage.goTo();
-      await mdPage.waitForPage();
+    await mdPage.goTo();
+    await mdPage.waitForPage();
 
-      await mdPage.list().resourceTable().sortableTable().rowSelectCtlWithName(mdName).set();
+    await mdPage.list().resourceTable().sortableTable().rowSelectCtlWithName(mdName).set();
 
-      const deleteResp = page.waitForResponse(
-        (r) =>
-          r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
-          r.request().method() === 'DELETE',
-      );
+    const deleteResp = page.waitForResponse(
+      (r) =>
+        r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
+        r.request().method() === 'DELETE',
+    );
 
-      await mdPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
+    await mdPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
-      const promptRemove = new PromptRemove(page);
+    const promptRemove = new PromptRemove(page);
 
-      await promptRemove.remove();
-      await deleteResp;
-      await mdPage.waitForPage();
+    await promptRemove.remove();
+    await deleteResp;
+    await mdPage.waitForPage();
 
-      // Remove finalizers so resource actually disappears from the list
-      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-      await expect(mdPage.body()).not.toContainText(mdName);
-    } finally {
-      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    }
+    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    await expect(mdPage.body()).not.toContainText(mdName);
+  });
+
+  test.skip(true, 'Percy snapshot test');
+  test('validating machine deployments page with percy', async () => {
+    // Upstream Percy snapshot test
+  });
+
+  test.skip(true, 'Requires provisioned cluster with machine deployments');
+  test('can download YAML', async () => {
+    // Upstream test downloads YAML file for a MachineDeployment
+    // Needs actual provisioned cluster with machine deployment resources
   });
 });

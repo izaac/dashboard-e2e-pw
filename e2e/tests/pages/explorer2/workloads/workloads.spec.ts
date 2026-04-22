@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
-import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
+import { WorkloadsDeploymentsCreatePagePo } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
 test.describe('Workloads', { tag: ['@noVai', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -11,9 +12,9 @@ test.describe('Workloads', { tag: ['@noVai', '@adminUser'] }, () => {
     const podName = `e2e-pod-${Date.now()}`;
     const namespace = 'default';
 
-    await rancherApi.createPod(namespace, podName, 'nginx:alpine');
-
     try {
+      await rancherApi.createPod(namespace, podName, SMALL_CONTAINER.image);
+
       const podDetailPage = new PagePo(page, `/c/local/explorer/pod/${namespace}/${podName}`);
 
       await podDetailPage.goTo();
@@ -26,7 +27,7 @@ test.describe('Workloads', { tag: ['@noVai', '@adminUser'] }, () => {
   });
 
   test('Validation errors should not be shown when form is just opened', async ({ page }) => {
-    const deploymentsCreatePage = new WorkloadsCreatePageBasePo(page, 'local', 'apps.deployment');
+    const deploymentsCreatePage = new WorkloadsDeploymentsCreatePagePo(page);
 
     await deploymentsCreatePage.goTo();
     await deploymentsCreatePage.waitForPage();

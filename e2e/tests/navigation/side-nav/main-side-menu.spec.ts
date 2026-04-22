@@ -27,10 +27,6 @@ test.describe('Side Menu: main', () => {
       await homePage.goTo();
     });
 
-    test.afterEach(async ({ page }) => {
-      await page.unrouteAll({ behavior: 'ignoreErrors' });
-    });
-
     test(
       'Pressing keyboard combo should display appropriate icon on cluster menu icon box',
       {
@@ -133,8 +129,7 @@ test.describe('Side Menu: main', () => {
       async ({ page }) => {
         const burgerMenu = new BurgerMenuPo(page);
 
-        // Cluster may be in pinned or unpinned list depending on default state
-        await expect(burgerMenu.allClusters().first()).toBeAttached();
+        await expect(burgerMenu.clusterNotPinnedList().first()).toBeAttached();
       },
     );
 
@@ -145,18 +140,6 @@ test.describe('Side Menu: main', () => {
       },
       async ({ page }) => {
         const burgerMenu = new BurgerMenuPo(page);
-
-        // In 2.13 local cluster is pinned by default — unpin first, then re-pin
-        const hasPinned = await burgerMenu
-          .clusterPinnedList()
-          .first()
-          .isVisible()
-          .catch(() => false);
-
-        if (hasPinned) {
-          await burgerMenu.unpinFirstCluster();
-          await expect(burgerMenu.clusterNotPinnedList().first()).toBeAttached();
-        }
 
         await burgerMenu.pinFirstCluster();
         await expect(burgerMenu.clusterPinnedList().first()).toBeAttached();

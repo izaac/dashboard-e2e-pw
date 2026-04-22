@@ -7,6 +7,7 @@ import {
 import FleetApplicationDetailsPo from '@/e2e/po/detail/fleet/fleet.cattle.io.application.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
+import { MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const localWorkspace = 'fleet-local';
 const gitRepoUrl = 'https://github.com/rancher/fleet-test-data';
@@ -19,6 +20,8 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
   test.beforeEach(async ({ login, rancherApi }) => {
     await login();
     repoName = rancherApi.createE2EResourceName('dash-repo');
+    // Idempotent: remove leftover from previous failed runs
+    await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
   });
 
   test('Has the correct title', async ({ page, rancherApi }) => {
@@ -53,9 +56,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
     await appBundleCreatePage.createGitRepo();
 
     await gitRepoCreatePage.waitForPage();
-    const createTitle = await gitRepoCreatePage.mastheadTitle();
-
-    expect(createTitle.replace(/\s+/g, ' ')).toContain('App Bundle: Create');
+    await expect(gitRepoCreatePage.mastheadTitleLocator()).toContainText('App Bundle: Create');
   });
 
   test('Should display workspace cards', async ({ page, rancherApi }) => {
@@ -82,25 +83,24 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
       const applicationsPanel = workspaceCard.resourcePanel('applications');
 
-      await expect(applicationsPanel.chart()).toBeAttached();
+      await expect(applicationsPanel.chart()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(applicationsPanel.stateBadge('success')).toBeAttached();
       await expect(applicationsPanel.description()).toContainText('1');
 
       const clustersPanel = workspaceCard.resourcePanel('clusters');
 
-      await expect(clustersPanel.chart()).toBeAttached();
-      await expect(clustersPanel.stateBadge('success')).toBeAttached();
+      await expect(clustersPanel.chart()).toBeAttached(MEDIUM_TIMEOUT_OPT);
+      await expect(clustersPanel.stateBadge()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(clustersPanel.description()).toContainText('1');
 
       const clusterGroupsPanel = workspaceCard.resourcePanel('cluster-groups');
 
-      await expect(clusterGroupsPanel.self()).toBeAttached();
+      await expect(clusterGroupsPanel.self()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(clusterGroupsPanel.chart()).not.toBeAttached();
       await expect(clusterGroupsPanel.stateBadge('success')).toBeAttached();
       await expect(clusterGroupsPanel.description()).toContainText('1');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
-      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -143,7 +143,6 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(activeStatePanel.card(repoName)).toBeVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
-      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -173,7 +172,6 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(activeStatePanel.self()).toBeHidden();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
-      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -207,7 +205,6 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await tablePanel.checkVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
-      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -240,7 +237,6 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(details).toContainText(repoName);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
-      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 
@@ -265,6 +261,8 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       const cardsPanel = workspaceCard.expandedPanel().cardsPanel();
       const activeStatePanel = cardsPanel.statePanel('Active');
 
+      // GitRepo may still be progressing — wait for Active panel to appear
+      await expect(activeStatePanel.title()).toBeVisible(MEDIUM_TIMEOUT_OPT);
       await activeStatePanel.title().click();
       await expect(activeStatePanel.card(repoName)).toBeVisible();
       await activeStatePanel.card(repoName).click();
@@ -277,7 +275,6 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await appDetails.waitForPage(undefined, 'bundles');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
-      await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
     }
   });
 });

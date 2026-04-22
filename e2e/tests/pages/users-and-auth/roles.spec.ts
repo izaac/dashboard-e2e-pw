@@ -7,6 +7,7 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import * as jsyaml from 'js-yaml';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const globalRoleYaml = `apiVersion: management.cattle.io/v3
 kind: GlobalRole
@@ -63,7 +64,6 @@ rules:
 
 test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
   test.describe('Roles', () => {
     test('can create a Global Role template', async ({ page, login, rancherApi }) => {
       await login();
@@ -106,7 +106,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         // Confirm created role is not built-in
         await roles.list('GLOBAL').checkBuiltIn(globalRoleName, false);
 
-        await roles.list('GLOBAL').details(globalRoleName, 2).locator('a').click();
+        await roles.list('GLOBAL').detailLink(globalRoleName, 2).click();
 
         const globalRoleDetails = roles.detailGlobal(globalRoleId);
 
@@ -129,6 +129,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         const userCreate = usersPo.createEdit();
 
         await userCreate.waitForPage();
+
         await expect(userCreate.globalRoleBindings().roleCheckbox(globalRoleId)).toBeVisible();
 
         await sideNav.navToSideMenuEntryByLabel('Role Templates');
@@ -137,7 +138,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.goToEditYamlPage(globalRoleName);
 
         const yamlValue = await createGlobalRole.yamlEditor().value();
-        const json: Record<string, unknown> = jsyaml.load(yamlValue);
+        const json: any = jsyaml.load(yamlValue);
 
         json.builtin = false;
         await createGlobalRole.yamlEditor().set(jsyaml.dump(json));
@@ -190,12 +191,12 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
         await roles.list('CLUSTER').resourceTable().sortableTable().checkRowCount(false, 1);
         await roles.list('CLUSTER').checkDefault(clusterRoleName, true);
-        await roles.list('CLUSTER').details(clusterRoleName, 2).locator('a').click();
+        await roles.list('CLUSTER').detailLink(clusterRoleName, 2).click();
 
-        const clusterRoleDetails = roles.detailRole(roleId);
+        const clusterRoleDetails = roles.detailRole(roleId!);
 
         await clusterRoleDetails.waitForPage();
-        await expect(page.locator('body')).toContainText(`Cluster - ${clusterRoleName}`);
+        await clusterRoleDetails.waitForMastheadTitle(`Cluster - ${clusterRoleName}`);
       } finally {
         if (roleId) {
           await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleId, false);
@@ -240,12 +241,12 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
         await roles.list('NAMESPACE').resourceTable().sortableTable().checkRowCount(false, 1);
         await roles.list('NAMESPACE').checkDefault(projectRoleName, true);
-        await roles.list('NAMESPACE').details(projectRoleName, 2).locator('a').click();
+        await roles.list('NAMESPACE').detailLink(projectRoleName, 2).click();
 
-        const projectRoleDetails = roles.detailRole(roleId);
+        const projectRoleDetails = roles.detailRole(roleId!);
 
         await projectRoleDetails.waitForPage();
-        await expect(page.locator('body')).toContainText(`Project/Namespaces - ${projectRoleName}`);
+        await projectRoleDetails.waitForMastheadTitle(`Project/Namespaces - ${projectRoleName}`);
       } finally {
         if (roleId) {
           await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleId, false);
@@ -372,7 +373,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         const cloneResponse = page.waitForResponse(
           (resp) => resp.url().includes('/v3/globalroles') && resp.request().method() === 'POST',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
 
         const editGlobalRole = roles.createRole();
@@ -392,7 +393,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         try {
           const allRoles = await rancherApi.getRancherResource('v3', 'globalRoles');
           const clonedRole = allRoles.body.data?.find(
-            (r: Record<string, string>) => r.displayName === clonedRoleName || r.name === clonedRoleName,
+            (r: any) => r.displayName === clonedRoleName || r.name === clonedRoleName,
           );
 
           if (clonedRole) {
@@ -426,14 +427,14 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         const editRole = roles.createGlobal(roleId);
         const yamlValue = await editRole.yamlEditor().value();
-        const json: Record<string, unknown> = jsyaml.load(yamlValue);
+        const json: any = jsyaml.load(yamlValue);
 
         json.description = 'updated-description';
         await editRole.yamlEditor().set(jsyaml.dump(json));
 
         const saveResp = page.waitForResponse(
           (resp) => resp.url().includes('/v1/management.cattle.io.globalroles/') && resp.request().method() === 'PUT',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
 
         await editRole.saveEditYamlForm().click();

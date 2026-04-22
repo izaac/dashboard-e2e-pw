@@ -5,6 +5,7 @@ import DeactivateDriverDialogPo from '@/e2e/po/prompts/deactivateDriverDialog.po
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const downloadUrl =
   'https://github.com/rancher-plugins/kontainer-engine-driver-example/releases/download/v0.2.3/kontainer-engine-driver-example-copy1-linux-amd64';
@@ -17,7 +18,6 @@ const exampleDriver = 'Example';
 
 test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
   test('should show the cluster drivers list page', async ({ page, login }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
@@ -29,11 +29,27 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
   });
 
-  test('can create new driver', async ({ page, login, rancherApi }) => {
-    test.skip(
-      true,
-      'Requires external network access to download driver binary from GitHub; consistently times out in CI',
+  test('can attempt to refresh kubernetes metadata', async ({ page, login }) => {
+    await login();
+    const driversPage = new KontainerDriversPagePo(page);
+
+    await driversPage.goTo();
+    await driversPage.waitForPage();
+
+    const refreshResp = page.waitForResponse(
+      (r) => r.url().includes('/v3/kontainerdrivers?action=refresh') && r.request().method() === 'POST',
+      { timeout: 30000 },
     );
+
+    await driversPage.refreshKubMetadata().click({ force: true });
+
+    const resp = await refreshResp;
+
+    // Upstream bug #52557: refresh may return non-200 on timeout
+    expect.soft(resp.status()).toBe(200);
+  });
+
+  test('can create new driver', async ({ page, login, rancherApi }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
     const createDriverPage = new KontainerDriverCreateEditPo(page);
@@ -44,7 +60,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
 
     if (existing.body?.data) {
-      const found = existing.body.data.find((d: Record<string, string>) => d.url === downloadUrl);
+      const found = existing.body.data.find((d: any) => d.url === downloadUrl);
 
       if (found) {
         await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
@@ -69,18 +85,19 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const body = await resp.json();
     const driverId = body.id;
 
-    // Wait for driver to become active
-    await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: 120000 });
+    try {
+      // Wait for driver to become active
+      await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: 120000 });
 
-    // Verify driver appears on cluster create page
-    await clusterList.goTo();
-    await clusterList.waitForPage();
-    await clusterList.createCluster();
-    await createCluster.waitForPage();
-    await createCluster.gridElementExistanceByName('example', 'toBeVisible');
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+      // Verify driver appears on cluster create page
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createCluster.waitForPage();
+      await createCluster.gridElementExistanceByName('example', 'toBeVisible');
+    } finally {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+    }
   });
 
   test('will show error if could not deactivate driver', async ({ page, login }) => {
@@ -142,16 +159,13 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const createCluster = new ClusterManagerCreatePagePo(page);
 
     // Ensure both drivers are inactive via API
+    // v3 API: `id` is the full name, `name` is the display name (e.g. id=opentelekomcloudcontainerengine, name=otccce)
     const drivers = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const otcDriver = drivers.body?.data?.find(
-      (d: Record<string, string>) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
-    );
-    const okeDriver = drivers.body?.data?.find(
-      (d: Record<string, string>) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
-    );
+    const otcDriver = drivers.body?.data?.find((d: any) => d.id === 'opentelekomcloudcontainerengine');
+    const okeDriver = drivers.body?.data?.find((d: any) => d.id === 'oraclecontainerengine');
 
     for (const driver of [otcDriver, okeDriver]) {
-      if (driver) {
+      if (driver && driver.active !== false) {
         await rancherApi.createRancherResource('v3', `kontainerDrivers/${driver.id}?action=deactivate`, {}, false);
         await rancherApi.waitForRancherResource(
           'v3',
@@ -207,16 +221,20 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Ensure both drivers are active via API
     const drivers = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const otcDriver = drivers.body?.data?.find(
-      (d: Record<string, string>) => d.name === 'opentelekomcloudcontainerengine' || d.uiUrl?.includes('otccce'),
-    );
-    const okeDriver = drivers.body?.data?.find(
-      (d: Record<string, string>) => d.name === 'oraclecontainerengine' || d.uiUrl?.includes('oke'),
-    );
+    const otcDriver = drivers.body?.data?.find((d: any) => d.id === 'opentelekomcloudcontainerengine');
+    const okeDriver = drivers.body?.data?.find((d: any) => d.id === 'oraclecontainerengine');
 
     for (const driver of [otcDriver, okeDriver]) {
       if (driver && !driver.active) {
         await rancherApi.createRancherResource('v3', `kontainerDrivers/${driver.id}?action=activate`, {}, false);
+        await rancherApi.waitForRancherResource(
+          'v3',
+          'kontainerDrivers',
+          driver.id,
+          (resp) => resp.body?.active === true,
+          30,
+          2000,
+        );
       }
     }
 
@@ -258,18 +276,19 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await createCluster.gridElementExistanceByName(oracleDriver, 'not.toBeVisible');
   });
 
-  test('can deactivate and activate a single driver', async ({ page, login, rancherApi }) => {
+  test('can deactivate driver', async ({ page, login, rancherApi }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
     const clusterList = new ClusterManagerListPagePo(page);
     const createCluster = new ClusterManagerCreatePagePo(page);
 
-    // Create a fresh example driver
+    // Create a fresh example driver — clean up existing first and wait for removal
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const found = existing.body?.data?.find((d: Record<string, string>) => d.url === downloadUrl);
+    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl);
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
@@ -289,58 +308,90 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       3000,
     );
 
-    try {
-      // Deactivate
-      await driversPage.goTo();
-      await driversPage.waitForPage();
-      await driversPage.list().resourceTable().sortableTable().checkVisible();
-      await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    await driversPage.goTo();
+    await driversPage.waitForPage();
+    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-      const deactivateResp = page.waitForResponse(
-        (r) => r.url().includes('action=deactivate') && r.request().method() === 'POST',
-      );
+    const deactivateResp = page.waitForResponse(
+      (r) => r.url().includes('action=deactivate') && r.request().method() === 'POST',
+    );
 
-      const actionMenu = await driversPage.list().actionMenu(exampleDriver);
+    const actionMenu = await driversPage.list().actionMenu(exampleDriver);
 
-      await actionMenu.getMenuItem('Deactivate').click();
-      const deactivateDialog = new DeactivateDriverDialogPo(page);
+    await actionMenu.getMenuItem('Deactivate').click();
+    const deactivateDialog = new DeactivateDriverDialogPo(page);
 
-      await deactivateDialog.deactivate();
-      const resp1 = await deactivateResp;
+    await deactivateDialog.deactivate();
+    const resp = await deactivateResp;
 
-      expect(resp1.status()).toBe(200);
+    expect(resp.status()).toBe(200);
 
-      await clusterList.goTo();
-      await clusterList.waitForPage();
-      await clusterList.createCluster();
-      await createCluster.waitForPage();
-      await createCluster.gridElementExistanceByName('example', 'not.toBeVisible');
+    await clusterList.goTo();
+    await clusterList.waitForPage();
+    await clusterList.createCluster();
+    await createCluster.waitForPage();
+    await createCluster.gridElementExistanceByName('example', 'not.toBeVisible');
 
-      // Activate
-      await driversPage.goTo();
-      await driversPage.waitForPage();
-      await driversPage.list().resourceTable().sortableTable().checkVisible();
-      await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    // Cleanup
+    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+  });
 
-      const activateResp = page.waitForResponse(
-        (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
-      );
+  test('can activate driver', async ({ page, login, rancherApi }) => {
+    await login();
+    const driversPage = new KontainerDriversPagePo(page);
+    const clusterList = new ClusterManagerListPagePo(page);
+    const createCluster = new ClusterManagerCreatePagePo(page);
 
-      const actionMenu2 = await driversPage.list().actionMenu(exampleDriver);
+    // Create a fresh example driver (inactive)
+    const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
+    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl);
 
-      await actionMenu2.getMenuItem('Activate').click();
-      const resp2 = await activateResp;
-
-      expect(resp2.status()).toBe(200);
-
-      await clusterList.goTo();
-      await clusterList.waitForPage();
-      await clusterList.createCluster();
-      await createCluster.waitForPage();
-      await createCluster.gridElementExistanceByName('example', 'toBeVisible');
-    } finally {
-      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+    if (found) {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
     }
+
+    const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
+      type: 'kontainerDriver',
+      active: false,
+      url: downloadUrl,
+    });
+    const driverId = created.body.id;
+
+    await driversPage.goTo();
+    await driversPage.waitForPage();
+    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+
+    const activateResp = page.waitForResponse(
+      (r) => r.url().includes('action=activate') && r.request().method() === 'POST',
+      LONG_TIMEOUT_OPT,
+    );
+
+    // Inactive drivers show API-generated name, not "Example" — find row by URL
+    const table = driversPage.list().resourceTable().sortableTable();
+    const driverRow = table.rowElementWithPartialName('kontainer-engine-driver-example');
+
+    await driverRow.locator('[data-testid*="action-button"]').click();
+    const actionMenu = driversPage.list().resourceTable().sortableTable().rowActionMenu();
+
+    await actionMenu.getMenuItem('Activate').click();
+    const resp = await activateResp;
+
+    expect(resp.status()).toBe(200);
+
+    await clusterList.goTo();
+    await clusterList.waitForPage();
+    await clusterList.createCluster();
+    await createCluster.waitForPage();
+    await createCluster.gridElementExistanceByName('example', 'toBeVisible');
+
+    // Cleanup
+    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+  });
+
+  test.skip('should display kontainer drivers list page', async () => {
+    // Percy snapshot test
   });
 
   test('can edit a cluster driver', async ({ page, login, rancherApi }) => {
@@ -348,14 +399,13 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const driversPage = new KontainerDriversPagePo(page);
     const createDriverPage = new KontainerDriverCreateEditPo(page);
 
-    // Create driver via API
+    // Create driver via API — clean up any existing one first and wait for removal
     const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
-    const found = existing.body?.data?.find(
-      (d: Record<string, string>) => d.url === downloadUrl || d.url === downloadUrlUpdated,
-    );
+    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl || d.url === downloadUrlUpdated);
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
@@ -374,88 +424,78 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       3000,
     );
 
-    try {
-      await driversPage.goTo();
-      await driversPage.waitForPage();
-      await driversPage.list().resourceTable().sortableTable().checkVisible();
-      await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    await driversPage.goTo();
+    await driversPage.waitForPage();
+    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-      const actionMenu = await driversPage.list().actionMenu(exampleDriver);
+    const actionMenu = await driversPage.list().actionMenu(exampleDriver);
 
-      await actionMenu.getMenuItem('Edit Config').click();
-      await createDriverPage.downloadUrl().set(downloadUrlUpdated);
+    await actionMenu.getMenuItem('Edit Config').click();
+    await createDriverPage.downloadUrl().set(downloadUrlUpdated);
 
-      const updateResp = page.waitForResponse(
-        (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'PUT',
-      );
+    const updateResp = page.waitForResponse(
+      (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'PUT',
+    );
 
-      await createDriverPage.saveCreateForm().createEditView().save();
-      const resp = await updateResp;
+    await createDriverPage.saveCreateForm().createEditView().save();
+    const resp = await updateResp;
 
-      expect(resp.status()).toBe(200);
-    } finally {
-      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
-    }
+    expect(resp.status()).toBe(200);
+
+    // Cleanup
+    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
   });
 
-  test('can refresh kubernetes metadata', async ({ page, login }) => {
+  test('can delete a driver', async ({ page, login, rancherApi }) => {
     await login();
     const driversPage = new KontainerDriversPagePo(page);
 
-    await driversPage.goTo();
-    await driversPage.waitForPage();
+    // Create driver via API — clean up any existing one first and wait for removal
+    const existing = await rancherApi.getRancherResource('v3', 'kontainerdrivers', undefined, 0);
+    const found = existing.body?.data?.find((d: any) => d.url === downloadUrl || d.url === downloadUrlUpdated);
 
-    const refreshResp = page.waitForResponse(
-      (r) => r.url().includes('/v3/kontainerdrivers?action=refresh') && r.request().method() === 'POST',
-      { timeout: 30000 },
+    if (found) {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
+    }
+
+    const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
+      type: 'kontainerDriver',
+      active: true,
+      url: downloadUrl,
+    });
+    const driverId = created.body.id;
+
+    await rancherApi.waitForRancherResource(
+      'v3',
+      'kontainerdrivers',
+      driverId,
+      (resp) => resp.body?.state === 'active',
+      40,
+      3000,
     );
 
-    await driversPage.refreshKubMetadata().click({ force: true });
-    const resp = await refreshResp;
+    await driversPage.goTo();
+    await driversPage.waitForPage();
+    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    expect.soft(resp.status()).toBe(200);
-  });
+    await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(exampleDriver).set();
+    await driversPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
-  test('can delete drivers in bulk', async ({ page, login, rancherApi }) => {
-    await login();
-    const driver1Name = `e2e-driver-bulk1-${Date.now()}`;
-    const driver2Name = `e2e-driver-bulk2-${Date.now()}`;
-    let driver1Id = '';
-    let driver2Id = '';
+    const promptRemove = new PromptRemove(page);
+    const deleteResp = page.waitForResponse(
+      (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'DELETE',
+    );
 
-    try {
-      const resp1 = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
-        url: `https://example.com/${driver1Name}`,
-        active: false,
-      });
+    await promptRemove.remove();
+    const resp = await deleteResp;
 
-      driver1Id = resp1.body.id;
-
-      const resp2 = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
-        url: `https://example.com/${driver2Name}`,
-        active: false,
-      });
-
-      driver2Id = resp2.body.id;
-
-      const driversPage = new KontainerDriversPagePo(page);
-
-      await driversPage.goTo();
-      await driversPage.waitForPage();
-
-      await driversPage.list().resourceTable().sortableTable().selectAll();
-      await driversPage.list().resourceTable().sortableTable().deleteButton().first().click();
-
-      const promptRemove = new PromptRemove(page);
-
-      await promptRemove.remove();
-    } finally {
-      if (driver1Id) {
-        await rancherApi.deleteRancherResource('v3', 'kontainerdrivers', driver1Id, false);
-      }
-      if (driver2Id) {
-        await rancherApi.deleteRancherResource('v3', 'kontainerdrivers', driver2Id, false);
-      }
-    }
+    expect(resp.status()).toBe(200);
+    await driversPage.waitForPage();
+    await expect(driversPage.list().resourceTable().sortableTable().rowElementWithName(exampleDriver)).not.toBeAttached(
+      SHORT_TIMEOUT_OPT,
+    );
   });
 });

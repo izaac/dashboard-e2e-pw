@@ -40,7 +40,7 @@ test.describe('Pod management and WebSocket interaction', { tag: ['@jenkins', '@
         'pods',
         '',
         (resp) => {
-          const pod = resp.body?.data?.find((p: Record<string, string>) => p.id === `${nsName}/${podName}`);
+          const pod = resp.body?.data?.find((p: any) => p.id === `${nsName}/${podName}`);
 
           return pod?.status?.phase === 'Running';
         },

@@ -1,5 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import { WorkloadsCronJobsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-cronjobs.po';
+import { WorkloadsCronJobsListPagePo } from '@/e2e/po/pages/explorer/workloads-cronjobs.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
@@ -21,40 +21,43 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       const cronJobName = `e2e-cj-${Date.now()}`;
       const namespace = 'default';
 
-      await rancherApi.createRancherResource('v1', 'batch.cronjobs', {
-        apiVersion: 'batch/v1',
-        kind: 'CronJob',
-        metadata: { name: cronJobName, namespace },
-        spec: {
-          schedule: '1 1 1 1 1',
-          concurrencyPolicy: 'Allow',
-          failedJobsHistoryLimit: 1,
-          successfulJobsHistoryLimit: 3,
-          suspend: false,
-          jobTemplate: {
-            spec: {
-              template: {
-                spec: {
-                  containers: [SMALL_CONTAINER],
-                  restartPolicy: 'Never',
+      try {
+        await rancherApi.createRancherResource('v1', 'batch.cronjobs', {
+          apiVersion: 'batch/v1',
+          kind: 'CronJob',
+          metadata: { name: cronJobName, namespace },
+          spec: {
+            schedule: '1 1 1 1 1',
+            concurrencyPolicy: 'Allow',
+            failedJobsHistoryLimit: 1,
+            successfulJobsHistoryLimit: 3,
+            suspend: false,
+            jobTemplate: {
+              spec: {
+                template: {
+                  spec: {
+                    containers: [SMALL_CONTAINER],
+                    restartPolicy: 'Never',
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
 
-      try {
         const listPage = new WorkloadsCronJobsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
 
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
+        const actionMenu = await sortableTable.rowActionMenuOpen(cronJobName);
+
         const responsePromise = page.waitForResponse(
           (resp) => resp.url().includes(`v1/batch.jobs/${namespace}`) && resp.request().method() === 'POST',
         );
 
-        await listPage.rowActionMenuClick(cronJobName, 'Run Now');
+        await actionMenu.getMenuItem('Run Now').click();
 
         const response = await responsePromise;
 
@@ -79,18 +82,7 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-cj-list-${Date.now()}`;
       ns2 = `e2e-cj-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -151,7 +143,7 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationNavigation(table, 23);
     });
@@ -162,7 +154,7 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
@@ -173,7 +165,7 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -187,7 +179,7 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationHidden(table);
 

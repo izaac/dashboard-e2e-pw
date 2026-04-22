@@ -4,6 +4,7 @@ import ElementalPo from '@/e2e/po/extensions/elemental/elemental.utils';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 
 import * as jsyaml from 'js-yaml';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const EXTENSION_NAME = 'elemental';
 const EXTENSION_VERSION = '3.0.1';
@@ -25,7 +26,6 @@ const UPDATE_GROUP_IMAGE_PATH = 'some/path';
 
 test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
   test.beforeEach(async ({ login }) => {
     await login();
   });
@@ -103,7 +103,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // Wait for either the elemental title or the error page to appear
     await page
-      .waitForSelector('[data-testid="elemental-main-title"], .main-layout.error, .fail-whale', { timeout: 15000 })
+      .waitForSelector('[data-testid="elemental-main-title"], .main-layout.error, .fail-whale', SHORT_TIMEOUT_OPT)
       .catch(() => {});
 
     // If the elemental extension is not installed, the route will hit fail-whale (404)
@@ -192,7 +192,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     await elementalPo.genericNameNsDescription().name().set(REG_ENDPOINT_NAME);
 
     const yamlValue = await elementalPo.genericCodeMirror().value();
-    const json = jsyaml.load(yamlValue) as Record<string, Record<string, Record<string, Record<string, string>>>>;
+    const json: any = jsyaml.load(yamlValue);
 
     json.config.elemental.install.device = REG_ENDPOINT_DEVICE_PATH;
     await elementalPo.genericCodeMirror().set(jsyaml.dump(json));
@@ -202,7 +202,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
       (resp) =>
         resp.url().includes('v1/elemental.cattle.io.machineregistrations/fleet-default') &&
         resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await elementalPo.genericResourceDetail().cruResource().saveOrCreate().click();
@@ -270,7 +270,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     }
 
     const yamlValue = await elementalPo.genericResourceDetail().resourceYaml().codeMirror().value();
-    const json = jsyaml.load(yamlValue) as Record<string, Record<string, string>>;
+    const json: any = jsyaml.load(yamlValue);
 
     json.metadata.name = MACHINE_INV_NAME;
     await elementalPo.genericResourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
@@ -322,7 +322,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     // Set up waitForResponse BEFORE clicking create
     const clusterCreationPromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await elementalPo.rke2CreateSaveButton().click();
@@ -380,7 +380,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     // Set up waitForResponse BEFORE clicking save
     const updateGroupPromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/elemental.cattle.io.managedosimages') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await elementalPo.genericResourceDetail().cruResource().saveOrCreate().click();
@@ -393,6 +393,24 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     expect(body.metadata).toHaveProperty('name', UPDATE_GROUP_NAME);
     expect(body.spec.clusterTargets[0]).toHaveProperty('clusterName', ELEMENTAL_CLUSTER_NAME);
     expect(body.spec).toHaveProperty('osImage', UPDATE_GROUP_IMAGE_PATH);
+  });
+
+  test.afterAll(async ({ rancherApi }) => {
+    // Best-effort cleanup of elemental resources created during tests
+    const resources = [
+      { type: 'elemental.cattle.io.managedosimages', id: `fleet-default/${UPDATE_GROUP_NAME}` },
+      { type: 'provisioning.cattle.io.clusters', id: `fleet-default/${ELEMENTAL_CLUSTER_NAME}` },
+      { type: 'elemental.cattle.io.machineinventories', id: `fleet-default/${MACHINE_INV_NAME}` },
+      { type: 'elemental.cattle.io.machineregistrations', id: `fleet-default/${REG_ENDPOINT_NAME}` },
+    ];
+
+    for (const { type, id } of resources) {
+      try {
+        await rancherApi.deleteRancherResource('v1', type, id, false);
+      } catch {
+        // Resource may not exist or CRDs not installed
+      }
+    }
   });
 
   test('Should uninstall the extension', async ({ page }) => {

@@ -8,6 +8,7 @@ import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisionin
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -19,17 +20,28 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
  */
 
 test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test('deactivating a hosted provider should hide its card from the cluster creation page', async ({
     page,
     login,
     rancherApi,
   }) => {
-    // Rancher 2.13 does not render data-testid="hosted-provider-list" — requires newer UI version
-    test.skip(true, 'Requires hosted-provider-list testid not present in Rancher 2.13');
-
     let reenableAKS = false;
 
     await login();
+
+    // Ensure AKS is Active before test — prior specs may have left it Inactive
+    const kev2Setting = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators');
+    const body = kev2Setting.body;
+    const operators = JSON.parse(body.value || '[]');
+    const aks = operators.find((op: any) => op.name === 'aks');
+
+    if (aks && !aks.active) {
+      aks.active = true;
+      body.value = JSON.stringify(operators);
+      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators', body);
+      await page.waitForTimeout(2000);
+    }
 
     const providersPage = new HostedProvidersPagePo(page);
     const clusterCreatePage = new ClusterManagerCreatePagePo(page);
@@ -38,11 +50,8 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await providersPage.goTo();
     await providersPage.waitForPage();
 
-    // Wait for hosted providers title to confirm the page content has rendered
-    await expect(providersPage.title()).toBeVisible({ timeout: 20000 });
-
     // Assert AKS is active
-    await expect(providersPage.list().details('Azure AKS', 1)).toContainText('Active', { timeout: 20000 });
+    await expect(providersPage.list().details('Azure AKS', 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
 
     try {
       // Deactivate AKS
@@ -51,7 +60,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           resp.url().includes('v1/management.cattle.io.settings/kev2-operators') && resp.request().method() === 'PUT',
       );
 
-      await providersPage.list().actionMenu('Azure AKS').getMenuItem('Deactivate').click();
+      const deactivateMenu = await providersPage.list().actionMenu('Azure AKS');
+
+      await deactivateMenu.getMenuItem('Deactivate').click();
       const deactivateResp = await updateResponse;
 
       expect(deactivateResp.status()).toBe(200);
@@ -61,7 +72,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(clusterCreatePage.providerCard('azure-aks', 'Azure AKS')).not.toBeAttached();
+      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).not.toBeAttached();
 
       // Re-enable AKS
       const reactivateResponse = page.waitForResponse(
@@ -71,7 +82,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await providersPage.goTo();
       await providersPage.waitForPage();
-      await providersPage.list().actionMenu('Azure AKS').getMenuItem('Activate').click();
+      const activateMenu = await providersPage.list().actionMenu('Azure AKS');
+
+      await activateMenu.getMenuItem('Activate').click();
       const reactivateResp = await reactivateResponse;
 
       expect(reactivateResp.status()).toBe(200);
@@ -81,13 +94,13 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(clusterCreatePage.providerCard('azure-aks', 'Azure AKS')).toBeAttached();
+      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached();
     } finally {
       if (reenableAKS) {
         // Restore AKS to active state if test failed mid-way
         const setting = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators');
-        const operators: Record<string, unknown>[] = JSON.parse(setting.body.value || '[]');
-        const aks = operators.find((o: Record<string, unknown>) => o.name === 'aks');
+        const operators: any[] = JSON.parse(setting.body.value || '[]');
+        const aks = operators.find((o: any) => o.name === 'aks');
 
         if (aks && !aks.active) {
           aks.active = true;
@@ -119,7 +132,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
   });
 
   test.describe('Created', () => {
-    test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning'] }, () => {
+    test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning', '@needsInfra'] }, () => {
       test('can create new cluster', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (custom node SSH access)');
       });
@@ -133,9 +146,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       });
 
       test('will disable saving if an addon config has invalid data', async ({ page, login }) => {
-        // In Rancher 2.13 the custom cluster create URL does not include ?type=custom#basic fragment
-        test.skip(true, 'URL fragment ?type=custom#basic not present in Rancher 2.13 create flow');
-
         await login();
 
         const clusterList = new ClusterManagerListPagePo(page);
@@ -153,10 +163,10 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
 
-        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().input().set('badvalue: -');
+        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().set('badvalue: -');
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeDisabled();
 
-        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().input().set('goodvalue: yay');
+        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().set('goodvalue: yay');
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
       });
 
@@ -178,7 +188,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     });
   });
 
-  test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning'] }, () => {
+  test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning', '@needsInfra'] }, () => {
     test.describe('Generic', () => {
       test('can create new cluster', async () => {
         test.skip(
@@ -205,7 +215,11 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
     await homePage.goTo();
     await burgerMenu.toggle();
-    await burgerMenu.burgerMenuNavToMenuByLabel('Cluster Management');
+
+    const clusterManagementNavItem = burgerMenu.burgerMenuGetNavMenuByLabel('Cluster Management');
+
+    await expect(clusterManagementNavItem).toBeVisible();
+    await clusterManagementNavItem.click();
 
     const clusterList = new ClusterManagerListPagePo(page);
 
@@ -221,16 +235,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page).toHaveURL(/fleet-local\/local|\/c\/local\//);
+      await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
 
       await clusterDetail.conditionsTab().click();
       await expect(page).toHaveURL(/conditions/);
 
-      const createdRow = clusterDetail.conditionRow('Created');
-
-      await expect(createdRow.locator('td').nth(1)).toContainText('True');
+      await expect(clusterDetail.tableRowCell('Created', 0)).toContainText('True');
     });
 
     test('can navigate to Cluster Related Page', async ({ page, login }) => {
@@ -241,13 +253,12 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
       await clusterDetail.relatedTab().click();
       await expect(page).toHaveURL(/related/);
 
-      // The related table has columns: [type, kind, name, ...] — 'local' is in column 2
-      await expect(clusterDetail.tableRowCell('Mgmt', 2)).toContainText('local');
+      await expect(clusterDetail.tableRowCell('Mgmt', 1)).toContainText('local');
     });
 
     test('can navigate to Cluster Provisioning Log Page', async ({ page, login }) => {
@@ -258,7 +269,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
       await clusterDetail.logTab().click();
       await expect(page).toHaveURL(/log/);
@@ -274,18 +285,15 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
       await clusterDetail.nodePoolsTab().click();
       await expect(page).toHaveURL(/node-pools/);
 
-      await expect(clusterDetail.tableRowContaining('machine-').first()).toBeVisible();
+      await expect(clusterDetail.tableRowContaining('machine-')).toBeVisible();
     });
 
     test('Show Configuration allows to edit config and view yaml for local cluster', async ({ page, login }) => {
-      // "Show Configuration" button / detail-drawer not present in Rancher 2.13 cluster detail page
-      test.skip(true, 'Show Configuration button not available in Rancher 2.13 cluster detail UI');
-
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
@@ -293,7 +301,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
       await clusterDetail.showConfigurationButton().click();
 
@@ -310,9 +318,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     });
 
     test('can navigate to namespace from cluster detail view', async ({ page, login }) => {
-      // data-testid="cluster-namespace" not present in Rancher 2.13 cluster detail page
-      test.skip(true, 'cluster-namespace testid not available in Rancher 2.13 cluster detail UI');
-
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
@@ -320,7 +325,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
       await expect(clusterDetail.clusterNamespaceLink()).toContainText('fleet-local');
       await clusterDetail.clusterNamespaceLink().click();
@@ -331,9 +336,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
   test.describe('Local', () => {
     test('can open edit for local cluster', async ({ page, login }) => {
-      // name-ns-description testid not rendered in Rancher 2.13 local cluster edit form
-      test.skip(true, 'name-ns-description testid not available in Rancher 2.13 cluster edit UI');
-
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
@@ -360,7 +362,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.explore('local').click();
+      await clusterList.list().explore('local').click();
 
       await expect(page).toHaveURL(/\/c\/local\/explorer/);
     });
@@ -374,10 +376,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterList.goTo();
     await clusterList.waitForPage();
 
-    // Select the local cluster row checkbox
-    await clusterList.sortableTable().rowSelectCtlWithName('local').set();
-    // In Rancher 2.13 bulk actions appear as direct buttons (no dropdown needed)
-    await page.getByTestId('sortable-table-download').click();
+    await clusterList.sortableTable().rowElementWithName('local').click();
+    await clusterList.list().openBulkActionDropdown();
+    await clusterList.list().bulkActionButton('Download YAML').click({ force: true });
 
     // Verify download was triggered (file content validation not available without file system access in PW)
     await expect(clusterList.sortableTable().self()).toBeVisible();
@@ -392,18 +393,16 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterList.waitForPage();
 
     const kubeConfigResponse = page.waitForResponse(
-      (resp) =>
-        (resp.url().includes('/v1/ext.cattle.io.kubeconfigs') || resp.url().includes('generateKubeconfig')) &&
-        resp.request().method() === 'POST',
+      (resp) => resp.url().includes('/v1/ext.cattle.io.kubeconfigs') && resp.request().method() === 'POST',
     );
 
-    await clusterList.sortableTable().rowSelectCtlWithName('local').set();
-    // In Rancher 2.13 bulk actions appear as direct buttons (no dropdown needed)
-    await page.getByTestId('sortable-table-downloadKubeConfig').click();
+    await clusterList.sortableTable().rowElementWithName('local').click();
+    await clusterList.list().openBulkActionDropdown();
+    await clusterList.list().bulkActionButton('Download KubeConfig').click();
 
     const resp = await kubeConfigResponse;
 
-    expect([200, 201]).toContain(resp.status());
+    expect(resp.status()).toBe(201);
   });
 
   test('can connect to kubectl shell', async ({ page, login }) => {
@@ -415,12 +414,12 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterList.goTo();
     await clusterList.waitForPage();
 
-    const kubectlMenu = await clusterList.list().actionMenu('local');
+    const shellMenu = await clusterList.list().actionMenu('local');
 
-    await kubectlMenu.getMenuItem('Kubectl Shell').click();
+    await shellMenu.getMenuItem('Kubectl Shell').click();
 
     await expect(clusterDetail.kubectlShell()).toBeVisible();
-    await expect(clusterDetail.shellStatus()).toContainText('Connected');
+    await expect(clusterDetail.kubectlConnectedText()).toBeVisible();
 
     await clusterDetail.closeShellButton().click();
   });
@@ -446,7 +445,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           await clusterCreate.goTo(`type=${driver}&rkeType=rke2`);
           await clusterCreate.waitForPage();
 
-          await expect(clusterCreate.credentialStep()).toBeAttached();
+          await expect(clusterCreate.credentialsBannerLocator()).toBeAttached();
         });
 
         test('should show credential step when `addCloudCredential` is false', async ({ page, login }) => {
@@ -465,7 +464,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
           await clusterCreate.goTo(`type=${driver}&rkeType=rke2`);
           await clusterCreate.waitForPage();
 
-          await expect(clusterCreate.credentialStep()).toBeAttached();
+          await expect(clusterCreate.credentialsBannerLocator()).toBeAttached();
         });
       });
     }
@@ -489,7 +488,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${driver2}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(clusterCreate.credentialStep()).toBeAttached();
+        await expect(clusterCreate.credentialsBannerLocator()).toBeAttached();
       });
 
       test('should NOT show credential step when `addCloudCredential` is false', async ({ page, login }) => {
@@ -508,22 +507,26 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterCreate.goTo(`type=${driver2}&rkeType=rke2`);
         await clusterCreate.waitForPage();
 
-        await expect(clusterCreate.credentialStep()).not.toBeAttached();
+        await expect(clusterCreate.credentialsBannerLocator()).not.toBeAttached();
       });
     });
   });
 });
 
 test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standardUser'] }, () => {
-  test('can navigate to Cluster Management Page', async ({ page, login }) => {
-    await login();
+  test('can navigate to Cluster Management Page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
 
     const homePage = new HomePagePo(page);
     const burgerMenu = new BurgerMenuPo(page);
 
     await homePage.goTo();
     await burgerMenu.toggle();
-    await burgerMenu.burgerMenuNavToMenuByLabel('Cluster Management');
+
+    const clusterManagementNavItem = burgerMenu.burgerMenuGetNavMenuByLabel('Cluster Management');
+
+    await expect(clusterManagementNavItem).toBeVisible();
+    await clusterManagementNavItem.click();
 
     const clusterList = new ClusterManagerListPagePo(page);
 
@@ -534,20 +537,18 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
     test('Show Configuration allows to view but not edit config and yaml for local cluster', async ({
       page,
       login,
+      envMeta,
     }) => {
-      // "Show Configuration" button / detail-drawer not present in Rancher 2.13 cluster detail page
-      test.skip(true, 'Show Configuration button not available in Rancher 2.13 cluster detail UI');
-
-      await login();
+      await login({ username: 'standard_user', password: envMeta.password });
 
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page).toHaveURL(/fleet-local\/local|\/c\/local\//);
+      await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/fleet-local\/local/);
 
       await clusterDetail.showConfigurationButton().click();
 
@@ -563,23 +564,33 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
     });
 
-    test('Shows the explore button and navigates to the cluster explorer when clicked', async ({ page, login }) => {
-      await login();
+    test('Shows the explore button and navigates to the cluster explorer when clicked', async ({
+      page,
+      login,
+      envMeta,
+    }) => {
+      await login({ username: 'standard_user', password: envMeta.password });
 
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', 'local');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local');
+      await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      // URL lands on the cluster detail page in manager (fleet-local/local) or the explorer
-      await expect(page).toHaveURL(/fleet-local\/local|\/c\/local\//);
+      await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/fleet-local\/local/);
 
       await expect(clusterDetail.exploreButton()).toBeVisible();
       await clusterDetail.exploreButton().click();
 
       await expect(page).toHaveURL(/\/c\/local\/explorer/);
     });
+  });
+});
+
+test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  test.skip(true, 'Percy snapshot test');
+  test('display cluster manager page', async () => {
+    // Upstream Percy snapshot test
   });
 });

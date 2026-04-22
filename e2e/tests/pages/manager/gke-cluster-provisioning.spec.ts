@@ -8,7 +8,7 @@ import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.clu
  */
 test.describe(
   'Deploy GKE cluster with default settings',
-  { tag: ['@manager', '@adminUser', '@jenkins', '@provisioning'] },
+  { tag: ['@manager', '@adminUser', '@jenkins', '@provisioning', '@needsInfra'] },
   () => {
     test.beforeEach(async ({ envMeta }) => {
       test.skip(
@@ -94,14 +94,18 @@ test.describe(
 
         await clusterList.waitForPage();
         await expect(clusterList.sortableTable().self()).toBeVisible();
+
+        // Fail early if cloud credentials are bad instead of waiting for a long timeout
+        await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource(
             'v1',
             'provisioning.cattle.io.clusters',
-            `fleet-default/${clusterId}`,
+            `fleet-default/${clusterName}`,
             false,
           );
+          await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
         }
         if (cloudcredentialId) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudcredentialId, false);

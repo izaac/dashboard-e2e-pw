@@ -6,6 +6,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
 
 const settings = {
   bannerLabel: 'Rancher e2e',
@@ -42,101 +43,78 @@ const bannerHtml =
 
 const acceptButtonText = 'Got it!';
 
-test.describe('Banners', () => {
-  test.describe.configure({ mode: 'serial' });
+/**
+ * Reset all banner settings to defaults via API.
+ */
+async function resetBannerSettings(rancherApi: RancherApi): Promise<void> {
+  try {
+    const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+    const banners = resp.body;
+    const value = JSON.parse(banners.value || '{}');
 
-  let bannersPage: BannersPagePo;
+    value.showHeader = 'false';
+    value.showFooter = 'false';
+    value.showConsent = 'false';
+    value.loginError = { showMessage: 'false', message: '' };
+    value.bannerHeader = {};
+    value.bannerFooter = {};
+    value.bannerConsent = {};
+    banners.value = JSON.stringify(value);
+    await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-  test.beforeEach(async ({ login, page }) => {
-    await login();
-    const homePage = new HomePagePo(page);
+    for (const setting of ['ui-banner-header', 'ui-banner-footer', 'ui-banner-login-consent']) {
+      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', setting);
 
-    await homePage.goTo();
-    bannersPage = new BannersPagePo(page);
-  });
-
-  test.afterEach(async ({ rancherApi }) => {
-    // Clean up all banner settings to ensure idempotency
-    try {
-      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      const banners = resp.body;
-      const value = JSON.parse(banners.value || '{}');
-
-      value.showHeader = 'false';
-      value.showFooter = 'false';
-      value.showConsent = 'false';
-      value.loginError = { showMessage: 'false', message: '' };
-      value.bannerHeader = {};
-      value.bannerFooter = {};
-      value.bannerConsent = {};
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-      // Clear individual banner settings
-      for (const setting of ['ui-banner-header', 'ui-banner-footer', 'ui-banner-login-consent']) {
-        const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', setting);
-
-        if (indResp.body.value) {
-          indResp.body.value = '';
-          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', setting, indResp.body);
-        }
+      if (indResp.body.value) {
+        indResp.body.value = '';
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', setting, indResp.body);
       }
-    } catch {
-      // ignore cleanup errors
     }
+  } catch {
+    // ignore cleanup errors
+  }
+}
+
+test.describe('Banners', () => {
+  test.afterEach(async ({ rancherApi }) => {
+    await resetBannerSettings(rancherApi);
   });
 
   test.describe('Standard Banner Configuration', () => {
-    test(
-      'can navigate to Banners Page',
-      { tag: ['@globalSettings', '@adminUser', '@standardUser'] },
-      async ({ page }) => {
-        const burgerMenu = new BurgerMenuPo(page);
-        const sideNav = new ProductNavPo(page);
+    let bannersPage: BannersPagePo;
 
-        await burgerMenu.toggle();
+    test.beforeEach(async ({ login, page }) => {
+      await login();
+      bannersPage = new BannersPagePo(page);
+    });
 
-        await expect(burgerMenu.categories().filter({ hasText: 'Configuration' })).toBeAttached();
-        const globalSettingsNavItem = burgerMenu.links().filter({ hasText: 'Global Settings' });
+    test('can navigate to Banners Page', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+      const homePage = new HomePagePo(page);
 
-        await expect(globalSettingsNavItem).toBeAttached();
-        await globalSettingsNavItem.click();
+      await homePage.goTo();
 
-        const settingsPage = new SettingsPagePo(page, '_');
+      const burgerMenu = new BurgerMenuPo(page);
+      const sideNav = new ProductNavPo(page);
 
-        await settingsPage.waitForPageWithClusterId();
+      await burgerMenu.toggle();
 
-        const bannersNavItem = await sideNav.sideMenuEntryByLabel('Banners');
+      await expect(burgerMenu.categories().filter({ hasText: 'Configuration' })).toBeAttached();
+      const globalSettingsNavItem = burgerMenu.links().filter({ hasText: 'Global Settings' });
 
-        await expect(bannersNavItem).toBeAttached();
-        await bannersNavItem.click();
+      await expect(globalSettingsNavItem).toBeAttached();
+      await globalSettingsNavItem.click();
 
-        await bannersPage.waitForPageWithClusterId();
-      },
-    );
+      const settingsPage = new SettingsPagePo(page, '_');
 
-    test(
-      'standard user has only read access to Banner page',
-      { tag: ['@globalSettings', '@standardUser'] },
-      async ({ page, login }) => {
-        test.skip(true, 'Requires standard user credentials — no standard user provisioned in test environment');
-        await login();
-        const homePage = new HomePagePo(page);
+      await settingsPage.waitForPageWithClusterId();
 
-        await homePage.goTo();
+      const bannersNavItem = await sideNav.sideMenuEntryByLabel('Banners');
 
-        const burgerMenu = new BurgerMenuPo(page);
-        const sideNav = new ProductNavPo(page);
+      await expect(bannersNavItem).toBeAttached();
+      await bannersNavItem.click();
 
-        await burgerMenu.toggle();
-        await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
-        await sideNav.navToSideMenuEntryByLabel('Banners');
-
-        // verify action buttons/checkboxes etc. are disabled/hidden for standard user
-        await expect(bannersPage.headerBannerCheckbox().self()).toBeDisabled();
-        await expect(bannersPage.saveButton().self()).not.toBeAttached();
-      },
-    );
+      await bannersPage.waitForPageWithClusterId();
+    });
 
     test('can show and hide Header Banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
       await bannersPage.goTo();
@@ -172,7 +150,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDiv = banner.locator('div').first();
+      const innerDiv = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDiv).toHaveCSS('font-weight', settings.fontWeight);
@@ -190,7 +168,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDivReload = banner.locator('div').first();
+      const innerDivReload = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDivReload).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDivReload).toHaveCSS('font-weight', settings.fontWeight);
@@ -240,7 +218,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDiv = banner.locator('div').first();
+      const innerDiv = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDiv).toHaveCSS('font-weight', settings.fontWeight);
@@ -258,7 +236,7 @@ test.describe('Banners', () => {
       await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
       await expect(banner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-      const innerDivReload = banner.locator('div').first();
+      const innerDivReload = bannersPage.fixedBannerTextDiv();
 
       await expect(innerDivReload).toHaveCSS('color', settings.bannerTextColor.newRGB);
       await expect(innerDivReload).toHaveCSS('font-weight', settings.fontWeight);
@@ -320,7 +298,7 @@ test.describe('Banners', () => {
         await expect(consentBanner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
         await expect(consentBanner).toHaveCSS('text-align', settings.textAlignment.new.toLowerCase());
 
-        const consentDiv = consentBanner.locator('div').first();
+        const consentDiv = bannersPage.consentBannerTextDiv();
 
         await expect(consentDiv).toHaveCSS('color', settings.bannerTextColor.newRGB);
         await expect(consentDiv).toHaveCSS('font-weight', settings.fontWeight);
@@ -505,328 +483,236 @@ test.describe('Banners', () => {
     });
   });
 
-  test.describe('Header Banner (Individual Setting)', () => {
-    test.beforeEach(async ({ rancherApi }) => {
-      // Make sure banner is not shown from the ui-banners setting
-      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      const banners = resp.body;
-      const value = JSON.parse(banners.value || '{}');
-
-      value.showHeader = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-      // Also clear the individual header banner setting (may be left over from a prior run)
-      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
-
-      if (indResp.body.value) {
-        indResp.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp.body);
-      }
-    });
-
-    test('Should not have banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-      const homePage = new HomePagePo(page);
-
-      await homePage.goTo();
-      await expect(bannersPage.headerBanner()).not.toBeAttached();
-    });
-
+  test.describe('Standard User', () => {
     test(
-      'Should use banner from ui-banners setting',
-      { tag: ['@globalSettings', '@adminUser'] },
-      async ({ page, rancherApi }) => {
+      'standard user has only read access to Banner page',
+      { tag: ['@globalSettings', '@standardUser'] },
+      async ({ page, login, envMeta }) => {
+        await login({ username: 'standard_user', password: envMeta.password });
+        const bannersPage = new BannersPagePo(page);
         const homePage = new HomePagePo(page);
 
         await homePage.goTo();
-        await expect(bannersPage.headerBanner()).not.toBeAttached();
 
-        // Update the ui-banners setting to enable the banner
-        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        let banners = resp.body;
-        let value = JSON.parse(banners.value || '{}');
+        const burgerMenu = new BurgerMenuPo(page);
+        const sideNav = new ProductNavPo(page);
 
-        value.showHeader = 'true';
-        value.bannerHeader = value.bannerHeader || {};
-        value.bannerHeader.text = 'TEST Banner (ui-banners)';
-        value.bannerHeader.background = '#00ff00';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+        await burgerMenu.toggle();
+        await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+        await sideNav.navToSideMenuEntryByLabel('Banners');
 
-        await homePage.goTo();
-        const banner = bannersPage.headerBanner();
-
-        await expect(banner).toBeAttached();
-        await expect(banner).toContainText('TEST Banner (ui-banners)');
-
-        await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(0, 255, 0)');
-
-        // Turn off the banner
-        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        banners = resp.body;
-        value = JSON.parse(banners.value || '{}');
-        value.showHeader = 'false';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).not.toBeAttached();
-      },
-    );
-
-    test(
-      'Should use banner from individual setting',
-      { tag: ['@globalSettings', '@adminUser'] },
-      async ({ page, rancherApi }) => {
-        const homePage = new HomePagePo(page);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).not.toBeAttached();
-
-        // Set the banner via the individual setting
-        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
-        const banner = resp.body;
-
-        banner.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', banner);
-
-        await homePage.goTo();
-        const bannerEl = bannersPage.headerBanner();
-
-        await expect(bannerEl).toBeAttached();
-        await expect(bannerEl).toContainText('Test Banner (individual setting)');
-
-        await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
-
-        // Unset the individual banner
-        const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
-
-        resp2.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', resp2.body);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).not.toBeAttached();
-      },
-    );
-
-    test(
-      'Should prefer setting from individual setting',
-      { tag: ['@globalSettings', '@adminUser'] },
-      async ({ page, rancherApi }) => {
-        const homePage = new HomePagePo(page);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).not.toBeAttached();
-
-        // Update the ui-banners setting to enable the banner
-        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        let banners = resp.body;
-        let value = JSON.parse(banners.value || '{}');
-
-        value.showHeader = 'true';
-        value.bannerHeader = value.bannerHeader || {};
-        value.bannerHeader.text = 'TEST Banner (ui-banners)';
-        value.bannerHeader.background = '#00ff00';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).toContainText('TEST Banner (ui-banners)');
-
-        // Set the banner via the individual setting
-        const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
-
-        indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp.body);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).toContainText('Test Banner (individual setting)');
-
-        await expect(bannersPage.headerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
-
-        // Turn off the banner via the banners setting
-        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        banners = resp.body;
-        value = JSON.parse(banners.value || '{}');
-        value.showHeader = 'false';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        // Banner should still exist from the individual setting
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).toContainText('Test Banner (individual setting)');
-
-        // Unset the individual banner
-        const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header');
-
-        indResp2.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-header', indResp2.body);
-
-        await homePage.goTo();
-        await expect(bannersPage.headerBanner()).not.toBeAttached();
+        // Standard user reaches the banners page but cannot save changes.
+        // The Apply button is hidden (schema has no PUT) and checkboxes are rendered
+        // with aria-disabled on the inner .checkbox-custom span (mode=_VIEW).
+        await bannersPage.headerBannerCheckbox().isDisabled();
+        await expect(bannersPage.saveButton().self()).not.toBeAttached();
       },
     );
   });
 
-  test.describe('Footer Banner (Individual Setting)', () => {
-    test.beforeEach(async ({ rancherApi }) => {
-      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-      const banners = resp.body;
-      const value = JSON.parse(banners.value || '{}');
+  // --- Individual Banner Setting Tests ---
+  // Header and Footer share the same test pattern (like upstream bannerTests()).
+  // Consent is separate because it requires login page assertions.
 
-      value.showFooter = 'false';
-      banners.value = JSON.stringify(value);
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+  function individualBannerTests(
+    bannerName: 'Header' | 'Footer',
+    settingKey: 'showHeader' | 'showFooter',
+    individualSettingId: 'ui-banner-header' | 'ui-banner-footer',
+  ) {
+    test.describe(`${bannerName} Banner (Individual Setting)`, () => {
+      let bannersPage: BannersPagePo;
 
-      // Also clear the individual footer banner setting (may be left over from a prior run)
-      const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
+      test.beforeEach(async ({ login, page, rancherApi }) => {
+        await login();
+        bannersPage = new BannersPagePo(page);
 
-      if (indResp.body.value) {
-        indResp.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp.body);
-      }
+        // Ensure banner is off via ui-banners
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+        const banners = resp.body;
+        const value = JSON.parse(banners.value || '{}');
+
+        value[settingKey] = 'false';
+        banners.value = JSON.stringify(value);
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+
+        // Clear the individual setting
+        const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', individualSettingId);
+
+        if (indResp.body.value) {
+          indResp.body.value = '';
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', individualSettingId, indResp.body);
+        }
+      });
+
+      const getBannerLocator = (bp: BannersPagePo) => (bannerName === 'Header' ? bp.headerBanner() : bp.footerBanner());
+      const getBannerContent = (bp: BannersPagePo) =>
+        bannerName === 'Header' ? bp.headerBannerContent() : bp.footerBannerContent();
+
+      test('Should not have banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+        const homePage = new HomePagePo(page);
+
+        await homePage.goTo();
+        await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+      });
+
+      test(
+        'Should use banner from ui-banners setting',
+        { tag: ['@globalSettings', '@adminUser'] },
+        async ({ page, rancherApi }) => {
+          const homePage = new HomePagePo(page);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+
+          // Enable the banner via ui-banners
+          let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+          let banners = resp.body;
+          let value = JSON.parse(banners.value || '{}');
+
+          value[settingKey] = 'true';
+          const bannerKey = `banner${bannerName}`;
+
+          value[bannerKey] = value[bannerKey] || {};
+          value[bannerKey].text = 'TEST Banner (ui-banners)';
+          value[bannerKey].background = '#00ff00';
+          banners.value = JSON.stringify(value);
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+
+          await homePage.goTo();
+          const banner = getBannerLocator(bannersPage);
+
+          await expect(banner).toBeAttached();
+          await expect(banner).toContainText('TEST Banner (ui-banners)');
+          await expect(getBannerContent(bannersPage)).toHaveCSS('background-color', 'rgb(0, 255, 0)');
+
+          // Turn off the banner
+          resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+          banners = resp.body;
+          value = JSON.parse(banners.value || '{}');
+          value[settingKey] = 'false';
+          banners.value = JSON.stringify(value);
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+        },
+      );
+
+      test(
+        'Should use banner from individual setting',
+        { tag: ['@globalSettings', '@adminUser'] },
+        async ({ page, rancherApi }) => {
+          const homePage = new HomePagePo(page);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+
+          // Set the banner via the individual setting
+          const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', individualSettingId);
+
+          resp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', individualSettingId, resp.body);
+
+          await homePage.goTo();
+          const banner = getBannerLocator(bannersPage);
+
+          await expect(banner).toBeAttached();
+          await expect(banner).toContainText('Test Banner (individual setting)');
+          await expect(getBannerContent(bannersPage)).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+
+          // Unset the individual banner
+          const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', individualSettingId);
+
+          resp2.body.value = '';
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', individualSettingId, resp2.body);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+        },
+      );
+
+      test(
+        'Should prefer setting from individual setting',
+        { tag: ['@globalSettings', '@adminUser'] },
+        async ({ page, rancherApi }) => {
+          const homePage = new HomePagePo(page);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+
+          // Enable via ui-banners
+          let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+          let banners = resp.body;
+          let value = JSON.parse(banners.value || '{}');
+          const bannerKey = `banner${bannerName}`;
+
+          value[settingKey] = 'true';
+          value[bannerKey] = value[bannerKey] || {};
+          value[bannerKey].text = 'TEST Banner (ui-banners)';
+          value[bannerKey].background = '#00ff00';
+          banners.value = JSON.stringify(value);
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).toContainText('TEST Banner (ui-banners)');
+
+          // Set individual setting — should override
+          const indResp = await rancherApi.getRancherResource(
+            'v1',
+            'management.cattle.io.settings',
+            individualSettingId,
+          );
+
+          indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', individualSettingId, indResp.body);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).toContainText('Test Banner (individual setting)');
+          await expect(getBannerContent(bannersPage)).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+
+          // Turn off via banners setting — individual should still apply
+          resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
+          banners = resp.body;
+          value = JSON.parse(banners.value || '{}');
+          value[settingKey] = 'false';
+          banners.value = JSON.stringify(value);
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).toContainText('Test Banner (individual setting)');
+
+          // Unset the individual banner
+          const indResp2 = await rancherApi.getRancherResource(
+            'v1',
+            'management.cattle.io.settings',
+            individualSettingId,
+          );
+
+          indResp2.body.value = '';
+          await rancherApi.setRancherResource(
+            'v1',
+            'management.cattle.io.settings',
+            individualSettingId,
+            indResp2.body,
+          );
+
+          await homePage.goTo();
+          await expect(getBannerLocator(bannersPage)).not.toBeAttached();
+        },
+      );
     });
+  }
 
-    test('Should not have banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-      const homePage = new HomePagePo(page);
-
-      await homePage.goTo();
-      await expect(bannersPage.footerBanner()).not.toBeAttached();
-    });
-
-    test(
-      'Should use banner from ui-banners setting',
-      { tag: ['@globalSettings', '@adminUser'] },
-      async ({ page, rancherApi }) => {
-        const homePage = new HomePagePo(page);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).not.toBeAttached();
-
-        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        let banners = resp.body;
-        let value = JSON.parse(banners.value || '{}');
-
-        value.showFooter = 'true';
-        value.bannerFooter = value.bannerFooter || {};
-        value.bannerFooter.text = 'TEST Banner (ui-banners)';
-        value.bannerFooter.background = '#00ff00';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        await homePage.goTo();
-        const banner = bannersPage.footerBanner();
-
-        await expect(banner).toBeAttached();
-        await expect(banner).toContainText('TEST Banner (ui-banners)');
-
-        await expect(bannersPage.footerBannerContent()).toHaveCSS('background-color', 'rgb(0, 255, 0)');
-
-        // Turn off the banner
-        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        banners = resp.body;
-        value = JSON.parse(banners.value || '{}');
-        value.showFooter = 'false';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).not.toBeAttached();
-      },
-    );
-
-    test(
-      'Should use banner from individual setting',
-      { tag: ['@globalSettings', '@adminUser'] },
-      async ({ page, rancherApi }) => {
-        const homePage = new HomePagePo(page);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).not.toBeAttached();
-
-        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
-
-        resp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', resp.body);
-
-        await homePage.goTo();
-        const banner = bannersPage.footerBanner();
-
-        await expect(banner).toBeAttached();
-        await expect(banner).toContainText('Test Banner (individual setting)');
-
-        await expect(bannersPage.footerBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
-
-        // Unset the individual banner
-        const resp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
-
-        resp2.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', resp2.body);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).not.toBeAttached();
-      },
-    );
-
-    test(
-      'Should prefer setting from individual setting',
-      { tag: ['@globalSettings', '@adminUser'] },
-      async ({ page, rancherApi }) => {
-        const homePage = new HomePagePo(page);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).not.toBeAttached();
-
-        // Enable via ui-banners
-        let resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        let banners = resp.body;
-        let value = JSON.parse(banners.value || '{}');
-
-        value.showFooter = 'true';
-        value.bannerFooter = value.bannerFooter || {};
-        value.bannerFooter.text = 'TEST Banner (ui-banners)';
-        value.bannerFooter.background = '#00ff00';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).toContainText('TEST Banner (ui-banners)');
-
-        // Set individual setting
-        const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
-
-        indResp.body.value = JSON.stringify({ text: 'Test Banner (individual setting)', background: '#ff0000' });
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp.body);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).toContainText('Test Banner (individual setting)');
-
-        // Turn off via banners setting
-        resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
-        banners = resp.body;
-        value = JSON.parse(banners.value || '{}');
-        value.showFooter = 'false';
-        banners.value = JSON.stringify(value);
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
-
-        // Banner should still exist from the individual setting
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).toContainText('Test Banner (individual setting)');
-
-        // Unset the individual banner
-        const indResp2 = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer');
-
-        indResp2.body.value = '';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banner-footer', indResp2.body);
-
-        await homePage.goTo();
-        await expect(bannersPage.footerBanner()).not.toBeAttached();
-      },
-    );
-  });
+  individualBannerTests('Header', 'showHeader', 'ui-banner-header');
+  individualBannerTests('Footer', 'showFooter', 'ui-banner-footer');
 
   test.describe('Login Consent Banner (Individual Setting)', () => {
-    test.beforeEach(async ({ rancherApi }) => {
+    let bannersPage: BannersPagePo;
+
+    test.beforeEach(async ({ login, page, rancherApi }) => {
+      await login();
+      bannersPage = new BannersPagePo(page);
+
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-banners');
       const banners = resp.body;
       const value = JSON.parse(banners.value || '{}');
@@ -835,7 +721,6 @@ test.describe('Banners', () => {
       banners.value = JSON.stringify(value);
       await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-      // Also clear the individual consent banner setting (may be left over from a prior run)
       const indResp = await rancherApi.getRancherResource(
         'v1',
         'management.cattle.io.settings',
@@ -854,7 +739,6 @@ test.describe('Banners', () => {
     });
 
     test('Should not have banner', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-      // Go to login page
       await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       await expect(bannersPage.loginSubmitButton()).toBeVisible();
       await expect(bannersPage.consentBanner()).not.toBeAttached();
@@ -864,7 +748,6 @@ test.describe('Banners', () => {
       'Should use banner from individual setting',
       { tag: ['@globalSettings', '@adminUser'] },
       async ({ page, rancherApi, login }) => {
-        // Set the banner via the individual setting
         const resp = await rancherApi.getRancherResource(
           'v1',
           'management.cattle.io.settings',
@@ -885,10 +768,9 @@ test.describe('Banners', () => {
 
         await expect(banner).toBeAttached();
         await expect(banner).toContainText('Test Banner (individual setting)');
-
         await expect(bannersPage.consentBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
-        // Unset the individual setting
+        // Login again to clean up via API
         await login();
         const resp2 = await rancherApi.getRancherResource(
           'v1',
@@ -910,7 +792,6 @@ test.describe('Banners', () => {
       'Should prefer banner from individual setting',
       { tag: ['@globalSettings', '@adminUser'] },
       async ({ page, rancherApi, login }) => {
-        // Set the banner via the individual setting
         const indResp = await rancherApi.getRancherResource(
           'v1',
           'management.cattle.io.settings',
@@ -937,7 +818,7 @@ test.describe('Banners', () => {
         banners.value = JSON.stringify(value);
         await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-        // Back to the login screen - check the banner is using the individual setting
+        // Go to login screen — individual should override ui-banners
         await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
         await expect(bannersPage.loginSubmitButton()).toBeVisible();
 
@@ -945,7 +826,6 @@ test.describe('Banners', () => {
 
         await expect(banner).toBeAttached();
         await expect(banner).toContainText('Test Banner (individual setting)');
-
         await expect(bannersPage.consentBannerContent()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
         // Login again to clean up
@@ -974,7 +854,7 @@ test.describe('Banners', () => {
         banners.value = JSON.stringify(value);
         await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
 
-        // Check no banners on login screen
+        // Verify no banners on login screen
         await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
         await expect(bannersPage.loginSubmitButton()).toBeVisible();
         await expect(banner).not.toBeAttached();

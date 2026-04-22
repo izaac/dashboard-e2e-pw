@@ -6,6 +6,7 @@ const APP_CO_LINK = 'https://apps.rancher.io/';
 const APP_CO_LABEL = 'SUSE Application Collection';
 
 test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.describe('link can be hidden via settings', () => {
     test('should allow app co link to be hidden', async ({ page, login, rancherApi }) => {
       await login();
@@ -46,7 +47,7 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         await checkbox.checkExists();
         await checkbox.checkVisible();
-        await checkbox.self().click();
+        await checkbox.set();
 
         await homeLinksPage.applyButton().click();
 
@@ -110,7 +111,7 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         await checkbox.checkExists();
         await checkbox.checkVisible();
-        await checkbox.self().click();
+        await checkbox.set();
 
         await homeLinksPage.applyButton().click();
 

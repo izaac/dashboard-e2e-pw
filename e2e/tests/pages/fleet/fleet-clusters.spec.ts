@@ -76,6 +76,21 @@ test.describe(
 test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] }, () => {
   const workspace = 'fleet-local';
 
+  test('should display fleet clusters list page', async ({ page, login }) => {
+    await login();
+
+    const fleetClusterListPage = new FleetClusterListPagePo(page);
+    const header = new HeaderPo(page);
+
+    await fleetClusterListPage.goTo();
+    await fleetClusterListPage.waitForPage();
+    await header.selectWorkspace(workspace);
+
+    await fleetClusterListPage.sortableTable().checkLoadingIndicatorNotVisible();
+
+    await expect(fleetClusterListPage.mainRows()).toHaveCount(1);
+  });
+
   test('should be able to list clusters in local workspace', async ({ page, login }) => {
     await login();
 
@@ -115,9 +130,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
     await appBundleCreatePage.createGitRepo();
     await gitRepoCreatePage.waitForPage();
 
-    const title = await gitRepoCreatePage.mastheadTitle();
-
-    expect(title.replace(/\s+/g, ' ')).toContain('App Bundle: Create');
+    await expect(gitRepoCreatePage.mastheadTitleLocator()).toContainText('App Bundle: Create');
   });
 
   test('should only display action menu with allowed actions only', async ({ page, login }) => {
@@ -148,7 +161,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
     'check table headers are available in list and details view',
     { tag: ['@noVai', '@adminUser'] },
     async ({ page, login, rancherApi }) => {
-      const gitRepoName = rancherApi.createE2EResourceName('fc-repo');
+      const gitRepoName = rancherApi.createE2EResourceName('git-repo');
       const fleetClusterListPage = new FleetClusterListPagePo(page);
       const fleetAppBundlesListPage = new FleetApplicationListPagePo(page);
       const header = new HeaderPo(page);
@@ -183,19 +196,17 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           'Last Seen',
           'Age',
         ];
-        const headerCells = fleetClusterListPage.sortableTable().headerContentCells();
 
-        for (let i = 0; i < expectedHeaders.length; i++) {
-          await expect(headerCells.nth(i)).toContainText(expectedHeaders[i]);
-        }
+        await expect(fleetClusterListPage.sortableTable().self()).toBeVisible();
+        const actualHeaders = await fleetClusterListPage.sortableTable().headerNames();
+
+        expect(actualHeaders).toEqual(expectedHeaders);
 
         await fleetClusterListPage.goToDetailsPage('local');
 
         const fleetClusterDetailsPage = new FleetClusterDetailsPo(page, workspace, 'local');
 
         await fleetClusterDetailsPage.waitForPage(undefined, 'applications');
-        await fleetClusterDetailsPage.appBundlesList().checkVisible();
-        await fleetClusterDetailsPage.appBundlesList().checkLoadingIndicatorNotVisible();
 
         const expectedHeadersDetailsView = [
           'State',
@@ -207,14 +218,17 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
           'Resources',
           'Age',
         ];
-        const detailHeaderCells = fleetClusterDetailsPage.appBundlesList().headerContentCells();
+        const detailsTable = fleetClusterDetailsPage.appBundlesList();
 
-        for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
-          await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);
-        }
+        await detailsTable.checkVisible();
+        await detailsTable.checkLoadingIndicatorNotVisible();
+        await detailsTable.groupByButtons(0).click();
+
+        const actualHeadersDetailsView = await detailsTable.headerNames();
+
+        expect(actualHeadersDetailsView).toEqual(expectedHeadersDetailsView);
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
-        await rancherApi.deleteNamespace(['nginx-keep']).catch(() => {});
       }
     },
   );

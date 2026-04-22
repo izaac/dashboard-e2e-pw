@@ -111,6 +111,30 @@ async function isExtensionInstalled(api: RancherApi, extensionName: string): Pro
 // =============================================================
 
 test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
+  let originalBannerSetting: string | undefined;
+
+  test.beforeAll(async ({ rancherApi }) => {
+    const resp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
+
+    if (resp.status !== 404) {
+      originalBannerSetting = resp.body?.value;
+    }
+  });
+
+  test.afterAll(async ({ rancherApi }) => {
+    if (originalBannerSetting !== undefined) {
+      const resp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
+
+      if (resp.status !== 404) {
+        await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
+          ...resp.body,
+          value: originalBannerSetting,
+        });
+      }
+    }
+  });
+
   test.beforeEach(async ({ login }) => {
     await login();
   });
@@ -276,7 +300,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await appRepoList.waitForPage();
     await expect(
       appRepoList.list().resourceTable().sortableTable().rowElementWithPartialName(UI_PLUGINS_PARTNERS_REPO_NAME),
-    ).toBeAttached({ timeout: 30000 });
+    ).toBeAttached();
 
     // Cleanup: remove the partners repo we just added
     await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
@@ -316,8 +340,8 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await expect(nameInput).toBeVisible();
     await nameInput.fill(repoName);
 
-    // Select git repo type (radio button in 2.13)
-    await repoCreateEdit.selectGitRepoCard();
+    // Select git repo card
+    await repoCreateEdit.gitRepoCard().click();
 
     // Fill git repo URL and branch
     const gitRepoInput = repoCreateEdit.gitRepoInput();
@@ -369,7 +393,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await expect(extensionsPo.loading()).not.toBeAttached();
 
     await extensionsPo.repoBanner().checkVisible();
-    await extensionsPo.repoBanner().self().getByTestId('extensions-new-repos-banner-action-btn').click();
+    await extensionsPo.repoBannerActionButton().click();
     await extensionsPo.repoBanner().checkNotExists();
 
     // Refresh the page to make sure it doesn't appear again
@@ -387,7 +411,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
 test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'] }, () => {
   // These tests install/uninstall extensions which can take time
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ mode: 'serial', timeout: 120_000 });
 
   test.beforeAll(async ({ rancherApi }) => {
     // Ensure the plugin examples repo exists

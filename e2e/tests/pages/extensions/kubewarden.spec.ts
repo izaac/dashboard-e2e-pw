@@ -11,7 +11,6 @@ const gitRepoUrl = 'https://github.com/rancher/ui-plugin-charts';
 
 test.describe('Kubewarden Extension', { tag: ['@extensions', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
   let kubewardenAvailable = false;
 
   test.beforeAll(async ({ rancherApi }) => {

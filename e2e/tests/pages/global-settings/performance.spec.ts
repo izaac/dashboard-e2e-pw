@@ -1,5 +1,4 @@
 import { test, expect } from '@/support/fixtures';
-import type { Page } from '@playwright/test';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
@@ -7,8 +6,7 @@ import { PerformancePagePo } from '@/e2e/po/pages/global-settings/performance.po
 
 test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
-  let performanceSettingsOriginal: Record<string, unknown>;
+  let performanceSettingsOriginal: any;
   let perfPage: PerformancePagePo;
 
   test.beforeEach(async ({ login, page, rancherApi }) => {
@@ -40,7 +38,7 @@ test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
     }
   });
 
-  async function navToPerformance(page: Page) {
+  async function navToPerformance(page: any) {
     const burgerMenu = new BurgerMenuPo(page);
     const sideNav = new ProductNavPo(page);
 
@@ -49,9 +47,9 @@ test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
     await sideNav.navToSideMenuEntryByLabel('Performance');
   }
 
-  async function applyAndWait(page: Page) {
+  async function applyAndWait(page: any) {
     const responsePromise = page.waitForResponse(
-      (resp) => resp.url().includes('ui-performance') && resp.request().method() === 'PUT',
+      (resp: any) => resp.url().includes('ui-performance') && resp.request().method() === 'PUT',
     );
 
     await perfPage.saveButton().click();

@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const expiredCertName = 'expired';
 const expiredCertNs = 'default';
@@ -36,23 +37,48 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     await clusterDashboard.waitForPage();
     await clusterDashboard.clickCertificatesTab();
 
-    await expect(clusterDashboard.certsSectionLocator()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible(SHORT_TIMEOUT_OPT);
     await clusterDashboard.certificatesList().sortableTable().checkLoadingIndicatorNotVisible();
 
     const rows = clusterDashboard.certificatesList().sortableTable().rowElements();
 
-    await expect(rows.first()).toBeVisible({ timeout: 15000 });
+    await expect(rows.first()).toBeVisible(SHORT_TIMEOUT_OPT);
     const rowCount = await rows.count();
 
     expect(rowCount).toBeGreaterThanOrEqual(2);
   });
 
-  test.skip("show correct 'expired' states", async () => {
-    // This test requires intercepting /v1/secrets responses to inject an expired cert.
-    // The UI computes cert expiry from the TLS cert data itself. The upstream Cypress test
-    // uses cy.intercept to modify responses in-flight, but the Rancher dashboard loads
-    // secrets via both REST and websocket, making reliable interception complex in Playwright.
-    // TODO: Revisit when page.route() can intercept websocket-based data loading.
+  test("show correct 'expired' states", async ({ page, login }) => {
+    // Intercept secrets REST endpoint and inject expired cert into response
+    await page.route(/\/v1\/secrets\?/, async (route) => {
+      const response = await route.fetch();
+      const json = await response.json();
+
+      json.data.push(expiredCert);
+      json.count = (json.count || json.data.length - 1) + 1;
+
+      await route.fulfill({ response, json });
+    });
+
+    await login();
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+    await clusterDashboard.goTo();
+    await clusterDashboard.waitForPage();
+    await clusterDashboard.clickCertificatesTab();
+
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible(SHORT_TIMEOUT_OPT);
+
+    // Verify expired banner
+    await expect(clusterDashboard.expiredBanner()).toBeVisible();
+    await expect(clusterDashboard.expiredBanner()).toContainText('1 Certificate has expired');
+
+    // Verify the expired cert row shows "Expired" state
+    const certRow = clusterDashboard.certificatesList().sortableTable().rowWithName(expiredCertName);
+
+    await certRow.self().scrollIntoViewIfNeeded();
+    await certRow.checkVisible();
+    await expect(certRow.column(1)).toContainText('Expired');
   });
 
   test('validate link to full secrets list', async ({ page, login }) => {
@@ -63,12 +89,12 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     await clusterDashboard.waitForPage();
     await clusterDashboard.clickCertificatesTab();
 
-    await expect(clusterDashboard.certsSectionLocator()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.certsSectionLocator()).toBeVisible(SHORT_TIMEOUT_OPT);
 
-    await expect(clusterDashboard.fullSecretsListLink()).toBeVisible({ timeout: 15000 });
+    await expect(clusterDashboard.fullSecretsListLink()).toBeVisible(SHORT_TIMEOUT_OPT);
     await clusterDashboard.fullSecretsListLink().scrollIntoViewIfNeeded();
     await clusterDashboard.fullSecretsListLink().click();
 
-    await expect(page).toHaveURL(/\/c\/local\/explorer\/secret/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/c\/local\/explorer\/secret/, SHORT_TIMEOUT_OPT);
   });
 });

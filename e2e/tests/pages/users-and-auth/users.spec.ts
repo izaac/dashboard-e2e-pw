@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import ActionMenuPo from '@/e2e/po/components/action-menu.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
@@ -36,7 +36,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
     } finally {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const createdUser = usersResp.body.data.find((u: Record<string, string>) => u.username === adminUsername);
+      const createdUser = usersResp.body.data.find((u: any) => u.username === adminUsername);
 
       if (createdUser) {
         await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
@@ -64,15 +64,13 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.newPass().set(userBasePassword);
       await userCreate.confirmNewPass().set(userBasePassword);
       await userCreate.selectCheckbox('User-Base').set();
-      // Wait for user creation POST (binding POST may 404 in 2.13 if user creation is async)
       await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
 
       await usersPo.waitForPage();
-      // Find the user by username since userId from binding may not be available
       await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
     } finally {
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const createdUser = usersResp.body.data.find((u: Record<string, string>) => u.username === userBaseUsername);
+      const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);
 
       if (createdUser) {
         await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
@@ -106,10 +104,10 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     const userId = body.userId;
 
     await usersPo.waitForPage();
-    await expect(usersPo.list().elementWithName(userId)).toBeVisible();
+    await expect(usersPo.list().elementWithName(standardUsername)).toBeVisible();
 
-    // view user's details via ID link in col-link-detail (column 2)
-    await usersPo.list().details(userId, 2).locator('a').click();
+    // view user's details
+    await usersPo.list().detailLink(standardUsername, 2).click();
 
     const userDetails = usersPo.detail(userId);
 
@@ -130,7 +128,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const response = await route.fetch();
       const body = await response.json();
 
-      const adminIndex = body.data.findIndex((item: Record<string, string>) => item.id === 'admin');
+      const adminIndex = body.data.findIndex((item: any) => item.id === 'admin');
 
       if (adminIndex !== -1) {
         const adminRole = body.data.splice(adminIndex, 1)[0];
@@ -170,17 +168,14 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
     const responsePromise = page.waitForResponse(
       (resp) =>
-        resp.url().includes('/v3/users') &&
-        resp.url().includes('action=refreshauthprovideraccess') &&
-        resp.request().method() === 'POST',
-      { timeout: 30000 },
+        resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
     );
 
     await usersPo.list().refreshGroupMembership().self().click();
 
     const response = await responsePromise;
 
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(201);
   });
 
   test.describe('Action Menu', () => {
@@ -210,8 +205,10 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const usersPo = new UsersPo(page);
 
       const usersResponse = page.waitForResponse(
-        (resp) => resp.url().includes('/v3/users') && resp.request().method() === 'GET' && resp.status() === 200,
-        { timeout: 30000 },
+        (resp) =>
+          resp.url().includes('/v1/management.cattle.io.users') &&
+          resp.request().method() === 'GET' &&
+          resp.status() === 200,
       );
 
       await usersPo.goTo();
@@ -219,21 +216,21 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersResponse;
 
       // Deactivate user
-      const deactivateMenu = await usersPo.list().actionMenu(userId);
+      const deactivateMenu = await usersPo.list().actionMenu(actualUsername);
 
       await deactivateMenu.getMenuItem('Disable').click();
 
-      await expect(usersPo.list().details(userId, 1).locator('i')).toHaveClass(/icon-user-xmark/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-xmark/);
 
       // Action menu must close before opening a new one, otherwise the next click targets the old menu
-      await expect(new ActionMenuPo(page).self()).toBeHidden();
+      await expect(usersPo.list().actionMenuDropdown()).not.toBeAttached();
 
       // Activate user
-      const activateMenu = await usersPo.list().actionMenu(userId);
+      const activateMenu = await usersPo.list().actionMenu(actualUsername);
 
       await activateMenu.getMenuItem('Enable').click();
 
-      await expect(usersPo.list().details(userId, 1).locator('i')).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-check/);
     });
 
     test('can Refresh Group Memberships via action menu', async ({ page, login }) => {
@@ -246,17 +243,14 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       const responsePromise = page.waitForResponse(
         (resp) =>
-          resp.url().includes('/v3/users') &&
-          resp.url().includes('action=refreshauthprovideraccess') &&
-          resp.request().method() === 'POST',
-        { timeout: 30000 },
+          resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
       );
 
-      await usersPo.list().clickRowActionMenuItem(userId, 'Refresh Group Memberships');
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Refresh Group Memberships');
 
       const response = await responsePromise;
 
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(201);
     });
 
     test('can Edit Config', async ({ page, login }) => {
@@ -267,7 +261,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().clickRowActionMenuItem(userId, 'Edit Config');
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Edit Config');
 
       const userEdit = usersPo.createEdit(userId);
 
@@ -276,7 +270,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await userEdit.description().set('e2e_test');
 
-      const response = await userEdit.saveAndWaitForRequests('PUT', `/v3/users/${userId}`);
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
 
       expect(response.status()).toBe(200);
       const body = await response.json();
@@ -292,13 +286,39 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().clickRowActionMenuItem(userId, 'Edit YAML');
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Edit YAML');
 
       await expect(page).toHaveURL(/mode=edit&as=yaml/);
 
       const viewYaml = usersPo.createEdit(userId);
 
       await expect(viewYaml.mastheadTitle()).toContainText(actualUsername);
+    });
+
+    test('can Download YAML', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      const downloadPromise = page.waitForEvent('download');
+
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Download YAML');
+
+      const download = await downloadPromise;
+      const path = await download.path();
+
+      expect(path).toBeTruthy();
+
+      const fs = await import('fs');
+      const jsyaml = await import('js-yaml');
+      const content = fs.readFileSync(path!, 'utf8');
+      const obj: any = jsyaml.load(content);
+
+      expect(obj.username).toBe(actualUsername);
+      expect(obj.apiVersion).toBe('management.cattle.io/v3');
     });
 
     test('can Delete user', async ({ page, login }) => {
@@ -309,13 +329,12 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().clickRowActionMenuItem(userId, 'Delete');
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Delete');
 
       const promptRemove = new PromptRemove(page);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
-        { timeout: 30000 },
+        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
       );
 
       await promptRemove.confirm(actualUsername);
@@ -325,7 +344,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       expect([200, 204]).toContain(deleteResp.status());
 
-      await expect(usersPo.list().elementWithName(userId)).not.toBeAttached();
+      await expect(usersPo.list().elementWithName(actualUsername)).not.toBeAttached();
 
       // User already deleted, clear userId so afterEach doesn't fail
       userId = '';
@@ -353,53 +372,57 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       }
     });
 
-    test('can Deactivate and Activate users', async ({ page, login, rancherApi }) => {
+    test('can Deactivate and Activate users', async ({ page, login }) => {
       await login();
 
       const usersPo = new UsersPo(page);
 
-      // Look up admin resource ID so we can find its row by the ID link
-      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const adminUser = usersResp.body.data.find((u: Record<string, string>) => u.username === 'admin');
-      const adminResourceId = adminUser.id;
-
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      // Filter to just the test user so pagination doesn't hide it
-      await usersPo.list().resourceTable().sortableTable().filter(userBaseId);
-      await expect(usersPo.list().elementWithName(userBaseId)).toBeVisible();
-
-      await usersPo.list().selectAll().self().click();
+      await usersPo.list().selectAll();
 
       // Deactivate
       const deactivatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'PUT',
-        { timeout: 30000 },
+        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'PUT',
       );
 
       await usersPo.list().deactivate().click();
       await deactivatePromise;
 
-      await expect(usersPo.list().details(userBaseId, 1).locator('i')).toHaveClass(/icon-user-xmark/);
-
-      // Clear filter and verify admin stays active (cannot self-deactivate)
-      await usersPo.list().resourceTable().sortableTable().resetFilter();
-      await expect(usersPo.list().details(adminResourceId, 1).locator('i')).toHaveClass(/icon-user-check/);
-
-      // Re-filter to the test user for activate
-      await usersPo.list().resourceTable().sortableTable().filter(userBaseId);
+      // admin stays active (cannot self-deactivate)
+      await expect(usersPo.list().statusIcon('admin', 1)).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-xmark/);
 
       // Activate
       const activatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'PUT',
-        { timeout: 30000 },
+        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'PUT',
       );
 
       await usersPo.list().activate().click();
       await activatePromise;
 
-      await expect(usersPo.list().details(userBaseId, 1).locator('i')).toHaveClass(/icon-user-check/);
+      await expect(usersPo.list().statusIcon(actualUsername, 1)).toHaveClass(/icon-user-check/);
+    });
+
+    test('can Download YAML', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      await usersPo.list().selectAll();
+
+      const downloadPromise = page.waitForEvent('download');
+
+      await usersPo.list().resourceTable().sortableTable().bulkActionButton('Download YAML').click();
+
+      const download = await downloadPromise;
+      const path = await download.path();
+
+      expect(path).toBeTruthy();
     });
 
     test('can Delete user via bulk', async ({ page, login }) => {
@@ -410,16 +433,13 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().resourceTable().sortableTable().filter(userBaseId);
-      await expect(usersPo.list().elementWithName(userBaseId)).toBeVisible();
-      await usersPo.list().elementWithName(userBaseId).locator('td:first-child').click();
+      await usersPo.list().rowCheckbox(actualUsername).click();
       await usersPo.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
       const promptRemove = new PromptRemove(page);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
-        { timeout: 30000 },
+        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
       );
 
       await promptRemove.confirm(actualUsername);
@@ -429,11 +449,32 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       expect([200, 204]).toContain(deleteResp.status());
 
-      await expect(usersPo.list().elementWithName(userBaseId)).not.toBeAttached();
+      await expect(usersPo.list().elementWithName(actualUsername)).not.toBeAttached();
 
       // User already deleted
       userBaseId = '';
     });
+  });
+
+  test('cannot delete admin user via action menu', async ({ page, login, rancherApi }) => {
+    await login();
+
+    const usersPo = new UsersPo(page);
+
+    // Find the admin user's ID to match the table row link
+    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+    const adminUser = usersResp.body.data.find((u: any) => u.username === 'admin');
+    const adminId = adminUser.id;
+
+    await usersPo.goTo();
+    await usersPo.waitForPage();
+
+    await usersPo.list().clickRowActionMenuItem(adminId, 'Delete');
+
+    const promptRemove = new PromptRemove(page);
+
+    await expect(promptRemove.self()).toBeVisible();
+    await expect(promptRemove.self()).toContainText('Default Admin');
   });
 
   test('can change standard user password', async ({ page, login, rancherApi }) => {
@@ -466,7 +507,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userEdit.newPass().set(newPassword);
       await userEdit.confirmNewPass().set(newPassword);
 
-      const response = await userEdit.saveAndWaitForRequests('PUT', `/v3/users/${userId}`);
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
 
       expect(response.status()).toBe(200);
 
@@ -508,7 +549,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.waitForPage();
 
       // Select only user1 by user ID (rendered as link in table)
-      await usersPo.list().elementWithName(user1Id).locator('td:first-child').click();
+      await usersPo.list().rowCheckbox(user1Id).click();
       await usersPo.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
       const promptRemove = new PromptRemove(page);
@@ -522,8 +563,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await promptRemove.confirm(user1DisplayName);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
-        { timeout: 30000 },
+        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
       );
 
       await promptRemove.remove();
@@ -572,13 +612,10 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const firstBinding = page.waitForResponse(
         (resp) =>
           resp.url().includes('/v3/globalrolebindings') && resp.request().method() === 'POST' && resp.status() === 201,
-        { timeout: 30000 },
       );
 
       await userCreate.resourceDetail().cruResource().saveOrCreate().click();
-      const firstBindingResp = await firstBinding;
-      const firstBindingBody = await firstBindingResp.json();
-      const standardUserId = firstBindingBody.userId;
+      await firstBinding;
 
       // Second globalrolebinding POST may already have resolved before we start listening
       await page
@@ -595,7 +632,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await usersPo.goTo();
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(standardUserId)).toBeAttached({ timeout: 15000 });
+      await expect(usersPo.list().elementWithName(standardUsername)).toBeAttached(SHORT_TIMEOUT_OPT);
 
       // Logout admin and login as the standard user
       await page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
@@ -619,37 +656,61 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const adminBindingFail = page.waitForResponse(
         (resp) =>
           resp.url().includes('/v3/globalrolebindings') && resp.request().method() === 'POST' && resp.status() === 403,
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await adminCreate.resourceDetail().cruResource().saveOrCreate().click();
       await adminBindingFail;
 
-      const banner = adminCreate.resourceDetail().createEditView().errorBanner();
-
-      await expect(banner).toBeVisible();
-      await expect(banner).toContainText('You cannot assign Global Permissions that are higher than your own');
+      await expect(adminCreate.errorBanner()).toBeVisible();
+      await expect(adminCreate.errorBanner()).toContainText(
+        'You cannot assign Global Permissions that are higher than your own',
+      );
 
       await adminCreate.selectCheckbox('Administrator').uncheck();
       await adminCreate.selectCheckbox('User-Base').set();
-      const adminBindingResp = await adminCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
-      const adminBindingBody = await adminBindingResp.json();
-      const adminUserId = adminBindingBody.userId;
+      await adminCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
 
       await usersPo.goTo();
       await usersPo.waitForPage();
-      await expect(usersPo.list().elementWithName(adminUserId)).toBeAttached({ timeout: 15000 });
+      await expect(usersPo.list().elementWithName(adminUsername)).toBeAttached(SHORT_TIMEOUT_OPT);
 
       // Cleanup: delete both test users via API (rancherApi is logged in as admin)
       const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
 
       for (const username of [standardUsername, adminUsername]) {
-        const user = usersResp.body.data.find((u: Record<string, string>) => u.username === username);
+        const user = usersResp.body.data.find((u: any) => u.username === username);
 
         if (user) {
           await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user.id, false);
         }
       }
+    });
+  });
+
+  test.describe('List and Pagination', () => {
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('pagination is visible and user is able to navigate through users data', async () => {
+      // Upstream test creates 26 users, sets rows-per-page to 10, validates pagination UI
+      // Port when pagination infrastructure is ready
+    });
+
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('filter users', async () => {
+      // Upstream test filters by user ID and username
+      // Port when pagination infrastructure is ready
+    });
+
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('sorting changes the order of paginated users data', async () => {
+      // Upstream test sorts by name column and validates order across pages
+      // Port when pagination infrastructure is ready
+    });
+
+    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    test('pagination is hidden', async () => {
+      // Upstream test validates pagination UI hidden when user count < page size
+      // Port when pagination infrastructure is ready
     });
   });
 });

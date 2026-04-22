@@ -82,7 +82,6 @@ async function deleteOidcClientIfExists(rancherApi: RancherApi): Promise<void> {
 
 test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
   test('should be able to create an OIDC client application', async ({ page, login, rancherApi }) => {
     test.skip(!(await isOidcProviderEnabled(rancherApi)), 'OIDC Provider feature flag is not enabled');
 
@@ -130,23 +129,22 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     const resp = await createResponse;
     const body = await resp.json();
 
-    try {
-      expect(resp.status()).toBe(201);
-      expect(body.metadata.name).toBe(OIDC_CREATE_DATA.APP_NAME);
-      expect(body.spec.description).toBe(OIDC_CREATE_DATA.APP_DESC);
-      expect(body.spec.redirectURIs).toContain(OIDC_CREATE_DATA.CB_URLS[0]);
-      expect(body.spec.redirectURIs).toContain(OIDC_CREATE_DATA.CB_URLS[1]);
-      expect(body.spec.refreshTokenExpirationSeconds).toBe(OIDC_CREATE_DATA.REF_TOKEN_EXP);
-      expect(body.spec.tokenExpirationSeconds).toBe(OIDC_CREATE_DATA.TOKEN_EXP);
+    expect(resp.status()).toBe(201);
+    expect(body.metadata.name).toBe(OIDC_CREATE_DATA.APP_NAME);
+    expect(body.spec.description).toBe(OIDC_CREATE_DATA.APP_DESC);
+    expect(body.spec.redirectURIs).toContain(OIDC_CREATE_DATA.CB_URLS[0]);
+    expect(body.spec.redirectURIs).toContain(OIDC_CREATE_DATA.CB_URLS[1]);
+    expect(body.spec.refreshTokenExpirationSeconds).toBe(OIDC_CREATE_DATA.REF_TOKEN_EXP);
+    expect(body.spec.tokenExpirationSeconds).toBe(OIDC_CREATE_DATA.TOKEN_EXP);
 
-      await oidcClientDetailPage.waitForUrlPathWithoutContext();
-      await oidcClientDetailPage.clientID().exists();
-      await oidcClientDetailPage.clientFullSecretCopy(0).exists();
-      await oidcClientDetailPage.clientID().copyToClipboard();
-      await oidcClientDetailPage.clientFullSecretCopy(0).copyToClipboard();
-    } finally {
-      await deleteOidcClientIfExists(rancherApi);
-    }
+    await oidcClientDetailPage.waitForUrlPathWithoutContext();
+    await oidcClientDetailPage.clientID().exists();
+    await oidcClientDetailPage.clientFullSecretCopy(0).exists();
+    await oidcClientDetailPage.clientID().copyToClipboard();
+    await oidcClientDetailPage.clientFullSecretCopy(0).copyToClipboard();
+
+    // Cleanup
+    await deleteOidcClientIfExists(rancherApi);
   });
 
   test('should be able to edit an OIDC client application', async ({ page, login, rancherApi }) => {
@@ -159,47 +157,46 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     const oidcClientsPage = new OidcClientsPagePo(page, CLUSTER_ID);
     const oidcClientEditPage = new OidcClientCreateEditPo(page, CLUSTER_ID, OIDC_CREATE_DATA.APP_NAME, true);
 
-    try {
-      await oidcClientsPage.goTo();
-      await oidcClientsPage.waitForPage();
+    await oidcClientsPage.goTo();
+    await oidcClientsPage.waitForPage();
 
-      const actionMenu = await oidcClientsPage.list().actionMenu(OIDC_CREATE_DATA.APP_NAME);
+    const actionMenu = await oidcClientsPage.list().actionMenu(OIDC_CREATE_DATA.APP_NAME);
 
-      await actionMenu.getMenuItem('Edit Config').click();
+    await actionMenu.getMenuItem('Edit Config').click();
 
-      await oidcClientEditPage.nameNsDescription().description().set(OIDC_EDIT_DATA.APP_DESC);
-      await oidcClientEditPage.callbackUrls().clearListItem(0);
-      await oidcClientEditPage.callbackUrls().clearListItem(1);
-      await oidcClientEditPage
-        .callbackUrls()
-        .setValueAtIndex(OIDC_EDIT_DATA.CB_URLS[0], 0, 'Add Callback URL', undefined, false);
-      await oidcClientEditPage
-        .callbackUrls()
-        .setValueAtIndex(OIDC_EDIT_DATA.CB_URLS[1], 1, 'Add Callback URL', undefined, false);
-      await oidcClientEditPage.refreshTokenExpiration().setValue(OIDC_EDIT_DATA.REF_TOKEN_EXP);
-      await oidcClientEditPage.tokenExpiration().setValue(OIDC_EDIT_DATA.TOKEN_EXP);
+    await oidcClientEditPage.nameNsDescription().description().set(OIDC_EDIT_DATA.APP_DESC);
+    await oidcClientEditPage.callbackUrls().clearListItem(0);
+    await oidcClientEditPage.callbackUrls().clearListItem(1);
+    await oidcClientEditPage
+      .callbackUrls()
+      .setValueAtIndex(OIDC_EDIT_DATA.CB_URLS[0], 0, 'Add Callback URL', undefined, false);
+    await oidcClientEditPage
+      .callbackUrls()
+      .setValueAtIndex(OIDC_EDIT_DATA.CB_URLS[1], 1, 'Add Callback URL', undefined, false);
+    await oidcClientEditPage.refreshTokenExpiration().setValue(OIDC_EDIT_DATA.REF_TOKEN_EXP);
+    await oidcClientEditPage.tokenExpiration().setValue(OIDC_EDIT_DATA.TOKEN_EXP);
 
-      const editResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
-          resp.request().method() === 'PUT',
-      );
+    const editResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
+        resp.request().method() === 'PUT',
+    );
 
-      await oidcClientEditPage.saveCreateForm().createEditView().save();
+    await oidcClientEditPage.saveCreateForm().createEditView().save();
 
-      const resp = await editResponse;
-      const body = await resp.json();
+    const resp = await editResponse;
+    const body = await resp.json();
 
-      expect(resp.status()).toBe(200);
-      expect(body.metadata.name).toBe(OIDC_CREATE_DATA.APP_NAME);
-      expect(body.spec.description).toBe(OIDC_EDIT_DATA.APP_DESC);
-      expect(body.spec.redirectURIs).toContain(OIDC_EDIT_DATA.CB_URLS[0]);
-      expect(body.spec.redirectURIs).toContain(OIDC_EDIT_DATA.CB_URLS[1]);
-      expect(body.spec.refreshTokenExpirationSeconds).toBe(OIDC_EDIT_DATA.REF_TOKEN_EXP);
-      expect(body.spec.tokenExpirationSeconds).toBe(OIDC_EDIT_DATA.TOKEN_EXP);
-    } finally {
-      await deleteOidcClientIfExists(rancherApi);
-    }
+    expect(resp.status()).toBe(200);
+    expect(body.metadata.name).toBe(OIDC_CREATE_DATA.APP_NAME);
+    expect(body.spec.description).toBe(OIDC_EDIT_DATA.APP_DESC);
+    expect(body.spec.redirectURIs).toContain(OIDC_EDIT_DATA.CB_URLS[0]);
+    expect(body.spec.redirectURIs).toContain(OIDC_EDIT_DATA.CB_URLS[1]);
+    expect(body.spec.refreshTokenExpirationSeconds).toBe(OIDC_EDIT_DATA.REF_TOKEN_EXP);
+    expect(body.spec.tokenExpirationSeconds).toBe(OIDC_EDIT_DATA.TOKEN_EXP);
+
+    // Cleanup
+    await deleteOidcClientIfExists(rancherApi);
   });
 
   test('should be able to add a new secret for an OIDC provider', async ({ page, login, rancherApi }) => {
@@ -213,39 +210,38 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     const oidcClientsPage = new OidcClientsPagePo(page, CLUSTER_ID);
     const oidcClientDetailPage = new OIDCClientDetailPo(page, CLUSTER_ID, OIDC_CREATE_DATA.APP_NAME);
 
-    try {
-      await homePage.goTo();
+    await homePage.goTo();
 
-      await oidcClientsPage.navToMenuEntry('Users & Authentication');
-      await oidcClientsPage.navToSideMenuEntryByLabel('OIDC Apps');
-      await oidcClientsPage.waitForUrlPathWithoutContext();
-      await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await oidcClientsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
-      await oidcClientsPage.list().resourceTable().goToDetailsPage(OIDC_CREATE_DATA.APP_NAME);
-      await oidcClientDetailPage.waitForUrlPathWithoutContext();
+    await oidcClientsPage.navToMenuEntry('Users & Authentication');
+    await oidcClientsPage.navToSideMenuEntryByLabel('OIDC Apps');
+    await oidcClientsPage.waitForUrlPathWithoutContext();
+    await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    await oidcClientsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+    await oidcClientsPage.list().resourceTable().goToDetailsPage(OIDC_CREATE_DATA.APP_NAME);
+    await oidcClientDetailPage.waitForUrlPathWithoutContext();
 
-      const addSecretResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
-          resp.request().method() === 'PUT',
-        { timeout: 30000 },
-      );
+    const addSecretResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
+        resp.request().method() === 'PUT',
+      { timeout: 30000 },
+    );
 
-      await oidcClientDetailPage.addNewSecretBtnClick();
+    await oidcClientDetailPage.addNewSecretBtnClick();
 
-      const resp = await addSecretResponse;
-      const reqBody = JSON.parse(await resp.request().postData()!);
+    const resp = await addSecretResponse;
+    const reqBody = JSON.parse(await resp.request().postData()!);
 
-      expect(resp.status()).toBe(200);
-      expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-create']).toBe('true');
+    expect(resp.status()).toBe(200);
+    expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-create']).toBe('true');
 
-      await oidcClientDetailPage.waitForUrlPathWithoutContext();
-      await oidcClientDetailPage.clientFullSecretCopy(1).checkVisible();
-      await oidcClientDetailPage.clientFullSecretCopy(1).exists();
-      await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
-    } finally {
-      await deleteOidcClientIfExists(rancherApi);
-    }
+    await oidcClientDetailPage.waitForUrlPathWithoutContext();
+    await oidcClientDetailPage.clientFullSecretCopy(1).checkVisible();
+    await oidcClientDetailPage.clientFullSecretCopy(1).exists();
+    await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
+
+    // Cleanup
+    await deleteOidcClientIfExists(rancherApi);
   });
 
   test('should be able to regenerate a secret for an OIDC provider', async ({ page, login, rancherApi }) => {
@@ -276,42 +272,41 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     const oidcClientsPage = new OidcClientsPagePo(page, CLUSTER_ID);
     const oidcClientDetailPage = new OIDCClientDetailPo(page, CLUSTER_ID, OIDC_CREATE_DATA.APP_NAME);
 
-    try {
-      await homePage.goTo();
-      await oidcClientsPage.navToMenuEntry('Users & Authentication');
-      await oidcClientsPage.navToSideMenuEntryByLabel('OIDC Apps');
-      await oidcClientsPage.waitForUrlPathWithoutContext();
-      await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await oidcClientsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
-      await oidcClientsPage.list().resourceTable().goToDetailsPage(OIDC_CREATE_DATA.APP_NAME);
-      await oidcClientDetailPage.waitForUrlPathWithoutContext();
+    await homePage.goTo();
+    await oidcClientsPage.navToMenuEntry('Users & Authentication');
+    await oidcClientsPage.navToSideMenuEntryByLabel('OIDC Apps');
+    await oidcClientsPage.waitForUrlPathWithoutContext();
+    await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
+    await oidcClientsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+    await oidcClientsPage.list().resourceTable().goToDetailsPage(OIDC_CREATE_DATA.APP_NAME);
+    await oidcClientDetailPage.waitForUrlPathWithoutContext();
 
-      await oidcClientDetailPage.secretCardActionMenuToggle(1);
-      await oidcClientDetailPage.secretCardMenu().getMenuItem('Regenerate').click();
+    await oidcClientDetailPage.secretCardActionMenuToggle(1);
+    await oidcClientDetailPage.secretCardMenu().getMenuItem('Regenerate').click();
 
-      const promptModal = new GenericPrompt(page);
+    const promptModal = new GenericPrompt(page);
 
-      await expect(promptModal.getBody()).toBeVisible();
+    await expect(promptModal.getBody()).toBeVisible();
 
-      const regenResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
-          resp.request().method() === 'PUT',
-      );
+    const regenResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
+        resp.request().method() === 'PUT',
+    );
 
-      await promptModal.clickActionButton('Regenerate Secret');
+    await promptModal.clickActionButton('Regenerate Secret');
 
-      const resp = await regenResponse;
-      const reqBody = JSON.parse(await resp.request().postData()!);
+    const resp = await regenResponse;
+    const reqBody = JSON.parse(await resp.request().postData()!);
 
-      expect(resp.status()).toBe(200);
-      expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-regenerate']).toBe('client-secret-2');
+    expect(resp.status()).toBe(200);
+    expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-regenerate']).toBe('client-secret-2');
 
-      await oidcClientDetailPage.clientFullSecretCopy(1).exists();
-      await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
-    } finally {
-      await deleteOidcClientIfExists(rancherApi);
-    }
+    await oidcClientDetailPage.clientFullSecretCopy(1).exists();
+    await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
+
+    // Cleanup
+    await deleteOidcClientIfExists(rancherApi);
   });
 
   test('should be able to delete a secret for an OIDC provider', async ({ page, login, rancherApi }) => {
@@ -339,35 +334,34 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
 
     const oidcClientDetailPage = new OIDCClientDetailPo(page, CLUSTER_ID, OIDC_CREATE_DATA.APP_NAME);
 
-    try {
-      await oidcClientDetailPage.goTo();
-      await oidcClientDetailPage.waitForPage();
+    await oidcClientDetailPage.goTo();
+    await oidcClientDetailPage.waitForPage();
 
-      await oidcClientDetailPage.secretCardActionMenuToggle(1);
-      await oidcClientDetailPage.secretCardMenu().getMenuItem('Delete').click();
+    await oidcClientDetailPage.secretCardActionMenuToggle(1);
+    await oidcClientDetailPage.secretCardMenu().getMenuItem('Delete').click();
 
-      const promptModal = new GenericPrompt(page);
+    const promptModal = new GenericPrompt(page);
 
-      await expect(promptModal.getBody()).toBeVisible();
+    await expect(promptModal.getBody()).toBeVisible();
 
-      const deleteSecretResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
-          resp.request().method() === 'PUT',
-      );
+    const deleteSecretResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
+        resp.request().method() === 'PUT',
+    );
 
-      await promptModal.clickActionButton('Delete Secret');
+    await promptModal.clickActionButton('Delete Secret');
 
-      const resp = await deleteSecretResponse;
-      const reqBody = JSON.parse(await resp.request().postData()!);
+    const resp = await deleteSecretResponse;
+    const reqBody = JSON.parse(await resp.request().postData()!);
 
-      expect(resp.status()).toBe(200);
-      expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-remove']).toBe('client-secret-2');
+    expect(resp.status()).toBe(200);
+    expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-remove']).toBe('client-secret-2');
 
-      await expect(oidcClientDetailPage.clientSecretCard(2)).not.toBeAttached();
-    } finally {
-      await deleteOidcClientIfExists(rancherApi);
-    }
+    await expect(oidcClientDetailPage.clientSecretCard(2)).not.toBeAttached();
+
+    // Cleanup
+    await deleteOidcClientIfExists(rancherApi);
   });
 
   test('should be able to delete an OIDC client application', async ({ page, login, rancherApi }) => {
@@ -379,33 +373,27 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
 
     const oidcClientsPage = new OidcClientsPagePo(page, CLUSTER_ID);
 
-    try {
-      await oidcClientsPage.goTo();
-      await oidcClientsPage.waitForPage();
+    await oidcClientsPage.goTo();
+    await oidcClientsPage.waitForPage();
 
-      const actionMenu = await oidcClientsPage.list().actionMenu(OIDC_CREATE_DATA.APP_NAME);
+    const actionMenu = await oidcClientsPage.list().actionMenu(OIDC_CREATE_DATA.APP_NAME);
 
-      await actionMenu.getMenuItem('Delete').click();
+    await actionMenu.getMenuItem('Delete').click();
 
-      const promptRemove = new PromptRemove(page);
+    const promptRemove = new PromptRemove(page);
 
-      const deleteResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
-          resp.request().method() === 'DELETE',
-      );
+    const deleteResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
+        resp.request().method() === 'DELETE',
+    );
 
-      await promptRemove.remove();
-      await deleteResponse;
+    await promptRemove.remove();
+    await deleteResponse;
 
-      await oidcClientsPage.waitForPage();
-      await expect(oidcClientsPage.body()).not.toContainText(OIDC_CREATE_DATA.APP_NAME);
-    } finally {
-      try {
-        await deleteOidcClientIfExists(rancherApi);
-      } catch {
-        // Already deleted by test — expected
-      }
-    }
+    await oidcClientsPage.waitForPage();
+    await expect(
+      oidcClientsPage.list().resourceTable().sortableTable().rowWithName(OIDC_CREATE_DATA.APP_NAME).self(),
+    ).not.toBeAttached();
   });
 });

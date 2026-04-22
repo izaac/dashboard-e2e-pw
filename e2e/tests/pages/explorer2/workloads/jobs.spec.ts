@@ -1,8 +1,6 @@
 import { test, expect } from '@/support/fixtures';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
-import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
-import { WorkloadsJobsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-jobs.po';
-import { SMALL_CONTAINER } from './workload.utils';
+import { WorkloadsJobsListPagePo, WorkLoadsJobDetailsPagePo } from '@/e2e/po/pages/explorer/workloads-jobs.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
   setTablePreferences,
@@ -28,14 +26,16 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
 
-        await listPage.masthead().create();
+        await listPage.baseResourceList().masthead().create();
 
-        const createPage = new WorkloadsCreatePageBasePo(page, 'local', 'batch.job');
-        const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+        const detailPage = new WorkLoadsJobDetailsPagePo(page, jobName);
+        const cruResource = detailPage.resourceDetail().createEditView();
 
-        await cruResource.nameNsDescription().createNewNamespace(namespaceName);
+        await detailPage.selectNamespace('Create a New Namespace');
+        await detailPage.namespaceInput().fill(namespaceName);
+
         await cruResource.nameNsDescription().name().set(jobName);
-        await createPage.containerImage().set('nginx');
+        await detailPage.containerImage().set('nginx');
 
         const responsePromise = page.waitForResponse(
           (resp) => resp.url().includes('v1/batch.jobs') && resp.request().method() === 'POST',
@@ -49,7 +49,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await listPage.waitForPage();
 
-        const sortableTable = listPage.sortableTablePo();
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
 
         await expect(sortableTable.rowElementWithPartialName(jobName)).toBeVisible();
       } finally {
@@ -64,36 +64,38 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       const cloneName = `${jobName}-copy`;
 
       await rancherApi.createNamespace(namespace);
-      await rancherApi.createRancherResource('v1', 'batch.jobs', {
-        apiVersion: 'batch/v1',
-        kind: 'Job',
-        metadata: { name: jobName, namespace },
-        spec: {
-          backoffLimit: 6,
-          completions: 1,
-          parallelism: 1,
-          template: {
-            metadata: { labels: { 'job-name': jobName } },
-            spec: {
-              containers: [{ name: 'nginx', image: 'nginx:alpine' }],
-              restartPolicy: 'Never',
-            },
-          },
-        },
-      });
 
       try {
+        await rancherApi.createRancherResource('v1', 'batch.jobs', {
+          apiVersion: 'batch/v1',
+          kind: 'Job',
+          metadata: { name: jobName, namespace },
+          spec: {
+            backoffLimit: 6,
+            completions: 1,
+            parallelism: 1,
+            template: {
+              metadata: { labels: { 'job-name': jobName } },
+              spec: {
+                containers: [SMALL_CONTAINER],
+                restartPolicy: 'Never',
+              },
+            },
+          },
+        });
+
         const listPage = new WorkloadsJobsListPagePo(page);
 
         await listPage.goTo();
         await listPage.waitForPage();
 
-        const sortableTable = listPage.sortableTablePo();
+        const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
         const actionMenu = await sortableTable.rowActionMenuOpen(jobName);
 
         await actionMenu.getMenuItem('Clone').click();
 
-        const cruResource = new CreateEditViewPo(page, '.dashboard-root');
+        const clonePage = new WorkLoadsJobDetailsPagePo(page, jobName, 'local', namespace);
+        const cruResource = clonePage.resourceDetail().createEditView();
 
         await cruResource.nameNsDescription().name().set(cloneName);
         await cruResource.formSave().click();
@@ -120,18 +122,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-job-list-${Date.now()}`;
       ns2 = `e2e-job-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -182,7 +173,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationNavigation(table, 23);
     });
@@ -193,7 +184,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
@@ -204,7 +195,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -218,7 +209,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTablePo();
+      const table = listPage.baseResourceList().resourceTable().sortableTable();
 
       await assertPaginationHidden(table);
 

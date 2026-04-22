@@ -178,15 +178,15 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       spec: {},
     });
 
-    try {
-      const listPage = new FleetClusterGroupsListPagePo(page);
-      const headerPo = new HeaderPo(page);
+    const listPage = new FleetClusterGroupsListPagePo(page);
+    const headerPo = new HeaderPo(page);
 
+    try {
       await listPage.goTo();
       await listPage.waitForPage();
       await headerPo.selectWorkspace(localWorkspace);
 
-      await expect(listPage.list().resourceTable().sortableTable().self()).toBeVisible();
+      const rowCountBefore = await listPage.list().resourceTable().sortableTable().rowCount();
 
       const actionMenu = await listPage.list().actionMenu(clusterGroupName);
 
@@ -203,20 +203,23 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await promptRemove.remove();
       await deletePromise;
 
+      await listPage.waitForPage();
+      await listPage
+        .list()
+        .resourceTable()
+        .sortableTable()
+        .checkRowCount(false, rowCountBefore - 1);
+
       await expect(
-        listPage.list().resourceTable().sortableTable().detailsPageLinkWithName(clusterGroupName),
+        listPage.list().resourceTable().sortableTable().rowElementWithName(clusterGroupName),
       ).not.toBeAttached();
     } finally {
-      try {
-        await rancherApi.deleteRancherResource(
-          'v1',
-          'fleet.cattle.io.clustergroups',
-          `${localWorkspace}/${clusterGroupName}`,
-          false,
-        );
-      } catch {
-        // Already deleted by test — expected
-      }
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'fleet.cattle.io.clustergroups',
+        `${localWorkspace}/${clusterGroupName}`,
+        false,
+      );
     }
   });
 
@@ -247,7 +250,6 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await headerPo.selectWorkspace(localWorkspace);
       await listPage.list().rowWithName(groupName).checkVisible();
 
-      await expect(listPage.list().resourceTable().sortableTable().self()).toBeVisible();
       const expectedHeaders = ['State', 'Name', 'Clusters Ready', 'Resources', 'Age'];
       const actualHeaders = await listPage.list().resourceTable().sortableTable().headerNames();
 
@@ -259,7 +261,6 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await detailsPage.waitForPage(undefined, 'clusters');
 
-      await expect(detailsPage.clusterList().sortableTable().self()).toBeVisible();
       const expectedHeadersDetailsView = [
         'State',
         'Name',

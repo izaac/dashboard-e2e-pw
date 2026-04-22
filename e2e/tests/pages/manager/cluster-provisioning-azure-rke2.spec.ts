@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
-import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
+import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 
 /**
  * Running this test will delete all Azure cloud credentials from the target cluster.
@@ -13,7 +13,7 @@ import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
 test.describe(
   'Deploy RKE2 cluster using node driver on Azure',
   {
-    tag: ['@manager', '@adminUser', '@standardUser', '@jenkins', '@provisioning'],
+    tag: ['@manager', '@adminUser', '@standardUser', '@jenkins', '@provisioning', '@needsInfra'],
   },
   () => {
     test.beforeEach(async ({ envMeta }) => {
@@ -116,16 +116,16 @@ test.describe(
         await createPage.nameNsDescription().description().set(`${clusterName}-description`);
 
         await createPage.poolNameInput().clear();
-        await expect(createPage.createButton().self()).toBeDisabled();
+        await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolNameInput().fill('pool1');
-        await expect(createPage.createButton().self()).toBeEnabled();
+        await expect(createPage.createButton()).toBeEnabled();
 
         await createPage.poolQuantityInput().fill('abc');
-        await expect(createPage.createButton().self()).toBeDisabled();
+        await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolQuantityInput().fill('-1');
-        await expect(createPage.createButton().self()).toBeDisabled();
+        await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolQuantityInput().fill('1');
-        await expect(createPage.createButton().self()).toBeEnabled();
+        await expect(createPage.createButton()).toBeEnabled();
 
         await createPage.kubernetesVersionSelect().click();
         await createPage.kubernetesVersionOption(k8sVersion).click();
@@ -233,7 +233,9 @@ test.describe(
       await clusterList.waitForPage();
 
       try {
-        await clusterList.list().actionMenu(clusterName).getMenuItem('Delete').click();
+        const deleteMenu = await clusterList.list().actionMenu(clusterName);
+
+        await deleteMenu.getMenuItem('Delete').click();
         await promptRemove.confirm(clusterName);
         await promptRemove.remove();
 

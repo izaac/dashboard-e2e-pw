@@ -8,13 +8,15 @@ import { PrometheusTab } from '@/e2e/po/pages/explorer/charts/tabs/prometheus-ta
 import { GrafanaTab } from '@/e2e/po/pages/explorer/charts/tabs/grafana-tab.po';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   const CHART = {
     name: 'Monitoring',
     id: 'rancher-monitoring',
     repo: 'rancher-charts',
   };
 
-  test.beforeEach(async ({ page, login }) => {
+  test.beforeEach(async ({ page, login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-monitoring');
     await login();
     await page.setViewportSize({ width: 1280, height: 720 });
   });
@@ -57,7 +59,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
           await terminal.executeCommand('delete pvc local-path-pvc --ignore-not-found=true', 3000);
           await terminal.closeTerminal();
         } catch {
-          // Terminal may fail to open if page navigated away or session expired — resources use --ignore-not-found so partial cleanup is safe
+          // Best-effort cleanup
         }
       });
 

@@ -5,6 +5,7 @@ import {
   WorkloadsDeploymentsDetailsPagePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import { createDeploymentBlueprint } from '@/e2e/blueprints/explorer/workloads/deployments/deployment-create';
 import {
   createBulkResources,
   setTablePreferences,
@@ -16,6 +17,7 @@ import {
   mockSmallCollection,
   type SavedPrefs,
 } from './pagination.utils';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', { tag: ['@standardUser', '@adminUser'] }, () => {
@@ -24,20 +26,20 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       const deploymentName = `e2e-deploy-${Date.now()}`;
       const namespace = 'default';
 
-      const deploymentsCreatePage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
-
-      await deploymentsCreatePage.goTo();
-      await deploymentsCreatePage.waitForPage();
-
-      const responsePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/apps.deployments') && resp.request().method() === 'POST',
-      );
-
-      await deploymentsCreatePage.createWithUI(deploymentName, 'nginx', namespace);
-
-      const response = await responsePromise;
-
       try {
+        const deploymentsCreatePage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+
+        await deploymentsCreatePage.goTo();
+        await deploymentsCreatePage.waitForPage();
+
+        const responsePromise = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/apps.deployments') && resp.request().method() === 'POST',
+        );
+
+        await deploymentsCreatePage.createWithUI(deploymentName, 'nginx', namespace);
+
+        const response = await responsePromise;
+
         expect(response.status()).toBe(201);
         const body = await response.json();
 
@@ -49,7 +51,6 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('Should be able to scale the number of pods', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'scale-count-text/scale-up-button/scale-down-button testids added in 2.15, not present in 2.13');
       test.setTimeout(120000);
       await login();
       const namespace = `e2e-scale-ns-${Date.now()}`;
@@ -81,20 +82,213 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await detailsPage.goTo();
         await expect(detailsPage.mastheadTitle()).toContainText(deploymentName);
 
-        await expect(page.getByTestId('scale-count-text')).toContainText('1', { timeout: 30000 });
+        await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
 
-        const scaleUpBtn = page.getByTestId('scale-up-button');
+        // Wait for PUT response so Vue store gets the new resourceVersion before next scale action
+        const scaleUpResp = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/apps.deployments/') && resp.request().method() === 'PUT',
+        );
 
-        await expect(scaleUpBtn).toBeEnabled();
-        await scaleUpBtn.click();
+        await expect(detailsPage.scaleUpButton()).toBeEnabled();
+        await detailsPage.scaleUpButton().click();
+        await scaleUpResp;
 
-        await expect(page.getByTestId('scale-count-text')).toContainText('2', { timeout: 30000 });
+        await expect(detailsPage.scalerValue()).toContainText('2', { timeout: 30000 });
 
-        const scaleDownBtn = page.getByTestId('scale-down-button');
+        // Wait for rollout to fully complete (readyReplicas === replicas) before scaling down
+        await rancherApi.waitForRancherResource(
+          'v1',
+          'apps.deployments',
+          `${namespace}/${deploymentName}`,
+          (resp) => resp.body.status?.readyReplicas === resp.body.spec?.replicas,
+        );
+        await detailsPage.waitForScaleComplete();
 
-        await scaleDownBtn.click();
-        await expect(page.getByTestId('scale-count-text')).toContainText('1', { timeout: 30000 });
+        // Reload to pick up latest resourceVersion — avoids 409 Conflict on scale-down PUT
+        await detailsPage.goTo();
+        await expect(detailsPage.scalerValue()).toContainText('2', SHORT_TIMEOUT_OPT);
+
+        const scaleDownResp = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/apps.deployments/') && resp.request().method() === 'PUT',
+        );
+
+        await detailsPage.scaleDownButton().click();
+        const scaleDownResponse = await scaleDownResp;
+
+        expect(scaleDownResponse.status()).toBe(200);
+        await expect(detailsPage.scalerValue()).toContainText('1', { timeout: 30000 });
       } finally {
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('Should show configuration drawer with the labels/annotations tab open', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      await login();
+      const namespace = `e2e-labels-ns-${Date.now()}`;
+      const deploymentName = `e2e-labels-deploy-${Date.now()}`;
+
+      await rancherApi.createNamespace(namespace);
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        ...createDeploymentBlueprint,
+        metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
+      });
+
+      try {
+        const detailsPage = new WorkloadsDeploymentsDetailsPagePo(page, deploymentName, 'local', namespace);
+
+        await detailsPage.goTo();
+        await detailsPage.waitForPage();
+
+        await detailsPage.openEmptyShowConfigurationLabelsLink();
+        await expect(detailsPage.labelsAndAnnotationsTab()).toBeVisible();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('Should be able to view and edit configuration of pod volumes with no custom component', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      await login();
+      const namespace = `e2e-vol-ns-${Date.now()}`;
+      const deploymentName = `e2e-vol-deploy-${Date.now()}`;
+
+      await rancherApi.createNamespace(namespace);
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        ...createDeploymentBlueprint,
+        metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
+      });
+      await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
+
+      try {
+        const deploymentsListPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+        const editPage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+
+        await deploymentsListPage.goTo();
+        await deploymentsListPage.waitForPage();
+        await deploymentsListPage.goToEditConfigPage(deploymentName);
+
+        await editPage.clickHorizontalTab('pod');
+        await editPage.clickPodTab('storage-pod');
+
+        const vol0Value = await editPage.podStorage().nthVolumeComponent(0).yamlEditor().value();
+
+        expect(vol0Value).toContain('name: test-vol');
+
+        const vol1Value = await editPage.podStorage().nthVolumeComponent(1).yamlEditor().value();
+
+        expect(vol1Value).toContain('name: test-vol1');
+
+        await editPage
+          .podStorage()
+          .nthVolumeComponent(0)
+          .yamlEditor()
+          .set('name: test-vol-changed\nprojected:\n    defaultMode: 420');
+
+        await editPage.clickHorizontalTab('container-0');
+        await editPage.clickContainerTab(0, 'storage');
+        await editPage.containerStorage().addVolumeButton().toggle();
+
+        const options = editPage.containerStorage().addVolumeButton().getOptions();
+
+        await expect(options.filter({ hasText: 'test-vol-changed (projected)' })).toBeVisible();
+        await expect(options.filter({ hasText: /^test-vol \(projected\)$/ })).not.toBeAttached();
+
+        const saveResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await editPage.save();
+        const response = await saveResponse;
+
+        expect(response.status()).toBe(200);
+        const body = await response.json();
+
+        expect(body.spec.template.spec.volumes[0]).toMatchObject({
+          name: 'test-vol-changed',
+          projected: { defaultMode: 420 },
+        });
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('should be able to add and remove container volume mounts', async ({ page, login, rancherApi }) => {
+      await login();
+      const namespace = `e2e-mount-ns-${Date.now()}`;
+      const deploymentName = `e2e-mount-deploy-${Date.now()}`;
+
+      await rancherApi.createNamespace(namespace);
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        ...createDeploymentBlueprint,
+        metadata: { ...createDeploymentBlueprint.metadata, name: deploymentName, namespace },
+      });
+      await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
+
+      try {
+        const deploymentsListPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+        const editPage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+
+        // Add a volume mount
+        await deploymentsListPage.goTo();
+        await deploymentsListPage.waitForPage();
+        await deploymentsListPage.goToEditConfigPage(deploymentName);
+
+        await editPage.clickContainerTab(0, 'storage');
+        await editPage.containerStorage().addVolume('test-vol1');
+        await editPage.containerStorage().nthVolumeMount(0).nthMountPoint(0).set('test-123');
+
+        const addResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await editPage.save();
+        const addResp = await addResponse;
+
+        expect(addResp.status()).toBe(200);
+        const addBody = await addResp.json();
+
+        expect(addBody.spec.template.spec.containers[0].volumeMounts).toEqual(
+          expect.arrayContaining([expect.objectContaining({ mountPath: 'test-123', name: 'test-vol1' })]),
+        );
+
+        // Remove the volume mount — wait for resource to stabilize after add
+        await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
+        await deploymentsListPage.goTo();
+        await deploymentsListPage.waitForPage();
+        await deploymentsListPage.goToEditConfigPage(deploymentName);
+
+        await editPage.clickContainerTab(0, 'storage');
+        await editPage.containerStorage().removeVolume(0);
+
+        const removeResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await editPage.save();
+        const removeResp = await removeResponse;
+
+        expect(removeResp.status()).toBe(200);
+        const removeBody = await removeResp.json();
+        const mounts = removeBody.spec.template.spec.containers[0].volumeMounts;
+
+        expect(mounts ?? []).toHaveLength(0);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
       }
     });
@@ -106,7 +300,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await deploymentsCreatePage.goTo();
       await deploymentsCreatePage.waitForPage();
 
-      await deploymentsCreatePage.containerTab().click();
+      await deploymentsCreatePage.containerTab(0).click();
 
       await deploymentsCreatePage.addEnvironmentVariable();
       await deploymentsCreatePage.addEnvironmentVariable();
@@ -133,6 +327,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await deploymentsCreatePage.podTab().click();
       await deploymentsCreatePage.storagePodTab().click();
+
       await deploymentsCreatePage.addVolumeButton().click();
       await expect(deploymentsCreatePage.dropdownMenu()).toContainText('CSI');
     });
@@ -158,192 +353,23 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
 
-      try {
-        await listPage.goTo();
-        await listPage.waitForPage();
+      await listPage.goTo();
+      await listPage.waitForPage();
 
-        await expect(listPage.listElementWithName(deploymentName)).toBeVisible();
+      await expect(listPage.listElementWithName(deploymentName)).toBeVisible();
 
-        const responsePromise = page.waitForResponse(
-          (resp) =>
-            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
-            resp.request().method() === 'DELETE',
-        );
+      const responsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+          resp.request().method() === 'DELETE',
+      );
 
-        await listPage.deleteItemWithUI(deploymentName);
+      await listPage.deleteItemWithUI(deploymentName);
 
-        const response = await responsePromise;
+      const response = await responsePromise;
 
-        expect([200, 204]).toContain(response.status());
-        await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached({ timeout: 15000 });
-      } finally {
-        try {
-          await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
-        } catch {
-          // Already deleted by test — expected
-        }
-      }
-    });
-  });
-
-  test.describe('Redeploy Dialog', () => {
-    test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.13');
-      await login();
-      const deploymentName = `e2e-redeploy-${Date.now()}`;
-      const namespace = 'default';
-
-      await rancherApi.createRancherResource('v1', 'apps.deployments', {
-        apiVersion: 'apps/v1',
-        kind: 'Deployment',
-        metadata: { name: deploymentName, namespace },
-        spec: {
-          replicas: 1,
-          selector: { matchLabels: { app: deploymentName } },
-          template: {
-            metadata: { labels: { app: deploymentName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      try {
-        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        const sortableTable = listPage.sortableTablePo();
-        const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const redeployDialog = listPage.redeployDialog();
-
-        await expect(redeployDialog).toBeVisible();
-
-        const responsePromise = page.waitForResponse(
-          (resp) =>
-            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
-            resp.request().method() === 'PUT',
-        );
-
-        await redeployDialog.locator('button').filter({ hasText: 'Redeploy' }).click();
-
-        const response = await responsePromise;
-
-        expect(response.status()).toBe(200);
-      } finally {
-        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
-      }
-    });
-
-    test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.13');
-      await login();
-      const deploymentName = `e2e-redeploy-cancel-${Date.now()}`;
-      const namespace = 'default';
-
-      await rancherApi.createRancherResource('v1', 'apps.deployments', {
-        apiVersion: 'apps/v1',
-        kind: 'Deployment',
-        metadata: { name: deploymentName, namespace },
-        spec: {
-          replicas: 1,
-          selector: { matchLabels: { app: deploymentName } },
-          template: {
-            metadata: { labels: { app: deploymentName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      let redeployCallCount = 0;
-
-      await page.route(`**/v1/apps.deployments/${namespace}/${deploymentName}`, async (route) => {
-        if (route.request().method() === 'PUT') {
-          redeployCallCount++;
-        }
-        await route.continue();
-      });
-
-      try {
-        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        const sortableTable = listPage.sortableTablePo();
-        const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const redeployDialog = listPage.redeployDialog();
-
-        await expect(redeployDialog).toBeVisible();
-
-        await redeployDialog.locator('button').filter({ hasText: 'Cancel' }).click();
-        await expect(redeployDialog).toBeHidden();
-
-        expect(redeployCallCount).toBe(0);
-      } finally {
-        await page.unroute(`**/v1/apps.deployments/${namespace}/${deploymentName}`);
-        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
-      }
-    });
-
-    test('displays error banner on failure', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Redeploy dialog (redeploy-dialog testid) is a 2.15 feature, not present in 2.13');
-      await login();
-      const deploymentName = `e2e-redeploy-err-${Date.now()}`;
-      const namespace = 'default';
-
-      await rancherApi.createRancherResource('v1', 'apps.deployments', {
-        apiVersion: 'apps/v1',
-        kind: 'Deployment',
-        metadata: { name: deploymentName, namespace },
-        spec: {
-          replicas: 1,
-          selector: { matchLabels: { app: deploymentName } },
-          template: {
-            metadata: { labels: { app: deploymentName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      await page.route(`**/v1/apps.deployments/${namespace}/${deploymentName}`, async (route) => {
-        if (route.request().method() === 'PUT') {
-          await route.fulfill({
-            status: 500,
-            body: JSON.stringify({ type: 'error', message: 'simulated failure' }),
-          });
-        } else {
-          await route.continue();
-        }
-      });
-
-      try {
-        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        const sortableTable = listPage.sortableTablePo();
-        const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const redeployDialog = listPage.redeployDialog();
-
-        await expect(redeployDialog).toBeVisible();
-        await redeployDialog.locator('button').filter({ hasText: 'Redeploy' }).click();
-
-        await expect(redeployDialog.locator('.banner.error')).toBeVisible();
-      } finally {
-        await page.unroute(`**/v1/apps.deployments/${namespace}/${deploymentName}`);
-        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
-      }
+      expect([200, 204]).toContain(response.status());
+      await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
     });
   });
 
@@ -361,18 +387,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-deploy-list-${Date.now()}`;
       ns2 = `e2e-deploy-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -462,6 +477,166 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await assertPaginationHidden(table);
 
       await page.unroute('**/v1/apps.deployments?**');
+    });
+  });
+
+  test.describe('Redeploy Dialog', () => {
+    test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
+      await login();
+      const deploymentName = `e2e-redeploy-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        metadata: { name: deploymentName, namespace },
+        spec: {
+          replicas: 1,
+          selector: { matchLabels: { app: deploymentName } },
+          template: {
+            metadata: { labels: { app: deploymentName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
+
+      try {
+        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const sortableTable = listPage.sortableTablePo();
+        const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const redeployDialog = listPage.redeployDialog();
+
+        await expect(redeployDialog.self()).toBeVisible();
+
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await redeployDialog.confirmRedeploy();
+
+        const response = await responsePromise;
+
+        expect(response.status()).toBe(200);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+      }
+    });
+
+    test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
+      await login();
+      const deploymentName = `e2e-redeploy-cancel-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        metadata: { name: deploymentName, namespace },
+        spec: {
+          replicas: 1,
+          selector: { matchLabels: { app: deploymentName } },
+          template: {
+            metadata: { labels: { app: deploymentName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      let redeployCallCount = 0;
+
+      await page.route(`**/v1/apps.deployments/${namespace}/${deploymentName}`, async (route) => {
+        if (route.request().method() === 'PUT') {
+          redeployCallCount++;
+        }
+        await route.continue();
+      });
+
+      try {
+        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const sortableTable = listPage.sortableTablePo();
+        const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const redeployDialog = listPage.redeployDialog();
+
+        await expect(redeployDialog.self()).toBeVisible();
+
+        await redeployDialog.cancel();
+        await expect(redeployDialog.self()).toBeHidden();
+
+        expect(redeployCallCount).toBe(0);
+      } finally {
+        await page.unroute(`**/v1/apps.deployments/${namespace}/${deploymentName}`);
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+      }
+    });
+
+    test('displays error banner on failure', async ({ page, login, rancherApi }) => {
+      await login();
+      const deploymentName = `e2e-redeploy-err-${Date.now()}`;
+      const namespace = 'default';
+
+      await rancherApi.createRancherResource('v1', 'apps.deployments', {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        metadata: { name: deploymentName, namespace },
+        spec: {
+          replicas: 1,
+          selector: { matchLabels: { app: deploymentName } },
+          template: {
+            metadata: { labels: { app: deploymentName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      await page.route(`**/v1/apps.deployments/${namespace}/${deploymentName}`, async (route) => {
+        if (route.request().method() === 'PUT') {
+          await route.fulfill({
+            status: 500,
+            body: JSON.stringify({ type: 'error', message: 'simulated failure' }),
+          });
+        } else {
+          await route.continue();
+        }
+      });
+
+      try {
+        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const sortableTable = listPage.sortableTablePo();
+        const actionMenu = await sortableTable.rowActionMenuOpen(deploymentName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const redeployDialog = listPage.redeployDialog();
+
+        await expect(redeployDialog.self()).toBeVisible();
+        await redeployDialog.confirmRedeploy();
+
+        await expect(redeployDialog.errorBanner()).toBeVisible();
+      } finally {
+        await page.unroute(`**/v1/apps.deployments/${namespace}/${deploymentName}`);
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+      }
     });
   });
 });

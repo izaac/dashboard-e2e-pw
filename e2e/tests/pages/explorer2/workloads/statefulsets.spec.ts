@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { WorkloadsStatefulSetsListPagePo } from '@/e2e/po/pages/explorer/workloads-statefulsets.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
   setTablePreferences,
@@ -12,173 +13,8 @@ import {
   mockSmallCollection,
   type SavedPrefs,
 } from './pagination.utils';
-import { SMALL_CONTAINER } from './workload.utils';
 
 test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
-  test.describe('Redeploy Dialog', () => {
-    test.beforeEach(async ({ rancherApi }) => {
-      await resetNamespaceFilter(rancherApi);
-    });
-
-    test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
-      await login();
-      const namespace = `e2e-sts-ns-${Date.now()}`;
-      const statefulSetName = `e2e-sts-${Date.now()}`;
-
-      await rancherApi.createNamespace(namespace);
-      await rancherApi.createRancherResource('v1', 'apps.statefulsets', {
-        apiVersion: 'apps/v1',
-        kind: 'StatefulSet',
-        metadata: { name: statefulSetName, namespace },
-        spec: {
-          replicas: 1,
-          serviceName: statefulSetName,
-          selector: { matchLabels: { app: statefulSetName } },
-          template: {
-            metadata: { labels: { app: statefulSetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      try {
-        const listPage = new WorkloadsStatefulSetsListPagePo(page);
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        await expect(listPage.sortableTable().rowElementWithName(statefulSetName)).toBeVisible();
-        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const dialog = listPage.redeployDialog();
-
-        await expect(dialog).toBeVisible();
-
-        const responsePromise = page.waitForResponse(
-          (resp) =>
-            resp.url().includes(`/v1/apps.statefulsets/${namespace}/${statefulSetName}`) &&
-            resp.request().method() === 'PUT',
-        );
-
-        await listPage.redeployDialogConfirmButton().click();
-        const response = await responsePromise;
-
-        expect(response.status()).toBe(200);
-      } finally {
-        await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);
-        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
-      }
-    });
-
-    test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
-      await login();
-      const namespace = `e2e-sts-cancel-ns-${Date.now()}`;
-      const statefulSetName = `e2e-sts-cancel-${Date.now()}`;
-
-      await rancherApi.createNamespace(namespace);
-      await rancherApi.createRancherResource('v1', 'apps.statefulsets', {
-        apiVersion: 'apps/v1',
-        kind: 'StatefulSet',
-        metadata: { name: statefulSetName, namespace },
-        spec: {
-          replicas: 1,
-          serviceName: statefulSetName,
-          selector: { matchLabels: { app: statefulSetName } },
-          template: {
-            metadata: { labels: { app: statefulSetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      let redeployCallCount = 0;
-
-      await page.route(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`, async (route) => {
-        if (route.request().method() === 'PUT') {
-          redeployCallCount++;
-        }
-        await route.continue();
-      });
-
-      try {
-        const listPage = new WorkloadsStatefulSetsListPagePo(page);
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        await expect(listPage.sortableTable().rowElementWithName(statefulSetName)).toBeVisible();
-        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const dialog = listPage.redeployDialog();
-
-        await expect(dialog).toBeVisible();
-        await listPage.redeployDialogCancelButton().click();
-        await expect(dialog).toBeHidden();
-        expect(redeployCallCount).toBe(0);
-      } finally {
-        await page.unroute(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`);
-        await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);
-        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
-      }
-    });
-
-    test('displays error banner on failure', async ({ page, login, rancherApi }) => {
-      await login();
-      const namespace = `e2e-sts-err-ns-${Date.now()}`;
-      const statefulSetName = `e2e-sts-err-${Date.now()}`;
-
-      await rancherApi.createNamespace(namespace);
-      await rancherApi.createRancherResource('v1', 'apps.statefulsets', {
-        apiVersion: 'apps/v1',
-        kind: 'StatefulSet',
-        metadata: { name: statefulSetName, namespace },
-        spec: {
-          replicas: 1,
-          serviceName: statefulSetName,
-          selector: { matchLabels: { app: statefulSetName } },
-          template: {
-            metadata: { labels: { app: statefulSetName } },
-            spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-          },
-        },
-      });
-
-      await page.route(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`, async (route) => {
-        if (route.request().method() === 'PUT') {
-          await route.fulfill({ status: 500, body: JSON.stringify({ type: 'error', message: 'simulated failure' }) });
-        } else {
-          await route.continue();
-        }
-      });
-
-      try {
-        const listPage = new WorkloadsStatefulSetsListPagePo(page);
-
-        await listPage.goTo();
-        await listPage.waitForPage();
-
-        await expect(listPage.sortableTable().rowElementWithName(statefulSetName)).toBeVisible();
-        const actionMenu = await listPage.sortableTable().rowActionMenuOpen(statefulSetName);
-
-        await actionMenu.getMenuItem('Redeploy').click();
-
-        const dialog = listPage.redeployDialog();
-
-        await expect(dialog).toBeVisible();
-        await listPage.redeployDialogConfirmButton().click();
-        await expect(listPage.redeployDialogErrorBanner()).toBeVisible();
-      } finally {
-        await page.unroute(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`);
-        await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);
-        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
-      }
-    });
-  });
-
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
     test.describe.configure({ mode: 'serial' });
     // Serial: tests share bulk resource setup (22 resources + user prefs)
@@ -193,18 +29,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-ss-list-${Date.now()}`;
       ns2 = `e2e-ss-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns1 },
-        }),
-        rancherApi.createRancherResource('v1', 'namespaces', {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: ns2 },
-        }),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 
@@ -255,7 +80,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.sortableTablePo();
 
       await assertPaginationNavigation(table, 23);
     });
@@ -266,7 +91,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.sortableTablePo();
 
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
@@ -277,7 +102,7 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.sortableTablePo();
 
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
@@ -291,11 +116,181 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      const table = listPage.sortableTable();
+      const table = listPage.sortableTablePo();
 
       await assertPaginationHidden(table);
 
       await page.unroute('**/v1/apps.statefulsets?**');
+    });
+  });
+
+  test.describe('Redeploy Dialog', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      await resetNamespaceFilter(rancherApi);
+    });
+
+    test('redeploys successfully after confirmation', async ({ page, login, rancherApi }) => {
+      await login();
+      const namespace = `e2e-sts-ns-${Date.now()}`;
+      const statefulSetName = `e2e-sts-${Date.now()}`;
+
+      await rancherApi.createNamespace(namespace);
+      await rancherApi.createRancherResource('v1', 'apps.statefulsets', {
+        apiVersion: 'apps/v1',
+        kind: 'StatefulSet',
+        metadata: { name: statefulSetName, namespace },
+        spec: {
+          replicas: 1,
+          serviceName: statefulSetName,
+          selector: { matchLabels: { app: statefulSetName } },
+          template: {
+            metadata: { labels: { app: statefulSetName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      try {
+        const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const sortableTable = listPage.sortableTablePo();
+
+        await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
+        const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const dialog = listPage.redeployDialog();
+
+        await expect(dialog.self()).toBeVisible();
+
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.statefulsets/${namespace}/${statefulSetName}`) &&
+            resp.request().method() === 'PUT',
+        );
+
+        await dialog.confirmRedeploy();
+        const response = await responsePromise;
+
+        expect(response.status()).toBe(200);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('does not send a request when cancelled', async ({ page, login, rancherApi }) => {
+      await login();
+      const namespace = `e2e-sts-cancel-ns-${Date.now()}`;
+      const statefulSetName = `e2e-sts-cancel-${Date.now()}`;
+
+      await rancherApi.createNamespace(namespace);
+      await rancherApi.createRancherResource('v1', 'apps.statefulsets', {
+        apiVersion: 'apps/v1',
+        kind: 'StatefulSet',
+        metadata: { name: statefulSetName, namespace },
+        spec: {
+          replicas: 1,
+          serviceName: statefulSetName,
+          selector: { matchLabels: { app: statefulSetName } },
+          template: {
+            metadata: { labels: { app: statefulSetName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      let redeployCallCount = 0;
+
+      await page.route(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`, async (route) => {
+        if (route.request().method() === 'PUT') {
+          redeployCallCount++;
+        }
+        await route.continue();
+      });
+
+      try {
+        const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const sortableTable = listPage.sortableTablePo();
+
+        await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
+        const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const dialog = listPage.redeployDialog();
+
+        await expect(dialog.self()).toBeVisible();
+        await dialog.cancel();
+        await expect(dialog.self()).toBeHidden();
+        expect(redeployCallCount).toBe(0);
+      } finally {
+        await page.unroute(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`);
+        await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
+    });
+
+    test('displays error banner on failure', async ({ page, login, rancherApi }) => {
+      await login();
+      const namespace = `e2e-sts-err-ns-${Date.now()}`;
+      const statefulSetName = `e2e-sts-err-${Date.now()}`;
+
+      await rancherApi.createNamespace(namespace);
+      await rancherApi.createRancherResource('v1', 'apps.statefulsets', {
+        apiVersion: 'apps/v1',
+        kind: 'StatefulSet',
+        metadata: { name: statefulSetName, namespace },
+        spec: {
+          replicas: 1,
+          serviceName: statefulSetName,
+          selector: { matchLabels: { app: statefulSetName } },
+          template: {
+            metadata: { labels: { app: statefulSetName } },
+            spec: { containers: [SMALL_CONTAINER] },
+          },
+        },
+      });
+
+      await page.route(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`, async (route) => {
+        if (route.request().method() === 'PUT') {
+          await route.fulfill({ status: 500, body: JSON.stringify({ type: 'error', message: 'simulated failure' }) });
+        } else {
+          await route.continue();
+        }
+      });
+
+      try {
+        const listPage = new WorkloadsStatefulSetsListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const sortableTable = listPage.sortableTablePo();
+
+        await expect(sortableTable.rowElementWithName(statefulSetName)).toBeVisible();
+        const actionMenu = await sortableTable.rowActionMenuOpen(statefulSetName);
+
+        await actionMenu.getMenuItem('Redeploy').click();
+
+        const dialog = listPage.redeployDialog();
+
+        await expect(dialog.self()).toBeVisible();
+        await dialog.confirmRedeploy();
+        await expect(dialog.errorBanner()).toBeVisible();
+      } finally {
+        await page.unroute(`**/v1/apps.statefulsets/${namespace}/${statefulSetName}`);
+        await rancherApi.deleteRancherResource('v1', 'apps.statefulsets', `${namespace}/${statefulSetName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
+      }
     });
   });
 });

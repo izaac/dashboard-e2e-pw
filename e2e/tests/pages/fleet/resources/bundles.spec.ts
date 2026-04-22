@@ -7,6 +7,7 @@ import {
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
+import * as fs from 'fs';
 
 const localWorkspace = 'fleet-local';
 const defaultWorkspace = 'fleet-default';
@@ -47,8 +48,8 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
       const detailsPage = new FleetBundleDetailsPo(page, localWorkspace, bundle);
 
       await detailsPage.waitForPage();
-      await expect(detailsPage.resourcesList().sortableTable().self()).toBeVisible();
 
+      await detailsPage.resourcesList().sortableTable().checkVisible();
       const expectedResourceHeaders = ['State', 'Name', 'Kind', 'Cluster', 'Namespace', 'API Version'];
       const resourceHeaderNames = await detailsPage.resourcesList().sortableTable().headerNames();
 
@@ -84,7 +85,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(createPage.mastheadTitle()).toContainText('Bundle: Create');
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: Record<string, unknown> = jsyaml.load(val);
+        const json: any = jsyaml.load(val);
 
         json.metadata.name = customBundleName;
         json.spec = json.spec || {};
@@ -138,7 +139,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
         await expect(createPage.mastheadTitle()).toContainText(`Bundle: Clone from ${customBundleName}`);
 
         const val = await createPage.resourceDetail().resourceYaml().codeMirror().value();
-        const json: Record<string, unknown> = jsyaml.load(val);
+        const json: any = jsyaml.load(val);
 
         json.metadata.name = cloneName;
         await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
@@ -186,27 +187,75 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
       const listPage = new FleetBundlesListPagePo(page);
       const headerPo = new HeaderPo(page);
 
-      await listPage.goTo();
-      await listPage.waitForPage();
-      await headerPo.selectWorkspace(localWorkspace);
+      try {
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(localWorkspace);
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).toBeVisible();
 
-      const actionMenu = await listPage.list().actionMenu(deleteName);
+        const actionMenu = await listPage.list().actionMenu(deleteName);
 
-      await actionMenu.getMenuItem('Delete').click();
+        await actionMenu.getMenuItem('Delete').click();
 
-      const responsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/fleet.cattle.io.bundles/${localWorkspace}/${deleteName}`) &&
-          resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/fleet.cattle.io.bundles/${localWorkspace}/${deleteName}`) &&
+            resp.request().method() === 'DELETE',
+        );
 
-      const prompt = new PromptRemove(page);
+        const prompt = new PromptRemove(page);
 
-      await prompt.remove();
-      await responsePromise;
-      await listPage.waitForPage();
+        await prompt.remove();
+        await responsePromise;
 
-      await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+        // Fleet lists update via websocket — navigate fresh to ensure data after delete
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(localWorkspace);
+
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.bundles/${localWorkspace}`, deleteName, false);
+      }
+    });
+
+    test('can Download YAML', async ({ page, login, rancherApi }) => {
+      const localWorkspace = 'fleet-local';
+      const bundleName = rancherApi.createE2EResourceName('bundle');
+
+      await rancherApi.createRancherResource('v1', 'fleet.cattle.io.bundles', {
+        metadata: { name: bundleName, namespace: localWorkspace },
+        spec: {},
+      });
+
+      try {
+        await login();
+        const listPage = new FleetBundlesListPagePo(page);
+        const headerPo = new HeaderPo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+        await headerPo.selectWorkspace(localWorkspace);
+        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+
+        const actionMenu = await listPage.list().actionMenu(bundleName);
+
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          actionMenu.getMenuItem('Download YAML').click(),
+        ]);
+
+        expect(download.suggestedFilename()).toBe(`${bundleName}.yaml`);
+
+        const downloadPath = await download.path();
+        const yamlContent = fs.readFileSync(downloadPath!, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('Bundle');
+        expect(parsed.metadata.name).toBe(bundleName);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.bundles/${localWorkspace}`, bundleName, false);
+      }
     });
   });
 });

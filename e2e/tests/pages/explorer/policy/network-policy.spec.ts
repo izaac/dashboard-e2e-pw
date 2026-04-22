@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { NetworkPolicyListPagePo, NetworkPolicyCreateEditPagePo } from '@/e2e/po/pages/explorer/network-policy.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
   test('creates a network policy and displays it in the list', async ({ page, login, rancherApi }) => {
@@ -38,7 +39,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
       const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
 
       await sortableTable.filter(customNetworkPolicyName);
-      await sortableTable.rowElementWithName(customNetworkPolicyName).waitFor({ timeout: 15000 });
+      await sortableTable.rowElementWithName(customNetworkPolicyName).waitFor(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource(
         'v1',
@@ -50,6 +51,8 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
   });
 
   test.skip('port value is sent correctly in request payload', async ({ page, login, rancherApi }) => {
+    // Debounce trap: port input value not propagated to request body before save.
+    // Needs waitForDebounce() or PO fix — same pattern as ingress RulePath.
     await login();
 
     const networkPolicyName = `np-port-${Date.now()}`;
@@ -113,28 +116,37 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
       spec: { podSelector: {} },
     });
 
-    const networkPolicyPage = new NetworkPolicyListPagePo(page);
+    try {
+      const networkPolicyPage = new NetworkPolicyListPagePo(page);
 
-    await networkPolicyPage.goTo();
-    await networkPolicyPage.waitForPage();
+      await networkPolicyPage.goTo();
+      await networkPolicyPage.waitForPage();
 
-    const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
+      const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
 
-    await sortableTable.filter(networkPolicyName);
-    await sortableTable.rowElementWithName(networkPolicyName).waitFor({ timeout: 15000 });
+      await sortableTable.filter(networkPolicyName);
+      await sortableTable.rowElementWithName(networkPolicyName).waitFor(SHORT_TIMEOUT_OPT);
 
-    const actionMenu = await sortableTable.rowActionMenuOpen(networkPolicyName);
+      const actionMenu = await sortableTable.rowActionMenuOpen(networkPolicyName);
 
-    await actionMenu.getMenuItem('Delete').click();
+      await actionMenu.getMenuItem('Delete').click();
 
-    const deleteResponse = page.waitForResponse(
-      (resp) => resp.url().includes('networking.k8s.io.networkpolicies') && resp.request().method() === 'DELETE',
-    );
+      const deleteResponse = page.waitForResponse(
+        (resp) => resp.url().includes('networking.k8s.io.networkpolicies') && resp.request().method() === 'DELETE',
+      );
 
-    await networkPolicyPage.promptRemove().remove();
-    await deleteResponse;
+      await networkPolicyPage.promptRemove().remove();
+      await deleteResponse;
 
-    await expect(sortableTable.rowElementWithName(networkPolicyName)).not.toBeAttached({ timeout: 15000 });
+      await expect(sortableTable.rowElementWithName(networkPolicyName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
+    } finally {
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'networking.k8s.io.networkpolicies',
+        `${namespace}/${networkPolicyName}`,
+        false,
+      );
+    }
   });
 
   test('can open Edit as YAML', async ({ page, login }) => {

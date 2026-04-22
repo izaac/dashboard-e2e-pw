@@ -13,6 +13,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       const sortableTable = storageClassesPage.list().resourceTable().sortableTable();
 
       await sortableTable.checkVisible();
+
       const expectedHeaders = ['State', 'Name', 'Provisioner', 'Default', 'Age'];
       const headerNames = await sortableTable.headerNames();
 
@@ -39,8 +40,11 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
       await storageClassesPage.waitForPage();
 
       await storageClassesPage.clickCreate();
-      await storageClassesPage.createEditView().editAsYaml();
-      await expect(storageClassesPage.yamlEditor()).toBeVisible();
+
+      const cruResource = storageClassesPage.list().createEditView();
+
+      await cruResource.editAsYaml();
+      await expect(cruResource.yamlEditor()).toBeVisible();
     });
   });
 });

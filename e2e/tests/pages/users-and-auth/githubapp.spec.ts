@@ -10,6 +10,7 @@ const appId = 'test-app-id';
 const privateKey = 'test-private-key';
 
 test.describe('GitHub App', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ page, login }) => {
     await login();
 

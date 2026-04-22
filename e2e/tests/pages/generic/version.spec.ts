@@ -10,7 +10,7 @@ async function interceptAndChangeVersion(page: import('@playwright/test').Page, 
   await page.route('**/v1/management.cattle.io.settings?exclude=metadata.managedFields', async (route) => {
     const response = await route.fetch();
     const json = await response.json();
-    const serverVersion = json.data.find((s: Record<string, string>) => s.id === 'server-version');
+    const serverVersion = json.data.find((s: any) => s.id === 'server-version');
 
     if (serverVersion) {
       serverVersion.value = version;

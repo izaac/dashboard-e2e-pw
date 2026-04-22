@@ -3,10 +3,10 @@ import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BannersPo from '@/e2e/po/components/banners.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('User can update their preferences', () => {
   test.describe.configure({ mode: 'serial' });
-
   let savedPreferences: Record<string, any> | null = null;
 
   test.beforeEach(async ({ rancherApi }) => {
@@ -36,7 +36,7 @@ test.describe('User can update their preferences', () => {
 
       // Now test nav via user menu — go to home-ish page first
       await page.goto('./home', { waitUntil: 'domcontentloaded' });
-      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
+      await expect(page).not.toHaveURL(/\/auth\/login/, SHORT_TIMEOUT_OPT);
 
       await userMenu.clickMenuItem('Preferences');
       await userMenu.isClosed();
@@ -591,16 +591,16 @@ test.describe('User can update their preferences', () => {
       await prefPage.goTo();
       await prefPage.waitForPage();
 
-      const radioGroup = prefPage.landingPagePreference();
+      const radioGroup = prefPage.landingPageRadioBtn();
 
-      await expect(radioGroup).toBeVisible();
+      await radioGroup.checkVisible();
 
       const prefUpdatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
       );
 
       // Select "Home" (index 0)
-      await radioGroup.locator('.radio-label').nth(0).click();
+      await radioGroup.set(0);
 
       const resp = await prefUpdatePromise;
 
@@ -613,7 +613,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '"home"');
 
       // Verify radio is checked
-      await expect(radioGroup.locator('.radio-container > span').nth(0)).toHaveAttribute('aria-checked', 'true');
+      await radioGroup.isChecked(0);
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');
@@ -636,16 +636,16 @@ test.describe('User can update their preferences', () => {
       await prefPage.goTo();
       await prefPage.waitForPage();
 
-      const radioGroup = prefPage.landingPagePreference();
+      const radioGroup = prefPage.landingPageRadioBtn();
 
-      await expect(radioGroup).toBeVisible();
+      await radioGroup.checkVisible();
 
       const prefUpdatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
       );
 
       // Select "Last visited" (index 1)
-      await radioGroup.locator('.radio-label').nth(1).click();
+      await radioGroup.set(1);
 
       const resp = await prefUpdatePromise;
 
@@ -658,7 +658,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '"last-visited"');
 
       // Verify radio is checked
-      await expect(radioGroup.locator('.radio-container > span').nth(1)).toHaveAttribute('aria-checked', 'true');
+      await radioGroup.isChecked(1);
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');
@@ -684,9 +684,9 @@ test.describe('User can update their preferences', () => {
       await prefPage.goTo();
       await prefPage.waitForPage();
 
-      const radioGroup = prefPage.landingPagePreference();
+      const radioGroup = prefPage.landingPageRadioBtn();
 
-      await expect(radioGroup).toBeVisible();
+      await radioGroup.checkVisible();
 
       // Ensure the cluster dropdown contains 'local' before selecting the radio
       await expect(prefPage.customPageOptions()).toContainText('local');
@@ -696,7 +696,7 @@ test.describe('User can update their preferences', () => {
       );
 
       // Select "Specific cluster" (index 2)
-      await radioGroup.locator('.radio-label').nth(2).click();
+      await radioGroup.set(2);
 
       const resp = await prefUpdatePromise;
 
@@ -709,7 +709,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '{"name":"c-cluster","params":{"cluster":"local"}}');
 
       // Verify radio is checked
-      await expect(radioGroup.locator('.radio-container > span').nth(2)).toHaveAttribute('aria-checked', 'true');
+      await radioGroup.isChecked(2);
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');

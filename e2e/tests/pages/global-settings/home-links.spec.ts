@@ -9,15 +9,11 @@ const runPrefix = `e2e-test-${runTimestamp}`;
 
 test.describe('Home Links', () => {
   test.describe.configure({ mode: 'serial' });
-
   let homeLinksPage: HomeLinksPagePo;
-  let originalCustomLinks: Record<string, unknown>;
+  let originalCustomLinks: any;
 
   test.beforeEach(async ({ login, page, rancherApi }) => {
     await login();
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
     homeLinksPage = new HomeLinksPagePo(page);
 
     // Save original custom links setting for cleanup
@@ -140,7 +136,8 @@ test.describe('Home Links', () => {
     expect(saveResp.status()).toBe(200);
 
     // Full page reload to pick up the saved setting
-    await page.goto('./home', { waitUntil: 'domcontentloaded' });
+    await page.goto('./home', { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
     await expect(homeLinksPage.supportLinks().filter({ hasText: customLinkName })).toHaveAttribute(
       'href',
       customLinkUrl,
@@ -165,32 +162,10 @@ test.describe('Home Links', () => {
     await homeLinksPage.saveButton().click();
     await removeResponsePromise;
 
-    await page.goto('./home', { waitUntil: 'domcontentloaded' });
+    await page.goto('./home', { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
     await expect(homeLinksPage.supportLinks().filter({ hasText: customLinkName })).not.toBeAttached();
   });
-
-  test(
-    'standard user has only read access to Home Links page',
-    { tag: ['@globalSettings', '@standardUser'] },
-    async ({ page, login }) => {
-      await login();
-      const homePage = new HomePagePo(page);
-
-      await homePage.goTo();
-
-      const burgerMenu = new BurgerMenuPo(page);
-      const sideNav = new ProductNavPo(page);
-
-      // Navigate to Home Links page
-      await burgerMenu.toggle();
-      await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
-      await sideNav.navToSideMenuEntryByLabel('Home Links');
-
-      // verify action buttons/checkboxes are hidden for standard user
-      await expect(homeLinksPage.defaultLinkCheckboxes().first()).not.toBeAttached();
-      await expect(homeLinksPage.saveButton().self()).not.toBeAttached();
-    },
-  );
 
   test('cleans custom links', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     const burgerMenu = new BurgerMenuPo(page);
@@ -223,15 +198,14 @@ test.describe('Home Links', () => {
     expect(saveResp.status()).toBe(200);
 
     // Full page reload to pick up saved setting
-    await page.goto('./home', { waitUntil: 'domcontentloaded' });
+    await page.goto('./home', { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
 
     // The javascript: link should be sanitized
     const link = homeLinksPage.supportLinks().filter({ hasText: customLinkName });
 
     await expect(link).not.toHaveAttribute('href', customLinkUrl);
-    const href = await link.getAttribute('href');
-
-    expect(href).toMatch(/#$/);
+    await expect(link).toHaveAttribute('href', /#$/);
 
     // Remove custom link
     await burgerMenu.toggle();
@@ -252,7 +226,25 @@ test.describe('Home Links', () => {
     await homeLinksPage.saveButton().click();
     await removeResponsePromise;
 
-    await page.goto('./home', { waitUntil: 'domcontentloaded' });
+    await page.goto('./home', { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
     await expect(homeLinksPage.supportLinks().filter({ hasText: customLinkName })).not.toBeAttached();
+  });
+});
+
+test.describe('Home Links - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {
+  test('standard user has only read access to Home Links page', async ({ page, login, envMeta }) => {
+    await login({ username: 'standard_user', password: envMeta.password });
+
+    const homeLinksPage = new HomeLinksPagePo(page);
+    const burgerMenu = new BurgerMenuPo(page);
+    const sideNav = new ProductNavPo(page);
+
+    await burgerMenu.toggle();
+    await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    await sideNav.navToSideMenuEntryByLabel('Home Links');
+
+    await expect(homeLinksPage.defaultLinkCheckboxes().first()).not.toBeAttached();
+    await expect(homeLinksPage.saveButton().self()).not.toBeAttached();
   });
 });

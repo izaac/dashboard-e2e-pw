@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const cloudCredentialsResponse = {
   type: 'collection',
@@ -32,7 +33,7 @@ test.describe('RKE2 Cilium CNI', () => {
         route.fulfill({ status: 201, json: {} }),
       );
 
-      let capturedClusterBody: Record<string, unknown> | null = null;
+      let capturedClusterBody: any = null;
 
       await page.route('**/v1/provisioning.cattle.io.clusters', (route) => {
         if (route.request().method() === 'POST') {
@@ -81,7 +82,7 @@ test.describe('RKE2 Cilium CNI', () => {
 
       const clusterSavePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createPage.create();

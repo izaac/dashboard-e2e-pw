@@ -1,5 +1,7 @@
 import { test, expect } from '@/support/fixtures';
-import { WorkloadsReplicaSetsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-replicasets.po';
+import PagePo from '@/e2e/po/pages/page.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
 test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('Workloads', () => {
@@ -9,27 +11,27 @@ test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
         const replicasetName = `e2e-rs-${Date.now()}`;
         const namespace = 'default';
 
-        await rancherApi.createRancherResource('v1', 'apps.replicasets', {
-          apiVersion: 'apps/v1',
-          kind: 'ReplicaSet',
-          metadata: { name: replicasetName, namespace },
-          spec: {
-            replicas: 1,
-            selector: { matchLabels: { app: replicasetName } },
-            template: {
-              metadata: { labels: { app: replicasetName } },
-              spec: { containers: [{ name: 'nginx', image: 'nginx:alpine' }] },
-            },
-          },
-        });
-
         try {
-          const listPage = new WorkloadsReplicaSetsListPagePo(page);
+          await rancherApi.createRancherResource('v1', 'apps.replicasets', {
+            apiVersion: 'apps/v1',
+            kind: 'ReplicaSet',
+            metadata: { name: replicasetName, namespace },
+            spec: {
+              replicas: 1,
+              selector: { matchLabels: { app: replicasetName } },
+              template: {
+                metadata: { labels: { app: replicasetName } },
+                spec: { containers: [SMALL_CONTAINER] },
+              },
+            },
+          });
+
+          const listPage = new PagePo(page, '/c/local/explorer/apps.replicaset');
 
           await listPage.goTo();
           await listPage.waitForPage();
 
-          const sortableTable = listPage.sortableTablePo();
+          const sortableTable = new SortableTablePo(page, '.sortable-table');
 
           await expect(sortableTable.rowElementWithPartialName(replicasetName)).toBeVisible();
 

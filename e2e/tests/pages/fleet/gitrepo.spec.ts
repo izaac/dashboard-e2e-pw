@@ -1,4 +1,6 @@
 import { test, expect } from '@/support/fixtures';
+import * as fs from 'fs';
+import * as jsyaml from 'js-yaml';
 import {
   FleetApplicationListPagePo,
   FleetGitRepoCreateEditPo,
@@ -29,7 +31,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test('check table headers are available in list and details view', async ({ page, login, rancherApi }) => {
-    const gitRepoName = rancherApi.createE2EResourceName('git-repo-headers');
+    const gitRepoName = rancherApi.createE2EResourceName('gitrepo-headers');
 
     await login();
 
@@ -57,11 +59,11 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         'Resources',
         'Age',
       ];
-      const headerCells = listPage.sortableTable().headerContentCells();
 
-      for (let i = 0; i < expectedHeadersListView.length; i++) {
-        await expect(headerCells.nth(i)).toContainText(expectedHeadersListView[i]);
-      }
+      await expect(listPage.sortableTable().self()).toBeVisible();
+      const actualHeaders = await listPage.sortableTable().headerNames();
+
+      expect(actualHeaders).toEqual(expectedHeadersListView);
 
       await listPage.goToDetailsPage(gitRepoName);
 
@@ -70,18 +72,18 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
       const expectedHeadersDetailsView = ['State', 'Name', 'Deployments', 'Last Updated', 'Date'];
-      const detailHeaderCells = gitRepoDetails.bundlesList().headerContentCells();
 
-      for (let i = 0; i < expectedHeadersDetailsView.length; i++) {
-        await expect(detailHeaderCells.nth(i)).toContainText(expectedHeadersDetailsView[i]);
-      }
+      await expect(gitRepoDetails.bundlesList().self()).toBeVisible();
+      const actualHeadersDetailsView = await gitRepoDetails.bundlesList().headerNames();
+
+      expect(actualHeadersDetailsView).toEqual(expectedHeadersDetailsView);
     } finally {
       await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
     }
   });
 
   test('check all tabs are available in the details view', async ({ page, login, rancherApi }) => {
-    const gitRepoName = rancherApi.createE2EResourceName('git-repo-tabs');
+    const gitRepoName = rancherApi.createE2EResourceName('gitrepo-tabs');
 
     await login();
 
@@ -104,13 +106,13 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await gitRepoDetails.waitForPage(undefined, 'bundles');
 
-      await expect(gitRepoDetails.gitRepoTabs().tabItems()).toHaveCount(4, { timeout: 10000 });
+      const expectedTabs = ['Bundles', 'Resources', 'Conditions', 'Recent Events'];
+      const tabs = gitRepoDetails.gitRepoTabs().allTabs();
 
-      const tabs = ['Bundles', 'Resources', 'Conditions', 'Recent Events'];
-      const tabLocators = gitRepoDetails.gitRepoTabs().tabItems();
+      await expect(tabs).toHaveCount(expectedTabs.length, { timeout: 10000 });
 
-      for (let i = 0; i < tabs.length; i++) {
-        await expect(tabLocators.nth(i)).toContainText(tabs[i]);
+      for (const name of expectedTabs) {
+        await expect(tabs.filter({ hasText: name })).toHaveCount(1);
       }
     } finally {
       await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, gitRepoName, false);
@@ -119,7 +121,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
   test.describe('Edit', () => {
     test('Can Clone a git repo', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo-clone');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-clone');
       let cloneName = '';
 
       await login();
@@ -146,9 +148,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await gitRepoEditPage.waitForPage('mode=clone');
 
-        const title = await gitRepoEditPage.mastheadTitle();
-
-        expect(title.replace(/\s+/g, ' ')).toContain(`App Bundle: Clone from ${editRepoName}`);
+        await expect(gitRepoEditPage.mastheadTitleLocator()).toContainText(`App Bundle: Clone from ${editRepoName}`);
 
         cloneName = `clone-${editRepoName}`;
 
@@ -169,7 +169,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Edit Yaml', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo-edityaml');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-yaml');
 
       await login();
 
@@ -187,24 +187,22 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
-        const editYamlMenu = await listPage.list().actionMenu(editRepoName);
+        const yamlMenu = await listPage.list().actionMenu(editRepoName);
 
-        await editYamlMenu.getMenuItem('Edit YAML').click();
+        await yamlMenu.getMenuItem('Edit YAML').click();
 
         const gitRepoEditPage = new FleetGitRepoCreateEditPo(page, workspace, editRepoName);
 
         await gitRepoEditPage.waitForPage('mode=edit&as=yaml');
 
-        const title = await gitRepoEditPage.mastheadTitle();
-
-        expect(title.replace(/\s+/g, ' ')).toContain(`App Bundle: ${editRepoName}`);
+        await expect(gitRepoEditPage.mastheadTitleLocator()).toContainText(`App Bundle: ${editRepoName}`);
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }
     });
 
     test('Can Download Yaml', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo-dlyaml');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-dl');
 
       await login();
 
@@ -222,9 +220,19 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
+        const downloadPromise = page.waitForEvent('download');
         const downloadMenu = await listPage.list().actionMenu(editRepoName);
 
         await downloadMenu.getMenuItem('Download YAML').click();
+        const download = await downloadPromise;
+
+        expect(download.suggestedFilename()).toContain(editRepoName);
+
+        const yamlContent = fs.readFileSync((await download.path()) as string, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('GitRepo');
+        expect(parsed.metadata.name).toBe(editRepoName);
 
         await expect(listPage.sortableTable().self()).toBeVisible();
       } finally {
@@ -233,7 +241,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('Can Edit Config', async ({ page, login, rancherApi }) => {
-      const editRepoName = rancherApi.createE2EResourceName('git-repo-editcfg');
+      const editRepoName = rancherApi.createE2EResourceName('gitrepo-edit');
       const description = `${editRepoName}-desc`;
 
       await login();
@@ -252,9 +260,9 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
-        const editConfigMenu = await listPage.list().actionMenu(editRepoName);
+        const editMenu = await listPage.list().actionMenu(editRepoName);
 
-        await editConfigMenu.getMenuItem('Edit Config').click();
+        await editMenu.getMenuItem('Edit Config').click();
 
         const gitRepoEditPage = new FleetGitRepoCreateEditPo(page, workspace, editRepoName);
 
@@ -265,6 +273,12 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }
+    });
+  });
+
+  test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+    test('should display continuous delivery page git repo', async () => {
+      test.skip(true, 'Percy visual testing — requires Percy CLI and token');
     });
   });
 });

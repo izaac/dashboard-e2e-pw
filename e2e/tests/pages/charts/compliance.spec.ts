@@ -14,27 +14,14 @@ const chartNamespace = 'compliance-operator-system';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-
-  test.beforeEach(async ({ login }) => {
+  test.beforeEach(async ({ login, chartGuard }) => {
+    await chartGuard('rancher-charts', 'rancher-compliance');
     await login();
   });
 
   test.describe('Compliance install', () => {
     test.afterEach(async ({ rancherApi }) => {
-      // Clean up compliance charts regardless of test outcome
-      await rancherApi.createRancherResource(
-        'v1',
-        `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`,
-        {},
-        false,
-      );
-      await rancherApi.createRancherResource(
-        'v1',
-        `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`,
-        {},
-        false,
-      );
-      // Reset namespace filter
+      await rancherApi.uninstallChart(chartNamespace, 'rancher-compliance', 'rancher-compliance-crd');
       await rancherApi.setUserPreference({ local: JSON.stringify({ local: ['all://user'] }) });
     });
 
@@ -67,20 +54,10 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
     });
 
     test.describe('Compliance Chart setup', () => {
-      test('Complete install and a Scan is created', { timeout: 180000 }, async ({ page, rancherApi }) => {
+      test('Complete install and a Scan is created', async ({ page, rancherApi }) => {
+        test.setTimeout(180000);
         // Clean up first in case charts exist from a previous failed run
-        await rancherApi.createRancherResource(
-          'v1',
-          `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance?action=uninstall`,
-          {},
-          false,
-        );
-        await rancherApi.createRancherResource(
-          'v1',
-          `catalog.cattle.io.apps/${chartNamespace}/rancher-compliance-crd?action=uninstall`,
-          {},
-          false,
-        );
+        await rancherApi.uninstallChart(chartNamespace, 'rancher-compliance', 'rancher-compliance-crd');
 
         // Reset namespace filter
         await rancherApi.setUserPreference({ local: JSON.stringify({ local: [] }) });

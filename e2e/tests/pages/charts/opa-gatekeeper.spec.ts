@@ -5,6 +5,7 @@ import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.
 import { setupOpaGatekeeperRoutes } from '@/e2e/blueprints/other-products/opa-gatekeeper-routes';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
   });
@@ -46,7 +47,8 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
   test.describe('OPA Gatekeeper install', () => {
     test.describe('YAML view', () => {
-      test('Footer controls should sticky to bottom', async ({ page }) => {
+      test('Footer controls should sticky to bottom', async ({ page, chartGuard }) => {
+        await chartGuard('rancher-charts', 'rancher-gatekeeper');
         const chartPage = new ChartPage(page);
         const installChartPage = new InstallChartPage(page);
 

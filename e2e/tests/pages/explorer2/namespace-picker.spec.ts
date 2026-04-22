@@ -1,6 +1,8 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test.beforeEach(async ({ page, login }) => {
@@ -9,6 +11,14 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await clusterDashboard.goTo();
     await clusterDashboard.waitForPage();
+
+    // Reset namespace picker to default state (like upstream beforeEach)
+    const namespacePicker = new NamespaceFilterPo(page);
+
+    await namespacePicker.toggle();
+    await namespacePicker.clickOptionByLabel('Only User Namespaces');
+    await namespacePicker.isChecked('Only User Namespaces');
+    await namespacePicker.closeDropdown();
   });
 
   test(
@@ -48,17 +58,14 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test('can deselect options', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
     const namespacePicker = new NamespaceFilterPo(page);
 
-    // Reset to known state — prior tests may have changed namespace selections
-    await namespacePicker.toggle();
-    await namespacePicker.clickOptionByLabel('Only User Namespaces');
-    await namespacePicker.closeDropdown();
-
     await namespacePicker.toggle();
 
     await namespacePicker.clickOptionByLabel('default');
     await namespacePicker.isChecked('default');
 
-    await namespacePicker.selectedValuesClearIcon().click();
+    const clearBtn = namespacePicker.clearIcon();
+
+    await clearBtn.click();
 
     await namespacePicker.isChecked('Only User Namespaces');
   });
@@ -66,18 +73,13 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test('can filter after making a selection', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
     const namespacePicker = new NamespaceFilterPo(page);
 
-    // Reset to known state — prior tests may have changed namespace selections
-    await namespacePicker.toggle();
-    await namespacePicker.clickOptionByLabel('Only User Namespaces');
-    await namespacePicker.closeDropdown();
-
     await namespacePicker.toggle();
 
     await namespacePicker.clickOptionByLabel('Project: Default');
     await namespacePicker.isChecked('Project: Default');
 
     await namespacePicker.searchByName('default');
-    const options = namespacePicker.nsOptionItems();
+    const options = namespacePicker.namespaceOptions();
 
     await expect(options).not.toHaveCount(0);
   });
@@ -88,11 +90,11 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await namespacePicker.toggle();
 
     await namespacePicker.searchByName('default');
-    const options = namespacePicker.nsOptionItems();
+    const options = namespacePicker.namespaceOptions();
 
     await expect(options).not.toHaveCount(0);
 
-    await namespacePicker.clickOptionByLabelAndWaitForRequest('Project: Default');
+    await namespacePicker.clickOptionByLabel('Project: Default');
     await namespacePicker.isChecked('Project: Default');
 
     await namespacePicker.clearSearchFilter();
@@ -130,7 +132,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         const namespacePicker = new NamespaceFilterPo(page);
 
         await namespacePicker.toggle();
-        await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
+        await expect(namespacePicker.optionByText(projName)).toBeVisible(SHORT_TIMEOUT_OPT);
         await expect(namespacePicker.optionByText(nsName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
@@ -166,29 +168,57 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         },
       });
 
+      const namespacePicker = new NamespaceFilterPo(page);
+
+      await namespacePicker.toggle();
+      await expect(namespacePicker.optionByText(projName)).toBeVisible(SHORT_TIMEOUT_OPT);
+
+      await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
+      await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
+
+      await namespacePicker.closeDropdown();
+      await namespacePicker.toggle();
+      await expect(namespacePicker.optionByText(projName)).not.toBeAttached({ timeout: 20000 });
+    },
+  );
+
+  test(
+    'can filter workloads by project/namespace from the picker dropdown',
+    { tag: ['@adminUser'] },
+    async ({ page, rancherApi }) => {
+      await rancherApi.updateNamespaceFilter('local', 'metadata.namespace', '{"local":["all://user"]}');
+
       try {
+        // Navigate to pods list (upstream uses WorkloadsPodsListPagePo)
+        await page.goto('./c/local/explorer/pod');
+        await page.waitForURL(/\/pod$/);
+
+        const sortableTable = new SortableTablePo(page, '.sortable-table');
+
+        await sortableTable.groupByButtons(1).click();
+
         const namespacePicker = new NamespaceFilterPo(page);
 
         await namespacePicker.toggle();
-        await expect(namespacePicker.optionByText(projName)).toBeVisible({ timeout: 15000 });
+        await expect(namespacePicker.optionById('ns_cattle-fleet-system')).toBeVisible();
+        await namespacePicker.clickOptionByLabel('cattle-fleet-system');
+        await namespacePicker.isChecked('cattle-fleet-system');
+        await namespacePicker.closeDropdown();
 
-        await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
-        await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
+        await expect(sortableTable.groupTab('cattle-fleet-system')).toHaveCount(1);
 
         await namespacePicker.toggle();
-        await namespacePicker.toggle();
-        await expect(namespacePicker.optionByText(projName)).not.toBeAttached({ timeout: 20000 });
+        await namespacePicker.clearIcon().click();
+        await namespacePicker.isChecked('Only User Namespaces');
+
+        await namespacePicker.clickOptionByLabel('Project: System');
+        await namespacePicker.isChecked('Project: System');
+        await namespacePicker.closeDropdown();
+
+        await expect(sortableTable.groupTab('kube-system')).toBeVisible();
+        await expect(sortableTable.groupTab('cattle-fleet-system')).toBeVisible();
       } finally {
-        try {
-          await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
-        } catch {
-          // Already deleted by test — expected
-        }
-        try {
-          await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
-        } catch {
-          // Already deleted by test — expected
-        }
+        await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
       }
     },
   );
