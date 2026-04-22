@@ -31,10 +31,61 @@ async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boo
   await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flagName, body);
 }
 
+// Flags that trigger helm operations or controller restarts when toggled.
+// afterAll resets them to default to prevent poisoning later specs.
+const DANGEROUS_FLAGS = ['oidc-provider', 'harvester', 'istio-virtual-service-ui'];
+
+/**
+ * Wait for Rancher to stabilize after flag resets that trigger controller churn.
+ * /v1/counts is the canary: it hangs when controllers are thrashing.
+ */
+async function waitForCountsSettle(rancherApi: any, maxAttempts = 6, intervalMs = 15_000): Promise<void> {
+  for (let i = 1; i <= maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+
+    try {
+      const resp = await rancherApi.getRancherResource('v1', 'counts');
+
+      if (resp.status === 200) {
+        return;
+      }
+    } catch (err: unknown) {
+      console.warn(`waitForCountsSettle attempt ${i}/${maxAttempts} failed:`, err);
+    }
+  }
+
+  console.warn(
+    `Rancher did not stabilize after ${(maxAttempts * intervalMs) / 1000}s — subsequent specs may be affected`,
+  );
+}
+
 test.describe('Feature Flags', () => {
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
+  });
+
+  test.afterAll(async ({ rancherApi }) => {
+    let resetCount = 0;
+
+    for (const flag of DANGEROUS_FLAGS) {
+      try {
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flag);
+        const body = resp.body;
+
+        if (body.spec?.value !== undefined && body.spec.value !== null) {
+          body.spec.value = null;
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flag, body);
+          resetCount++;
+        }
+      } catch (err) {
+        console.warn(`Failed to reset feature flag '${flag}':`, err);
+      }
+    }
+
+    if (resetCount > 0) {
+      await waitForCountsSettle(rancherApi);
+    }
   });
 
   test(
