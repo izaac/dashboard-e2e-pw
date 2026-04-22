@@ -235,32 +235,28 @@ test.describe('Feature Flags', () => {
     },
   );
 
-  test(
-    'can toggle token-hashing feature flag',
-    { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page, _rancherApi }) => {
-      // token-hashing is a one-way flag: once activated, it cannot be deactivated.
-      // Running this test permanently mutates the Rancher instance.
-      test.skip(true, 'token-hashing is a one-way flag — activating it permanently changes the Rancher instance');
+  test('can toggle token-hashing feature flag', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+    // token-hashing is a one-way flag: once activated, it cannot be deactivated.
+    // Running this test permanently mutates the Rancher instance.
+    test.skip(true, 'token-hashing is a one-way flag — activating it permanently changes the Rancher instance');
 
-      const featureFlagsPage = new FeatureFlagsPagePo(page);
-      const flagName = 'token-hashing';
+    const featureFlagsPage = new FeatureFlagsPagePo(page);
+    const flagName = 'token-hashing';
 
-      await featureFlagsPage.navTo();
-      await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
+    await featureFlagsPage.navTo();
+    await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
 
-      // Activate
-      await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-      await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
+    // Activate
+    await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
+    await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
 
-      // Check Updated State: should be active
-      await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
+    // Check Updated State: should be active
+    await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
 
-      // Check - No actions available (lock icon visible)
-      await page.reload();
-      await expect(featureFlagsPage.list().lockIcon(flagName)).toBeVisible();
-    },
-  );
+    // Check - No actions available (lock icon visible)
+    await page.reload();
+    await expect(featureFlagsPage.list().lockIcon(flagName)).toBeVisible();
+  });
 
   test(
     'can toggle unsupported-storage-drivers feature flag',

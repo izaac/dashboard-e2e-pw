@@ -121,7 +121,7 @@ test.describe('Settings', () => {
     await expect(settingsPage.banner()).toContainText(BANNER_TEXT);
   });
 
-  test('can update engine-iso-url', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, _rancherApi }) => {
+  test('can update engine-iso-url', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     const settingName = 'engine-iso-url';
 
     await navToSettings(page);

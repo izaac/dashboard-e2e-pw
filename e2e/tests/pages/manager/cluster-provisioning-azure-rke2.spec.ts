@@ -157,7 +157,7 @@ test.describe(
       }
     });
 
-    test('can see details of cluster in cluster list', async ({ page, login, rancherApi, _envMeta }) => {
+    test('can see details of cluster in cluster list', async ({ page, login, rancherApi }) => {
       const clusterName = rancherApi.createE2EResourceName('az-list');
 
       await login();

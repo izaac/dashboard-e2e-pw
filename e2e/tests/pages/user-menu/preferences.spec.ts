@@ -579,55 +579,51 @@ test.describe('User can update their preferences', () => {
     },
   );
 
-  test(
-    'Can select login landing page - home page',
-    { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, _envMeta }) => {
-      await login();
+  test('Can select login landing page - home page', { tag: ['@userMenu', '@adminUser'] }, async ({ page, login }) => {
+    await login();
 
-      const prefPage = new PreferencesPagePo(page);
-      const userMenu = new UserMenuPo(page);
+    const prefPage = new PreferencesPagePo(page);
+    const userMenu = new UserMenuPo(page);
 
-      await prefPage.goTo();
-      await prefPage.waitForPage();
+    await prefPage.goTo();
+    await prefPage.waitForPage();
 
-      const radioGroup = prefPage.landingPageRadioBtn();
+    const radioGroup = prefPage.landingPageRadioBtn();
 
-      await radioGroup.checkVisible();
+    await radioGroup.checkVisible();
 
-      const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
-      );
+    const prefUpdatePromise = page.waitForResponse(
+      (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+    );
 
-      // Select "Home" (index 0)
-      await radioGroup.set(0);
+    // Select "Home" (index 0)
+    await radioGroup.set(0);
 
-      const resp = await prefUpdatePromise;
+    const resp = await prefUpdatePromise;
 
-      expect(resp.status()).toBe(200);
+    expect(resp.status()).toBe(200);
 
-      const reqBody = resp.request().postDataJSON();
-      const respBody = await resp.json();
+    const reqBody = resp.request().postDataJSON();
+    const respBody = await resp.json();
 
-      expect(reqBody.data).toHaveProperty('after-login-route', '"home"');
-      expect(respBody.data).toHaveProperty('after-login-route', '"home"');
+    expect(reqBody.data).toHaveProperty('after-login-route', '"home"');
+    expect(respBody.data).toHaveProperty('after-login-route', '"home"');
 
-      // Verify radio is checked
-      await radioGroup.isChecked(0);
+    // Verify radio is checked
+    await radioGroup.isChecked(0);
 
-      // Logout and verify landing page
-      await userMenu.clickMenuItem('Log Out');
-      await expect(page).toHaveURL(/logged-out/);
+    // Logout and verify landing page
+    await userMenu.clickMenuItem('Log Out');
+    await expect(page).toHaveURL(/logged-out/);
 
-      await login();
-      await expect(page).toHaveURL(/\/home/);
-    },
-  );
+    await login();
+    await expect(page).toHaveURL(/\/home/);
+  });
 
   test(
     'Can select login landing page - last visited',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, _envMeta }) => {
+    async ({ page, login }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -675,7 +671,7 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select login landing page - specific cluster',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, _envMeta }) => {
+    async ({ page, login }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);

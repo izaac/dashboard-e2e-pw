@@ -26,19 +26,15 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       expect(actualHeaders).toEqual(expectedHeaders);
     });
 
-    test('pagination is visible and user is able to navigate through workspace data', async ({
-      _page,
-      _login,
-      _rancherApi,
-    }) => {
+    test('pagination is visible and user is able to navigate through workspace data', async () => {
       test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
     });
 
-    test('filter workspace', async ({ _page, _login, _rancherApi }) => {
+    test('filter workspace', async () => {
       test.skip(true, 'Requires creating multiple workspaces — expensive setup');
     });
 
-    test('sorting changes the order of paginated workspace data', async ({ _page, _login, _rancherApi }) => {
+    test('sorting changes the order of paginated workspace data', async () => {
       test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
     });
 

@@ -77,20 +77,21 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return new LabeledSelectPo(this.page, '.vs__dropdown-toggle');
   }
 
-  repoRcItemCard(id: string): Locator {
-    return this.page.getByTestId(`item-card-${id}`);
+  // Rancher 2.13 uses radio buttons (not item cards) for repo type selection
+  private repoTypeRadio(value: string): Locator {
+    return this.page.getByTestId('clusterrepo-radio-input').locator(`input[value="${value}"] + span[role="radio"]`);
   }
 
   async selectGitRepoCard(): Promise<void> {
-    await this.repoRcItemCard('git-repo').click();
+    await this.repoTypeRadio('git-repo').click();
   }
 
   async selectOciUrlCard(): Promise<void> {
-    await this.repoRcItemCard('oci-url').click();
+    await this.repoTypeRadio('oci-url').click();
   }
 
   async selectHelmUrlCard(): Promise<void> {
-    await this.repoRcItemCard('helm-url').click();
+    await this.repoTypeRadio('helm-url').click();
   }
 
   lablesAnnotationsKeyValue(): KeyValuePo {
@@ -106,9 +107,9 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return this.self().locator('[data-testid="name-ns-description-name"] input');
   }
 
-  /** Git repo type card selector */
+  /** Git repo type radio selector (Rancher 2.13 uses radio buttons, not item cards) */
   gitRepoCard(): Locator {
-    return this.self().locator('[data-testid="item-card-git-repo"]');
+    return this.page.getByTestId('clusterrepo-radio-input').locator('input[value="git-repo"] + span[role="radio"]');
   }
 
   /** Git repo URL input */

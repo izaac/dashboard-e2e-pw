@@ -105,7 +105,7 @@ test.describe('Home Links', () => {
     },
   );
 
-  test('can add and remove custom links', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, _rancherApi }) => {
+  test('can add and remove custom links', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     const burgerMenu = new BurgerMenuPo(page);
     const sideNav = new ProductNavPo(page);
     const customLinkName = `${runPrefix}-custom-link`;

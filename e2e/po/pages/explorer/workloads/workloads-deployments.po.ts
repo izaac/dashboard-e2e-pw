@@ -70,7 +70,7 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
   }
 
   labelsAndAnnotationsTab(): Locator {
-    return this.page.getByTestId('btn-labels');
+    return this.page.getByTestId('workload-general-tabs').getByTestId('btn-labels');
   }
 
   scaler(): Locator {

@@ -414,7 +414,8 @@ test.describe('Banners', () => {
         await expect(bannersPage.fixedBanner()).not.toBeAttached();
       });
 
-      test('can show HTML banner in the login confirmation dialog', async ({ page, _login, envMeta }) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      test('can show HTML banner in the login confirmation dialog', async ({ page, login, envMeta }) => {
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
 

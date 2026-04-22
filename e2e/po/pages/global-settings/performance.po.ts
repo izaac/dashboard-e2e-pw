@@ -61,7 +61,8 @@ export class PerformancePagePo extends RootClusterPage {
   }
 
   websocketCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Disable websocket notifications' });
+    // Rancher checkbox renders hidden <input> + visible <span role="checkbox">; pick the visible one
+    return this.page.getByRole('checkbox', { name: 'Disable websocket notifications' }).last();
   }
 
   incrementalLoadingCheckbox(): Locator {

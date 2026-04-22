@@ -166,16 +166,17 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await usersPo.goTo();
     await usersPo.waitForPage();
 
+    // Rancher 2.13 uses v3 action endpoint for refresh
     const responsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
+      (resp) => resp.url().includes('refreshauthprovideraccess') && resp.request().method() === 'POST',
     );
 
     await usersPo.list().refreshGroupMembership().self().click();
 
     const response = await responsePromise;
 
-    expect(response.status()).toBe(201);
+    // v3 action returns 200
+    expect(response.status()).toBe(200);
   });
 
   test.describe('Action Menu', () => {
@@ -242,15 +243,14 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.waitForPage();
 
       const responsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes('/v1/ext.cattle.io.groupmembershiprefreshrequests') && resp.request().method() === 'POST',
+        (resp) => resp.url().includes('refreshauthprovideraccess') && resp.request().method() === 'POST',
       );
 
       await usersPo.list().clickRowActionMenuItem(actualUsername, 'Refresh Group Memberships');
 
       const response = await responsePromise;
 
-      expect(response.status()).toBe(201);
+      expect(response.status()).toBe(200);
     });
 
     test('can Edit Config', async ({ page, login }) => {
@@ -270,7 +270,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       await userEdit.description().set('e2e_test');
 
-      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v3/users/${userId}`);
 
       expect(response.status()).toBe(200);
       const body = await response.json();
@@ -334,7 +334,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const promptRemove = new PromptRemove(page);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
       );
 
       await promptRemove.confirm(actualUsername);
@@ -384,7 +384,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       // Deactivate
       const deactivatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'PUT',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'PUT',
       );
 
       await usersPo.list().deactivate().click();
@@ -396,7 +396,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       // Activate
       const activatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'PUT',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'PUT',
       );
 
       await usersPo.list().activate().click();
@@ -439,7 +439,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       const promptRemove = new PromptRemove(page);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
       );
 
       await promptRemove.confirm(actualUsername);
@@ -469,12 +469,11 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await usersPo.goTo();
     await usersPo.waitForPage();
 
-    await usersPo.list().clickRowActionMenuItem(adminId, 'Delete');
+    // On Rancher 2.13, the admin user action menu does not include "Delete" at all
+    const menu = await usersPo.list().resourceTable().sortableTable().rowActionMenuOpen(adminId);
 
-    const promptRemove = new PromptRemove(page);
-
-    await expect(promptRemove.self()).toBeVisible();
-    await expect(promptRemove.self()).toContainText('Default Admin');
+    await expect(menu.getMenuItem('Edit Config')).toBeVisible();
+    await expect(menu.getMenuItem('Delete')).not.toBeAttached();
   });
 
   test('can change standard user password', async ({ page, login, rancherApi }) => {
@@ -507,7 +506,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userEdit.newPass().set(newPassword);
       await userEdit.confirmNewPass().set(newPassword);
 
-      const response = await userEdit.saveAndWaitForRequests('PUT', `/v1/management.cattle.io.users/${userId}`);
+      const response = await userEdit.saveAndWaitForRequests('PUT', `/v3/users/${userId}`);
 
       expect(response.status()).toBe(200);
 
@@ -563,7 +562,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await promptRemove.confirm(user1DisplayName);
 
       const deletePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/management.cattle.io.users/') && resp.request().method() === 'DELETE',
+        (resp) => resp.url().includes('/v3/users/') && resp.request().method() === 'DELETE',
       );
 
       await promptRemove.remove();
