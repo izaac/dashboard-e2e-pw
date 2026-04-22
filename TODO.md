@@ -1,12 +1,82 @@
 # TODO
 
+## Gold Standard Fixes
+
+### Web-first assertion violations
+
+- [ ] `user-retention.spec.ts` — 4x `expect(await ...value()).toBe()` → `toHaveValue()`
+- [ ] `home.spec.ts` — 6x `await .innerText()` + manual expect → `toContainText()`
+- [ ] `settings-p2.spec.ts` — `await .innerText()` → `toContainText()`
+- [ ] `cloud-credentials.spec.ts` — `getAttributeValue('placeholder')` → `toHaveAttribute()`
+- [ ] `cluster-list.spec.ts` — `await .innerText()` → `toContainText()`
+- [ ] `feature-flags.spec.ts` — `await rowElements().count()` → `toHaveCount()`
+- [ ] `custom-resource-definitions.spec.ts` — `await firstCell.innerText()` → `not.toHaveText('')`
+
+### Raw selectors in specs (move to POs)
+
+- [ ] `rancher-setup.spec.ts` — 3x `page.locator('[data-testid="local-login-username"]')` + `waitForTimeout(1000)`
+- [ ] `aks-cluster-provisioning.spec.ts` — 2x `.locator('button[type="submit"], .btn-primary')`
+- [ ] `jwt-authentication.spec.ts` — `.locator('a, .accordion-title, ...').filter(...)` chain
+- [ ] `kontainer-drivers.spec.ts` — `driverRow.locator('[data-testid*="action-button"]')`
+- [ ] `replicasets.spec.ts` — `'.sortable-table'` passed to SortableTablePo constructor
+- [ ] `elemental.spec.ts` — `page.waitForSelector(...)` with raw CSS
+- [ ] `persistent-volume-claims.spec.ts` — `.evaluate((el) => el.classList.contains(...))`
+
+### Missing cleanup / state restore
+
+- [ ] `deployments.spec.ts` — wrap `deleteRancherResource` in `try/finally`
+- [ ] `kontainer-drivers.spec.ts` — wrap driver cleanup in `try/finally`
+- [ ] `extensions.spec.ts` — restore `display-add-extension-repos-banner` setting
+- [ ] `elemental.spec.ts` — add teardown for 4 created resources
+
+### Manual waits
+
+- [ ] `no-vai-setup.spec.ts` — 120s hardcoded `waitForTimeout` (needs polling alternative)
+- [ ] `rancher-setup.spec.ts` — unjustified `waitForTimeout(1000)`
+
+## Assertion Parity Gaps
+
+### Entire tests missing or empty stubs
+
+- [ ] `events.spec.ts` — 3 tests (pagination, filter, sort) not ported
+- [ ] `roles.spec.ts` (users-and-auth) — 5 tests (filter, sort, pagination x2, std user)
+- [ ] `configmap.spec.ts` — 3 tests (pagination, sort, filter) skipped
+- [ ] `workspaces.spec.ts` — 3 tests (pagination, filter, sort) skipped
+- [ ] `websockets/connection.spec.ts` — 3 folder tests skipped
+- [ ] `edit-fake-cluster.spec.ts` — 2 empty stubs (needs blueprint port)
+- [ ] `repositories.spec.ts` (apps) — Refresh describe block not ported
+- [ ] `settings.spec.ts` — inactivity modal test skipped
+- [ ] `cilium-cni.spec.ts` — IPv6 test missing
+- [ ] `preferences.spec.ts` — language selection test missing
+- [ ] `prime.spec.ts` — auth page link test (needs AuthProviderPo)
+- [ ] `network-policy.spec.ts` — port validation test skipped
+
+### Large assertion gaps in existing tests
+
+- [ ] `aks-cluster-provisioning.spec.ts` — ~46 missing default value assertions
+- [ ] `namespace-picker.spec.ts` — checkIcon mutual-exclusivity, selection cycles
+- [ ] `services.spec.ts` — create: tabs/IP/labels; delete: row count (~15 assertions)
+- [ ] `ingress.spec.ts` — create/edit: tabs, IP array, response iteration (~12 assertions)
+- [ ] `deployments.spec.ts` — deep.eq body checks, pod scaling, EnvVars (~10 assertions)
+- [ ] `persistent-volume-claims.spec.ts` — per-header checks in empty/flat/grouped tables
+- [ ] `repositories.spec.ts` (apps) — checkbox state assertions, row count guards
+- [ ] `settings-p2.spec.ts` — server-url errors, ui-offline-preferred, ui-brand, hide-local
+- [ ] `settings.spec.ts` — kubeconfig YAML parse, auth-token-max-ttl options
+- [ ] `feature-flags.spec.ts` — standard user: only 5 of 11 flags checked, lock icon
+
+### Systemic patterns (recurring across many specs)
+
+- [ ] Fleet delete assertions — add `checkRowCount` + `not.contain` after delete (~8 specs)
+- [ ] YAML download content — verify kind/metadata.name, not just filename (~8 specs)
+- [ ] Response body deep checks — services, ingress, network-policy (~5 specs)
+
 ## Not yet validated (need credentials or infra)
 
 ### AWS credentials (`awsAccessKey` / `awsSecretKey`)
 
-- [x] `cloud-credentials.spec.ts` — 7 pass (CRUD, edit, clone, delete) ✅
-- [x] `cloud-credential.spec.ts` — 4 tests (create, edit, clone, delete — skipped: Azure/GKE creds) ✅
-- [x] `jwt-authentication.spec.ts` — 7 pass, 2 skipped (bulk selection upstream bug) ✅
+- [x] `cloud-credentials.spec.ts` — 7 pass (CRUD, edit, clone, delete)
+- [x] `cloud-credential.spec.ts` — 4 tests (create, edit, clone, delete — skipped: Azure/GKE creds)
+- [x] `jwt-authentication.spec.ts` — 7 pass, 2 skipped (bulk selection upstream bug)
 - [ ] `cluster-provisioning-amazon-ec2-rke2.spec.ts` — 8 tests (full provision lifecycle)
 
 ### Azure credentials (`azureSubscriptionId` / `azureClientId` / `azureClientSecret`)
@@ -22,6 +92,8 @@
 
 - [ ] `cluster-manager.spec.ts` — 9 tests need live RKE2 custom cluster or imported cluster
 - [ ] `machine-sets.spec.ts` — 1 test needs provisioned cluster with machine sets
+- [ ] `fleet-clusters.spec.ts` — 11 tests need AWS downstream clusters
+- [ ] `gitrepo.spec.ts` — Create GitRepo needs downstream clusters
 
 ### Standard user account
 
