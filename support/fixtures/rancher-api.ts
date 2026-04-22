@@ -15,6 +15,7 @@ export class RancherApi {
   private csrfCookie: string;
   private runTimestamp: number;
   private chartPresenceCache = new Map<string, 'available' | 'filtered' | 'catalog-error'>();
+  private credentials?: { username: string; password: string };
 
   constructor(request: APIRequestContext, apiUrl: string, csrfToken = '') {
     this.request = request;
@@ -30,6 +31,8 @@ export class RancherApi {
 
   /** Authenticate via API and store the token for subsequent requests */
   async login(username: string, password: string): Promise<void> {
+    this.credentials = { username, password };
+
     // Step 1: Native fetch for login — avoids CSRF cookie conflicts from Playwright's cookie jar
     const resp = await fetch(`${this.apiUrl}/v3-public/localProviders/local?action=login`, {
       method: 'POST',
@@ -79,6 +82,23 @@ export class RancherApi {
     return { headers: this.headers(), ignoreHTTPSErrors: true, ...extra };
   }
 
+  /**
+   * Execute an API request with automatic re-auth on 401.
+   * Worker-scoped tokens can expire mid-suite; this transparently refreshes once.
+   */
+  private async fetchWithReauth(fn: () => Promise<import('@playwright/test').APIResponse>) {
+    const resp = await fn();
+
+    if (resp.status() === 401 && this.credentials) {
+      console.warn('[RancherApi] 401 received — re-authenticating...');
+      await this.login(this.credentials.username, this.credentials.password);
+
+      return fn();
+    }
+
+    return resp;
+  }
+
   /** Generate a unique E2E resource name */
   rootE2EResourceName(): string {
     return `e2e-test-${this.runTimestamp}`;
@@ -111,10 +131,7 @@ export class RancherApi {
       expectedStatusCode = 201;
     }
 
-    const resp = await this.request.fetch(url, {
-      method,
-      ...this.opts({ data: body }),
-    });
+    const resp = await this.fetchWithReauth(() => this.request.fetch(url, { method, ...this.opts({ data: body }) }));
 
     if (expectedStatusCode) {
       expect(resp.status()).toBe(expectedStatusCode);
@@ -126,9 +143,9 @@ export class RancherApi {
   }
 
   async createRancherResource(prefix: string, resourceType: string, body: any, failOnStatusCode = true) {
-    const resp = await this.request.post(`${this.apiUrl}/${prefix}/${resourceType}`, {
-      ...this.opts({ data: body }),
-    });
+    const resp = await this.fetchWithReauth(() =>
+      this.request.post(`${this.apiUrl}/${prefix}/${resourceType}`, { ...this.opts({ data: body }) }),
+    );
 
     if (failOnStatusCode) {
       expect([200, 201]).toContain(resp.status());
@@ -144,9 +161,9 @@ export class RancherApi {
     body: any,
     failOnStatusCode = true,
   ) {
-    const resp = await this.request.put(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, {
-      ...this.opts({ data: body }),
-    });
+    const resp = await this.fetchWithReauth(() =>
+      this.request.put(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { ...this.opts({ data: body }) }),
+    );
 
     if (failOnStatusCode) {
       expect(resp.status()).toBe(200);
@@ -156,9 +173,9 @@ export class RancherApi {
   }
 
   async deleteRancherResource(prefix: string, resourceType: string, resourceId: string, failOnStatusCode = true) {
-    const resp = await this.request.delete(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, {
-      ...this.opts(),
-    });
+    const resp = await this.fetchWithReauth(() =>
+      this.request.delete(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { ...this.opts() }),
+    );
 
     if (failOnStatusCode) {
       expect([200, 204]).toContain(resp.status());
@@ -229,6 +246,100 @@ export class RancherApi {
       },
       retries,
     );
+  }
+
+  /**
+   * Poll a newly-created cluster and fail early if it enters a sustained error state.
+   *
+   * During provisioning, clusters can briefly hiccup into an error state before recovering.
+   * This method only throws if the error persists for `sustainedErrorMs` consecutive milliseconds,
+   * avoiding false positives from transient blips.
+   *
+   * @param api - 'v3' for EKS/AKS/GKE clusters (uses transitioning field),
+   *              'v1' for RKE2/K3s provisioning clusters (uses metadata.state)
+   * @param clusterId - For v3: management cluster ID (e.g. 'c-xxxxx').
+   *                    For v1: 'namespace/name' (e.g. 'fleet-default/my-cluster').
+   * @param pollIntervalMs - How often to poll (default 10s)
+   * @param maxPollMs - Total polling window (default 5 min)
+   * @param sustainedErrorMs - How long error must persist before failing (default 2 min)
+   */
+  async assertClusterProvisioningNotStuck(
+    api: 'v1' | 'v3',
+    clusterId: string,
+    {
+      pollIntervalMs = 10_000,
+      maxPollMs = 300_000,
+      sustainedErrorMs = 120_000,
+    }: { pollIntervalMs?: number; maxPollMs?: number; sustainedErrorMs?: number } = {},
+  ): Promise<void> {
+    const start = Date.now();
+    let errorSince: number | null = null;
+    let lastErrorMsg = '';
+
+    while (Date.now() - start < maxPollMs) {
+      try {
+        const isError =
+          api === 'v3' ? await this.isV3ClusterErrored(clusterId) : await this.isV1ClusterErrored(clusterId);
+
+        if (isError.errored) {
+          lastErrorMsg = isError.message;
+
+          if (!errorSince) {
+            errorSince = Date.now();
+          } else if (Date.now() - errorSince >= sustainedErrorMs) {
+            throw new Error(
+              `Cluster ${clusterId} stuck in error state for ${Math.round((Date.now() - errorSince) / 1000)}s: ${lastErrorMsg}`,
+            );
+          }
+        } else {
+          // Error cleared — reset counter (transient hiccup)
+          errorSince = null;
+          lastErrorMsg = '';
+        }
+      } catch (e) {
+        // Re-throw our own assertion errors, ignore fetch failures
+        if (e instanceof Error && e.message.startsWith('Cluster ')) {
+          throw e;
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
+    }
+  }
+
+  private async isV3ClusterErrored(clusterId: string): Promise<{ errored: boolean; message: string }> {
+    const result = await this.getRancherResource('v3', 'clusters', clusterId, 0);
+
+    if (result.status !== 200) {
+      return { errored: false, message: '' };
+    }
+
+    const { transitioning, transitioningMessage, state } = result.body;
+
+    if (transitioning === 'error' || state === 'error') {
+      return { errored: true, message: transitioningMessage || state || 'unknown error' };
+    }
+
+    return { errored: false, message: '' };
+  }
+
+  private async isV1ClusterErrored(clusterId: string): Promise<{ errored: boolean; message: string }> {
+    const result = await this.getRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, 0);
+
+    if (result.status !== 200) {
+      return { errored: false, message: '' };
+    }
+
+    const metaState = result.body.metadata?.state;
+    const stalled = (result.body.status?.conditions || []).find(
+      (c: any) => c.type === 'Stalled' && c.status === 'True',
+    );
+
+    if (metaState?.error === true || stalled) {
+      return { errored: true, message: metaState?.message || stalled?.message || 'unknown error' };
+    }
+
+    return { errored: false, message: '' };
   }
 
   /** User management */

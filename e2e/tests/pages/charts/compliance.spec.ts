@@ -54,7 +54,8 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
     });
 
     test.describe('Compliance Chart setup', () => {
-      test('Complete install and a Scan is created', { timeout: 180000 }, async ({ page, rancherApi }) => {
+      test('Complete install and a Scan is created', async ({ page, rancherApi }) => {
+        test.setTimeout(180000);
         // Clean up first in case charts exist from a previous failed run
         await rancherApi.uninstallChart(chartNamespace, 'rancher-compliance', 'rancher-compliance-crd');
 

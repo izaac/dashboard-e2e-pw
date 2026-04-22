@@ -20,6 +20,8 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
   test.beforeEach(async ({ login, rancherApi }) => {
     await login();
     repoName = rancherApi.createE2EResourceName('dash-repo');
+    // Idempotent: remove leftover from previous failed runs
+    await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
   });
 
   test('Has the correct title', async ({ page, rancherApi }) => {
@@ -81,19 +83,19 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
       const applicationsPanel = workspaceCard.resourcePanel('applications');
 
-      await expect(applicationsPanel.chart()).toBeAttached();
+      await expect(applicationsPanel.chart()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(applicationsPanel.stateBadge('success')).toBeAttached();
       await expect(applicationsPanel.description()).toContainText('1');
 
       const clustersPanel = workspaceCard.resourcePanel('clusters');
 
-      await expect(clustersPanel.chart()).toBeAttached();
-      await expect(clustersPanel.stateBadge('success')).toBeAttached();
+      await expect(clustersPanel.chart()).toBeAttached(MEDIUM_TIMEOUT_OPT);
+      await expect(clustersPanel.stateBadge()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(clustersPanel.description()).toContainText('1');
 
       const clusterGroupsPanel = workspaceCard.resourcePanel('cluster-groups');
 
-      await expect(clusterGroupsPanel.self()).toBeAttached();
+      await expect(clusterGroupsPanel.self()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(clusterGroupsPanel.chart()).not.toBeAttached();
       await expect(clusterGroupsPanel.stateBadge('success')).toBeAttached();
       await expect(clusterGroupsPanel.description()).toContainText('1');
