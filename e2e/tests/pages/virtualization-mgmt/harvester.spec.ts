@@ -369,6 +369,9 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
     await extensionsPo.extensionReloadClick();
     await expect(extensionsPo.loading()).not.toBeAttached();
+
+    // 2.13: reload may land on #available — navigate to installed tab explicitly
+    await extensionsPo.extensionTabInstalledClick();
     await extensionsPo.waitForPage(undefined, 'installed');
 
     // check harvester version on card - should be the latest available version

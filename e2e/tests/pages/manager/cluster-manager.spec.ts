@@ -258,7 +258,10 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterDetail.relatedTab().click();
       await expect(page).toHaveURL(/related/);
 
-      await expect(clusterDetail.tableRowCell('Mgmt', 1)).toContainText('local');
+      // 2.13: Related tab column layout differs — verify 'local' appears in the Mgmt row
+      const mgmtRow = page.locator('tr', { hasText: /\bMgmt\b/ }).first();
+
+      await expect(mgmtRow).toContainText('local');
     });
 
     test('can navigate to Cluster Provisioning Log Page', async ({ page, login }) => {

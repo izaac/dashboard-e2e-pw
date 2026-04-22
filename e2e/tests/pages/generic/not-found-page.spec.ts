@@ -96,8 +96,8 @@ test.describe('Not found page display', { tag: ['@generic', '@adminUser', '@stan
     await chartsPage.waitForPage();
     await expect(notFoundPage.errorTitle()).not.toBeAttached();
 
-    await pagePo.navToSideMenuEntryByLabel('Repositories');
-    await reposPage.waitForPage();
+    // 2.13: Repositories may not exist under Apps side-nav — navigate directly
+    await reposPage.goTo();
     await expect(notFoundPage.errorTitle()).not.toBeAttached();
 
     await pagePo.navToMenuEntry('Cluster Management');
