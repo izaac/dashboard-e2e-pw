@@ -379,7 +379,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().selectAll().self().click();
+      await usersPo.list().selectAll();
 
       // Deactivate
       const deactivatePromise = page.waitForResponse(
@@ -412,7 +412,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.goTo();
       await usersPo.waitForPage();
 
-      await usersPo.list().selectAll().self().click();
+      await usersPo.list().selectAll();
 
       const downloadPromise = page.waitForEvent('download');
 
