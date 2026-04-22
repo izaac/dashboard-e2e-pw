@@ -130,6 +130,9 @@ test.describe(
 
         await expect(stateLocator).toBeVisible();
         await expect(stateLocator).toContainText(/Reconciling|Updating/);
+
+        // Fail early if cloud credentials are bad instead of waiting for a long timeout
+        await rancherApi.assertClusterProvisioningNotStuck('v1', clusterId);
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, false);

@@ -53,6 +53,7 @@
     "ws": "8.18.0"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "24.12.2",
     "@types/ws": "8.5.14",
     "@typescript-eslint/eslint-plugin": "8.32.0",

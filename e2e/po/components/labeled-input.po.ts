@@ -49,7 +49,7 @@ export default class LabeledInputPo extends ComponentPo {
     await expect(this.self()).toBeEnabled();
   }
 
-  private input(): Locator {
+  input(): Locator {
     return this.self();
   }
 }

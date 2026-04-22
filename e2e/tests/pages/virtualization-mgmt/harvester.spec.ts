@@ -366,11 +366,10 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     expect(installStatus3).toBe(201);
 
-    await extensionsPo.waitForPage(undefined, 'installed');
-
     await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
     await extensionsPo.extensionReloadClick();
     await expect(extensionsPo.loading()).not.toBeAttached();
+    await extensionsPo.waitForPage(undefined, 'installed');
 
     // check harvester version on card - should be the latest available version
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);

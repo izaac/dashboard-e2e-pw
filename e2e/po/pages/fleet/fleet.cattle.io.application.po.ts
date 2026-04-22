@@ -97,7 +97,7 @@ export class FleetGitRepoCreateEditPo extends PagePo {
     return this.self().locator('.primaryheader h1, .title-bar h1');
   }
 
-  async mastheadTitle(): Promise<string> {
+  async mastheadTitleText(): Promise<string> {
     return (await this.mastheadTitleLocator().textContent()) ?? '';
   }
 }

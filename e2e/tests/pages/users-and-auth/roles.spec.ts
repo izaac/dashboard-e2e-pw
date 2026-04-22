@@ -193,7 +193,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.list('CLUSTER').checkDefault(clusterRoleName, true);
         await roles.list('CLUSTER').detailLink(clusterRoleName, 2).click();
 
-        const clusterRoleDetails = roles.detailRole(roleId);
+        const clusterRoleDetails = roles.detailRole(roleId!);
 
         await clusterRoleDetails.waitForPage();
         await clusterRoleDetails.waitForMastheadTitle(`Cluster - ${clusterRoleName}`);
@@ -243,7 +243,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.list('NAMESPACE').checkDefault(projectRoleName, true);
         await roles.list('NAMESPACE').detailLink(projectRoleName, 2).click();
 
-        const projectRoleDetails = roles.detailRole(roleId);
+        const projectRoleDetails = roles.detailRole(roleId!);
 
         await projectRoleDetails.waitForPage();
         await projectRoleDetails.waitForMastheadTitle(`Project/Namespaces - ${projectRoleName}`);

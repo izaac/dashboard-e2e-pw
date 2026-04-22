@@ -6,7 +6,6 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import ProductNavPo from '@/e2e/po/components/product-nav.po';
 
 class DashboardPagePo extends PagePo {
   constructor(page: Page) {
@@ -36,10 +35,6 @@ class DashboardPagePo extends PagePo {
 
   async createUpdateGroupClick(): Promise<void> {
     await this.self().getByTestId('create-update-group-btn').click();
-  }
-
-  productNav(): ProductNavPo {
-    return new ProductNavPo(this.page);
   }
 }
 

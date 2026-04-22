@@ -11,8 +11,8 @@ class ResourcePanelPo extends ComponentPo {
     return this.self().locator('[data-testid="description"]');
   }
 
-  stateBadge(state: string): Locator {
-    return this.self().locator(`.badge.bg-${state}`);
+  stateBadge(state?: string): Locator {
+    return state ? this.self().locator(`.badge.bg-${state}`) : this.self().locator('.badge[class*="bg-"]');
   }
 }
 

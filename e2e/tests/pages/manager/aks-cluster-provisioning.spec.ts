@@ -74,14 +74,7 @@ test.describe(
           (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
         );
 
-        await aksCreatePage
-          .resourceDetail()
-          .cruResource()
-          .saveCreateForm()
-          .self()
-          .locator('button[type="submit"], .btn-primary')
-          .first()
-          .click();
+        await aksCreatePage.resourceDetail().cruResource().saveOrCreate().click();
 
         const response = await createClusterResponse;
 
@@ -94,14 +87,18 @@ test.describe(
 
         await clusterList.waitForPage();
         await expect(clusterList.sortableTable().self()).toBeVisible();
+
+        // Fail early if cloud credentials are bad instead of waiting for a long timeout
+        await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource(
             'v1',
             'provisioning.cattle.io.clusters',
-            `fleet-default/${clusterId}`,
+            `fleet-default/${clusterName}`,
             false,
           );
+          await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
         }
         if (cloudcredentialId) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudcredentialId, false);
@@ -160,14 +157,7 @@ test.describe(
           (resp) => resp.url().includes('v3/clusters') && resp.request().method() === 'POST',
         );
 
-        await aksCreatePage
-          .resourceDetail()
-          .cruResource()
-          .saveCreateForm()
-          .self()
-          .locator('button[type="submit"], .btn-primary')
-          .first()
-          .click();
+        await aksCreatePage.resourceDetail().cruResource().saveOrCreate().click();
 
         const response = await createClusterResponse;
 
@@ -180,14 +170,18 @@ test.describe(
         clusterId = body.id;
 
         await clusterList.waitForPage();
+
+        // Fail early if cloud credentials are bad instead of waiting for a long timeout
+        await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource(
             'v1',
             'provisioning.cattle.io.clusters',
-            `fleet-default/${clusterId}`,
+            `fleet-default/${clusterName}`,
             false,
           );
+          await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
         }
         if (cloudcredentialId) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudcredentialId, false);

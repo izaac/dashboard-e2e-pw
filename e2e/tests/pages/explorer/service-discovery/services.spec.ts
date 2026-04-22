@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import { ServicesPagePo } from '@/e2e/po/pages/explorer/services.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import {
   servicesGetReponseEmpty,
   servicesGetResponseSmallSet,
@@ -27,12 +28,19 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
     test('can create an ExternalName Service', async ({ page, login, rancherApi }) => {
       await login();
 
-      // UI create form uses whatever namespace the header filter defaults to (typically 'default')
       const serviceExternalName = `svc-ext-${Date.now()}`;
       const servicesPage = new ServicesPagePo(page);
+      const nsFilter = new NamespaceFilterPo(page);
 
       await servicesPage.goTo();
       await servicesPage.waitForPage();
+
+      // Set header namespace filter to our isolated namespace so the form creates there
+      await nsFilter.toggle();
+      await nsFilter.searchByName(namespace);
+      await nsFilter.clickOptionByLabel(namespace);
+      await nsFilter.closeDropdown();
+
       await servicesPage.clickCreate();
 
       await servicesPage.externalNameTab().click();
@@ -52,17 +60,13 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
 
       expect(resp.status()).toBe(201);
 
-      // Extract actual namespace from response (form uses header filter default)
-      const body = await resp.json();
-      const createdNs = body.metadata?.namespace || 'default';
-
       try {
         await servicesPage.waitForPage();
         const sortableTable = servicesPage.list().resourceTable().sortableTable();
 
         await sortableTable.rowElementWithName(serviceExternalName).waitFor(SHORT_TIMEOUT_OPT);
       } finally {
-        await rancherApi.deleteRancherResource('v1', 'services', `${createdNs}/${serviceExternalName}`, false);
+        await rancherApi.deleteRancherResource('v1', 'services', `${namespace}/${serviceExternalName}`, false);
       }
     });
 

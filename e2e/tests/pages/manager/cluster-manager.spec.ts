@@ -163,10 +163,10 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
 
-        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().input().set('badvalue: -');
+        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().set('badvalue: -');
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeDisabled();
 
-        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().input().set('goodvalue: yay');
+        await createRKE2ClusterPage.calicoAddonConfig().yamlEditor().set('goodvalue: yay');
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
       });
 

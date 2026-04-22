@@ -41,7 +41,8 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       );
     });
 
-    test('Resource dropdown picker has ConfigMaps listed', { timeout: 120000 }, async ({ page, rancherApi }) => {
+    test('Resource dropdown picker has ConfigMaps listed', async ({ page, rancherApi }) => {
+      test.setTimeout(120000);
       // Clean up first in case resources exist from a previous failed run
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', testChartsRepoName, false);
       await rancherApi.deleteRancherResource(
@@ -115,69 +116,65 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
     });
 
-    test(
-      'should persist custom registry when changing chart version',
-      { timeout: 180000 },
-      async ({ page, rancherApi, chartGuard }) => {
-        await chartGuard('rancher-charts', 'rancher-backup');
-        const namespacePicker = new NamespaceFilterPo(page);
-        const installChartPage = new InstallChartPage(page);
-        const chartPage = new ChartPage(page);
-        const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
+    test('should persist custom registry when changing chart version', async ({ page, rancherApi, chartGuard }) => {
+      test.setTimeout(180000);
+      await chartGuard('rancher-charts', 'rancher-backup');
+      const namespacePicker = new NamespaceFilterPo(page);
+      const installChartPage = new InstallChartPage(page);
+      const chartPage = new ChartPage(page);
+      const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
 
-        // Ensure charts are uninstalled before starting
-        await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
+      // Ensure charts are uninstalled before starting
+      await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
 
-        // Set namespace filter
-        await rancherApi.setUserPreference({ local: JSON.stringify({ local: ['all://user'] }) });
+      // Set namespace filter
+      await rancherApi.setUserPreference({ local: JSON.stringify({ local: ['all://user'] }) });
 
-        // Install the chart first so the versions selector shows up later
-        await chartPage.navTo(chartName);
-        await chartPage.waitForChartHeader(chartName, 30000);
-        await chartPage.goToInstall();
-        await installChartPage.nextPage();
+      // Install the chart first so the versions selector shows up later
+      await chartPage.navTo(chartName);
+      await chartPage.waitForChartHeader(chartName, 30000);
+      await chartPage.goToInstall();
+      await installChartPage.nextPage();
 
-        // Set up namespace selection
-        await namespacePicker.toggle();
-        await namespacePicker.clickOptionByLabel('All Namespaces');
-        await namespacePicker.closeDropdown();
+      // Set up namespace selection
+      await namespacePicker.toggle();
+      await namespacePicker.clickOptionByLabel('All Namespaces');
+      await namespacePicker.closeDropdown();
 
-        // Listen for install response before triggering
-        const installResponsePromise = page.waitForResponse(
-          (resp) =>
-            /\/v1\/catalog\.cattle\.io\.(clusterrepos|apps)\/.*\?action=(install|upgrade)/.test(resp.url()) &&
-            resp.ok(),
-        );
+      // Listen for install response before triggering
+      const installResponsePromise = page.waitForResponse(
+        (resp) =>
+          /\/v1\/catalog\.cattle\.io\.(clusterrepos|apps)\/.*\?action=(install|upgrade)/.test(resp.url()) && resp.ok(),
+      );
 
-        await installChartPage.installChart();
+      await installChartPage.installChart();
 
-        await installedAppsPage.waitForInstallCloseTerminal(installResponsePromise, [
-          'rancher-backup',
-          'rancher-backup-crd',
-        ]);
+      await installedAppsPage.waitForInstallCloseTerminal(installResponsePromise, [
+        'rancher-backup',
+        'rancher-backup-crd',
+      ]);
 
-        // Navigate back to chart
-        await chartPage.navTo(chartName);
-        await chartPage.waitForChartHeader(chartName, 30000);
-        await chartPage.goToInstall();
+      // Navigate back to chart
+      await chartPage.navTo(chartName);
+      await chartPage.waitForChartHeader(chartName, 30000);
+      await chartPage.goToInstall();
 
-        // The version selector should now be visible
-        await expect(installChartPage.chartVersionSelector().self()).toBeVisible();
+      // The version selector should now be visible
+      await expect(installChartPage.chartVersionSelector().self()).toBeVisible();
 
-        await installChartPage.customRegistryCheckbox().set();
+      await installChartPage.customRegistryCheckbox().set();
 
-        // Enter custom registry
-        await expect(installChartPage.customRegistryInput().self()).toBeVisible();
-        await installChartPage.customRegistryInput().set(customRegistry);
+      // Enter custom registry
+      await expect(installChartPage.customRegistryInput().self()).toBeVisible();
+      await installChartPage.customRegistryInput().set(customRegistry);
 
-        // Change chart version
-        await installChartPage.chartVersionSelector().toggle();
-        await installChartPage.chartVersionSelector().clickOption(2);
+      // Change chart version
+      await installChartPage.chartVersionSelector().toggle();
+      await installChartPage.chartVersionSelector().clickOption(2);
 
-        // Verify custom registry is still there
-        await installChartPage.customRegistryCheckbox().isChecked();
-        await expect(installChartPage.customRegistryInput().self()).toHaveValue(customRegistry);
-      },
-    );
+      // Verify custom registry is still there
+      await installChartPage.customRegistryCheckbox().isChecked();
+      await expect(installChartPage.customRegistryInput().self()).toHaveValue(customRegistry);
+    });
   });
 });

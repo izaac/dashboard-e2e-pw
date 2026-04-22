@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
-import { PromptRemove } from '@/e2e/po/prompts/promptRemove.po';
+import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 
 /**
  * Running this test will delete all Azure cloud credentials from the target cluster.

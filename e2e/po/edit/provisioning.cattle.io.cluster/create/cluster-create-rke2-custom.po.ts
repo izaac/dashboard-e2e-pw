@@ -6,6 +6,7 @@ import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import AddonConfigPo from '@/e2e/po/components/addon-config.po';
 
 export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManagerCreatePagePo {
   static url(clusterId: string): string {
@@ -58,5 +59,9 @@ export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManager
 
   async create(): Promise<void> {
     await this.resourceDetail().createEditView().create();
+  }
+
+  calicoAddonConfig(): AddonConfigPo {
+    return new AddonConfigPo(this.page);
   }
 }

@@ -113,9 +113,18 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Provisioning');
+
+      // Fail early if cloud credentials are bad instead of waiting for a long timeout
+      await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
     } finally {
       if (clusterId) {
-        await rancherApi.deleteRancherResource('v1', `provisioning.cattle.io.clusters/fleet-default`, clusterId, false);
+        await rancherApi.deleteRancherResource(
+          'v1',
+          'provisioning.cattle.io.clusters',
+          `fleet-default/${clusterName}`,
+          false,
+        );
+        await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
       }
       if (cloudCredId) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudCredId, false);
@@ -217,9 +226,18 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Provisioning');
+
+      // Fail early if cloud credentials are bad instead of waiting for a long timeout
+      await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
     } finally {
       if (clusterId) {
-        await rancherApi.deleteRancherResource('v1', `provisioning.cattle.io.clusters/fleet-default`, clusterId, false);
+        await rancherApi.deleteRancherResource(
+          'v1',
+          'provisioning.cattle.io.clusters',
+          `fleet-default/${clusterName}`,
+          false,
+        );
+        await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
       }
       if (cloudCredId) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudCredId, false);

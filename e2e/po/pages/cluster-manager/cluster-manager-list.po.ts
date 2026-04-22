@@ -1,6 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
-import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import ProvClusterListPo from '@/e2e/po/lists/provisioning.cattle.io.cluster.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 export default class ClusterManagerListPagePo extends PagePo {
@@ -12,8 +12,8 @@ export default class ClusterManagerListPagePo extends PagePo {
     super(page, ClusterManagerListPagePo.createPath(clusterId));
   }
 
-  list(): BaseResourceList {
-    return new BaseResourceList(this.page, '[data-testid="cluster-list"]');
+  list(): ProvClusterListPo {
+    return new ProvClusterListPo(this.page, '[data-testid="cluster-list"]');
   }
 
   sortableTable(): SortableTablePo {

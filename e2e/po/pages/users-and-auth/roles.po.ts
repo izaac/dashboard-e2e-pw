@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import ClusterPagePo from '@/e2e/po/pages/cluster-page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import GlobalRoleEditPo from '@/e2e/po/edit/management.cattle.io.globalrole.po';
