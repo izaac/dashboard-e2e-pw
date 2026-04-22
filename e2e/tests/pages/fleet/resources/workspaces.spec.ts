@@ -27,18 +27,18 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
     });
 
     test('pagination is visible and user is able to navigate through workspace data', async ({
-      page,
-      login,
-      rancherApi,
+      _page,
+      _login,
+      _rancherApi,
     }) => {
       test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
     });
 
-    test('filter workspace', async ({ page, login, rancherApi }) => {
+    test('filter workspace', async ({ _page, _login, _rancherApi }) => {
       test.skip(true, 'Requires creating multiple workspaces — expensive setup');
     });
 
-    test('sorting changes the order of paginated workspace data', async ({ page, login, rancherApi }) => {
+    test('sorting changes the order of paginated workspace data', async ({ _page, _login, _rancherApi }) => {
       test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
     });
 

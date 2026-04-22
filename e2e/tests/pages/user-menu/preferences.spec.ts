@@ -582,7 +582,7 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select login landing page - home page',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, envMeta }) => {
+    async ({ page, login, _envMeta }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -627,7 +627,7 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select login landing page - last visited',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, envMeta }) => {
+    async ({ page, login, _envMeta }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -675,7 +675,7 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select login landing page - specific cluster',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, envMeta }) => {
+    async ({ page, login, _envMeta }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);

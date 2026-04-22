@@ -21,7 +21,10 @@ setup('authenticate', async ({ page }) => {
   }
 
   // Fill credentials
-  await page.locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]').last().fill(username);
+  await page
+    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+    .last()
+    .fill(username);
   await page.locator('[data-testid="local-login-password"] input').fill(password);
 
   // Submit

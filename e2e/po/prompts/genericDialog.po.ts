@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import DialogPo from '@/e2e/po/components/dialog.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';

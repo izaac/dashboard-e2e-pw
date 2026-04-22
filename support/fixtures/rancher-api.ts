@@ -125,8 +125,6 @@ export class RancherApi {
    * Idempotent: skips if user already exists.
    */
   async ensureStandardUser(password: string): Promise<void> {
-    const headers = this.headers();
-
     try {
       const usersResp = await this.getRancherResource('v1', 'management.cattle.io.users');
       const existing = usersResp.body.data?.find((u: { username?: string }) => u.username === 'standard_user');
@@ -749,7 +747,7 @@ export class RancherApi {
   async isVaiCacheEnabled(): Promise<boolean> {
     const result = await this.getRancherResource('v1', 'management.cattle.io.features', 'ui-sql-cache');
 
-    if (result.body?.status?.lockedValue != null) {
+    if (result.body?.status?.lockedValue !== null && result.body?.status?.lockedValue !== undefined) {
       return result.body.status.lockedValue;
     }
 

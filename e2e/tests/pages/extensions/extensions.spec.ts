@@ -6,13 +6,11 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import UiPluginsPagePo from '@/e2e/po/pages/explorer/uiplugins.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
-import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 
 const cluster = 'local';
 const DISABLED_CACHE_EXTENSION_NAME = 'large-extension';
 const UNAUTHENTICATED_EXTENSION_NAME = 'uk-locale';
 const EXTENSION_NAME = 'clock';
-const UI_PLUGINS_PARTNERS_REPO_URL = 'https://github.com/rancher/partner-extensions';
 const UI_PLUGINS_PARTNERS_REPO_NAME = 'partner-extensions';
 const GIT_REPO_NAME = 'rancher-plugin-examples';
 const GIT_REPO_URL = 'https://github.com/rancher/ui-plugin-examples';

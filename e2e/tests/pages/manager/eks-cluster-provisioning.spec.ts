@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateEKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-eks.po';
-import TabbedPo from '@/e2e/po/components/tabbed.po';
+
 import * as eksDefaultSettings from '@/e2e/blueprints/cluster_management/eks-default-settings';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 

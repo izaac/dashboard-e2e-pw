@@ -1,4 +1,4 @@
-import { test, expect } from '@/support/fixtures';
+import { test } from '@/support/fixtures';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
 import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import { exampleStorageClass, defaultStorageClass } from '@/e2e/blueprints/charts/rancher-backup-chart';

@@ -238,7 +238,7 @@ test.describe('Feature Flags', () => {
   test(
     'can toggle token-hashing feature flag',
     { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page, rancherApi }) => {
+    async ({ page, _rancherApi }) => {
       // token-hashing is a one-way flag: once activated, it cannot be deactivated.
       // Running this test permanently mutates the Rancher instance.
       test.skip(true, 'token-hashing is a one-way flag — activating it permanently changes the Rancher instance');

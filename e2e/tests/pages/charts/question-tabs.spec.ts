@@ -20,7 +20,7 @@ test.describe('Charts Install', { tag: ['@charts', '@adminUser'] }, () => {
       await expect(tabs).not.toBeAttached();
     });
 
-    test('Should show tabs on "Edit Options" screen because there is more than 1 group', async ({ page, login }) => {
+    test('Should show tabs on "Edit Options" screen because there is more than 1 group', async ({ _page, _login }) => {
       test.skip(true, 'NeuVector chart in 2.13 does not have multiple question groups');
     });
   });

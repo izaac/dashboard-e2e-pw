@@ -1,6 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
-import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 
 /**
  * Page object for Logging chart resources (ClusterOutput, ClusterFlow).

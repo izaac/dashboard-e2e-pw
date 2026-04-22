@@ -9,10 +9,6 @@ const authFile = '.auth/user.json';
  * Replaces the Cypress cy.login() + session caching pattern.
  */
 setup('authenticate', async ({ page }) => {
-  const baseURL = page.context().browser()?.version
-    ? (process.env.TEST_BASE_URL || 'https://localhost:8005').replace(/\/$/, '')
-    : (process.env.TEST_BASE_URL || 'https://localhost:8005').replace(/\/$/, '');
-
   const username = process.env.TEST_USERNAME || 'admin';
   const password = process.env.CATTLE_BOOTSTRAP_PASSWORD || process.env.TEST_PASSWORD || '';
 

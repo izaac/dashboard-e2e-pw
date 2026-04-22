@@ -79,6 +79,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         );
 
         await installChartPage.installChart();
+        await installActionPromise;
 
         // Wait for terminal to show installation progress and complete
         await terminal.waitForTerminalStatus('Disconnected', 60000);
