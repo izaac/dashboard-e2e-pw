@@ -24,8 +24,8 @@
   # Warn if .env is missing
   enterShell = ''
     if [ ! -f .env ]; then
-      echo "⚠️  No .env file — copy .env.example and fill in credentials"
+      echo "WARNING: No .env file — copy .env.example and fill in credentials"
     fi
-    echo "🦬 Rancher E2E ready — chromium, node, kubectl wired"
+    echo "Rancher E2E ready — chromium, node, kubectl wired"
   '';
 }
