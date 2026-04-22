@@ -67,49 +67,6 @@ async function waitForRancherReady(apiUrl: string, password: string, username: s
 }
 
 /**
- * Set auth-user-session-ttl-minutes to 0 (unlimited) so tokens created during
- * the suite never expire mid-run. Only affects new tokens — existing ones keep
- * their original TTL. The settings spec tests this value independently and
- * resets it, so no conflict.
- */
-async function setUnlimitedSessionTTL(apiUrl: string, password: string, username: string): Promise<void> {
-  const loginResp = await fetch(`${apiUrl}/v3-public/localProviders/local?action=login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, responseType: 'json' }),
-    signal: AbortSignal.timeout(5_000),
-  });
-
-  const body = await loginResp.json().catch(() => ({}));
-
-  if (!body.token) {
-    console.warn('[auth.setup] Could not set session TTL — login failed');
-
-    return;
-  }
-
-  const headers = { Authorization: `Bearer ${body.token}`, 'Content-Type': 'application/json' };
-
-  // Read current value to preserve in logs
-  const current = await fetch(`${apiUrl}/v3/settings/auth-user-session-ttl-minutes`, { headers }).then((r) =>
-    r.json().catch(() => ({})),
-  );
-
-  if (current.value === '0') {
-    return; // Already unlimited
-  }
-
-  console.log(
-    `[auth.setup] Setting auth-user-session-ttl-minutes: ${current.value || current.default} → 0 (unlimited)`,
-  );
-  await fetch(`${apiUrl}/v3/settings/auth-user-session-ttl-minutes`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({ ...current, value: '0' }),
-  });
-}
-
-/**
  * Authenticate as admin and persist session cookies + localStorage.
  * All tests in the 'chromium' project reuse this state via storageState,
  * skipping the login page entirely.
@@ -124,9 +81,6 @@ setup('authenticate as admin', async ({ page }) => {
 
   // Gate: ensure Rancher API is healthy before browser login attempt
   await waitForRancherReady(meta.api, password, username);
-
-  // Prevent session expiry mid-suite — set TTL to unlimited before creating the auth token
-  await setUnlimitedSessionTTL(meta.api, password, username);
 
   await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
 
