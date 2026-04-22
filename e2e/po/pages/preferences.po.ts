@@ -148,11 +148,6 @@ export default class PreferencesPagePo extends PagePo {
     await expect(this.page.locator(label)).toBeAttached();
   }
 
-  /** Keyboard mapping indicator shown in YAML editor when a non-default keymap is active */
-  keyboardMappingIndicator(): Locator {
-    return this.page.locator('.keyboard-mapping-indicator');
-  }
-
   /** Dropdown menu options list (visible when a select is open) */
   dropdownOptions(): Locator {
     return this.page.locator('.vs__dropdown-menu > li');
@@ -161,5 +156,10 @@ export default class PreferencesPagePo extends PagePo {
   /** Click a dropdown option by its 1-based index */
   dropdownOptionByIndex(index: number): Locator {
     return this.page.locator(`.vs__dropdown-menu .vs__dropdown-option:nth-child(${index})`);
+  }
+
+  /** YAML editor keyboard mapping indicator (visible when a non-default keymap is active) */
+  keyboardMappingIndicator(): Locator {
+    return this.page.locator('.keyboard-mapping-indicator');
   }
 }

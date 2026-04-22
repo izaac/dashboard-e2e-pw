@@ -48,6 +48,10 @@ export class BannerCheckboxPo {
     await expect(this.container).toBeVisible();
   }
 
+  async isDisabled(): Promise<void> {
+    await expect(this.container.locator('span.checkbox-custom')).toHaveAttribute('aria-disabled', 'true');
+  }
+
   async hasAppropriateWidth(): Promise<void> {
     const width = await this.container.locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).width);
 
@@ -179,6 +183,11 @@ export class BannersPagePo extends RootClusterPage {
     return this.page.getByTestId('fixed__banner');
   }
 
+  /** Inner text div of the fixed banner (for CSS style assertions) */
+  fixedBannerTextDiv(): Locator {
+    return this.fixedBanner().locator('div').first();
+  }
+
   headerBanner(): Locator {
     return this.page.locator('#banner-header');
   }
@@ -201,6 +210,11 @@ export class BannersPagePo extends RootClusterPage {
 
   consentBannerContent(): Locator {
     return this.consentBanner().locator('.banner');
+  }
+
+  /** Inner text div of the consent banner (for CSS style assertions) */
+  consentBannerTextDiv(): Locator {
+    return this.consentBannerContent().locator('div').first();
   }
 
   loginSubmitButton(): Locator {

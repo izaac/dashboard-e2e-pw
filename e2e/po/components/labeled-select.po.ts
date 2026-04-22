@@ -69,7 +69,7 @@ export default class LabeledSelectPo extends ComponentPo {
 
   /** Check dropdown is closed */
   async isClosed(): Promise<void> {
-    await expect(this.getOptions()).not.toBeAttached();
+    await expect(this.getOptions().first()).not.toBeAttached();
   }
 
   /** Filter list by typing name */

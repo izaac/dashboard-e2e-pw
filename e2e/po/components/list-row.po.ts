@@ -28,19 +28,19 @@ export default class ListRowPo {
     return this.rowLocator.locator(selector);
   }
 
-  async checkVisible(): Promise<void> {
-    await expect(this.rowLocator).toBeVisible();
-  }
-
-  async checkNotVisible(): Promise<void> {
-    await expect(this.rowLocator).not.toBeVisible();
+  nameLink(): Locator {
+    return this.rowLocator.locator('td.col-link-detail a');
   }
 
   async checkExists(): Promise<void> {
     await expect(this.rowLocator).toBeAttached();
   }
 
-  async checkNotExists(): Promise<void> {
-    await expect(this.rowLocator).not.toBeAttached();
+  async checkVisible(): Promise<void> {
+    await expect(this.rowLocator).toBeVisible();
+  }
+
+  async checkNotVisible(): Promise<void> {
+    await expect(this.rowLocator).not.toBeVisible();
   }
 }

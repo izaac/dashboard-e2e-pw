@@ -1,5 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@/support/fixtures';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
@@ -8,6 +8,8 @@ import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import BannersPo from '@/e2e/po/components/banners.po';
+
+// --------------- Install Extension Dialog ---------------
 
 class InstallExtensionDialog {
   private page: Page;
@@ -66,6 +68,8 @@ class InstallExtensionDialog {
     return texts;
   }
 }
+
+// --------------- Extensions Page ---------------
 
 export default class ExtensionsPagePo extends PagePo {
   extensionTabs: TabbedPo;
@@ -218,14 +222,6 @@ export default class ExtensionsPagePo extends PagePo {
     return this.extensionTabs.getTab('builtin');
   }
 
-  tabByName(name: string): Locator {
-    return this.page.getByTestId(`extension-tab-${name}`);
-  }
-
-  extensionCardByName(name: string): Locator {
-    return this.page.getByTestId('extension-card-install-btn').locator('..').filter({ hasText: name });
-  }
-
   async checkForExtensionTab(tab: 'available' | 'installed' | 'builtin'): Promise<boolean> {
     await this.waitForTabs();
 
@@ -279,14 +275,24 @@ export default class ExtensionsPagePo extends PagePo {
     return new BannersPo(this.page, '[data-testid="extensions-new-repos-banner"]', this.self());
   }
 
+  repoBannerActionButton(): Locator {
+    return this.self().getByTestId('extensions-new-repos-banner-action-btn');
+  }
+
   // --- add repos modal ---
 
   addReposModal(): Locator {
     return this.page.getByTestId('add-extensions-repos-modal');
   }
 
+  addReposModalPartnersCheckbox(): Locator {
+    return this.addReposModal().getByTestId('add-extensions-repos-modal-add-partners-repo');
+  }
+
   async addReposModalAddClick(): Promise<void> {
-    await this.addReposModal().getByRole('button', { name: 'Add' }).click();
+    // Wait for modal fetch() to complete — checkboxes are disabled while pending
+    await expect(this.addReposModalPartnersCheckbox()).toBeEnabled();
+    await this.addReposModal().locator('.dialog-buttons button:last-child').click();
   }
 
   // --- extension script import ---

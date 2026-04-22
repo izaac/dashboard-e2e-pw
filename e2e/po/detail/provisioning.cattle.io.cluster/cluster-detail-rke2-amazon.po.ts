@@ -78,7 +78,19 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   configurationDrawer(): Locator {
-    return this.page.locator('[data-testid="detail-drawer"], .side-panel');
+    return this.page.locator('aside.slide-in');
+  }
+
+  drawerSaveButton(): Locator {
+    return this.configurationDrawer().locator('button:has-text("Save")');
+  }
+
+  drawerConfigTab(): Locator {
+    return this.configurationDrawer().getByRole('tab', { name: 'Config' });
+  }
+
+  drawerYamlTab(): Locator {
+    return this.configurationDrawer().getByRole('tab', { name: 'YAML' });
   }
 
   clusterNamespaceLink(): Locator {
@@ -97,10 +109,12 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
     return this.page.locator('.terminal, [data-testid="kubectl-shell"]');
   }
 
+  kubectlConnectedText(): Locator {
+    return this.kubectlShell().locator('text=Connected');
+  }
+
   closeShellButton(): Locator {
-    return this.page.locator(
-      '[data-testid="close-shell-button"], .btn:has-text("Close"), [data-testid="wm-tab-close-button"], .wm-closer-button',
-    );
+    return this.page.locator('[data-testid="close-shell-button"], .btn:has-text("Close")');
   }
 
   logsContainer(): Locator {
@@ -109,30 +123,6 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
 
   exploreButton(): Locator {
     return this.page.locator('[data-testid="explore-button"], button:has-text("Explore")');
-  }
-
-  shellStatus(): Locator {
-    return this.page.locator('.container-shell .status');
-  }
-
-  conditionRow(name: string): Locator {
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    return this.page.locator('tr').filter({
-      has: this.page.locator('td').filter({ hasText: new RegExp(`^\\s*${escaped}\\s*$`) }),
-    });
-  }
-
-  drawerSaveButton(): Locator {
-    return this.configurationDrawer().locator('button:has-text("Save")');
-  }
-
-  drawerConfigTab(): Locator {
-    return this.configurationDrawer().locator('[data-testid="tab-config"], button:has-text("Config")');
-  }
-
-  drawerYamlTab(): Locator {
-    return this.configurationDrawer().locator('[data-testid="tab-yaml"], button:has-text("YAML")');
   }
 
   tableRowCell(rowText: string, cellIndex: number): Locator {

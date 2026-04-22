@@ -33,6 +33,11 @@ export default class RoleListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().rowWithName(name).column(index);
   }
 
+  /** Click the detail link in a specific column for a role */
+  detailLink(name: string, columnIndex: number): Locator {
+    return this.details(name, columnIndex).locator('a');
+  }
+
   async checkBuiltIn(name: string, isBuiltIn = true): Promise<void> {
     const element = this.details(name, 4).locator('span i.icon-checkmark');
 

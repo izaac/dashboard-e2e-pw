@@ -23,9 +23,4 @@ export default class JWTAuthenticationPagePo extends PagePo {
   jwtAuthNavLink(): Locator {
     return this.sideNav().self().locator('[href*="jwt.authentication"]');
   }
-
-  /** Advanced group in side nav — may be collapsed accordion or group label */
-  advancedSideNavGroup(): Locator {
-    return this.sideNav().self().locator('a, .accordion-title, .side-nav-group-name').filter({ hasText: 'Advanced' });
-  }
 }

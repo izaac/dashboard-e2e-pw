@@ -1,20 +1,27 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import WorkloadPodStoragePo from '@/e2e/po/components/workloads/pod-storage.po';
+import ContainerMountPathPo from '@/e2e/po/components/workloads/container-mount-paths.po';
 
 type WorkloadType =
   | 'workload'
   | 'pods'
+  | 'pod'
   | 'apps.deployments'
+  | 'apps.deployment'
+  | 'apps.daemonset'
+  | 'apps.statefulset'
+  | 'batch.job'
+  | 'batch.cronjob'
   | 'replicasets'
   | 'daemonsets'
   | 'statefulsets'
   | 'jobs'
-  | 'cronjobs'
-  | 'apps.deployment'
-  | 'batch.job'
-  | 'batch.cronjob';
+  | 'cronjobs';
 
 /**
  * Base page object for workload list pages (Deployments, DaemonSets, etc.)
@@ -31,9 +38,12 @@ export class WorkloadsListPageBasePo extends PagePo {
     return this.self().locator('.sortable-table');
   }
 
-  /** SortableTablePo with full component methods (action menus, row selection, etc.) */
   sortableTablePo(): SortableTablePo {
     return new SortableTablePo(this.page, '.sortable-table');
+  }
+
+  masthead(): ResourceListMastheadPo {
+    return new ResourceListMastheadPo(this.page, ':scope', this.self());
   }
 
   listElementWithName(name: string): Locator {
@@ -69,12 +79,6 @@ export class WorkloadsListPageBasePo extends PagePo {
       .locator('button[data-testid$="action-button"], .actions .btn.role-multi-action, button.actions-container')
       .click();
   }
-
-  /** Open the row action menu for a named resource and click a menu item */
-  async rowActionMenuClick(name: string, menuItem: string): Promise<void> {
-    await this.rowActionMenuOpen(name);
-    await this.page.getByRole('menuitem', { name: menuItem }).click();
-  }
 }
 
 /**
@@ -93,26 +97,46 @@ export class WorkloadsCreatePageBasePo extends PagePo {
   }
 
   async selectNamespace(label: string): Promise<void> {
-    const nsSelect = this.page.getByTestId('name-ns-description-namespace');
+    const nsSelect = new LabeledSelectPo(this.page, '[data-testid="name-ns-description-namespace"]');
 
-    await nsSelect.click();
-    await this.page.locator(`.vs__dropdown-menu`).getByRole('option', { name: label, exact: true }).click();
+    await nsSelect.toggle();
+    await nsSelect.clickOptionWithLabel(label);
   }
 
   containerImage(): LabeledInputPo {
     return LabeledInputPo.byLabel(this.page, this.self(), 'Container Image');
   }
 
-  async save(): Promise<void> {
-    await this.page.getByTestId('form-save').click();
+  containerImageInput(index = 0): Locator {
+    return this.page.getByTestId(`input-container-image-${index}`);
   }
 
-  containerTab(index = 0): Locator {
-    return this.page.locator(`li#container-${index}`);
+  addContainerButton(): Locator {
+    return this.page.getByTestId('workload-button-add-container');
+  }
+
+  errorBanner(): Locator {
+    return this.page.locator('#cru-errors');
+  }
+
+  containerTab(index: number): Locator {
+    return this.page.getByTestId(`btn-container-${index}`);
   }
 
   podTab(): Locator {
-    return this.page.locator('li#pod');
+    return this.page.getByTestId('btn-pod');
+  }
+
+  storagePodTab(): Locator {
+    return this.page.getByRole('tabpanel', { name: 'Pod' }).getByRole('tab', { name: 'Storage' });
+  }
+
+  namespaceDropdown(): Locator {
+    return this.page.getByTestId('namespaces-dropdown');
+  }
+
+  namespaceInput(): Locator {
+    return this.page.getByTestId('name-ns-description-namespace-create').locator('input[type="text"]');
   }
 
   async addEnvironmentVariable(): Promise<void> {
@@ -124,34 +148,47 @@ export class WorkloadsCreatePageBasePo extends PagePo {
   }
 
   environmentVariableValueInput(index: number): Locator {
-    return this.page.getByTestId(`env-var-row-${index}`).locator('.single-value input, .single-value textarea');
+    return this.page.getByTestId(`env-var-row-${index}`).locator('.single-value input');
   }
 
   async removeEnvironmentVariable(index: number): Promise<void> {
     await this.page.getByTestId(`env-var-row-${index}`).locator('.remove button').click();
   }
 
-  addContainerButton(): Locator {
-    return this.page.getByTestId('workload-button-add-container');
+  async save(): Promise<void> {
+    await this.page.getByTestId('form-save').click();
   }
 
-  errorBanner(): Locator {
-    return this.page.locator('#cru-errors');
+  horizontalTabs(): Locator {
+    return this.page.getByTestId('workload-horizontal-tabs');
   }
 
-  storagePodTab(): Locator {
-    return this.page.locator('li#storage-pod');
+  async clickHorizontalTab(tabId: string): Promise<void> {
+    await this.horizontalTabs().getByTestId(tabId).click();
   }
 
-  addVolumeButton(): Locator {
-    return this.page
-      .locator('.add-vol button, [data-testid="add-volume-button"]')
-      .or(this.page.getByRole('button', { name: 'Add Volume' }))
-      .first();
+  podTabs(): Locator {
+    return this.page.getByTestId('workload-pod-tabs');
   }
 
-  dropdownMenu(): Locator {
-    return this.page.locator('.vs__dropdown-menu');
+  async clickPodTab(tabId: string): Promise<void> {
+    await this.podTabs().getByTestId(tabId).click();
+  }
+
+  nthContainerTabs(containerIndex: number): Locator {
+    return this.page.getByTestId(`workload-container-tabs-${containerIndex}`);
+  }
+
+  async clickContainerTab(containerIndex: number, tabId: string): Promise<void> {
+    await this.nthContainerTabs(containerIndex).getByTestId(tabId).click();
+  }
+
+  podStorage(): WorkloadPodStoragePo {
+    return new WorkloadPodStoragePo(this.page);
+  }
+
+  containerStorage(): ContainerMountPathPo {
+    return new ContainerMountPathPo(this.page);
   }
 
   /**

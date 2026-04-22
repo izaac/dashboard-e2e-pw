@@ -1,7 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
-import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 
 export default class ClusterToolsPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -51,9 +50,5 @@ export default class ClusterToolsPagePo extends PagePo {
 
   getChartVersion(name: string): Locator {
     return this.getCardByName(name).locator('[data-testid="app-chart-card-sub-header-item"]').first();
-  }
-
-  createEditView(): CreateEditViewPo {
-    return new CreateEditViewPo(this.page, '.dashboard-root');
   }
 }

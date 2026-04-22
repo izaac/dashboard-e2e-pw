@@ -4,7 +4,6 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import NotificationsCenterPo from '@/e2e/po/components/notification-center.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 export default class HomePagePo extends PagePo {
   static url = '/home';
@@ -34,24 +33,42 @@ export default class HomePagePo extends PagePo {
     return this.changelog().self().locator('a');
   }
 
-  list(): SortableTablePo {
-    return new SortableTablePo(this.page, '[data-testid="sortable-table-list-container"]');
+  list(): Locator {
+    return this.page.locator('[data-testid="sortable-table-list-container"]');
   }
 
-  clusterRow(name: string) {
-    return this.list().rowWithPartialName(name);
+  filterInput(): Locator {
+    return this.list().locator('[data-testid="search-box-filter-row"] input');
   }
 
-  clusterDescription(): Locator {
-    return this.list().self().locator('.cluster-description');
+  clusterDescriptions(): Locator {
+    return this.list().locator('.cluster-description');
   }
 
-  manageButton(): Locator {
-    return this.page.getByTestId('cluster-management-manage-button');
+  tableHeaders(): Locator {
+    return this.list().locator('.table-header-container .content');
   }
 
   manageClustersButton(): Locator {
     return this.page.getByTestId('home-manage-clusters-button');
+  }
+
+  /** Get a cluster row by name */
+  clusterRow(name: string): Locator {
+    return this.list().locator('tr').filter({ hasText: name });
+  }
+
+  noResultsMessage(): Locator {
+    return this.list().locator('.no-results');
+  }
+
+  /** Get a cell from a cluster row (0-indexed) */
+  clusterRowCell(name: string, index: number): Locator {
+    return this.clusterRow(name).locator('td').nth(index);
+  }
+
+  manageButton(): Locator {
+    return this.page.getByTestId('cluster-management-manage-button');
   }
 
   importExistingButton(): Locator {

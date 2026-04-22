@@ -73,8 +73,8 @@ export default class LoggingPo extends ComponentPo {
     return this.tableRows().filter({ hasText: text });
   }
 
-  /** Click detail link in a table row */
-  tableRowDetailLink(text: string): Locator {
+  /** Click the detail link in a table row */
+  rowDetailLink(text: string): Locator {
     return this.tableRowByText(text).locator('td.col-link-detail a');
   }
 

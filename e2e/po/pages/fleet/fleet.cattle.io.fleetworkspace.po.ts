@@ -4,6 +4,7 @@ import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 
 export class FleetWorkspaceListPagePo extends PagePo {
   static url = '/c/_/fleet/management.cattle.io.fleetworkspace';
@@ -38,6 +39,10 @@ export class FleetWorkspaceCreateEditPo extends PagePo {
 
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
+  }
+
+  defaultOciRegistry(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="default-oci-storage-secret"]');
   }
 }
 

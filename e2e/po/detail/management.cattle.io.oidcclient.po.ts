@@ -28,11 +28,11 @@ export default class OIDCClientDetailPo extends PagePo {
     await this.page.getByTestId(`oidc-client-secret-${index}-action-menu`).click();
   }
 
-  clientSecretCard(index: number): Locator {
-    return this.page.getByTestId(`item-card-client-secret-${index}`);
-  }
-
   secretCardMenu(): ActionMenuPo {
     return new ActionMenuPo(this.page);
+  }
+
+  clientSecretCard(index: number): Locator {
+    return this.page.getByTestId(`item-card-client-secret-${index}`);
   }
 }

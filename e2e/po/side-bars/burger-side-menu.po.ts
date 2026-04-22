@@ -30,7 +30,7 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Navigate to a cluster on a top-level side menu entry by label */
   async burgerMenuNavToClusterByLabel(label: string): Promise<void> {
     await expect(this.sideMenu()).toBeAttached();
-    await this.sideMenu().locator('.option .cluster-name').getByText(label).first().click();
+    await this.sideMenu().locator('.option .cluster-name').getByText(label).click();
   }
 
   /** Check key combo icon for a cluster by its displayed label */
@@ -49,9 +49,9 @@ export default class BurgerMenuPo extends ComponentPo {
     return this.sideMenu().locator('.option').getByText(label);
   }
 
-  /** Get cluster navigation item by label (first match — cluster may appear in both pinned and unpinned) */
+  /** Get cluster navigation item by label */
   burgerMenuGetNavClusterByLabel(label: string): Locator {
-    return this.sideMenu().locator('.option .cluster-name').getByText(label).first();
+    return this.sideMenu().locator('.option .cluster-name').getByText(label);
   }
 
   /** Check if Cluster Top Level Menu link is highlighted */

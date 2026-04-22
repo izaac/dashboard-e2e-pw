@@ -4,6 +4,7 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import ComponentPo from '@/e2e/po/components/component.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 class GlobalRoleBindingsPo extends ComponentPo {
   constructor(page: Page) {
@@ -15,11 +16,11 @@ class GlobalRoleBindingsPo extends ComponentPo {
   }
 
   globalOptionsLocator(): Locator {
-    return this.self().locator('.checkbox-section--global .checkbox-label');
+    return this.self().locator('.checkbox-section--global .checkbox-label-slot .checkbox-label');
   }
 
   async globalOptions(): Promise<string[]> {
-    const labels = this.self().locator('.checkbox-section--global .checkbox-label-slot .checkbox-label');
+    const labels = this.globalOptionsLocator();
     const count = await labels.count();
     const options: string[] = [];
 
@@ -67,10 +68,9 @@ export default class MgmtUserEditPo extends PagePo {
   }
 
   async saveAndWaitForRequests(method: string, url: string): Promise<Response> {
-    // Set up response listener BEFORE clicking to avoid race conditions
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(url) && resp.request().method() === method,
-      { timeout: 30000 },
+      { timeout: 10000 },
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();
@@ -84,8 +84,8 @@ export default class MgmtUserEditPo extends PagePo {
     }
 
     const userCreationPromise = this.page.waitForResponse(
-      (resp) => resp.url().includes('v3/globalrolebindings') && resp.request().method() === 'POST',
-      { timeout: 30000 },
+      (resp) => resp.url().includes('v1/management.cattle.io.users') && resp.request().method() === 'POST',
+      SHORT_TIMEOUT_OPT,
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();
@@ -104,13 +104,13 @@ export default class MgmtUserEditPo extends PagePo {
 
     const bindingPromise = this.page.waitForResponse(
       (resp) => resp.url().includes('v3/globalrolebindings') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     const bindingResp = await bindingPromise;
 
     if (bindingResp.status() !== 201 && userId) {
-      await this.page.request.delete(`v3/users/${userId}`);
+      await this.page.request.delete(`v1/management.cattle.io.users/${userId}`);
       await this.page.waitForTimeout(2000);
       await this.saveCreateWithErrorRetry(attempt + 1);
     }
@@ -118,6 +118,10 @@ export default class MgmtUserEditPo extends PagePo {
 
   globalRoleBindings(): GlobalRoleBindingsPo {
     return new GlobalRoleBindingsPo(this.page);
+  }
+
+  errorBanner(): Locator {
+    return this.page.locator('#cru-errors');
   }
 
   resourceDetail(): ResourceDetailPo {

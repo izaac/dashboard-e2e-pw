@@ -75,10 +75,6 @@ export default class PagePo extends ComponentPo {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
   }
 
-  yamlEditor(): Locator {
-    return this.page.locator('.resource-yaml .CodeMirror, .resource-yaml .code-mirror');
-  }
-
   async waitForMastheadTitle(title: string): Promise<void> {
     await expect(this.mastheadTitle()).toContainText(title);
   }
@@ -185,5 +181,15 @@ export default class PagePo extends ComponentPo {
   /** Get extension script import element by name */
   extensionScriptImport(name: string): Locator {
     return this.self().locator(`[data-purpose="extension"] [id*="${name}"]`);
+  }
+
+  /** Get a VueSelect dropdown option by text (after clicking a VueSelect input) */
+  vsDropdownOption(text: string, exact = true): Locator {
+    return this.page.locator('.vs__dropdown-menu').getByText(text, { exact });
+  }
+
+  /** Get the form save button */
+  formSaveButton(): Locator {
+    return this.page.locator('[data-testid="form-save"]');
   }
 }

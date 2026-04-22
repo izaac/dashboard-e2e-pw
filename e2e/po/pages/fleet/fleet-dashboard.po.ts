@@ -22,7 +22,7 @@ export class FleetDashboardListPagePo extends PagePo {
   }
 
   slideInPanel(): Locator {
-    return this.page.getByTestId('slide-in-panel-component');
+    return this.page.locator('[data-testid="slide-in-panel-component"].chrome');
   }
 
   slideInPanelTitleLink(name: string): Locator {

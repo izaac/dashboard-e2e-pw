@@ -69,13 +69,11 @@ export default class ClusterProjectMembersPo extends PagePo {
   }
 
   sortableTable(): SortableTablePo {
-    return this.resourcesList().resourceTable().sortableTable();
+    return new SortableTablePo(this.page, '#cluster-membership .sortable-table');
   }
 
   listElementWithName(name: string): Locator {
-    // Cluster member rows contain the username plus the cluster display name (e.g. "Local"),
-    // so a partial match is required here rather than exact.
-    return this.sortableTable().rowElementWithPartialName(name);
+    return this.sortableTable().rowElementWithName(name);
   }
 
   projectTable(): SortableTablePo {

@@ -21,11 +21,12 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   bulkActionButton(label: string): Locator {
-    return this.self().locator('.fixed-header-actions .bulk button').filter({ hasText: label });
+    // Bulk action buttons live in .sortable-table-header (sibling of .sortable-table)
+    return this.self().locator('..').locator('.fixed-header-actions .bulk button').filter({ hasText: label });
   }
 
   bulkActionDropDown(): Locator {
-    return this.self().locator('.fixed-header-actions .bulk .bulk-actions-dropdown');
+    return this.self().locator('..').locator('.fixed-header-actions .bulk .bulk-actions-dropdown');
   }
 
   async bulkActionDropDownOpen(): Promise<void> {
@@ -88,8 +89,6 @@ export default class SortableTablePo extends ComponentPo {
     //   - linked cells (td a) — hasText matches the inner <a> text
     //   - plain text cells (td with direct text — e.g. feature flags)
     //   - cells with name+description (td span + td div) — matches span/a only, not whole td
-    // Uses td.hasText(exactRegex) first; falls back to td span/a with exact text for
-    // cells that contain both a name element and a description sub-element.
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const exactRegex = new RegExp(`^\\s*${escaped}\\s*$`);
 
@@ -262,6 +261,10 @@ export default class SortableTablePo extends ComponentPo {
 
   groupElementsWithName(name: string): Locator {
     return this.self().locator('tr.group-row').filter({ hasText: name });
+  }
+
+  groupTab(name: string): Locator {
+    return this.self().locator('.group-tab').filter({ hasText: name });
   }
 
   tableHeaderRow(): Locator {

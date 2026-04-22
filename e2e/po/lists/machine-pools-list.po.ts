@@ -25,6 +25,10 @@ export default class MachinePoolsListPo extends BaseResourceList {
       .locator('[data-testid="machine-progress-bar"]');
   }
 
+  machineProgressBarError(poolName: string): Locator {
+    return this.machineProgressBar(poolName).locator('.bg-error');
+  }
+
   scaleDownButton(poolName: string): Locator {
     return this.resourceTable()
       .sortableTable()

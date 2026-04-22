@@ -36,11 +36,6 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
   }
 
   create(): Locator {
-    return this.resourceDetail()
-      .cruResource()
-      .saveCreateForm()
-      .self()
-      .locator('button[type="submit"], .btn-primary')
-      .first();
+    return this.resourceDetail().cruResource().saveOrCreate().self();
   }
 }

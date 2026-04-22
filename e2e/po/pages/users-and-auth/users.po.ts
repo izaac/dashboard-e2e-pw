@@ -4,6 +4,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import MgmtUserEditPo from '@/e2e/po/edit/management.cattle.io.user.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Detail page object for a single user resource.
@@ -28,7 +29,7 @@ export default class UsersPo extends ClusterPagePo {
   async waitForRequests(): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.status() === 200,
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await this.goTo();
@@ -81,8 +82,8 @@ class UsersListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().bulkActionDropDownButton(name);
   }
 
-  selectAll(): ComponentPo {
-    return this.resourceTable().sortableTable().selectAllCheckbox();
+  async selectAll(): Promise<void> {
+    await this.resourceTable().sortableTable().selectAll();
   }
 
   elementWithName(name: string): Locator {
@@ -93,9 +94,28 @@ class UsersListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().rowWithName(name).column(index);
   }
 
+  /** Click the detail link in a column */
+  detailLink(name: string, columnIndex: number): Locator {
+    return this.details(name, columnIndex).locator('a');
+  }
+
+  /** Status icon in a column (active/inactive user icon) */
+  statusIcon(name: string, columnIndex: number): Locator {
+    return this.details(name, columnIndex).locator('i');
+  }
+
+  /** Checkbox cell (first td) for row selection */
+  rowCheckbox(name: string): Locator {
+    return this.elementWithName(name).locator('td:first-child');
+  }
+
   async clickRowActionMenuItem(name: string, itemLabel: string): Promise<void> {
     const menu = await this.resourceTable().sortableTable().rowActionMenuOpen(name);
 
     await menu.getMenuItem(itemLabel).click();
+  }
+
+  actionMenuDropdown(): Locator {
+    return this.page.locator('[dropdown-menu-collection]:visible');
   }
 }

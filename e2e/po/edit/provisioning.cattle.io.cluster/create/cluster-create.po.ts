@@ -92,15 +92,11 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     return new BannersPo(this.page, '.banner:has-text("Ok, Let\'s create a new credential")');
   }
 
-  credentialStep(): Locator {
-    return this.self().getByTestId('select-credential');
-  }
-
-  providerCard(testIdFragment: string, displayName: string): Locator {
-    return this.self().locator(`[data-testid*="${testIdFragment}"], .item:has-text("${displayName}")`);
-  }
-
   errorsBanner(): BannersPo {
     return new BannersPo(this.page, '.banner.error', this.self());
+  }
+
+  credentialsBannerLocator(): Locator {
+    return this.self().locator('[data-testid="credentials-banner"], .credentials-banner');
   }
 }

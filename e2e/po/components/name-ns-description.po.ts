@@ -25,20 +25,6 @@ export default class NameNsDescriptionPo extends ComponentPo {
     await this.namespace().clickLabel(label);
   }
 
-  /** Select "Create a New Namespace" and fill in the name */
-  async createNewNamespace(name: string): Promise<void> {
-    const nsSelect = this.self().getByTestId('name-ns-description-namespace');
-
-    await nsSelect.click();
-
-    const createOption = this.page
-      .locator('.vs__dropdown-menu .vs__dropdown-option')
-      .filter({ hasText: 'Create a New Namespace' });
-
-    await createOption.click();
-    await this.page.getByRole('textbox', { name: 'Name' }).first().fill(name);
-  }
-
   project(): LabeledInputPo {
     return new LabeledInputPo(this.page, '[data-testid="name-ns-description-project"] input', this.self());
   }

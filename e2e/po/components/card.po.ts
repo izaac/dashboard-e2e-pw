@@ -21,4 +21,9 @@ export default class CardPo extends ComponentPo {
   getActionButton(): Locator {
     return this.self().getByTestId('card-actions-slot');
   }
+
+  /** Get a specific action button by label text */
+  actionButtonWithText(text: string): Locator {
+    return this.getActionButton().locator('button', { hasText: text });
+  }
 }
