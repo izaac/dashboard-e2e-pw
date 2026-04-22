@@ -7,6 +7,7 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import * as jsyaml from 'js-yaml';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const globalRoleYaml = `apiVersion: management.cattle.io/v3
 kind: GlobalRole
@@ -372,7 +373,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         const cloneResponse = page.waitForResponse(
           (resp) => resp.url().includes('/v3/globalroles') && resp.request().method() === 'POST',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
 
         const editGlobalRole = roles.createRole();
@@ -433,7 +434,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         const saveResp = page.waitForResponse(
           (resp) => resp.url().includes('/v1/management.cattle.io.globalroles/') && resp.request().method() === 'PUT',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
 
         await editRole.saveEditYamlForm().click();

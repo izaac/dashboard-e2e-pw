@@ -4,6 +4,7 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import ComponentPo from '@/e2e/po/components/component.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 class GlobalRoleBindingsPo extends ComponentPo {
   constructor(page: Page) {
@@ -84,7 +85,7 @@ export default class MgmtUserEditPo extends PagePo {
 
     const userCreationPromise = this.page.waitForResponse(
       (resp) => resp.url().includes('v1/management.cattle.io.users') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();
@@ -103,7 +104,7 @@ export default class MgmtUserEditPo extends PagePo {
 
     const bindingPromise = this.page.waitForResponse(
       (resp) => resp.url().includes('v3/globalrolebindings') && resp.request().method() === 'POST',
-      { timeout: 15000 },
+      SHORT_TIMEOUT_OPT,
     );
 
     const bindingResp = await bindingPromise;

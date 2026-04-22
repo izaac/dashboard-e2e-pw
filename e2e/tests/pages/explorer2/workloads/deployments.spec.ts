@@ -17,6 +17,7 @@ import {
   mockSmallCollection,
   type SavedPrefs,
 } from './pagination.utils';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', { tag: ['@standardUser', '@adminUser'] }, () => {
@@ -105,7 +106,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         // Reload to pick up latest resourceVersion — avoids 409 Conflict on scale-down PUT
         await detailsPage.goTo();
-        await expect(detailsPage.scalerValue()).toContainText('2', { timeout: 15000 });
+        await expect(detailsPage.scalerValue()).toContainText('2', SHORT_TIMEOUT_OPT);
 
         const scaleDownResp = page.waitForResponse(
           (resp) => resp.url().includes('/v1/apps.deployments/') && resp.request().method() === 'PUT',
@@ -368,7 +369,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       const response = await responsePromise;
 
       expect([200, 204]).toContain(response.status());
-      await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached({ timeout: 15000 });
+      await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
     });
   });
 

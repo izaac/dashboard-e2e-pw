@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { PersistentVolumeClaimsPagePo } from '@/e2e/po/pages/explorer/persistent-volume-claims.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
@@ -98,7 +99,7 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
       await sortableTable.checkVisible();
       await sortableTable.groupByButtons(1).click();
 
-      await expect(sortableTable.groupRows().first()).toBeVisible({ timeout: 15000 });
+      await expect(sortableTable.groupRows().first()).toBeVisible(SHORT_TIMEOUT_OPT);
     });
   });
 });

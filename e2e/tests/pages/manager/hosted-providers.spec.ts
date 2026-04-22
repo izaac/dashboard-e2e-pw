@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const AKS = 'Azure AKS';
 const EKS = 'Amazon EKS';
@@ -89,7 +90,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await providersPage.waitForPage();
       await providersPage.list().resourceTable().sortableTable().checkVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await expect(providersPage.list().details(AKS, 1)).toContainText('Active', { timeout: 15000 });
+      await expect(providersPage.list().details(AKS, 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
 
       const deactivateResp = page.waitForResponse(
         (r) => r.url().includes('management.cattle.io.settings/kev2-operators') && r.request().method() === 'PUT',
@@ -172,8 +173,8 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await providersPage.waitForPage();
       await providersPage.list().resourceTable().sortableTable().checkVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await expect(providersPage.list().details(EKS, 1)).toContainText('Active', { timeout: 15000 });
-      await expect(providersPage.list().details(GKE, 1)).toContainText('Active', { timeout: 15000 });
+      await expect(providersPage.list().details(EKS, 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
+      await expect(providersPage.list().details(GKE, 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
 
       await providersPage.list().resourceTable().sortableTable().rowSelectCtlWithName(EKS).set();
       await providersPage.list().resourceTable().sortableTable().rowSelectCtlWithName(GKE).set();
@@ -224,8 +225,8 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       await providersPage.waitForPage();
       await providersPage.list().resourceTable().sortableTable().checkVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await expect(providersPage.list().details(EKS, 1)).toContainText('Inactive', { timeout: 15000 });
-      await expect(providersPage.list().details(GKE, 1)).toContainText('Inactive', { timeout: 15000 });
+      await expect(providersPage.list().details(EKS, 1)).toContainText('Inactive', SHORT_TIMEOUT_OPT);
+      await expect(providersPage.list().details(GKE, 1)).toContainText('Inactive', SHORT_TIMEOUT_OPT);
 
       await providersPage.list().resourceTable().sortableTable().rowSelectCtlWithName(EKS).set();
       await providersPage.list().resourceTable().sortableTable().rowSelectCtlWithName(GKE).set();

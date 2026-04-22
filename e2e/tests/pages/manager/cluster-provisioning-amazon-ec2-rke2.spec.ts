@@ -7,6 +7,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import describeSubnetsResponse from '@/e2e/blueprints/manager/describe-subnets-response';
 import describeVpcsResponse from '@/e2e/blueprints/manager/describe-vpcs-response';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const MEDIUM_TIMEOUT = 120_000;
 const LONG_TIMEOUT = 360_000;
@@ -50,7 +51,7 @@ test.describe(
         await clusterList.waitForPage();
         await clusterList.createCluster();
         await createRKE2ClusterPage.selectCreate(0);
-        await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+        await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
         await expect(createRKE2ClusterPage.rke2PageTitle()).toContainText('Create Amazon EC2');
         await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2');
 
@@ -66,7 +67,7 @@ test.describe(
 
         const credCreatePromise = page.waitForResponse(
           (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
         const pageLoadPromise = page.waitForResponse(
           (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
@@ -82,7 +83,7 @@ test.describe(
         cloudcredentialId = credBody.id;
 
         await pageLoadPromise;
-        await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+        await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
         await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2', 'basic');
 
         await createRKE2ClusterPage.nameNsDescription().name().set(clusterName);
@@ -108,7 +109,7 @@ test.describe(
 
         const clusterCreatePromise = page.waitForResponse(
           (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
 
         await createRKE2ClusterPage.create();
@@ -211,7 +212,7 @@ test.describe(
         (resp) =>
           resp.url().includes(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`) &&
           resp.request().method() === 'PUT',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await clusterDetails.poolsList('machine').scaleUpButton(poolName).click();
@@ -260,7 +261,7 @@ test.describe(
           (resp) =>
             resp.url().includes(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`) &&
             resp.request().method() === 'PUT',
-          { timeout: 15000 },
+          SHORT_TIMEOUT_OPT,
         );
 
         await clusterDetails.poolsList('machine').scaleDownButton(poolName).click();
@@ -319,7 +320,7 @@ test.describe(
         (resp) =>
           resp.url().includes(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`) &&
           resp.request().method() === 'PUT',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await editClusterPage.resourceDetail().createEditView().save();
@@ -428,7 +429,7 @@ test.describe(
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createRKE2ClusterPage.selectCreate(0);
-      await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await expect(createRKE2ClusterPage.rke2PageTitle()).toContainText('Create Amazon EC2');
       await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2', 'basic');
 
@@ -518,7 +519,7 @@ test.describe(
 
       const clusterCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createRKE2ClusterPage.create();
@@ -563,7 +564,7 @@ test.describe(
       await clusterList.waitForPage();
       await clusterList.createCluster();
       await createRKE2ClusterPage.selectCreate(0);
-      await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached({ timeout: 15000 });
+      await expect(createRKE2ClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
       await expect(createRKE2ClusterPage.rke2PageTitle()).toContainText('Create Amazon EC2');
       await createRKE2ClusterPage.waitForPage('type=amazonec2&rkeType=rke2', 'basic');
 
@@ -625,7 +626,7 @@ test.describe(
 
       const clusterCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await createRKE2ClusterPage.create();

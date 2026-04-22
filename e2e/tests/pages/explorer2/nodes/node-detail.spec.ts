@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { NodesPagePo } from '@/e2e/po/pages/explorer/nodes.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('should still show the node detail view when the page is refreshed', async ({ page, login }) => {
@@ -29,11 +30,11 @@ test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
     await expect(page).toHaveURL(/\/explorer\/node\//);
-    await expect(clusterDashboard.mastheadTitle()).toContainText(nodeName!, { timeout: 15000 });
+    await expect(clusterDashboard.mastheadTitle()).toContainText(nodeName!, SHORT_TIMEOUT_OPT);
 
     await page.reload();
 
     await expect(page).toHaveURL(/\/explorer\/node\//);
-    await expect(clusterDashboard.mastheadTitle()).toContainText(nodeName!, { timeout: 15000 });
+    await expect(clusterDashboard.mastheadTitle()).toContainText(nodeName!, SHORT_TIMEOUT_OPT);
   });
 });

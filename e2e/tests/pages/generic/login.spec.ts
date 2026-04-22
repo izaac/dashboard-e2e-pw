@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standardUser'] }, () => {
   // Login tests must start unauthenticated — clear storageState
@@ -32,7 +33,7 @@ test.describe('Local authentication', { tag: ['@generic', '@adminUser', '@standa
 
     await loginPage.submit();
 
-    await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
+    await expect(page).not.toHaveURL(/\/auth\/login/, SHORT_TIMEOUT_OPT);
 
     // Second request — full settings (authed)
     const secondResp = await secondSettingsPromise;

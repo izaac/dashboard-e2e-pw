@@ -3,6 +3,7 @@ import { RancherSetupLoginPagePo } from '@/e2e/po/pages/rancher-setup-login.po';
 import { RancherSetupConfigurePage } from '@/e2e/po/pages/rancher-setup-configure.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Rancher setup — equivalent of cypress/e2e/tests/setup/rancher-setup.spec.ts
@@ -124,7 +125,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     // Wait for first login preferences
     const prefsPromise = page.waitForResponse('**/v1/userpreferences/*');
 
-    await expect(page).toHaveURL(/\/home/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/home/, SHORT_TIMEOUT_OPT);
 
     const prefsResp = await prefsPromise;
 

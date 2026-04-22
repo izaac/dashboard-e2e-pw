@@ -4,6 +4,7 @@ import {
   fleetContentsGetResponseEmpty,
   fleetContentsResponseSmallSet,
 } from '@/e2e/blueprints/explorer/fleet/contents-get';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
@@ -51,7 +52,7 @@ test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const headerCells = contentsPage.list().resourceTable().sortableTable().headerContentCells();
 
-      await expect(headerCells.first()).toBeVisible({ timeout: 15000 });
+      await expect(headerCells.first()).toBeVisible(SHORT_TIMEOUT_OPT);
 
       const headers = await contentsPage.list().resourceTable().sortableTable().headerNames();
 

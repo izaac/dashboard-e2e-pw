@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
   test('can see error when authentication fails', async ({ login, page, rancherApi, envMeta }) => {
@@ -79,7 +80,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
 
       const responsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
@@ -149,7 +150,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
 
       const putResponsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'PUT',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
@@ -207,7 +208,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
 
       const postResponsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
@@ -259,7 +260,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
       const promptRemove = new PromptRemove(page);
       const deletePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await promptRemove.remove();
@@ -307,7 +308,7 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
       const promptRemove = new PromptRemove(page);
       const deletePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudCredentials') && resp.request().method() === 'DELETE',
-        { timeout: 15000 },
+        SHORT_TIMEOUT_OPT,
       );
 
       await promptRemove.remove();

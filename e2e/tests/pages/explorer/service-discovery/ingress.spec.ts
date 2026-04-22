@@ -5,6 +5,7 @@ import {
   ingressesGetReponseEmpty,
   ingressesGetResponseSmallSet,
 } from '@/e2e/blueprints/explorer/workloads/service-discovery/ingresses-get';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
   test('does not show console warning due to lack of secondary schemas', async ({ page, login }) => {
@@ -348,7 +349,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = ingressListPage.list().resourceTable().sortableTable();
 
-      await sortableTable.rowElementWithName(ingressHeadlessName).waitFor({ timeout: 15000 });
+      await sortableTable.rowElementWithName(ingressHeadlessName).waitFor(SHORT_TIMEOUT_OPT);
       await expect(sortableTable.rowWithName(ingressHeadlessName).column(1)).toContainText('Active', {
         timeout: 30000,
       });

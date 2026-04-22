@@ -3,6 +3,7 @@ import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BannersPo from '@/e2e/po/components/banners.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('User can update their preferences', () => {
   test.describe.configure({ mode: 'serial' });
@@ -35,7 +36,7 @@ test.describe('User can update their preferences', () => {
 
       // Now test nav via user menu — go to home-ish page first
       await page.goto('./home', { waitUntil: 'domcontentloaded' });
-      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
+      await expect(page).not.toHaveURL(/\/auth\/login/, SHORT_TIMEOUT_OPT);
 
       await userMenu.clickMenuItem('Preferences');
       await userMenu.isClosed();
