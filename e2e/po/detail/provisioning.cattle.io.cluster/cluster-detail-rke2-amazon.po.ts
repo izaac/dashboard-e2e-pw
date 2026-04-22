@@ -126,7 +126,11 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   tableRowCell(rowText: string, cellIndex: number): Locator {
-    return this.page.locator(`tr:has-text("${rowText}") td`).nth(cellIndex);
+    return this.page
+      .locator(`tr`, { hasText: new RegExp(`\\b${rowText}\\b`) })
+      .first()
+      .locator('td')
+      .nth(cellIndex);
   }
 
   tableRowContaining(text: string): Locator {

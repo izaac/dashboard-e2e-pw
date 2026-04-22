@@ -74,19 +74,19 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
   }
 
   scaler(): Locator {
-    return this.page.getByTestId('scaler');
+    return this.page.locator('.plus-minus').or(this.page.getByTestId('scaler')).first();
   }
 
   scalerValue(): Locator {
-    return this.scaler().getByTestId('scaler-value');
+    return this.scaler().locator('.value');
   }
 
   scaleUpButton(): Locator {
-    return this.scaler().getByTestId('scaler-increase');
+    return this.scaler().locator('button:has(.icon-plus)');
   }
 
   scaleDownButton(): Locator {
-    return this.scaler().getByTestId('scaler-decrease');
+    return this.scaler().locator('button:has(.icon-minus)');
   }
 
   /** Wait for scale buttons to be enabled and no pending indicators visible */

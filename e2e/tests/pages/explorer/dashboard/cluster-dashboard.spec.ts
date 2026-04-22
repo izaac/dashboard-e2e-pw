@@ -106,7 +106,9 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
 
     const header = new HeaderPo(page);
     const copyResponse = page.waitForResponse(
-      (resp) => resp.url().includes('/v1/ext.cattle.io.kubeconfigs') && resp.request().method() === 'POST',
+      (resp) =>
+        (resp.url().includes('/v1/ext.cattle.io.kubeconfigs') || resp.url().includes('action=generateKubeconfig')) &&
+        resp.request().method() === 'POST',
     );
 
     await header.copyKubeconfig().click();

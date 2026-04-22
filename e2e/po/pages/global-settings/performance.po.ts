@@ -66,15 +66,15 @@ export class PerformancePagePo extends RootClusterPage {
   }
 
   incrementalLoadingCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable incremental loading' });
+    return this.page.getByRole('checkbox', { name: 'Enable incremental loading' }).last();
   }
 
   manualRefreshCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable manual refresh of data for lists' });
+    return this.page.getByRole('checkbox', { name: 'Enable manual refresh of data for lists' }).last();
   }
 
   garbageCollectionCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable Garbage Collection' });
+    return this.page.getByRole('checkbox', { name: 'Enable Garbage Collection' }).last();
   }
 
   garbageCollectionThresholdInput(): Locator {
@@ -82,11 +82,11 @@ export class PerformancePagePo extends RootClusterPage {
   }
 
   nsFilterCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable Required Namespace / Project Filtering' });
+    return this.page.getByRole('checkbox', { name: 'Enable Required Namespace / Project Filtering' }).last();
   }
 
   advancedWorkerCheckbox(): Locator {
-    return this.page.getByRole('checkbox', { name: 'Enable Advanced Websocket Web Worker' });
+    return this.page.getByRole('checkbox', { name: 'Enable Advanced Websocket Web Worker' }).last();
   }
 
   confirmationModal(): CardPo {

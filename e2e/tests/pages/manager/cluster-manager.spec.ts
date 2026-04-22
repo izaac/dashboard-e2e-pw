@@ -237,12 +237,12 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
+      await expect(page).toHaveURL(/\/c\/local\/|\/local(?:[#?]|$)/);
 
       await clusterDetail.conditionsTab().click();
       await expect(page).toHaveURL(/conditions/);
 
-      await expect(clusterDetail.tableRowCell('Created', 0)).toContainText('True');
+      await expect(page.locator('tr[data-node-id="Created"]')).toContainText('True');
     });
 
     test('can navigate to Cluster Related Page', async ({ page, login }) => {

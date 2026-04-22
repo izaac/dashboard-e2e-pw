@@ -144,7 +144,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         await detailsPage.waitForPage();
 
         await detailsPage.openEmptyShowConfigurationLabelsLink();
-        await expect(detailsPage.labelsAndAnnotationsTab()).toBeVisible();
+        await expect(detailsPage.labelsAndAnnotationsTab()).toHaveAttribute('aria-selected', 'true');
       } finally {
         await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
         await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
