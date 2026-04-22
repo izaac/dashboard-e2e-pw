@@ -8,15 +8,16 @@ Everything you need to run the Playwright test suite for Rancher Dashboard, whet
 
 ### What you need installed
 
-- **Node.js 24+** — check with `node --version`
-- **Yarn** — check with `yarn --version`
-- **Docker** — only if you want Docker mode (see sections 4–6)
+- **Git** — check with `git --version`
+- **Node.js 24+** — check with `node --version` ([download](https://nodejs.org/))
+- **Yarn** — check with `yarn --version`. If you have Node 24+ with Corepack: `corepack enable` then `corepack prepare yarn@stable --activate`
+- **Docker** — only if you want Docker mode (see sections 4–6). Needs at least 6 GB RAM allocated.
 
 ### Set up the project
 
 ```bash
-# Clone the repo
-git clone git@github.com:izaac/dashboard-e2e-pw.git
+# Clone the repo (HTTPS — no SSH key needed)
+git clone https://github.com/izaac/dashboard-e2e-pw.git
 cd dashboard-e2e-pw
 
 # Install dependencies
@@ -263,6 +264,10 @@ npx playwright show-report
 6. Tests run sequentially against that Rancher instance
 7. Results land in `test-results/` and `playwright-report/` on your machine
 
+> **Standard user tests:** Tests tagged `@standardUser` need a non-admin user. The test fixture
+> creates a `standard_user` account automatically on first run — no manual setup needed. This
+> happens transparently whether you're using Docker or running against your own Rancher instance.
+
 ### Use a different Rancher version
 
 ```bash
@@ -406,15 +411,8 @@ cat test-results/FAILURE-SUMMARY.md
 This classifies each failure (timeout, selector not found, API error, assertion mismatch, etc.)
 and flags common issues like login page showing up or loading spinners still visible.
 
-### Viewing a trace
-
-Traces are step-by-step recordings of what happened during a failed test — every click, every network request, every DOM snapshot. They're the single best tool for figuring out what went wrong.
-
-```bash
-npx playwright show-trace test-results/<test-folder>/trace.zip
-```
-
-Or just open the HTML report — traces are clickable right there, no separate command needed.
+For a detailed walkthrough of how to investigate failures — understanding artifacts, diagnosing
+failure types, and reproducing issues — see [Debugging Failures](DEBUGGING-FAILURES.md).
 
 ---
 
