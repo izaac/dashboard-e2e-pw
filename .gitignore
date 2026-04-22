@@ -38,3 +38,4 @@ out/
 npm-debug.log*
 local.yaml
 .devenv/
+devenv.lock
