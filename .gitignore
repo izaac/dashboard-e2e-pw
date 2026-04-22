@@ -16,6 +16,12 @@ browser-logs/
 .env.*.local
 local.yaml
 
+# Devenv / Nix
+.devenv/
+.devenv.flake.nix
+devenv.lock
+.direnv/
+
 # Claude Code
 .claude/
 

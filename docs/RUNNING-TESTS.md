@@ -8,7 +8,7 @@ Everything you need to run the Playwright test suite for Rancher Dashboard, whet
 
 ### What you need installed
 
-- **Node.js 22+** — check with `node --version`
+- **Node.js 24+** — check with `node --version`
 - **Yarn** — check with `yarn --version`
 - **Docker** — only if you want Docker mode (see sections 4–6)
 
