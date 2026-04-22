@@ -81,8 +81,8 @@ class UsersListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().bulkActionDropDownButton(name);
   }
 
-  selectAll(): ComponentPo {
-    return this.resourceTable().sortableTable().selectAllCheckbox();
+  async selectAll(): Promise<void> {
+    await this.resourceTable().sortableTable().selectAll();
   }
 
   elementWithName(name: string): Locator {
