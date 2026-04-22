@@ -37,3 +37,4 @@ out/
 *.log
 npm-debug.log*
 local.yaml
+.devenv/
