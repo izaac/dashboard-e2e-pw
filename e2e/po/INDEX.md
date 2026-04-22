@@ -29,7 +29,7 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkVisible, checkNotVisible |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkExists, checkVisible, checkNotVisible |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+12) |
@@ -168,7 +168,7 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+45) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+46) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |

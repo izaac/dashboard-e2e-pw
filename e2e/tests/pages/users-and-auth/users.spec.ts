@@ -416,7 +416,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       const downloadPromise = page.waitForEvent('download');
 
-      await usersPo.list().bulkActionButton('Download YAML').click();
+      await usersPo.list().resourceTable().sortableTable().bulkActionButton('Download YAML').click();
 
       const download = await downloadPromise;
       const path = await download.path();
