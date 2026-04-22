@@ -286,12 +286,12 @@ This sets both the bootstrap password and the test login password.
 
 ---
 
-## 5. Running Tests with Docker (Sharded — 4 Ranchers)
+## 5. Running Tests with Docker (Sharded — 2 Ranchers)
 
-Instead of running all tests against one Rancher, you can spin up four Rancher instances and split the work across them. This cuts the wall-clock time roughly by four.
+Instead of running all tests against one Rancher, you can spin up two Rancher instances and split the work across them. This cuts the wall-clock time roughly in half.
 
 ```bash
-# Run all 4 shards
+# Run both shards
 docker compose -f docker-compose.sharded.yml up
 
 # With tag filter
@@ -307,10 +307,10 @@ docker compose -f docker-compose.sharded.yml down -v
 
 ### What happens
 
-1. Four Rancher containers (`rancher-1` through `rancher-4`) boot in parallel
-2. Four test runners each get one quarter of the tests (`--shard=1/4`, `--shard=2/4`, etc.)
+1. Two Rancher containers (`rancher-1` and `rancher-2`) boot in parallel
+2. Two test runners each get half of the tests (`--shard=1/2`, `--shard=2/2`)
 3. Each shard bootstraps its own Rancher independently
-4. When all four finish, a merge service combines the reports into one
+4. When both finish, a merge service combines the reports into one
 5. Final report lands in `playwright-report/`
 
 ### Resource requirements
@@ -319,9 +319,8 @@ docker compose -f docker-compose.sharded.yml down -v
 | --------------- | ---------- | -------------- |
 | Single Rancher  | ~6 GB      | 1×             |
 | 2 Ranchers      | ~10 GB     | ~2× faster     |
-| 4 Ranchers      | ~18 GB     | ~4× faster     |
 
-> **Heads up:** Four Rancher instances are hungry. Make sure Docker has enough memory allocated
+> **Heads up:** Two Rancher instances are hungry. Make sure Docker has enough memory allocated
 > (check Docker Desktop → Settings → Resources if you're on Mac/Windows).
 
 ---

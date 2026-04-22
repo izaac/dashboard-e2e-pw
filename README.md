@@ -29,9 +29,26 @@ npx playwright test e2e/tests/pages/generic/login.spec.ts
 
 # Run by test name
 npx playwright test -g "Log in with valid"
+```
 
-# Or start Rancher + run everything in Docker (no local setup needed)
+Or skip local setup entirely and use Docker:
+
+```bash
+# Start Rancher + run all tests (first run pulls ~2 GB, takes 10–15 min)
 docker compose up
+
+# Start Rancher in the background, run tests separately
+docker compose up rancher -d
+docker compose up tests
+
+# Run with a specific Rancher version
+RANCHER_IMAGE=docker.io/rancher/rancher:v2.14.0 docker compose up
+
+# Sharded mode — 2 Rancher instances, ~2× faster
+docker compose -f docker-compose.sharded.yml up
+
+# Stop everything
+docker compose down
 ```
 
 For the full story — tag filtering, Docker modes, sharding, debugging — see the guides below.
