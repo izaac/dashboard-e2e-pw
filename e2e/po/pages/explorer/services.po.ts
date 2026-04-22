@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 
 export class ServicesPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -21,6 +22,10 @@ export class ServicesPagePo extends PagePo {
 
   mastheadTitle(): Locator {
     return this.page.locator('.primaryheader h1, .title h1');
+  }
+
+  nameNsDescription(): NameNsDescriptionPo {
+    return new NameNsDescriptionPo(this.page, '[data-testid="name-ns-description"]');
   }
 
   nameInput(): Locator {

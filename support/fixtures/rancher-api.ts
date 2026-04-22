@@ -137,14 +137,22 @@ export class RancherApi {
     return { status: resp.status(), body: await resp.json().catch(() => ({})) };
   }
 
-  async setRancherResource(prefix: string, resourceType: string, resourceId: string, body: any) {
+  async setRancherResource(
+    prefix: string,
+    resourceType: string,
+    resourceId: string,
+    body: any,
+    failOnStatusCode = true,
+  ) {
     const resp = await this.request.put(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, {
       ...this.opts({ data: body }),
     });
 
-    expect(resp.status()).toBe(200);
+    if (failOnStatusCode) {
+      expect(resp.status()).toBe(200);
+    }
 
-    return { status: resp.status(), body: await resp.json() };
+    return { status: resp.status(), body: await resp.json().catch(() => ({})) };
   }
 
   async deleteRancherResource(prefix: string, resourceType: string, resourceId: string, failOnStatusCode = true) {

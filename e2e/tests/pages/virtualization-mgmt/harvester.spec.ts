@@ -163,39 +163,43 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     const clusterBody = await createClusterResp.json();
     const harvesterClusterId = clusterBody.id;
 
-    const harvesterDetails = new HarvesterClusterDetailsPo(page, undefined, undefined, harvesterClusterId);
+    try {
+      const harvesterDetails = new HarvesterClusterDetailsPo(page, undefined, undefined, harvesterClusterId);
 
-    await harvesterDetails.waitForPage(undefined, 'registration');
-    await expect(harvesterDetails.title()).toContainText(harvesterClusterName);
+      await harvesterDetails.waitForPage(undefined, 'registration');
+      await expect(harvesterDetails.title()).toContainText(harvesterClusterName);
 
-    // navigate to harvester list page and verify the logo and tagline do not display after cluster created
-    await harvesterPo.navTo();
-    await harvesterPo.waitForPage();
-    await harvesterPo
-      .list()
-      .resourceTable()
-      .sortableTable()
-      .rowWithName(harvesterClusterName)
-      .self()
-      .scrollIntoViewIfNeeded();
-    await expect(
-      harvesterPo.list().resourceTable().sortableTable().rowWithName(harvesterClusterName).self(),
-    ).toBeVisible();
-    await expect(harvesterPo.harvesterLogo()).not.toBeAttached();
-    await expect(harvesterPo.harvesterTagline()).not.toBeAttached();
+      // navigate to harvester list page and verify the logo and tagline do not display after cluster created
+      await harvesterPo.navTo();
+      await harvesterPo.waitForPage();
+      await harvesterPo
+        .list()
+        .resourceTable()
+        .sortableTable()
+        .rowWithName(harvesterClusterName)
+        .self()
+        .scrollIntoViewIfNeeded();
+      await expect(
+        harvesterPo.list().resourceTable().sortableTable().rowWithName(harvesterClusterName).self(),
+      ).toBeVisible();
+      await expect(harvesterPo.harvesterLogo()).not.toBeAttached();
+      await expect(harvesterPo.harvesterTagline()).not.toBeAttached();
 
-    // #14285: Should be able to edit cluster here
-    const actionMenu = await harvesterPo.list().actionMenu(harvesterClusterName);
+      // #14285: Should be able to edit cluster here
+      const actionMenu = await harvesterPo.list().actionMenu(harvesterClusterName);
 
-    await expect(actionMenu.getMenuItem('Edit Config')).toBeAttached();
-
-    // delete cluster
-    await page.keyboard.press('Escape');
-    await rancherApi.deleteRancherResource(
-      'v1',
-      'provisioning.cattle.io.clusters',
-      `fleet-default/${harvesterClusterId}`,
-    );
+      await expect(actionMenu.getMenuItem('Edit Config')).toBeAttached();
+      await page.keyboard.press('Escape');
+    } finally {
+      // Delete both provisioning and management cluster to avoid orphans
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${harvesterClusterId}`,
+        false,
+      );
+      await rancherApi.deleteRancherResource('v3', 'clusters', harvesterClusterId, false);
+    }
   });
 
   test('missing repo message should display when repo does NOT exist', async ({ page, rancherApi }) => {

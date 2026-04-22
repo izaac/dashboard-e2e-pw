@@ -305,39 +305,6 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
     );
   });
 
-  test('should not have JWT Authentication side menu entry for standard user', async ({ login, page, envMeta }) => {
-    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
-
-    await login({ username: 'standard_user', password: envMeta.password });
-
-    const homePage = new HomePagePo(page);
-
-    await homePage.goTo();
-    await homePage.manageButton().click();
-    await expect(page).toHaveURL(/\/c\/_\/manager/);
-
-    const jwtAuthPage = new JWTAuthenticationPagePo(page);
-
-    const advancedGroup = jwtAuthPage
-      .sideNav()
-      .self()
-      .locator('a, .accordion-title, .side-nav-group-name')
-      .filter({ hasText: 'Advanced' });
-    const advancedVisible = await advancedGroup.isVisible({ timeout: 3000 }).catch((e: Error) => {
-      if (!e.message.includes('strict mode violation')) {
-        throw e;
-      }
-
-      return false;
-    });
-
-    if (advancedVisible) {
-      await advancedGroup.click();
-    }
-
-    await expect(jwtAuthPage.jwtAuthNavLink()).not.toBeAttached();
-  });
-
   test('should display JWT Authentication list page', async ({ login, page, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
 
@@ -387,3 +354,42 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
     }
   });
 });
+
+test.describe(
+  'JWT Authentication (Standard User)',
+  { tag: ['@manager', '@standardUser', '@needsInfra', '@cloudCredential'] },
+  () => {
+    test('should not have JWT Authentication side menu entry for standard user', async ({ login, page, envMeta }) => {
+      test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+      await login({ username: 'standard_user', password: envMeta.password });
+
+      const homePage = new HomePagePo(page);
+
+      await homePage.goTo();
+      await homePage.manageButton().click();
+      await expect(page).toHaveURL(/\/c\/_\/manager/);
+
+      const jwtAuthPage = new JWTAuthenticationPagePo(page);
+
+      const advancedGroup = jwtAuthPage
+        .sideNav()
+        .self()
+        .locator('a, .accordion-title, .side-nav-group-name')
+        .filter({ hasText: 'Advanced' });
+      const advancedVisible = await advancedGroup.isVisible({ timeout: 3000 }).catch((e: Error) => {
+        if (!e.message.includes('strict mode violation')) {
+          throw e;
+        }
+
+        return false;
+      });
+
+      if (advancedVisible) {
+        await advancedGroup.click();
+      }
+
+      await expect(jwtAuthPage.jwtAuthNavLink()).not.toBeAttached();
+    });
+  },
+);

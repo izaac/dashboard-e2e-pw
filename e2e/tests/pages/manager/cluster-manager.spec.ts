@@ -8,6 +8,7 @@ import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisionin
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -29,6 +30,19 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
     await login();
 
+    // Ensure AKS is Active before test — prior specs may have left it Inactive
+    const kev2Setting = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators');
+    const body = kev2Setting.body;
+    const operators = JSON.parse(body.value || '[]');
+    const aks = operators.find((op: any) => op.name === 'aks');
+
+    if (aks && !aks.active) {
+      aks.active = true;
+      body.value = JSON.stringify(operators);
+      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators', body);
+      await page.waitForTimeout(2000);
+    }
+
     const providersPage = new HostedProvidersPagePo(page);
     const clusterCreatePage = new ClusterManagerCreatePagePo(page);
     const clusterList = new ClusterManagerListPagePo(page);
@@ -37,7 +51,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await providersPage.waitForPage();
 
     // Assert AKS is active
-    await expect(providersPage.list().details('Azure AKS', 1)).toContainText('Active');
+    await expect(providersPage.list().details('Azure AKS', 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
 
     try {
       // Deactivate AKS

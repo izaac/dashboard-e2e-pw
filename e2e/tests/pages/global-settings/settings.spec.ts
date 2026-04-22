@@ -515,8 +515,21 @@ test.describe('Settings', () => {
     await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
   });
 
-  test('can update agent-tls-mode', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+  test('can update agent-tls-mode', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'agent-tls-mode';
+
+    // Webhook can reject agent-tls-mode changes for multiple reasons (downstream cluster health,
+    // AgentConnectCheck conditions, etc). Probe with a no-op PUT to verify the webhook allows changes.
+    const current = await rancherApi.getRancherResource('v1', `management.cattle.io.settings`, settingName);
+    const probeResp = await rancherApi.setRancherResource(
+      'v1',
+      'management.cattle.io.settings',
+      settingName,
+      { ...current.body, value: current.body.value || current.body.default },
+      false,
+    );
+
+    test.skip(probeResp.status !== 200, `Webhook rejects agent-tls-mode changes (${probeResp.status})`);
 
     await navToSettings(page);
     await editSetting(page, settingName);
