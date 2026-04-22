@@ -67,101 +67,12 @@ async function waitForRancherReady(apiUrl: string, password: string, username: s
 }
 
 /**
- * Ensure standard_user exists with global 'user' role and project-member on local/Default.
- * Idempotent: skips if user already exists. Uses raw fetch (no rancherApi fixture available).
- */
-async function ensureStandardUser(apiUrl: string, cookie: string, password: string): Promise<void> {
-  const headers = { Cookie: cookie, 'Content-Type': 'application/json', Accept: 'application/json' };
-
-  // Check if standard_user already exists
-  const usersResp = await fetch(`${apiUrl}/v1/management.cattle.io.users`, {
-    headers,
-    signal: AbortSignal.timeout(10_000),
-  });
-
-  if (!usersResp.ok) {
-    console.warn(`[auth.setup] Could not list users (${usersResp.status}), skipping standard_user ensure`);
-
-    return;
-  }
-
-  const users = await usersResp.json();
-  const existing = users.data?.find((u: { username?: string }) => u.username === 'standard_user');
-
-  if (existing) {
-    console.log('[auth.setup] standard_user already exists, skipping creation');
-
-    return;
-  }
-
-  console.log('[auth.setup] Creating standard_user...');
-
-  // Create user
-  const createResp = await fetch(`${apiUrl}/v1/management.cattle.io.users`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ type: 'user', enabled: true, mustChangePassword: false, username: 'standard_user' }),
-  });
-
-  if (!createResp.ok) {
-    throw new Error(`Failed to create standard_user: ${createResp.status} ${await createResp.text()}`);
-  }
-
-  const user = await createResp.json();
-  const userId = user.id;
-
-  // Wait for principalIds to populate
-  await new Promise((r) => setTimeout(r, 500));
-
-  const userDataResp = await fetch(`${apiUrl}/v1/management.cattle.io.users/${userId}`, { headers });
-  const userData = await userDataResp.json();
-  const principalId = userData.principalIds?.[0];
-
-  // Set password
-  await fetch(`${apiUrl}/v1/secrets`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      type: 'secret',
-      metadata: { namespace: 'cattle-local-user-passwords', name: userId },
-      data: { password: Buffer.from(password).toString('base64') },
-    }),
-  });
-
-  // Global role binding: 'user'
-  await fetch(`${apiUrl}/v3/globalrolebindings`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ type: 'globalRoleBinding', globalRoleId: 'user', userId }),
-  });
-
-  // Project role binding: project-member on local/Default
-  if (principalId) {
-    const projResp = await fetch(`${apiUrl}/v3/projects?name=Default&clusterId=local`, { headers });
-    const projData = await projResp.json();
-    const projectId = projData.data?.[0]?.id;
-
-    if (projectId) {
-      await fetch(`${apiUrl}/v3/projectroletemplatebindings`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          type: 'projectroletemplatebinding',
-          roleTemplateId: 'project-member',
-          userPrincipalId: principalId,
-          projectId,
-        }),
-      });
-    }
-  }
-
-  console.log('[auth.setup] standard_user created successfully');
-}
-
-/**
  * Authenticate as admin and persist session cookies + localStorage.
  * All tests in the 'chromium' project reuse this state via storageState,
  * skipping the login page entirely.
+ *
+ * standard_user creation is handled by the worker-scoped rancherApi fixture
+ * (ensureStandardUser runs on init), so it's not needed here.
  */
 setup('authenticate as admin', async ({ page }) => {
   const meta = setup.info().project.metadata as Record<string, string>;
@@ -190,19 +101,4 @@ setup('authenticate as admin', async ({ page }) => {
   await expect(page).toHaveURL(/\/home/, { timeout: 60000 });
 
   await page.context().storageState({ path: ADMIN_AUTH_FILE });
-
-  // Ensure standard_user exists (idempotent) — needs admin session cookie
-  const loginResp = await fetch(`${meta.api}/v3-public/localProviders/local?action=login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, responseType: 'cookie' }),
-  });
-  const sessCookie = loginResp.headers
-    .getSetCookie?.()
-    .find((c) => c.startsWith('R_SESS='))
-    ?.split(';')[0];
-
-  if (sessCookie) {
-    await ensureStandardUser(meta.api, sessCookie, password);
-  }
 });
