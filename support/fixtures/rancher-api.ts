@@ -64,6 +64,133 @@ export class RancherApi {
     }
   }
 
+  /**
+   * Pre-login health gate: verify Rancher API is responsive.
+   * Retries with backoff to ride out transient instability from controller churn.
+   */
+  async waitForReady(): Promise<void> {
+    if (!this.credentials) {
+      return;
+    }
+
+    const { username, password } = this.credentials;
+    const maxRetries = 5;
+    const backoffMs = 10_000;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const loginResp = await fetch(`${this.apiUrl}/v3-public/localProviders/local?action=login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, responseType: 'cookie' }),
+          signal: AbortSignal.timeout(5_000),
+        });
+
+        if (!loginResp.ok) {
+          throw new Error(`Login returned ${loginResp.status}`);
+        }
+
+        const cookie = loginResp.headers.getSetCookie?.().find((c) => c.startsWith('R_SESS='));
+
+        if (!cookie) {
+          throw new Error('No R_SESS cookie in login response');
+        }
+
+        const countsResp = await fetch(`${this.apiUrl}/v1/counts`, {
+          headers: { Cookie: cookie.split(';')[0] },
+          signal: AbortSignal.timeout(5_000),
+        });
+
+        if (!countsResp.ok) {
+          throw new Error(`/v1/counts returned ${countsResp.status}`);
+        }
+
+        return;
+      } catch (err) {
+        if (attempt === maxRetries) {
+          throw new Error(
+            `Rancher API unresponsive after ${maxRetries} attempts (${(maxRetries * backoffMs) / 1000}s). ` +
+              `Last error: ${err instanceof Error ? err.message : err}. ` +
+              'Likely cause: controller churn from feature flag toggles or helm operations.',
+          );
+        }
+
+        await new Promise((r) => setTimeout(r, backoffMs));
+      }
+    }
+  }
+
+  /**
+   * Ensure standard_user exists with global 'user' role and project-member on local/Default.
+   * Idempotent: skips if user already exists.
+   */
+  async ensureStandardUser(password: string): Promise<void> {
+    const headers = this.headers();
+
+    try {
+      const usersResp = await this.getRancherResource('v1', 'management.cattle.io.users');
+      const existing = usersResp.body.data?.find((u: { username?: string }) => u.username === 'standard_user');
+
+      if (existing) {
+        return;
+      }
+    } catch {
+      console.warn('[RancherApi] Could not list users, skipping standard_user ensure');
+
+      return;
+    }
+
+    console.log('[RancherApi] Creating standard_user...');
+
+    const userResp = await this.createRancherResource('v1', 'management.cattle.io.users', {
+      type: 'user',
+      enabled: true,
+      mustChangePassword: false,
+      username: 'standard_user',
+    });
+
+    const userId = userResp.body.id;
+
+    await new Promise((r) => setTimeout(r, MEDIUM_API_DELAY));
+
+    // Set password
+    await this.createRancherResource('v1', 'secrets', {
+      type: 'secret',
+      metadata: { namespace: 'cattle-local-user-passwords', name: userId },
+      data: { password: Buffer.from(password).toString('base64') },
+    });
+
+    // Global role binding: 'user'
+    await this.request.post(`${this.apiUrl}/v3/globalrolebindings`, {
+      ...this.opts({ data: { type: 'globalRoleBinding', globalRoleId: 'user', userId } }),
+    });
+
+    // Project role binding: project-member on local/Default
+    const userData = await this.getRancherResource('v1', 'management.cattle.io.users', userId);
+    const principalId = userData.body.principalIds?.[0];
+
+    if (principalId) {
+      try {
+        const project = await this.getProjectByName('local', 'Default');
+
+        await this.request.post(`${this.apiUrl}/v3/projectroletemplatebindings`, {
+          ...this.opts({
+            data: {
+              type: 'projectroletemplatebinding',
+              roleTemplateId: 'project-member',
+              userPrincipalId: principalId,
+              projectId: project.id,
+            },
+          }),
+        });
+      } catch {
+        console.warn('[RancherApi] Could not set project role — Default project may not exist');
+      }
+    }
+
+    console.log('[RancherApi] standard_user created');
+  }
+
   private headers() {
     const h: Record<string, string> = { Accept: 'application/json' };
 
