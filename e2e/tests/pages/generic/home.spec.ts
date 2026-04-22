@@ -143,13 +143,9 @@ test.describe('Home Page', () => {
       ];
 
       const headers = homePage.tableHeaders();
-      const count = await headers.count();
 
-      for (let i = 0; i < count && i < expectedHeaders.length; i++) {
-        await expect(headers.nth(i)).not.toHaveText('');
-        const text = (await headers.nth(i).innerText()).trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
-
-        expect(text).toBe(expectedHeaders[i]);
+      for (let i = 0; i < expectedHeaders.length; i++) {
+        await expect(headers.nth(i)).toHaveText(expectedHeaders[i]);
       }
     });
   });

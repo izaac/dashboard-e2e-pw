@@ -1,4 +1,6 @@
 import { test, expect } from '@/support/fixtures';
+import * as fs from 'fs';
+import * as jsyaml from 'js-yaml';
 import {
   FleetApplicationListPagePo,
   FleetGitRepoCreateEditPo,
@@ -218,9 +220,19 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await header.selectWorkspace(workspace);
 
+        const downloadPromise = page.waitForEvent('download');
         const downloadMenu = await listPage.list().actionMenu(editRepoName);
 
         await downloadMenu.getMenuItem('Download YAML').click();
+        const download = await downloadPromise;
+
+        expect(download.suggestedFilename()).toContain(editRepoName);
+
+        const yamlContent = fs.readFileSync((await download.path()) as string, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('GitRepo');
+        expect(parsed.metadata.name).toBe(editRepoName);
 
         await expect(listPage.sortableTable().self()).toBeVisible();
       } finally {

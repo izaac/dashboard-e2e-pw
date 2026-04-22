@@ -58,13 +58,10 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
       await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
 
       // Name is mandatory — verify placeholder has no "optional"
-      const placeholder = await cloudCredentialsPage
-        .createEditCloudCreds()
-        .nameNsDescription()
-        .name()
-        .getAttributeValue('placeholder');
-
-      expect(placeholder).not.toContain('optional');
+      await expect(cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().self()).not.toHaveAttribute(
+        'placeholder',
+        /optional/i,
+      );
 
       await cloudCredentialsPage
         .createEditCloudCreds()

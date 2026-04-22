@@ -4,13 +4,13 @@
 
 ### Web-first assertion violations
 
-- [ ] `user-retention.spec.ts` — 4x `expect(await ...value()).toBe()` → `toHaveValue()`
-- [ ] `home.spec.ts` — 6x `await .innerText()` + manual expect → `toContainText()`
+- [x] `user-retention.spec.ts` — 4x `expect(await ...value()).toBe()` → `toHaveValue()`
+- [x] `home.spec.ts` — 6x `await .innerText()` + manual expect → `toContainText()`
 - [ ] `settings-p2.spec.ts` — `await .innerText()` → `toContainText()`
-- [ ] `cloud-credentials.spec.ts` — `getAttributeValue('placeholder')` → `toHaveAttribute()`
-- [ ] `cluster-list.spec.ts` — `await .innerText()` → `toContainText()`
-- [ ] `feature-flags.spec.ts` — `await rowElements().count()` → `toHaveCount()`
-- [ ] `custom-resource-definitions.spec.ts` — `await firstCell.innerText()` → `not.toHaveText('')`
+- [x] `cloud-credentials.spec.ts` — `getAttributeValue('placeholder')` → `toHaveAttribute()`
+- [x] `cluster-list.spec.ts` — `await .innerText()` → `toContainText()`
+- [x] `feature-flags.spec.ts` — `await rowElements().count()` → `toHaveCount()`
+- [x] `custom-resource-definitions.spec.ts` — `await firstCell.innerText()` → `not.toHaveText('')`
 
 ### Raw selectors in specs (move to POs)
 
@@ -24,10 +24,10 @@
 
 ### Missing cleanup / state restore
 
-- [ ] `deployments.spec.ts` — wrap `deleteRancherResource` in `try/finally`
-- [ ] `kontainer-drivers.spec.ts` — wrap driver cleanup in `try/finally`
-- [ ] `extensions.spec.ts` — restore `display-add-extension-repos-banner` setting
-- [ ] `elemental.spec.ts` — add teardown for 4 created resources
+- [x] `deployments.spec.ts` — wrap `deleteRancherResource` in `try/finally`
+- [x] `kontainer-drivers.spec.ts` — wrap driver cleanup in `try/finally`
+- [x] `extensions.spec.ts` — restore `display-add-extension-repos-banner` setting
+- [x] `elemental.spec.ts` — add teardown for 4 created resources
 
 ### Manual waits
 
@@ -66,8 +66,8 @@
 
 ### Systemic patterns (recurring across many specs)
 
-- [ ] Fleet delete assertions — add `checkRowCount` + `not.contain` after delete (~8 specs)
-- [ ] YAML download content — verify kind/metadata.name, not just filename (~8 specs)
+- [x] Fleet delete assertions — add `checkRowCount` + `not.contain` after delete (~8 specs)
+- [x] YAML download content — verify kind/metadata.name, not just filename (~8 specs)
 - [ ] Response body deep checks — services, ingress, network-policy (~5 specs)
 
 ## Not yet validated (need credentials or infra)
@@ -113,6 +113,16 @@
 
 - [ ] `pods.spec.ts` — 1 test (pod shell exec, needs running pod)
 - [ ] `connection.spec.ts` — 1 test (WebSocket folder creation, needs TLS helper)
+
+## Safety Guards
+
+- [x] `auth.setup.ts` — pre-login health gate: pings `/v1/counts` with retry+backoff before browser login
+- [x] `feature-flags.spec.ts` — afterAll resets dangerous flags (`oidc-provider`, `harvester`, `istio-virtual-service-ui`) to default
+- [x] `deployments.spec.ts` — `waitForResourceState` before redeploy to avoid 409 Conflict
+
+## Cleanup
+
+- [ ] Replace scattered `{ timeout: 15000 }` / `{ timeout: 60000 }` with global config or named constants
 
 ## Specs to debug
 

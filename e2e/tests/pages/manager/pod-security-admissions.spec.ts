@@ -1,4 +1,6 @@
 import { test, expect } from '@/support/fixtures';
+import * as fs from 'fs';
+import * as jsyaml from 'js-yaml';
 import PodSecurityAdmissionsPagePo from '@/e2e/po/pages/cluster-manager/pod-security-admissions.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import {
@@ -234,6 +236,12 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toBe(`${psaName}.yaml`);
+
+    const yamlContent = fs.readFileSync((await download.path()) as string, 'utf-8');
+    const parsed: any = jsyaml.load(yamlContent);
+
+    expect(parsed.kind).toBe('PodSecurityAdmissionConfigurationTemplate');
+    expect(parsed.metadata.name).toBe(psaName);
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', PSA_RESOURCE, psaName, false);

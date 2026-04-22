@@ -88,9 +88,8 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       const firstCell = crdsPage.sortableTable().rowCell(crdsPage.sortableTable().rowElements().first(), 2);
 
       await expect(firstCell).toBeVisible();
+      await expect(firstCell).not.toHaveText('');
       const firstRowBefore = await firstCell.innerText();
-
-      expect(firstRowBefore.length).toBeGreaterThan(0);
 
       await crdsPage.sortableTable().sort(2).click();
 

@@ -84,18 +84,19 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     const body = await resp.json();
     const driverId = body.id;
 
-    // Wait for driver to become active
-    await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: 120000 });
+    try {
+      // Wait for driver to become active
+      await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: 120000 });
 
-    // Verify driver appears on cluster create page
-    await clusterList.goTo();
-    await clusterList.waitForPage();
-    await clusterList.createCluster();
-    await createCluster.waitForPage();
-    await createCluster.gridElementExistanceByName('example', 'toBeVisible');
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+      // Verify driver appears on cluster create page
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createCluster.waitForPage();
+      await createCluster.gridElementExistanceByName('example', 'toBeVisible');
+    } finally {
+      await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', driverId, false);
+    }
   });
 
   test('will show error if could not deactivate driver', async ({ page, login }) => {

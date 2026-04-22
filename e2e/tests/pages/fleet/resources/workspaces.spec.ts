@@ -6,6 +6,8 @@ import {
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { fleetWorkspacesSmallResponse } from '@/e2e/blueprints/fleet/workspaces-get';
+import * as jsyaml from 'js-yaml';
+import * as fs from 'fs';
 
 test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai'] }, () => {
@@ -215,6 +217,13 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
         ]);
 
         expect(download.suggestedFilename()).toBe(`${customWorkspace}.yaml`);
+
+        const downloadPath = await download.path();
+        const yamlContent = fs.readFileSync(downloadPath!, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('FleetWorkspace');
+        expect(parsed.metadata.name).toBe(customWorkspace);
       } finally {
         await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', customWorkspace, false);
       }
@@ -235,6 +244,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
         await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).toBeVisible();
 
         const actionMenu = await listPage.list().actionMenu(deleteName);
 
@@ -249,6 +259,9 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
         await prompt.confirmField().set(deleteName);
         await prompt.remove();
         await responsePromise;
+
+        // Fleet lists update via websocket — navigate fresh to ensure data after delete
+        await listPage.goTo();
         await listPage.waitForPage();
 
         await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();

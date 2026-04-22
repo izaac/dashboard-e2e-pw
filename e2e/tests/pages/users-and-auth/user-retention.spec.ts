@@ -136,11 +136,11 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
 
       await userRetentionPo.disableAfterPeriodCheckbox().checkExists();
       await userRetentionPo.disableAfterPeriodCheckbox().isChecked();
-      expect(await userRetentionPo.disableAfterPeriodInput().value()).toBe('300h');
+      await expect(userRetentionPo.disableAfterPeriodInput().self()).toHaveValue('300h');
       await userRetentionPo.deleteAfterPeriodCheckbox().isChecked();
-      expect(await userRetentionPo.deleteAfterPeriodInput().value()).toBe('600h');
-      expect(await userRetentionPo.userRetentionCron().value()).toBe('0 0 1 1 *');
-      expect(await userRetentionPo.userLastLoginDefault().value()).toBe('1718744536000');
+      await expect(userRetentionPo.deleteAfterPeriodInput().self()).toHaveValue('600h');
+      await expect(userRetentionPo.userRetentionCron().self()).toHaveValue('0 0 1 1 *');
+      await expect(userRetentionPo.userLastLoginDefault().self()).toHaveValue('1718744536000');
     } finally {
       await resetRetentionSettings(rancherApi);
     }

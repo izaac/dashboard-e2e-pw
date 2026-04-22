@@ -31,10 +31,58 @@ async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boo
   await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flagName, body);
 }
 
+// Flags that trigger helm operations or controller restarts when toggled.
+// afterAll resets them to default to prevent poisoning later specs.
+const DANGEROUS_FLAGS = ['oidc-provider', 'harvester', 'istio-virtual-service-ui'];
+
 test.describe('Feature Flags', () => {
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
+  });
+
+  test.afterAll(async ({ rancherApi }) => {
+    let resetCount = 0;
+
+    for (const flag of DANGEROUS_FLAGS) {
+      try {
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flag);
+        const body = resp.body;
+
+        if (body.spec?.value !== undefined && body.spec.value !== null) {
+          body.spec.value = null;
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flag, body);
+          resetCount++;
+        }
+      } catch (err) {
+        console.warn(`Failed to reset feature flag '${flag}':`, err);
+      }
+    }
+
+    // Flag resets trigger controller churn and pod restarts — wait for Rancher to stabilize.
+    // /v1/counts is the canary: it hangs when controllers are thrashing.
+    if (resetCount > 0) {
+      const maxAttempts = 6;
+      const intervalMs = 15_000;
+
+      for (let i = 1; i <= maxAttempts; i++) {
+        await new Promise((r) => setTimeout(r, intervalMs));
+
+        try {
+          const resp = await rancherApi.getRancherResource('v1', 'counts');
+
+          if (resp.status === 200) {
+            return;
+          }
+        } catch {
+          // Rancher still restarting — keep waiting
+        }
+      }
+
+      console.warn(
+        `Rancher did not stabilize after ${(maxAttempts * intervalMs) / 1000}s — subsequent specs may be affected`,
+      );
+    }
   });
 
   test(
@@ -333,9 +381,7 @@ test.describe('Feature Flags', () => {
       const expectedHeaders = ['State', 'Name', 'Description', 'Restart Rancher'];
       const headers = featureFlagsPage.list().resourceTable().sortableTable().headerContentCells();
 
-      const count = await headers.count();
-
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < expectedHeaders.length; i++) {
         await expect(headers.nth(i)).toHaveText(expectedHeaders[i]);
       }
 
@@ -348,9 +394,8 @@ test.describe('Feature Flags', () => {
       const hiddenFlags = ['fleet', 'ui-sql-cache'];
       const hiddenCount = resp.body.data.filter((f: { id: string }) => hiddenFlags.includes(f.id)).length;
       const featureCount = resp.body.count - hiddenCount;
-      const rowCount = await featureFlagsPage.list().resourceTable().sortableTable().rowElements().count();
 
-      expect(rowCount).toBe(featureCount);
+      await expect(featureFlagsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(featureCount);
     });
   });
 });

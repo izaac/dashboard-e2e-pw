@@ -112,6 +112,29 @@ async function isExtensionInstalled(api: RancherApi, extensionName: string): Pro
 
 test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
+  let originalBannerSetting: string | undefined;
+
+  test.beforeAll(async ({ rancherApi }) => {
+    const resp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
+
+    if (resp.status !== 404) {
+      originalBannerSetting = resp.body?.value;
+    }
+  });
+
+  test.afterAll(async ({ rancherApi }) => {
+    if (originalBannerSetting !== undefined) {
+      const resp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
+
+      if (resp.status !== 404) {
+        await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
+          ...resp.body,
+          value: originalBannerSetting,
+        });
+      }
+    }
+  });
+
   test.beforeEach(async ({ login }) => {
     await login();
   });

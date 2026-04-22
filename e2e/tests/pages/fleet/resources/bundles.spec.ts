@@ -7,6 +7,7 @@ import {
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
+import * as fs from 'fs';
 
 const localWorkspace = 'fleet-local';
 const defaultWorkspace = 'fleet-default';
@@ -190,6 +191,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
         await headerPo.selectWorkspace(localWorkspace);
+        await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).toBeVisible();
 
         const actionMenu = await listPage.list().actionMenu(deleteName);
 
@@ -205,7 +207,11 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await prompt.remove();
         await responsePromise;
+
+        // Fleet lists update via websocket — navigate fresh to ensure data after delete
+        await listPage.goTo();
         await listPage.waitForPage();
+        await headerPo.selectWorkspace(localWorkspace);
 
         await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).not.toBeAttached();
       } finally {
@@ -240,6 +246,13 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
         ]);
 
         expect(download.suggestedFilename()).toBe(`${bundleName}.yaml`);
+
+        const downloadPath = await download.path();
+        const yamlContent = fs.readFileSync(downloadPath!, 'utf-8');
+        const parsed: any = jsyaml.load(yamlContent);
+
+        expect(parsed.kind).toBe('Bundle');
+        expect(parsed.metadata.name).toBe(bundleName);
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.bundles/${localWorkspace}`, bundleName, false);
       }

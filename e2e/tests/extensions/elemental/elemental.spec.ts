@@ -394,6 +394,24 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     expect(body.spec).toHaveProperty('osImage', UPDATE_GROUP_IMAGE_PATH);
   });
 
+  test.afterAll(async ({ rancherApi }) => {
+    // Best-effort cleanup of elemental resources created during tests
+    const resources = [
+      { type: 'elemental.cattle.io.managedosimages', id: `fleet-default/${UPDATE_GROUP_NAME}` },
+      { type: 'provisioning.cattle.io.clusters', id: `fleet-default/${ELEMENTAL_CLUSTER_NAME}` },
+      { type: 'elemental.cattle.io.machineinventories', id: `fleet-default/${MACHINE_INV_NAME}` },
+      { type: 'elemental.cattle.io.machineregistrations', id: `fleet-default/${REG_ENDPOINT_NAME}` },
+    ];
+
+    for (const { type, id } of resources) {
+      try {
+        await rancherApi.deleteRancherResource('v1', type, id, false);
+      } catch {
+        // Resource may not exist or CRDs not installed
+      }
+    }
+  });
+
   test('Should uninstall the extension', async ({ page }) => {
     const extensionsPo = new ExtensionsPagePo(page);
 

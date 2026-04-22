@@ -59,6 +59,10 @@ export class FleetBundleDetailsPo extends PagePo {
   }
 
   resourcesList(): ResourceTablePo {
-    return new ResourceTablePo(this.page, '[data-testid="sortable-table-list-container"]');
+    // Detail page has multiple sortable-table-list-container elements (Resources, Conditions, Events tabs).
+    // Scope to the first one (Resources tab, active by default).
+    const firstContainer = this.self().locator('[data-testid="sortable-table-list-container"]').first();
+
+    return new ResourceTablePo(this.page, ':scope', firstContainer);
   }
 }

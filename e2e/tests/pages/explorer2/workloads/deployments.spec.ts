@@ -25,26 +25,28 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       const deploymentName = `e2e-deploy-${Date.now()}`;
       const namespace = 'default';
 
-      const deploymentsCreatePage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+      try {
+        const deploymentsCreatePage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
 
-      await deploymentsCreatePage.goTo();
-      await deploymentsCreatePage.waitForPage();
+        await deploymentsCreatePage.goTo();
+        await deploymentsCreatePage.waitForPage();
 
-      const responsePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/apps.deployments') && resp.request().method() === 'POST',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/apps.deployments') && resp.request().method() === 'POST',
+        );
 
-      await deploymentsCreatePage.createWithUI(deploymentName, 'nginx', namespace);
+        await deploymentsCreatePage.createWithUI(deploymentName, 'nginx', namespace);
 
-      const response = await responsePromise;
+        const response = await responsePromise;
 
-      expect(response.status()).toBe(201);
-      const body = await response.json();
+        expect(response.status()).toBe(201);
+        const body = await response.json();
 
-      expect(body.metadata.name).toBe(deploymentName);
-      expect(body.metadata.namespace).toBe(namespace);
-
-      await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+        expect(body.metadata.name).toBe(deploymentName);
+        expect(body.metadata.namespace).toBe(namespace);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+      }
     });
 
     test('Should be able to scale the number of pods', async ({ page, login, rancherApi }) => {
@@ -496,6 +498,8 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
           },
         },
       });
+
+      await rancherApi.waitForResourceState('v1', 'apps.deployments', `${namespace}/${deploymentName}`);
 
       try {
         const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
