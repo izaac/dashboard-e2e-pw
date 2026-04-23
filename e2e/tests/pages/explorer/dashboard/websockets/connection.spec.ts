@@ -1,40 +1,24 @@
 import { test, expect } from '@/support/fixtures';
+import { execInPod } from '@/support/utils/pod-exec';
 
 const podImage = 'nginx:stable-alpine3.20-perl';
 
 test.describe('Pod management and WebSocket interaction', { tag: ['@jenkins', '@adminUser'] }, () => {
-  test('should create a new pod', async ({ rancherApi }) => {
-    const selfUser = await rancherApi.getRancherResource('v1', 'ext.cattle.io.selfuser', undefined, 201);
-    const userId = selfUser.body.status.userID;
+  test('should create a pod and manage folders via WebSocket exec', async ({ rancherApi, envMeta }) => {
+    const nsName = `e2e-ws-ns-${Date.now()}`;
+    const podName = `e2e-ws-pod-${Date.now()}`;
+    const tokenDesc = `e2e-ws-token-${Date.now()}`;
 
-    const nsName = `namespace${Date.now()}`;
-    const projName = `project${Date.now()}`;
+    await rancherApi.createNamespace(nsName);
 
-    const projResp = await rancherApi.createRancherResource('v3', 'projects', {
-      type: 'project',
-      name: projName,
-      clusterId: 'local',
-      members: [
-        { type: 'projectRoleTemplateBinding', userPrincipalId: `local://${userId}`, roleTemplateId: 'project-owner' },
-      ],
-    });
-
-    const projId = projResp.body.id;
+    const tokenResp = await rancherApi.createToken(tokenDesc);
+    const bearerToken = tokenResp.body.token;
+    const tokenId = tokenResp.body.id;
 
     try {
-      await rancherApi.createRancherResource('v1', 'namespaces', {
-        type: 'namespace',
-        metadata: {
-          annotations: { 'field.cattle.io/projectId': projId },
-          name: nsName,
-        },
-      });
+      await rancherApi.createPod(nsName, podName, podImage);
 
-      const podName = `e2e-ws-pod-${Date.now()}`;
-      const podResp = await rancherApi.createPod(nsName, podName, podImage, false);
-
-      expect(podResp.body.metadata.name).toBe(podName);
-
+      // Wait for container ready — phase Running + container ready
       const ready = await rancherApi.waitForRancherResource(
         'v1',
         'pods',
@@ -42,26 +26,45 @@ test.describe('Pod management and WebSocket interaction', { tag: ['@jenkins', '@
         (resp) => {
           const pod = resp.body?.data?.find((p: any) => p.id === `${nsName}/${podName}`);
 
-          return pod?.status?.phase === 'Running';
+          return pod?.status?.phase === 'Running' && pod?.status?.containerStatuses?.[0]?.ready === true;
         },
-        15,
+        30,
         2000,
       );
 
       expect(ready).toBe(true);
+
+      // Create a directory
+      const mkdirOutput = await execInPod(
+        envMeta.api,
+        nsName,
+        podName,
+        'container-0',
+        'mkdir test-directory && echo "Directory created successfully"',
+        bearerToken,
+      );
+
+      expect(mkdirOutput.some((msg) => msg.includes('Directory created successfully'))).toBe(true);
+
+      // Verify directory exists
+      const lsOutput = await execInPod(envMeta.api, nsName, podName, 'container-0', 'ls', bearerToken);
+
+      expect(lsOutput.some((msg) => msg.includes('test-directory'))).toBe(true);
+
+      // Delete the directory
+      const rmOutput = await execInPod(
+        envMeta.api,
+        nsName,
+        podName,
+        'container-0',
+        'rm -rf test-directory && echo "Directory deleted successfully"',
+        bearerToken,
+      );
+
+      expect(rmOutput.some((msg) => msg.includes('Directory deleted successfully'))).toBe(true);
     } finally {
+      await rancherApi.deleteRancherResource('v3', 'tokens', tokenId, false);
       await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
-      await rancherApi.deleteRancherResource('v3', 'projects', projId, false);
     }
   });
-
-  test.skip('should create a new folder via websocket', async () => {
-    // WebSocket exec via page.evaluate does not reliably work with self-signed certs.
-    // The upstream Cypress test uses a custom cy.setupWebSocket helper that bypasses TLS.
-    // TODO: Implement a native WebSocket helper that handles TLS for Playwright.
-  });
-
-  test.skip('should validate the folder name', async () => {});
-
-  test.skip('should delete the folder', async () => {});
 });

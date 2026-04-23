@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import { WorkloadsPodsListPagePo, WorkloadsPodsDetailPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
 import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/workloads.po';
+import ShellPo from '@/e2e/po/components/shell.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
   createBulkResources,
@@ -109,9 +110,58 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Should open a terminal', () => {
-    test.skip(true, 'Pod shell tests require a running pod with a shell — skipped in automated CI');
+    const podImage = 'nginx:alpine';
+    let shellNs: string;
+    let shellPodName: string;
 
-    test('should open a pod shell', async () => {});
+    test.beforeAll(async ({ rancherApi }) => {
+      shellNs = `e2e-shell-${Date.now()}`;
+      shellPodName = `e2e-shell-pod-${Date.now()}`;
+
+      await rancherApi.createNamespace(shellNs);
+      await rancherApi.createPod(shellNs, shellPodName, podImage);
+
+      // Wait for container ready — not just pod Running
+      const ready = await rancherApi.waitForRancherResource(
+        'v1',
+        'pods',
+        '',
+        (resp) => {
+          const pod = resp.body?.data?.find((p: any) => p.id === `${shellNs}/${shellPodName}`);
+
+          return pod?.status?.phase === 'Running' && pod?.status?.containerStatuses?.[0]?.ready === true;
+        },
+        30,
+        2000,
+      );
+
+      expect(ready).toBe(true);
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      await rancherApi.deleteRancherResource('v1', 'namespaces', shellNs, false);
+    });
+
+    test('should open a pod shell', async ({ page, login }) => {
+      await login();
+
+      const listPage = new WorkloadsPodsListPagePo(page);
+
+      await listPage.goTo();
+      await listPage.waitForPage();
+
+      // Filter to our specific pod so it's the first row
+      const table = listPage.sortableTable();
+
+      await table.filter(shellPodName);
+      await expect(table.rowElements()).toHaveCount(1);
+
+      const shell = new ShellPo(page);
+
+      await shell.openTerminal();
+      await shell.terminalStatus('Connected');
+      await shell.closeTerminal();
+    });
   });
 
   test.describe('When cloning a pod', () => {
