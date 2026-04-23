@@ -89,4 +89,9 @@ export class HomeLinksPagePo extends RootClusterPage {
   waitForRequests(): void {
     // Placeholder - upstream uses goToAndWaitForGet which is Cypress-specific
   }
+
+  /** KeyValue component debounces update events by 500ms — call after last field interaction */
+  async waitForKeyValueDebounce(): Promise<void> {
+    await this.page.waitForTimeout(600);
+  }
 }

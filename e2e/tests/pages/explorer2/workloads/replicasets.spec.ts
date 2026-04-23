@@ -1,6 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
-import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
 test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -31,11 +31,11 @@ test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
           await listPage.goTo();
           await listPage.waitForPage();
 
-          const sortableTable = new SortableTablePo(page, '.sortable-table');
+          const resourceTable = new ResourceTablePo(page, '.dashboard-root');
 
-          await expect(sortableTable.rowElementWithPartialName(replicasetName)).toBeVisible();
+          await expect(resourceTable.sortableTable().rowElementWithPartialName(replicasetName)).toBeVisible();
 
-          const actionMenu = await sortableTable.rowActionMenuOpen(replicasetName);
+          const actionMenu = await resourceTable.sortableTable().rowActionMenuOpen(replicasetName);
 
           await expect(actionMenu.self()).not.toContainText('Rollback');
         } finally {

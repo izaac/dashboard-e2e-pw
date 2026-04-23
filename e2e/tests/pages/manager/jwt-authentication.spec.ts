@@ -372,11 +372,7 @@ test.describe(
 
       const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
-      const advancedGroup = jwtAuthPage
-        .sideNav()
-        .self()
-        .locator('a, .accordion-title, .side-nav-group-name')
-        .filter({ hasText: 'Advanced' });
+      const advancedGroup = jwtAuthPage.sideNav().groupByName('Advanced');
       const advancedVisible = await advancedGroup.isVisible({ timeout: 3000 }).catch((e: Error) => {
         if (!e.message.includes('strict mode violation')) {
           throw e;

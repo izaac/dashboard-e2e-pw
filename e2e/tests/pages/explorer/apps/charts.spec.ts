@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, POLL_ITERATION_TIMEOUT } from '@/support/utils/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
 
@@ -155,8 +155,6 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 
     const totalCharts = await chartsPage.totalChartsCount();
 
-    let prevCount = 0;
-
     for (let i = 0; i < 50; i++) {
       const currentCount = await chartsPage.chartCards().count();
 
@@ -164,13 +162,13 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
         break;
       }
 
-      if (currentCount > prevCount) {
-        prevCount = currentCount;
-      }
-
       await chartsPage.scrollContainer().evaluate((el) => el.scrollTo(0, el.scrollHeight));
-      // Brief pause needed for virtual-scroll render cycle after programmatic scroll
-      await page.waitForTimeout(300);
+      // Poll until virtual-scroll renders new items after programmatic scroll
+      try {
+        await expect.poll(() => chartsPage.chartCards().count(), POLL_ITERATION_TIMEOUT).toBeGreaterThan(currentCount);
+      } catch {
+        // Scroll may not produce new items on every iteration — continue
+      }
     }
 
     await expect(chartsPage.chartCards()).toHaveCount(totalCharts, SHORT_TIMEOUT_OPT);

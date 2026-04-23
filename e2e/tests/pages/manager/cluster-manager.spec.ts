@@ -40,7 +40,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       aks.active = true;
       body.value = JSON.stringify(operators);
       await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators', body);
-      await page.waitForTimeout(2000);
     }
 
     const providersPage = new HostedProvidersPagePo(page);

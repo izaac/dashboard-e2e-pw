@@ -103,7 +103,9 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // Wait for either the elemental title or the error page to appear
     await page
-      .waitForSelector('[data-testid="elemental-main-title"], .main-layout.error, .fail-whale', SHORT_TIMEOUT_OPT)
+      .locator('[data-testid="elemental-main-title"], .main-layout.error, .fail-whale')
+      .first()
+      .waitFor({ state: 'visible', ...SHORT_TIMEOUT_OPT })
       .catch(() => {});
 
     // If the elemental extension is not installed, the route will hit fail-whale (404)

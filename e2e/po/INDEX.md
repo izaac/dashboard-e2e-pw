@@ -286,7 +286,7 @@
 | BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, isDisabled, hasAppropriateWidth (+35) |
 | BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+13) |
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
-| HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+10) |
+| HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+11) |
 | PerformancePagePo | performance.po.ts | RootClusterPage | — | super, saveButton, inactivityCheckbox, inactivityInput, garbageCollectionResourceCount, namespaceFilteringCheckbox, websocketWebWorkerCheckbox, serverSidePaginationCheckbox (+11) |
 | SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+12) |
 
@@ -321,6 +321,6 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, burgerMenuNavClusterKeyComboIconCheckByLabel, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, checkIfClusterMenuLinkIsHighlighted (+31) |
-| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList, activeLinksInGroup (+13) |
+| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+14) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |

@@ -14,12 +14,12 @@
 
 ### Raw selectors in specs (move to POs)
 
-- [ ] `rancher-setup.spec.ts` (setup/) — 3x `page.locator('[data-testid="local-login-username"]')` + `waitForTimeout(1000)`
-- [ ] `jwt-authentication.spec.ts` — `.locator('a, .accordion-title, ...').filter(...)` chain
-- [ ] `kontainer-drivers.spec.ts` — `driverRow.locator('[data-testid*="action-button"]')`
-- [ ] `replicasets.spec.ts` — `'.sortable-table'` passed to SortableTablePo constructor
-- [ ] `elemental.spec.ts` (extensions/) — `page.waitForSelector(...)` with raw CSS
-- [ ] `persistent-volume-claims.spec.ts` — `.evaluate((el) => el.classList.contains(...))`
+- [x] `rancher-setup.spec.ts` (setup/) — `page.locator('[data-testid=...]')` → `page.getByTestId()`
+- [x] `jwt-authentication.spec.ts` — raw CSS chain → `ProductNavPo.groupByName()`
+- [x] `kontainer-drivers.spec.ts` — raw action-button locator → `ListRowPo.actionBtn()` via PO
+- [x] `replicasets.spec.ts` — `SortableTablePo` with raw CSS → `ResourceTablePo` (encapsulates selector)
+- [x] `elemental.spec.ts` (extensions/) — `page.waitForSelector()` → `locator.waitFor()`
+- [x] `persistent-volume-claims.spec.ts` — `.evaluate(classList.contains)` → `getAttribute('class')`
 
 ### Missing cleanup / state restore
 
@@ -31,7 +31,7 @@
 ### Manual waits
 
 - [ ] `no-vai-setup.spec.ts` — 120s hardcoded `waitForTimeout` (needs polling alternative)
-- [ ] `rancher-setup.spec.ts` — unjustified `waitForTimeout(1000)`
+- [x] `rancher-setup.spec.ts` — `waitForTimeout(1000)` justified (grace period for extra settings requests) + eslint-disable comment
 
 ## Assertion Parity Gaps
 
