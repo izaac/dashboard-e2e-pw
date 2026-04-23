@@ -425,19 +425,19 @@ npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --reporter=line
 
 ### Step 5: Debug if it fails
 
+See [Debugging Failures](DEBUGGING-FAILURES.md) for the full investigation workflow. Quick version:
+
 ```bash
-# See the browser while the test runs
-npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --headed
-
-# Step through the test interactively (pause on each action)
-npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --debug
-
-# After a failure — get a classified summary of what went wrong
+# Summarize what went wrong
 yarn summarize-failures
 cat test-results/FAILURE-SUMMARY.md
-```
 
-The failure summary tells you *what kind* of failure happened (timeout, selector not found, API error, assertion mismatch) and shows relevant context (network errors, DOM state). Always read it before diving into raw screenshots or traces.
+# Watch the test run in the browser
+npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --headed
+
+# Step through interactively
+npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --debug
+```
 
 ---
 
@@ -608,22 +608,13 @@ Run through this before pushing:
 These save time. Use them instead of doing things by hand.
 
 ```bash
-# List all Page Objects with their classes, selectors, and methods
-yarn po-index
-cat e2e/po/INDEX.md
-
-# Compare POs against upstream Cypress — see what's missing or extra
-yarn po-diff
-cat e2e/po/UPSTREAM-DIFF.md
-
-# See test conversion progress (upstream Cypress vs our Playwright)
-yarn gap-map
-cat docs/ASSERTION-GAP-MAP.md
-
-# After a test failure — get a classified summary before digging into artifacts
-yarn summarize-failures
-cat test-results/FAILURE-SUMMARY.md
+yarn po-index            # List all POs with class, selector, and methods
+yarn po-diff             # Compare POs against upstream Cypress
+yarn gap-map             # Generate assertion gap map (upstream vs ours)
+yarn summarize-failures  # Classify test failures after a run
 ```
+
+See also: [Debugging Failures](DEBUGGING-FAILURES.md) for how to use `summarize-failures` and trace analysis.
 
 ---
 

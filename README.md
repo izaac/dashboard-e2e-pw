@@ -1,27 +1,46 @@
 # Rancher Dashboard E2E — Playwright
 
-Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/dashboard), migrated from the upstream Cypress suite.
+Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/dashboard). Tests run against a live Rancher instance — clicking buttons, creating resources, and verifying real UI behavior.
 
-This isn't a find-and-replace from Cypress to Playwright. Every test was rewritten to work reliably against a shared Rancher instance:
+## Get Running
 
-- **Atomic** — each test sets up what it needs, does its thing, and cleans up. No test depends on another running first.
-- **Idempotent** — run a test once or fifty times, pass or fail midway — it still works next time. State is never assumed, always set explicitly.
-- **Web-first assertions** — Playwright's auto-retrying assertions (`await expect(loc).toBeVisible()`) replace the snapshot-read pattern that causes flaky failures in naive conversions.
-- **No raw selectors in specs** — every CSS selector and `data-testid` lives in a Page Object. Spec files read like plain English.
-- **Explicit cleanup** — every resource a test creates gets cleaned up in `try/finally` or a Playwright fixture. No test relies on the next one to reset state.
-
-## Quick Start
+### Fastest path: Docker (no Node required)
 
 ```bash
-# Install dependencies
+# Boots Rancher + runs a quick smoke test (~17 tests)
+GREP_TAGS="@generic" docker compose up
+```
+
+> First run pulls ~2 GB and takes 10–15 minutes. Requires Docker with at least 6 GB RAM and free ports `8443`/`8080`.
+
+```bash
+# Run the full admin suite
+docker compose up
+
+# Run with a specific Rancher version
+RANCHER_IMAGE=docker.io/rancher/rancher:v2.14.0 docker compose up
+
+# Sharded (2 Rancher instances, ~2× faster, needs ~10 GB RAM)
+docker compose -f docker-compose.sharded.yml up
+
+# Stop everything
+docker compose down
+```
+
+### Native setup (your own Rancher instance)
+
+```bash
+# Prerequisites: Node 24+, Yarn
+git clone https://github.com/izaac/dashboard-e2e-pw.git
+cd dashboard-e2e-pw
 yarn install
 npx playwright install chromium
 
-# Configure environment
+# Configure
 cp .env.example .env
-# Edit .env with your Rancher instance URL and credentials
+# Edit .env — set TEST_BASE_URL and TEST_PASSWORD for your Rancher instance
 
-# Run tests
+# Run all tests
 npx playwright test
 
 # Run a single spec
@@ -29,20 +48,19 @@ npx playwright test e2e/tests/pages/generic/login.spec.ts
 
 # Run by test name
 npx playwright test -g "Log in with valid"
-
-# Or start Rancher + run everything in Docker (no local setup needed)
-docker compose up
 ```
 
-For the full story — tag filtering, Docker modes, sharding, debugging — see the guides below.
+> **Tip:** Start with `GREP_TAGS="@generic" npx playwright test` for a fast smoke test before running the full suite.
 
 ## Guides
 
 | Guide | What it covers |
 |---|---|
-| **[Running Tests](docs/RUNNING-TESTS.md)** | Every way to run tests — native, Docker, sharded, tags, environment variables, debugging failures |
-| **[Writing Tests](docs/WRITING-TESTS.md)** | How to write a new test — Page Objects, fixtures, golden rules, blueprints, step-by-step walkthrough |
-| **[Parallelism](docs/PARALLELISM.md)** | Which specs can run in parallel vs which need serial execution |
+| **[Running Tests](docs/RUNNING-TESTS.md)** | Setup, execution modes, Docker, sharding, tag filtering, environment variables |
+| **[Debugging Failures](docs/DEBUGGING-FAILURES.md)** | Investigating failures — artifacts, traces, failure types, reproduction |
+| **[Writing Tests](docs/WRITING-TESTS.md)** | Page Objects, fixtures, golden rules, blueprints, step-by-step walkthrough |
+| **[Parallelism](docs/PARALLELISM.md)** | Which specs can run in parallel vs serial |
+| **[Contributing](CONTRIBUTING.md)** | How to contribute — workflow, rules, conventions |
 
 ## Architecture
 
@@ -60,26 +78,15 @@ docs/             # Guides and reference
 
 ## Test Design
 
-### Why not just swap `cy.get()` for `page.locator()`?
+Every test is written to work reliably against a shared Rancher instance:
 
-Cypress queues every command and adds invisible waits between steps. That's convenient, but it hides timing bugs — tests pass because they're accidentally slow enough. Playwright runs at full speed, so those hidden races surface immediately. Good for reliability, but it means you can't just transliterate Cypress tests line by line.
+- **Atomic** — sets up what it needs, does its thing, cleans up. No test depends on another.
+- **Idempotent** — run once or fifty times, pass or fail midway — works next time.
+- **Web-first assertions** — `await expect(loc).toBeVisible()` auto-retries instead of reading the DOM once.
+- **No raw selectors in specs** — every selector lives in a Page Object.
+- **Explicit cleanup** — every resource created gets cleaned up in `try/finally`.
 
-Here's what changes:
-
-1. **Web-first assertions instead of snapshot reads.** Cypress `cy.get('.row').should('be.visible')` retries automatically. A naive Playwright translation like `expect(await loc.isVisible()).toBe(true)` reads the DOM exactly once — if the element hasn't rendered, the test fails. We write `await expect(loc).toBeVisible()` instead, which polls until the condition is true or timeout expires.
-
-2. **Every test stands on its own.** The upstream Cypress suite uses `testIsolation: 'off'` — one test navigates somewhere, the next picks up from there. That's fragile and prevents running tests individually. Every Playwright test starts fresh: login, navigate, assert, clean up.
-
-3. **Vue debounce handling.** Rancher Dashboard components debounce form changes (typically 500ms before emitting). Cypress is slow enough that it never notices. Playwright clicks Save before the debounce fires, so form data never reaches the API. Our Page Objects have `waitFor*Debounce()` methods for affected components.
-
-### Web-first assertions at a glance
-
-| Reads DOM once (flaky) | Retries automatically (stable) |
-|---|---|
-| `expect(await loc.isVisible()).toBe(true)` | `await expect(loc).toBeVisible()` |
-| `expect(await loc.innerText()).toBe('x')` | `await expect(loc).toHaveText('x')` |
-| `expect(await loc.inputValue()).toBe('x')` | `await expect(loc).toHaveValue('x')` |
-| `expect(await loc.count()).toBe(3)` | `await expect(loc).toHaveCount(3)` |
+This isn't a find-and-replace from Cypress. Playwright runs at full speed, so timing bugs that Cypress hides behind its command queue surface immediately. See [Writing Tests](docs/WRITING-TESTS.md) for the full story on why and how.
 
 ## Developer Tools
 
@@ -89,8 +96,6 @@ yarn po-diff             # Compare POs against upstream Cypress
 yarn gap-map             # Generate assertion gap map (upstream vs ours)
 yarn summarize-failures  # Classify test failures after a run
 ```
-
-See [Writing Tests](docs/WRITING-TESTS.md) for details on each tool.
 
 ## License
 

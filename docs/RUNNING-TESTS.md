@@ -8,15 +8,16 @@ Everything you need to run the Playwright test suite for Rancher Dashboard, whet
 
 ### What you need installed
 
-- **Node.js 22+** — check with `node --version`
-- **Yarn** — check with `yarn --version`
-- **Docker** — only if you want Docker mode (see sections 4–6)
+- **Git** — check with `git --version`
+- **Node.js 24+** — check with `node --version` ([download](https://nodejs.org/))
+- **Yarn** — check with `yarn --version`. If you have Node 24+ with Corepack: `corepack enable` then `corepack prepare yarn@stable --activate`
+- **Docker** — only if you want Docker mode (see sections 4–6). Needs at least 6 GB RAM allocated.
 
 ### Set up the project
 
 ```bash
-# Clone the repo
-git clone git@github.com:izaac/dashboard-e2e-pw.git
+# Clone the repo (HTTPS — no SSH key needed)
+git clone https://github.com/izaac/dashboard-e2e-pw.git
 cd dashboard-e2e-pw
 
 # Install dependencies
@@ -263,6 +264,10 @@ npx playwright show-report
 6. Tests run sequentially against that Rancher instance
 7. Results land in `test-results/` and `playwright-report/` on your machine
 
+> **Standard user tests:** Tests tagged `@standardUser` need a non-admin user. The test fixture
+> creates a `standard_user` account automatically on first run — no manual setup needed. This
+> happens transparently whether you're using Docker or running against your own Rancher instance.
+
 ### Use a different Rancher version
 
 ```bash
@@ -286,12 +291,12 @@ This sets both the bootstrap password and the test login password.
 
 ---
 
-## 5. Running Tests with Docker (Sharded — 4 Ranchers)
+## 5. Running Tests with Docker (Sharded — 2 Ranchers)
 
-Instead of running all tests against one Rancher, you can spin up four Rancher instances and split the work across them. This cuts the wall-clock time roughly by four.
+Instead of running all tests against one Rancher, you can spin up two Rancher instances and split the work across them. This cuts the wall-clock time roughly in half.
 
 ```bash
-# Run all 4 shards
+# Run both shards
 docker compose -f docker-compose.sharded.yml up
 
 # With tag filter
@@ -307,10 +312,10 @@ docker compose -f docker-compose.sharded.yml down -v
 
 ### What happens
 
-1. Four Rancher containers (`rancher-1` through `rancher-4`) boot in parallel
-2. Four test runners each get one quarter of the tests (`--shard=1/4`, `--shard=2/4`, etc.)
+1. Two Rancher containers (`rancher-1` and `rancher-2`) boot in parallel
+2. Two test runners each get half of the tests (`--shard=1/2`, `--shard=2/2`)
 3. Each shard bootstraps its own Rancher independently
-4. When all four finish, a merge service combines the reports into one
+4. When both finish, a merge service combines the reports into one
 5. Final report lands in `playwright-report/`
 
 ### Resource requirements
@@ -319,9 +324,8 @@ docker compose -f docker-compose.sharded.yml down -v
 | --------------- | ---------- | -------------- |
 | Single Rancher  | ~6 GB      | 1×             |
 | 2 Ranchers      | ~10 GB     | ~2× faster     |
-| 4 Ranchers      | ~18 GB     | ~4× faster     |
 
-> **Heads up:** Four Rancher instances are hungry. Make sure Docker has enough memory allocated
+> **Heads up:** Two Rancher instances are hungry. Make sure Docker has enough memory allocated
 > (check Docker Desktop → Settings → Resources if you're on Mac/Windows).
 
 ---
@@ -407,15 +411,8 @@ cat test-results/FAILURE-SUMMARY.md
 This classifies each failure (timeout, selector not found, API error, assertion mismatch, etc.)
 and flags common issues like login page showing up or loading spinners still visible.
 
-### Viewing a trace
-
-Traces are step-by-step recordings of what happened during a failed test — every click, every network request, every DOM snapshot. They're the single best tool for figuring out what went wrong.
-
-```bash
-npx playwright show-trace test-results/<test-folder>/trace.zip
-```
-
-Or just open the HTML report — traces are clickable right there, no separate command needed.
+For a detailed walkthrough of how to investigate failures — understanding artifacts, diagnosing
+failure types, and reproducing issues — see [Debugging Failures](DEBUGGING-FAILURES.md).
 
 ---
 
