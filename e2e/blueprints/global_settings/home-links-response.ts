@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 export function applyCustomLinksResponse(customLinkName: string, customLinkUrl: string): object {
   return {
@@ -38,7 +38,7 @@ export function applyCustomLinksResponse(customLinkName: string, customLinkUrl: 
       ],
       name: 'ui-custom-links',
       relationships: null,
-      resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+      resourceVersion: SAFE_RESOURCE_REVISION,
       state: {
         error: false,
         message: 'Resource is current',
@@ -90,7 +90,7 @@ export function removeCustomLinksResponse(): object {
       ],
       name: 'ui-custom-links',
       relationships: null,
-      resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+      resourceVersion: SAFE_RESOURCE_REVISION,
       state: {
         error: false,
         message: 'Resource is current',

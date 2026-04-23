@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
 
 export const roleBindingGetResponseEmpty = {
   type: 'collection',
@@ -9,7 +9,7 @@ export const roleBindingGetResponseEmpty = {
   },
   actions: {},
   resourceType: 'rbac.authorization.k8s.io.rolebinding',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 0,
   data: [],
 };
@@ -23,7 +23,7 @@ export const roleBindingResponseSmallSet = {
   },
   actions: {},
   resourceType: 'rbac.authorization.k8s.io.rolebinding',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 3,
   data: [
     {
@@ -48,7 +48,7 @@ export const roleBindingResponseSmallSet = {
         },
         name: 'request-frnrr',
         namespace: 'cluster-fleet-default-c-7h4dt-d2a039d07d4b',
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: '020198ab-9d82-44f3-8c1b-afefb65bb207',
       },
@@ -83,7 +83,7 @@ export const roleBindingResponseSmallSet = {
         },
         name: 'request-5sz89',
         namespace: 'cluster-fleet-default-c-9khnf-46795bb742fd',
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: '0d74e4e4-133c-4a78-abe9-16d0488692bc',
       },
@@ -112,7 +112,7 @@ export const roleBindingResponseSmallSet = {
         labels: { 'app.kubernetes.io/managed-by': 'Helm' },
         name: 'rke2-ingress-nginx',
         namespace: 'kube-system',
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: 'e3156530-f58e-4ef0-b80b-46fe4cc194d9',
       },

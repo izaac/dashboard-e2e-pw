@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
 
 export const eventsGetEmptyEventsSet = {
   type: 'collection',
@@ -6,7 +6,7 @@ export const eventsGetEmptyEventsSet = {
   createTypes: { event: '/v1/events' },
   actions: {},
   resourceType: 'event',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   data: [],
 };
 
@@ -16,7 +16,7 @@ export const eventsGetResponseSmallSet = {
   createTypes: { event: '/v1/events' },
   actions: {},
   resourceType: 'event',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 3,
   data: [
     {
@@ -40,7 +40,7 @@ export const eventsGetResponseSmallSet = {
         name: 'fleet-agent-0.17d80b90a6d2c7ab',
         namespace: 'cattle-fleet-local-system',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
       },
       reason: 'e2e-vai-regression-test',
@@ -66,7 +66,7 @@ export const eventsGetResponseSmallSet = {
         name: 'fleet-agent-1.17d80b90a6d2c7ac',
         namespace: 'cattle-fleet-local-system',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
       },
       reason: 'e2e-vai-regression-test',
@@ -92,7 +92,7 @@ export const eventsGetResponseSmallSet = {
         name: 'fleet-agent-2.17d80b90a6d2c7ad',
         namespace: 'cattle-fleet-local-system',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
       },
       reason: 'e2e-vai-regression-test',

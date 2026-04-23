@@ -1,6 +1,7 @@
 # Writing E2E Tests
 
-How to write Playwright tests for this project. If you know basic TypeScript, you have everything you need — this guide covers the rest.
+How to write Playwright tests for this project. If you know basic TypeScript, you have everything
+you need — this guide covers the rest.
 
 ---
 
@@ -50,7 +51,8 @@ Let's walk through each piece:
 import { test, expect } from '@/support/fixtures';
 ```
 
-**Always** import `test` and `expect` from `@/support/fixtures` — never from `@playwright/test` directly. Our custom fixtures (login, API helpers, environment config) are wired into that import.
+**Always** import `test` and `expect` from `@/support/fixtures` — never from `@playwright/test`
+directly. Our custom fixtures (login, API helpers, environment config) are wired into that import.
 
 ### Tags
 
@@ -58,7 +60,9 @@ import { test, expect } from '@/support/fixtures';
 test.describe('Home Page', { tag: ['@adminUser', '@generic'] }, () => {
 ```
 
-Tags go in the second argument of `test.describe()` or `test()`. They describe who can run this test (`@adminUser`, `@standardUser`) and what feature area it covers (`@generic`, `@explorer`, `@fleet`, etc.).
+Tags go in the second argument of `test.describe()` or `test()`. They describe who can run this
+test (`@adminUser`, `@standardUser`) and what feature area it covers (`@generic`, `@explorer`,
+`@fleet`, etc.).
 
 ### Login
 
@@ -68,7 +72,8 @@ test.beforeEach(async ({ login }) => {
 });
 ```
 
-The `login()` fixture handles authentication — it logs into Rancher via the UI. Call it in `beforeEach` so every test starts with a fresh logged-in session.
+The `login()` fixture handles authentication — it logs into Rancher via the UI. Call it in
+`beforeEach` so every test starts with a fresh logged-in session.
 
 ### Page Objects
 
@@ -77,7 +82,8 @@ const homePage = new HomePagePo(page);
 await homePage.goTo();
 ```
 
-Page Objects handle all the selectors and UI interactions. Your spec file reads like plain English — "go to the home page", "check the title". No CSS selectors in sight.
+Page Objects handle all the selectors and UI interactions. Your spec file reads like plain
+English — "go to the home page", "check the title". No CSS selectors in sight.
 
 ### Assertions
 
@@ -85,13 +91,16 @@ Page Objects handle all the selectors and UI interactions. Your spec file reads 
 await expect(homePage.title()).toContainText('Welcome');
 ```
 
-All assertions use `await expect(...)`. These are "web-first" assertions — they automatically retry until the condition is true (or timeout). This means you don't need manual waits or sleep calls.
+All assertions use `await expect(...)`. These are "web-first" assertions — they automatically
+retry until the condition is true (or timeout). This means you don't need manual waits or
+sleep calls.
 
 ---
 
 ## 2. Page Objects (POs)
 
-A Page Object is a class that knows how to interact with one page or one UI component. It holds all the selectors so your test files stay clean.
+A Page Object is a class that knows how to interact with one page or one UI component. It holds
+all the selectors so your test files stay clean.
 
 **Why bother?** If a developer changes a button's CSS class, you fix one PO file instead of twenty spec files.
 
@@ -157,7 +166,7 @@ export default class HomePagePo extends PagePo {
 
 ### Where do POs live?
 
-```
+```text
 e2e/po/
   components/   → Reusable UI pieces (LabeledInput, AsyncButton, Checkbox...)
   pages/        → Full-page POs (HomePage, LoginPage, SettingsPage...)
@@ -185,7 +194,8 @@ cat e2e/po/UPSTREAM-DIFF.md
 
 ## 3. Fixtures (login, rancherApi, envMeta)
 
-Fixtures are values that Playwright passes into your test functions automatically. We have three custom ones that you'll use in nearly every test.
+Fixtures are values that Playwright passes into your test functions automatically. We have three
+custom ones that you'll use in nearly every test.
 
 ### `login()` — Authenticate before your test
 
@@ -205,7 +215,8 @@ await login({ username: 'testuser', password: 'testpass' });
 
 ### `rancherApi` — Talk to Rancher's API directly
 
-Use this to create resources, change settings, or clean up — all without touching the UI. It's faster and more reliable than clicking through forms.
+Use this to create resources, change settings, or clean up — all without touching the UI. It's
+faster and more reliable than clicking through forms.
 
 ```typescript
 test('create and verify a namespace', async ({ page, rancherApi }) => {
@@ -225,7 +236,8 @@ test('create and verify a namespace', async ({ page, rancherApi }) => {
 
 ### `envMeta` — Environment configuration
 
-Access environment variables like cloud credentials, the Rancher URL, or the login username. Useful for skipping tests that need infrastructure you don't have:
+Access environment variables like cloud credentials, the Rancher URL, or the login username.
+Useful for skipping tests that need infrastructure you don't have:
 
 ```typescript
 test('provision AKS cluster', async ({ envMeta }) => {
@@ -234,13 +246,16 @@ test('provision AKS cluster', async ({ envMeta }) => {
 });
 ```
 
-Available properties include: `username`, `password`, `baseUrl`, `awsAccessKey`, `awsSecretKey`, `azureClientId`, `azureClientSecret`, `gkeServiceAccount`, `customNodeIp`, and more (see `globals.d.ts` for the full list).
+Available properties include: `username`, `password`, `baseUrl`, `awsAccessKey`, `awsSecretKey`,
+`azureClientId`, `azureClientSecret`, `gkeServiceAccount`, `customNodeIp`, and more
+(see `globals.d.ts` for the full list).
 
 ---
 
 ## 4. The Golden Rules
 
-These rules exist because our tests run against a shared, live Rancher instance. Breaking them leads to flaky tests that fail randomly and waste everyone's time.
+These rules exist because our tests run against a shared, live Rancher instance. Breaking them
+leads to flaky tests that fail randomly and waste everyone's time.
 
 ### Rule 1: Every test stands alone (Atomicity)
 
@@ -297,7 +312,8 @@ await rancherApi.createNamespace('my-namespace', 'default');
 
 ### Rule 3: Always clean up
 
-Every resource you create must be deleted when the test is done. Use `try/finally` so cleanup runs even if your assertions fail:
+Every resource you create must be deleted when the test is done. Use `try/finally` so cleanup
+runs even if your assertions fail:
 
 ```typescript
 test('modify a setting', async ({ rancherApi }) => {
@@ -339,7 +355,8 @@ await myPage.title().innerText();
 
 ### Rule 5: Web-first assertions
 
-Use `await expect(...)` — these retry automatically until the condition is true or the timeout expires. Never check once with a manual boolean.
+Use `await expect(...)` — these retry automatically until the condition is true or the timeout
+expires. Never check once with a manual boolean.
 
 **Don't do this** — it checks the DOM once and moves on, which is a race condition:
 
@@ -383,7 +400,7 @@ If you find it, great — just import it. If not, create one following the patte
 
 Spec files live in `e2e/tests/`, mirroring the app's page structure. Name it `<feature>.spec.ts`:
 
-```
+```text
 e2e/tests/pages/global-settings/banners.spec.ts
 e2e/tests/pages/explorer/dashboard/events.spec.ts
 e2e/tests/pages/user-menu/preferences.spec.ts
@@ -443,7 +460,9 @@ npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --debug
 
 ## 6. Blueprints (Mock Data)
 
-Sometimes you want to test the UI without creating real resources on the server. Blueprints are factory functions that return fake API responses — you feed them to the browser so the UI renders data without any backend round-trips.
+Sometimes you want to test the UI without creating real resources on the server. Blueprints are
+factory functions that return fake API responses — you feed them to the browser so the UI renders
+data without any backend round-trips.
 
 ### When to use blueprints
 
@@ -526,7 +545,8 @@ await myPage.saveButton().click();
 await saveResponse;
 ```
 
-**Important:** `waitForResponse` is set up *before* the click, then awaited *after*. If you set it up after clicking, you might miss the response.
+**Important:** `waitForResponse` is set up *before* the click, then awaited *after*. If you set
+it up after clicking, you might miss the response.
 
 ### Skipping tests that need special infrastructure
 
@@ -583,9 +603,13 @@ test.describe('Branding', () => {
 
 ### Vue debounce trap
 
-Some Rancher form components wait 500ms before actually sending a value change to the app (this is called debouncing). Playwright is fast enough to click Save before that delay finishes, which means the value shows up correctly in the UI but never makes it into the API request.
+Some Rancher form components wait 500ms before actually sending a value change to the app (this
+is called debouncing). Playwright is fast enough to click Save before that delay finishes, which
+means the value shows up correctly in the UI but never makes it into the API request.
 
-If your test fills a form field and the value seems to "disappear" on save, this might be why. Page Objects for known debounced components provide `waitFor*Debounce()` methods — call them before saving.
+If your test fills a form field and the value seems to "disappear" on save, this might be why.
+Page Objects for known debounced components provide `waitFor*Debounce()` methods — call them
+before saving.
 
 ---
 

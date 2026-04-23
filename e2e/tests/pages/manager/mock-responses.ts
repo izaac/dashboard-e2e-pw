@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '@/e2e/blueprints/blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '@/e2e/blueprints/blueprint.utils';
 
 export function nodeDriveResponse(addCloudCredential: boolean, driver: string): any {
   return {
@@ -47,7 +47,7 @@ export function nodeDriveResponse(addCloudCredential: boolean, driver: string): 
               message: 'Resource is current',
             },
           ],
-          resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+          resourceVersion: SAFE_RESOURCE_REVISION,
           state: {
             error: false,
             message: '',

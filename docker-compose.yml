@@ -1,0 +1,38 @@
+services:
+  rancher:
+    image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
+    privileged: true
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    volumes:
+      - rancher-data:/var/lib/rancher
+    healthcheck:
+      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+
+  tests:
+    build: .
+    depends_on:
+      rancher:
+        condition: service_healthy
+    environment:
+      TEST_BASE_URL: https://rancher/dashboard
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_USERNAME: admin
+      GREP_TAGS: ${GREP_TAGS:-}
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    command: ["sh", "-c", "npx playwright test --reporter=line; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results /app/playwright-report 2>/dev/null; exit $$rc"]
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+
+volumes:
+  rancher-data:

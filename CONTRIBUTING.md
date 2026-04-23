@@ -1,6 +1,7 @@
 # Contributing
 
-Thanks for helping improve the Rancher Dashboard E2E suite. Here's what you need to know — follow this guide and your PR will have a smooth ride.
+Thanks for helping improve the Rancher Dashboard E2E suite. Here's what you need to know — follow
+this guide and your PR will have a smooth ride.
 
 ## Getting Started
 
@@ -22,15 +23,19 @@ You need a running Rancher instance. Set `TEST_BASE_URL` and `TEST_PASSWORD` in 
 1. Create a branch from `main`
 2. Make your changes
 3. Run the affected spec:
+
    ```bash
    npx playwright test e2e/tests/your-spec.spec.ts --reporter=line
    ```
+
 4. Run it a second time — this verifies idempotency
 5. Lint and type check:
+
    ```bash
    yarn lint
    yarn typecheck
    ```
+
 6. Commit and push (ESLint + Prettier run automatically on staged `.ts` files via husky)
 7. Open a PR and fill out the [template](.github/pull_request_template.md)
 
@@ -39,10 +44,12 @@ You need a running Rancher instance. Set `TEST_BASE_URL` and `TEST_PASSWORD` in 
 These are non-negotiable. See [`docs/WRITING-TESTS.md`](docs/WRITING-TESTS.md) for the full explanation.
 
 1. **Atomic** — every test stands alone with no order dependencies. Set up preconditions, assert, clean up.
-2. **Idempotent** — must produce the same result on run 1 and run 100. Use unique names (`Date.now()` suffixes) to avoid collisions.
+2. **Idempotent** — must produce the same result on run 1 and run 100.
+   Use unique names (`Date.now()` suffixes) to avoid collisions.
 3. **Cleanup** — every resource you create gets deleted. Use `try/finally` so cleanup runs even on assertion failure.
 4. **No raw selectors in specs** — all selectors live in Page Objects. Specs import POs and call methods.
-5. **Web-first assertions** — use `await expect(loc).toBeVisible()`, never `expect(await loc.isVisible()).toBe(true)`. Web-first assertions auto-retry.
+5. **Web-first assertions** — use `await expect(loc).toBeVisible()`, never
+   `expect(await loc.isVisible()).toBe(true)`. Web-first assertions auto-retry.
 6. **Import from fixtures** — always `import { test, expect } from '@/support/fixtures'`, not from `@playwright/test`.
 
 ## Page Object Conventions
@@ -105,7 +112,9 @@ Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md). Include:
 - Rancher version
 - Error output or failure summary
 
-Run `yarn summarize-failures` after a failed test run to generate a structured failure report. See [`docs/DEBUGGING-FAILURES.md`](docs/DEBUGGING-FAILURES.md) for detailed guidance on collecting and analyzing failure artifacts.
+Run `yarn summarize-failures` after a failed test run to generate a structured failure report.
+See [`docs/DEBUGGING-FAILURES.md`](docs/DEBUGGING-FAILURES.md) for detailed guidance on
+collecting and analyzing failure artifacts.
 
 ## Questions?
 

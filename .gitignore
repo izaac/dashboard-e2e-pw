@@ -14,8 +14,16 @@ browser-logs/
 .env.local
 .env.*.local
 
+# NixOS Docker (local-only, not needed on non-NixOS hosts)
+Dockerfile.rancher-nix
+docker-compose.nix.yml
+
 # Claude Code
 .claude/
+
+# Codex
+.codex
+.codex/
 
 # IDE
 .idea/

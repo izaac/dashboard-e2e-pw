@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 export function machinePoolConfigResponse(clusterName: string, machinePoolId: string): object {
   return {
@@ -61,7 +61,7 @@ export function machinePoolConfigResponse(clusterName: string, machinePoolId: st
           message: 'Resource is current',
         },
       ],
-      resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+      resourceVersion: SAFE_RESOURCE_REVISION,
       state: {
         error: false,
         message: 'Resource is current',

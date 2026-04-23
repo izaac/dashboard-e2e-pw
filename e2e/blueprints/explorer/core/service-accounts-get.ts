@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
 
 export const serviceAccGetResponseEmpty = {
   type: 'collection',
@@ -6,7 +6,7 @@ export const serviceAccGetResponseEmpty = {
   createTypes: { serviceaccount: '/v1/serviceaccounts' },
   actions: {},
   resourceType: 'serviceaccount',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 0,
   data: [],
 };
@@ -17,7 +17,7 @@ export const serviceAcctResponseSmallSet = {
   createTypes: { serviceaccount: '/v1/serviceaccounts' },
   actions: {},
   resourceType: 'serviceaccount',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 3,
   data: [
     {
@@ -38,7 +38,7 @@ export const serviceAcctResponseSmallSet = {
         name: 'default',
         namespace: 'cattle-system',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: 'a60fc248-faea-47d7-a2f5-d7bf759c48ad',
       },
@@ -61,7 +61,7 @@ export const serviceAcctResponseSmallSet = {
         name: 'default',
         namespace: 'cattle-fleet-local-system',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: '003b0146-d4c0-4ae8-8736-2183d675ebc9',
       },
@@ -83,7 +83,7 @@ export const serviceAcctResponseSmallSet = {
         name: 'fleet-agent',
         namespace: 'cattle-fleet-local-system',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: 'de615799-099c-4088-809c-8cf00122c0fa',
       },

@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 // /v1/management.cattle.io.nodedrivers?*
 export function generateFakeNodeDriversReply(): any {
@@ -42,7 +42,7 @@ export function generateFakeNodeDriversReply(): any {
           message: 'Resource is current',
         },
       ],
-      resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+      resourceVersion: SAFE_RESOURCE_REVISION,
       state: {
         error: false,
         message: '',
@@ -237,7 +237,7 @@ export function generateFakeMachineConfigReply(provClusterId: string, machinePoo
           message: 'Resource is current',
         },
       ],
-      resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+      resourceVersion: SAFE_RESOURCE_REVISION,
       state: {
         error: false,
         message: 'Resource is current',
@@ -284,7 +284,7 @@ export function generateFakeSecretsReply(): any {
         name: 'registryconfig-auth-reg1',
         namespace: 'fleet-default',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Resource is always ready',
@@ -317,7 +317,7 @@ export function generateFakeSecretsReply(): any {
         name: 'registryconfig-auth-reg2',
         namespace: 'fleet-default',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Resource is always ready',

@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
 
 const SMALL_CONTAINER = {
   name: 'small-image',
@@ -221,7 +221,7 @@ export const deploymentCreateResponse = {
         rel: 'uses',
       },
     ],
-    resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+    resourceVersion: SAFE_RESOURCE_REVISION,
     state: {
       error: false,
       message: 'replicas: 0/1',

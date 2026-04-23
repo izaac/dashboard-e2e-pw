@@ -30,7 +30,15 @@
     "po-diff": "npx tsx scripts/generate-po-index.ts --diff",
     "gap-map": "npx tsx scripts/generate-gap-map.ts",
     "branch-diff": "sh scripts/branch-backport.sh",
-    "prepare": "husky"
+    "api-diff": "npx tsx scripts/api-diff.ts",
+    "local:up": "docker compose up rancher -d",
+    "local:test": "docker compose up tests",
+    "local:test:sharded": "docker compose -f docker-compose.sharded.yml up",
+    "local:down": "docker compose down",
+    "local:down:sharded": "docker compose -f docker-compose.sharded.yml down -v",
+    "local:report": "npx playwright show-report",
+    "prepare": "husky",
+    "lint:md": "markdownlint-cli2"
   },
   "dependencies": {
     "@axe-core/playwright": "4.10.1",
@@ -49,8 +57,9 @@
     "@typescript-eslint/parser": "8.32.0",
     "eslint": "9.26.0",
     "eslint-plugin-playwright": "2.2.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "markdownlint-cli2": "^0.22.1",
     "prettier": "3.5.3",
     "tsx": "^4.21.0"
   },
@@ -58,6 +67,9 @@
     "*.ts": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix"
     ]
   },
   "repository": {
@@ -65,5 +77,8 @@
     "url": "https://github.com/rancher/dashboard.git",
     "directory": "playwright"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": ">=22"
+  }
 }

@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
 
 export const crdsGetResponseSmallSet = {
   type: 'collection',
@@ -8,7 +8,7 @@ export const crdsGetResponseSmallSet = {
   },
   actions: {},
   resourceType: 'apiextensions.k8s.io.customresourcedefinition',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 2,
   data: [
     {
@@ -22,7 +22,7 @@ export const crdsGetResponseSmallSet = {
         generation: 1,
         name: 'users.management.cattle.io',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'CRD is established', name: 'active', transitioning: false },
         uid: 'c27f4c68-da43-4361-bb71-fc8aa111a313',
       },
@@ -44,7 +44,7 @@ export const crdsGetResponseSmallSet = {
         generation: 1,
         name: 'volumesnapshotclasses.snapshot.storage.k8s.io',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'CRD is established', name: 'active', transitioning: false },
         uid: '5a36103d-b699-4d33-b154-5e8581821447',
       },

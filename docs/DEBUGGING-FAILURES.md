@@ -1,6 +1,7 @@
 # Debugging Test Failures
 
-Your test failed — here's how to figure out why and fix it. This guide walks through the tools, artifacts, and patterns you'll use most.
+Your test failed — here's how to figure out why and fix it. This guide walks through the tools,
+artifacts, and patterns you'll use most.
 
 For running tests, see [RUNNING-TESTS.md](./RUNNING-TESTS.md).
 For writing tests, see [WRITING-TESTS.md](./WRITING-TESTS.md).
@@ -102,6 +103,7 @@ The trace viewer has four panels:
 - **Console** — browser console logs and errors
 
 Look for:
+
 - The last successful action before the failure
 - Network requests that returned errors (red in the network panel)
 - DOM state at the failing locator step (was the element there?)
@@ -178,6 +180,7 @@ npx playwright test <spec> -g "<test name>" --debug
 
 **When:** You need to pause on each step and inspect the live DOM. The
 Playwright Inspector opens alongside the browser. You can:
+
 - Step through actions one at a time
 - Inspect the current DOM with browser DevTools
 - Evaluate locators in the Inspector console
@@ -193,6 +196,7 @@ npx playwright test --ui
 
 **When:** You're iterating on a fix and want to re-run tests repeatedly
 without switching to the terminal. The UI mode shows:
+
 - All tests in a tree view — click to run
 - Inline trace viewer for each run
 - Watch mode — re-runs on file change
@@ -301,6 +305,7 @@ Whether you're filing a test bug or an app bug, include these details.
 - **Trace file** — attach or paste the path:
   `test-results/creates-a-deployment/trace.zip`
 - **Rancher version:**
+
   ```bash
   curl -sk https://<your-rancher>/rancherversion | jq .
   ```

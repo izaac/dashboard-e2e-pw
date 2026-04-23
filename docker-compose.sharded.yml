@@ -1,0 +1,96 @@
+# Sharded test execution — 2 Rancher instances running tests in parallel.
+# Usage: docker compose -f docker-compose.sharded.yml up
+# Results merged into playwright-report/ after all shards complete.
+
+services:
+  rancher-1:
+    image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
+    privileged: true
+    restart: unless-stopped
+    environment:
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    healthcheck:
+      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 60s
+
+  rancher-2:
+    image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
+    privileged: true
+    restart: unless-stopped
+    environment:
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    healthcheck:
+      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 60s
+
+  shard-1:
+    build: .
+    depends_on:
+      rancher-1:
+        condition: service_healthy
+    environment:
+      TEST_BASE_URL: https://rancher-1/dashboard
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      TEST_USERNAME: admin
+      GREP_TAGS: ${GREP_TAGS:-}
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-1.exit"]
+    volumes:
+      - blob-reports:/blobs
+      - ./test-results:/app/test-results
+
+  shard-2:
+    build: .
+    depends_on:
+      rancher-2:
+        condition: service_healthy
+    environment:
+      TEST_BASE_URL: https://rancher-2/dashboard
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      TEST_USERNAME: admin
+      GREP_TAGS: ${GREP_TAGS:-}
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
+    volumes:
+      - blob-reports:/blobs
+      - ./test-results:/app/test-results
+
+  merge:
+    build: .
+    depends_on:
+      shard-1:
+        condition: service_started
+      shard-2:
+        condition: service_started
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Waiting for all 2 shards to complete..."
+        while [ $$(ls /blobs/shard-*.exit 2>/dev/null | wc -l) -lt 2 ]; do sleep 5; done
+        echo "All shards done. Merging reports..."
+        mkdir -p /blobs/all
+        cp /blobs/*.zip /blobs/all/ 2>/dev/null || true
+        npx playwright merge-reports /blobs/all --reporter=html
+        cp -r playwright-report/* /report/
+        echo ""
+        echo "=== Shard exit codes ==="
+        for f in /blobs/shard-*.exit; do echo "$$(basename $$f .exit): exit $$(cat $$f)"; done
+        echo ""
+        echo "Report written to playwright-report/"
+        chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /report 2>/dev/null
+    volumes:
+      - blob-reports:/blobs
+      - ./playwright-report:/report
+
+volumes:
+  blob-reports:

@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 const k8sSchemas = [
   {
@@ -780,7 +780,7 @@ const allowedReposGet = {
   createTypes:  { 'constraints.gatekeeper.sh.k8sallowedrepos': 'https://localhost:8005/k8s/clusters/local/v1/constraints.gatekeeper.sh.k8sallowedrepos' },
   actions:      {},
   resourceType: 'constraints.gatekeeper.sh.k8sallowedrepos',
-  revision:     CYPRESS_SAFE_RESOURCE_REVISION,
+  revision:     SAFE_RESOURCE_REVISION,
   data:         []
 };
 
@@ -790,7 +790,7 @@ const requiredLabelsGet = {
   createTypes:  { 'constraints.gatekeeper.sh.k8srequiredlabels': 'https://localhost:8005/k8s/clusters/local/v1/constraints.gatekeeper.sh.k8srequiredlabels' },
   actions:      {},
   resourceType: 'constraints.gatekeeper.sh.k8srequiredlabels',
-  revision:     CYPRESS_SAFE_RESOURCE_REVISION,
+  revision:     SAFE_RESOURCE_REVISION,
   data:         []
 };
 
@@ -800,7 +800,7 @@ const constraintTemplatesGet = {
   createTypes:  { 'templates.gatekeeper.sh.constrainttemplate': 'https://localhost:8005/k8s/clusters/local/v1/templates.gatekeeper.sh.constrainttemplates' },
   actions:      {},
   resourceType: 'templates.gatekeeper.sh.constrainttemplate',
-  revision:     CYPRESS_SAFE_RESOURCE_REVISION,
+  revision:     SAFE_RESOURCE_REVISION,
   count:        2,
   data:         [
     {
@@ -828,7 +828,7 @@ const constraintTemplatesGet = {
         labels:          { 'app.kubernetes.io/managed-by': 'Helm' },
         name:            'k8sallowedrepos',
         relationships:   null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state:           {
           error:         false,
           message:       'Resource is current',
@@ -929,7 +929,7 @@ const constraintTemplatesGet = {
         labels:          { 'app.kubernetes.io/managed-by': 'Helm' },
         name:            'k8srequiredlabels',
         relationships:   null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state:           {
           error:         false,
           message:       'Resource is current',

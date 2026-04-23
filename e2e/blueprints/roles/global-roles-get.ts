@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 // GET /v1/management.cattle.io.globalroles - small set of pods data
 const globalRolesGetResponseSmallSet = {
@@ -9,7 +9,7 @@ const globalRolesGetResponseSmallSet = {
   },
   actions: {},
   resourceType: 'management.cattle.io.globalrole',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION, // The UI will use this point in history to start watching for changes from. If it's too low (than the global system revision) we will spam with requests
+  revision: SAFE_RESOURCE_REVISION, // The UI will use this point in history to start watching for changes from. If it's too low (than the global system revision) we will spam with requests
   count: 2,
   data: [
     {
@@ -49,7 +49,7 @@ const globalRolesGetResponseSmallSet = {
             message: 'Resource is current',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Resource is current',
@@ -127,7 +127,7 @@ const globalRolesGetResponseSmallSet = {
             message: 'Resource is current',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Resource is current',
