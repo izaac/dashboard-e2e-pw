@@ -38,10 +38,10 @@
 
 ### Entire tests missing or empty stubs
 
-- [ ] `events.spec.ts` — 3 tests (pagination, filter, sort) not ported
-- [ ] `roles.spec.ts` (users-and-auth) — 5 tests (filter, sort, pagination x2, std user)
-- [ ] `configmap.spec.ts` — 3 tests (pagination, sort, filter) skipped
-- [ ] `workspaces.spec.ts` — 3 tests (pagination, filter, sort) skipped
+- [x] `events.spec.ts` — ✅ 3 tests (pagination mock, filter real, sort real)
+- [x] `roles.spec.ts` (users-and-auth) — ✅ 3 tests (pagination mock GLOBAL tab, filter, sort); 2 remaining (pagination x2 other tabs, std user)
+- [x] `configmap.spec.ts` — ✅ 3 tests (pagination mock, sort real, filter real with test namespace)
+- [x] `workspaces.spec.ts` — ✅ 3 tests (pagination mock, filter real, sort real)
 - [x] `websockets/connection.spec.ts` — ✅ atomic WS exec test (mkdir/ls/rm via pod-exec helper)
 - [ ] `edit-fake-cluster.spec.ts` — 2 empty stubs (needs blueprint port)
 - [ ] `repositories.spec.ts` (apps) — Refresh describe block not ported
