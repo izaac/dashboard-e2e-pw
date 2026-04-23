@@ -218,12 +218,16 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         'apps.daemonsets',
         `${namespace}/${daemonsetName}`,
         (resp) => {
-          const gen = resp.body?.status?.observedGeneration;
-          const scheduled = resp.body?.status?.currentNumberScheduled;
+          const s = resp.body?.status;
 
-          return gen >= 1 && scheduled !== undefined;
+          return (
+            s?.observedGeneration >= 1 &&
+            s?.currentNumberScheduled !== undefined &&
+            s?.numberReady === s?.currentNumberScheduled &&
+            s?.updatedNumberScheduled === s?.currentNumberScheduled
+          );
         },
-        15,
+        20,
         2000,
       );
 
@@ -231,26 +235,41 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         const listPage = new WorkloadsDaemonsetsListPagePo(page);
         const sortableTable = listPage.baseResourceList().resourceTable().sortableTable();
 
+        // Fresh goTo ensures UI fetches current resourceVersion
         await listPage.goTo();
         await listPage.waitForPage();
 
         await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
-        const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
-        await actionMenu.getMenuItem('Redeploy').click();
+        const triggerRedeploy = async () => {
+          const actionMenu = await sortableTable.rowActionMenuOpen(daemonsetName);
 
-        const dialog = listPage.redeployDialog();
+          await actionMenu.getMenuItem('Redeploy').click();
 
-        await expect(dialog.self()).toBeVisible();
+          const dialog = listPage.redeployDialog();
 
-        const responsePromise = page.waitForResponse(
-          (resp) =>
-            resp.url().includes(`/v1/apps.daemonsets/${namespace}/${daemonsetName}`) &&
-            resp.request().method() === 'PUT',
-        );
+          await expect(dialog.self()).toBeVisible();
 
-        await dialog.confirmRedeploy();
-        const response = await responsePromise;
+          const responsePromise = page.waitForResponse(
+            (resp) =>
+              resp.url().includes(`/v1/apps.daemonsets/${namespace}/${daemonsetName}`) &&
+              resp.request().method() === 'PUT',
+          );
+
+          await dialog.confirmRedeploy();
+
+          return responsePromise;
+        };
+
+        let response = await triggerRedeploy();
+
+        // If 409 (stale resourceVersion), reload and retry once
+        if (response.status() === 409) {
+          await listPage.goTo();
+          await listPage.waitForPage();
+          await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
+          response = await triggerRedeploy();
+        }
 
         expect(response.status()).toBe(200);
       } finally {

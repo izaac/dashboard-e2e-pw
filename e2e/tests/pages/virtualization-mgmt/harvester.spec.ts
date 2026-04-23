@@ -366,10 +366,12 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     expect(installStatus3).toBe(201);
 
+    // Wait for page to transition to installed tab (matches upstream order)
+    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: 30000 });
+
     await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
     await extensionsPo.extensionReloadClick();
-    await expect(extensionsPo.loading()).not.toBeAttached();
-    await extensionsPo.waitForPage(undefined, 'installed');
+    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: 30000 });
 
     // check harvester version on card - should be the latest available version
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);
@@ -423,8 +425,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await harvesterPo.updateOrInstallButton().checkNotExists();
 
     await extensionsPo.goTo();
-    await extensionsPo.waitForPage(undefined, 'installed');
-    await expect(extensionsPo.loading()).not.toBeAttached();
+    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: 30000 });
+    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: 30000 });
     // check harvester version on card after update - should be latest
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);
 

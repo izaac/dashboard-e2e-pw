@@ -1,4 +1,5 @@
 import { test, expect } from '@/support/fixtures';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
@@ -6,6 +7,23 @@ import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
+
+/**
+ * Delete a user by username via v3 filtered query.
+ * Silently ignores errors so cleanup never fails the test.
+ */
+async function deleteUserByUsername(api: RancherApi, username: string): Promise<void> {
+  try {
+    const resp = await api.getRancherResource('v3', `users?username=${username}`, undefined, 0);
+    const user = resp.body?.data?.[0];
+
+    if (user) {
+      await api.deleteRancherResource('v3', 'users', user.id, false);
+    }
+  } catch {
+    // Cleanup must not fail the test
+  }
+}
 
 test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
   test('can create Admin', async ({ page, login, rancherApi }) => {
@@ -35,12 +53,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userCreate.selectCheckbox('Administrator').set();
       await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
     } finally {
-      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const createdUser = usersResp.body.data.find((u: any) => u.username === adminUsername);
-
-      if (createdUser) {
-        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
-      }
+      await deleteUserByUsername(rancherApi, adminUsername);
     }
   });
 
@@ -69,12 +82,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.waitForPage();
       await expect(usersPo.list().elementWithName(userBaseUsername)).toBeVisible();
     } finally {
-      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-      const createdUser = usersResp.body.data.find((u: any) => u.username === userBaseUsername);
-
-      if (createdUser) {
-        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', createdUser.id, false);
-      }
+      await deleteUserByUsername(rancherApi, userBaseUsername);
     }
   });
 
@@ -462,9 +470,8 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     const usersPo = new UsersPo(page);
 
     // Find the admin user's ID to match the table row link
-    const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-    const adminUser = usersResp.body.data.find((u: any) => u.username === 'admin');
-    const adminId = adminUser.id;
+    const adminResp = await rancherApi.getRancherResource('v3', 'users?username=admin', undefined, 0);
+    const adminId = adminResp.body?.data?.[0]?.id;
 
     await usersPo.goTo();
     await usersPo.waitForPage();
@@ -675,15 +682,9 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await usersPo.waitForPage();
       await expect(usersPo.list().elementWithName(adminUsername)).toBeAttached(SHORT_TIMEOUT_OPT);
 
-      // Cleanup: delete both test users via API (rancherApi is logged in as admin)
-      const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-
+      // Cleanup: delete both test users via API
       for (const username of [standardUsername, adminUsername]) {
-        const user = usersResp.body.data.find((u: any) => u.username === username);
-
-        if (user) {
-          await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user.id, false);
-        }
+        await deleteUserByUsername(rancherApi, username);
       }
     });
   });
