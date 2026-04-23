@@ -56,6 +56,9 @@ test.describe('Settings', () => {
 
     await burgerMenu.toggle();
     await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    // Guard: wait for navigation + Vue render (cluster context may be local or _)
+    await settingsPage.waitForUrlPathWithoutContext();
+    await settingsPage.waitForDashboardRoot();
     await sideNav.navToSideMenuEntryByLabel('Settings');
   }
 
@@ -161,8 +164,7 @@ test.describe('Settings', () => {
           await page.unroute('**/v1/ext.cattle.io.useractivities/*');
         }
       } finally {
-        await restoreIdle();
-        await restoreTtl();
+        await Promise.allSettled([restoreIdle(), restoreTtl()]);
       }
     },
   );

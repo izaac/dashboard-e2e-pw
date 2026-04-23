@@ -60,6 +60,9 @@ test.describe('Settings (Part 2)', () => {
 
     await burgerMenu.toggle();
     await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
+    // Guard: wait for navigation + Vue render (cluster context may be local or _)
+    await settingsPage.waitForUrlPathWithoutContext();
+    await settingsPage.waitForDashboardRoot();
     await sideNav.navToSideMenuEntryByLabel('Settings');
   }
 

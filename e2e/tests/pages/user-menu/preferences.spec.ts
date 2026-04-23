@@ -162,6 +162,7 @@ test.describe('User can update their preferences', () => {
 
     await prefPage.goTo();
     await prefPage.waitForPage();
+    await prefPage.waitForDashboardRoot();
 
     const dateFormatSelect = prefPage.dateFormatSelect();
 
