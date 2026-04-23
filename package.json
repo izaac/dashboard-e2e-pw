@@ -71,5 +71,6 @@
     "type": "git",
     "url": "https://github.com/rancher/dashboard.git",
     "directory": "playwright"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

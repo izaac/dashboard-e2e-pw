@@ -185,6 +185,9 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
         await expect(sortableTable.rowElementWithName(nsNames[0])).toBeVisible();
         await expect(sortableTable.rowElementWithName(nsNames[1])).toBeVisible();
       } finally {
+        for (const ns of nsNames) {
+          await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
+        }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
         }
@@ -196,6 +199,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       rancherApi,
     }) => {
       const projectIds: string[] = [];
+      const nsNames: string[] = [];
 
       try {
         for (let i = 0; i < 3; i++) {
@@ -204,7 +208,10 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
           projectIds.push(resp.body.id);
 
           if (i < 2) {
-            await rancherApi.createNamespaceInProject(`e2e-sn2-${Date.now()}-${i}`, resp.body.id);
+            const nsName = `e2e-sn2-${Date.now()}-${i}`;
+
+            nsNames.push(nsName);
+            await rancherApi.createNamespaceInProject(nsName, resp.body.id);
           }
         }
 
@@ -221,6 +228,9 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
         // 3rd project has no namespaces but should still appear as a group
         await expect(sortableTable.groupElementsWithName(projectName)).toHaveCount(3);
       } finally {
+        for (const ns of nsNames) {
+          await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
+        }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
         }
@@ -258,6 +268,9 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
         await expect(sortableTable.rowElementWithName(nsNames[0])).toBeVisible();
         await expect(sortableTable.rowElementWithName(nsNames[1])).toBeVisible();
       } finally {
+        for (const ns of nsNames) {
+          await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
+        }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
         }
