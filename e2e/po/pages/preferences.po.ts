@@ -142,10 +142,10 @@ export default class PreferencesPagePo extends PagePo {
     await expect(this.customPageOptionsDropdown().self()).toContainText(clusterName);
   }
 
-  async checkLangDomElement(label: string): Promise<void> {
+  async checkLangDomElement(langCode: string): Promise<void> {
     const { expect } = await import('@playwright/test');
 
-    await expect(this.page.locator(label)).toBeAttached();
+    await expect(this.page.locator(`[lang="${langCode}"]`)).toBeAttached();
   }
 
   /** Dropdown menu options list (visible when a select is open) */

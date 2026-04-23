@@ -110,57 +110,52 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe('Should open a terminal', () => {
-    const podImage = 'nginx:alpine';
-    let shellNs: string;
-    let shellPodName: string;
-
-    test.beforeAll(async ({ rancherApi }) => {
-      shellNs = `e2e-shell-${Date.now()}`;
-      shellPodName = `e2e-shell-pod-${Date.now()}`;
+    test('should open a pod shell', async ({ page, login, rancherApi }) => {
+      const podImage = 'nginx:alpine';
+      const shellNs = `e2e-shell-${Date.now()}`;
+      const shellPodName = `e2e-shell-pod-${Date.now()}`;
 
       await rancherApi.createNamespace(shellNs);
       await rancherApi.createPod(shellNs, shellPodName, podImage);
 
-      // Wait for container ready — not just pod Running
-      const ready = await rancherApi.waitForRancherResource(
-        'v1',
-        'pods',
-        '',
-        (resp) => {
-          const pod = resp.body?.data?.find((p: any) => p.id === `${shellNs}/${shellPodName}`);
+      try {
+        // Wait for container ready — not just pod Running
+        const ready = await rancherApi.waitForRancherResource(
+          'v1',
+          'pods',
+          '',
+          (resp) => {
+            const pod = resp.body?.data?.find((p: any) => p.id === `${shellNs}/${shellPodName}`);
 
-          return pod?.status?.phase === 'Running' && pod?.status?.containerStatuses?.[0]?.ready === true;
-        },
-        30,
-        2000,
-      );
+            return pod?.status?.phase === 'Running' && pod?.status?.containerStatuses?.[0]?.ready === true;
+          },
+          30,
+          2000,
+        );
 
-      expect(ready).toBe(true);
-    });
+        expect(ready).toBe(true);
 
-    test.afterAll(async ({ rancherApi }) => {
-      await rancherApi.deleteRancherResource('v1', 'namespaces', shellNs, false);
-    });
+        await login();
 
-    test('should open a pod shell', async ({ page, login }) => {
-      await login();
+        const listPage = new WorkloadsPodsListPagePo(page);
 
-      const listPage = new WorkloadsPodsListPagePo(page);
+        await listPage.goTo();
+        await listPage.waitForPage();
 
-      await listPage.goTo();
-      await listPage.waitForPage();
+        // Filter to our specific pod so it's the first row
+        const table = listPage.sortableTable();
 
-      // Filter to our specific pod so it's the first row
-      const table = listPage.sortableTable();
+        await table.filter(shellPodName);
+        await expect(table.rowElements()).toHaveCount(1);
 
-      await table.filter(shellPodName);
-      await expect(table.rowElements()).toHaveCount(1);
+        const shell = new ShellPo(page);
 
-      const shell = new ShellPo(page);
-
-      await shell.openTerminal(table, shellPodName);
-      await shell.terminalStatus('Connected');
-      await shell.closeTerminal();
+        await shell.openTerminal(table, shellPodName);
+        await shell.terminalStatus('Connected');
+        await shell.closeTerminal();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'namespaces', shellNs, false);
+      }
     });
   });
 

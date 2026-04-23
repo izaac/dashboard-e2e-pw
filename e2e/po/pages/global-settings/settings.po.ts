@@ -50,6 +50,10 @@ export class SettingsPagePo extends RootClusterPage {
     return this.page.locator('[data-testid="mvc__card"]');
   }
 
+  resumeSessionButton(): Locator {
+    return this.inactivityModalCard().locator('button', { hasText: 'Resume Session' });
+  }
+
   /** The h1 title on the setting detail/edit page */
   settingTitle(): Locator {
     return this.page.locator('h1');

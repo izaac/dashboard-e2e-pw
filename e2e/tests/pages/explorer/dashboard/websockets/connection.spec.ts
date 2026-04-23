@@ -65,11 +65,10 @@ test.describe('Pod management and WebSocket interaction', { tag: ['@jenkins', '@
 
       expect(rmOutput.some((msg) => msg.includes('Directory deleted successfully'))).toBe(true);
     } finally {
-      if (tokenId) {
-        await rancherApi.deleteRancherResource('v3', 'tokens', tokenId, false);
-      }
-
-      await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
+      await Promise.allSettled([
+        tokenId ? rancherApi.deleteRancherResource('v3', 'tokens', tokenId, false) : Promise.resolve(),
+        rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false),
+      ]);
     }
   });
 });

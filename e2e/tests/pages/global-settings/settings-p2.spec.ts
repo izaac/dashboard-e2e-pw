@@ -33,35 +33,26 @@ const settingsClusterId = '_';
 
 test.describe('Settings (Part 2)', () => {
   test.describe.configure({ mode: 'serial' });
-  const settingsOriginal: Record<string, any> = {};
-  const resetSettings: string[] = [];
+  // Serial: tests mutate global singleton settings on a shared Rancher instance
   let settingsPage: SettingsPagePo;
 
-  test.beforeEach(async ({ login, page, rancherApi }) => {
+  test.beforeEach(async ({ login, page }) => {
     await login();
-
     settingsPage = new SettingsPagePo(page, settingsClusterId);
-
-    const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings');
-
-    resp.body.data.forEach((s: any) => {
-      settingsOriginal[s.id] = s;
-    });
   });
 
-  test.afterEach(async ({ rancherApi }) => {
-    try {
-      for (const s of resetSettings) {
-        const resource = settingsOriginal[s];
-        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', s);
+  /** Snapshot a setting and return a restore function (handles resourceVersion refresh) */
+  async function snapshotSetting(rancherApi: any, name: string) {
+    const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', name);
+    const original = structuredClone(resp.body);
 
-        resource.metadata.resourceVersion = resp.body.metadata.resourceVersion;
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', s, resource);
-      }
-    } finally {
-      resetSettings.length = 0;
-    }
-  });
+    return async () => {
+      const fresh = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', name);
+
+      original.metadata.resourceVersion = fresh.body.metadata.resourceVersion;
+      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', name, original);
+    };
+  }
 
   async function navToSettings(page: any) {
     const burgerMenu = new BurgerMenuPo(page);
@@ -143,273 +134,11 @@ test.describe('Settings (Part 2)', () => {
     }
   });
 
-  test('can update ui-index', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+  test('can update ui-index', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'ui-index';
+    const restore = await snapshotSetting(rancherApi, settingName);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
-
-    expect(resetResp.status()).toBe(200);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test('can update ui-dashboard-index', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'ui-dashboard-index';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
-
-    expect(resetResp.status()).toBe(200);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test('can update ui-offline-preferred', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'ui-offline-preferred';
-
-    // Update setting: Local
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const select = settingsPage.unlabeledSelect();
-
-    await select.toggle();
-    await select.clickOptionWithLabel('Local');
-
-    resetSettings.push(settingName);
-
-    let saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    let saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe('true');
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText('Local');
-
-    // Update settings: Remote
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await select.toggle();
-    await select.clickOptionWithLabel('Remote');
-
-    saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe('false');
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText('Remote');
-
-    // Update settings: Dynamic
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await select.toggle();
-    await select.clickOptionWithLabel('Dynamic');
-
-    saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe('dynamic');
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText('Dynamic');
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
-
-    expect(resetResp.status()).toBe(200);
-  });
-
-  test('can update ui-brand', { tag: ['@noPrime', '@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'ui-brand';
-    const burgerMenu = new BurgerMenuPo(page);
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Check logos in top-level navigation header for updated logo
-    await burgerMenu.toggle();
-    await expect(burgerMenu.brandLogoImage()).toBeVisible();
-    await burgerMenu.toggle();
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).not.toContainText(settingsData[settingName].new);
-  });
-
-  test('can update hide-local-cluster', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'hide-local-cluster';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    // Set radio button to "true" (first option)
-    await settingsPage.radioButton(0).click();
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText('true');
-
-    // Check home page for local cluster
-    const burgerMenu = new BurgerMenuPo(page);
-
-    await burgerMenu.toggle();
-    await burgerMenu.burgerMenuNavToMenuByLabel('Home');
-    const homePage = new HomePagePo(page);
-
-    await expect(homePage.body()).not.toContainText('local');
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    // Set radio button to "false" (second option)
-    await settingsPage.radioButton(1).click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test(
-    'can update k3s-based-upgrader-uninstall-concurrency',
-    { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page }) => {
-      const settingName = 'k3s-based-upgrader-uninstall-concurrency';
-
+    try {
       await navToSettings(page);
       await editSetting(page, settingName);
 
@@ -419,8 +148,6 @@ test.describe('Settings (Part 2)', () => {
 
       await input.clear();
       await input.fill(settingsData[settingName].new);
-
-      resetSettings.push(settingName);
 
       const saveResponsePromise = page.waitForResponse(
         (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
@@ -434,7 +161,7 @@ test.describe('Settings (Part 2)', () => {
 
       await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-      // Reset
+      // Reset via UI
       await navToSettings(page);
       await editSetting(page, settingName);
 
@@ -448,94 +175,401 @@ test.describe('Settings (Part 2)', () => {
 
       expect(resetResp.status()).toBe(200);
 
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
+      const defaultVal = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName)).body
+        .default;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(defaultVal);
+    } finally {
+      await restore();
+    }
+  });
+
+  test('can update ui-dashboard-index', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
+    const settingName = 'ui-dashboard-index';
+    const restore = await snapshotSetting(rancherApi, settingName);
+
+    try {
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+      const input = settingsPage.settingInput();
+
+      await input.clear();
+      await input.fill(settingsData[settingName].new);
+
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      const saveResp = await saveResponsePromise;
+
+      expect(saveResp.status()).toBe(200);
+      expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await settingsPage.useDefaultButton().click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      const resetResp = await resetResponsePromise;
+
+      expect(resetResp.status()).toBe(200);
+
+      const defaultVal = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName)).body
+        .default;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(defaultVal);
+    } finally {
+      await restore();
+    }
+  });
+
+  test('can update ui-offline-preferred', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
+    const settingName = 'ui-offline-preferred';
+    const restore = await snapshotSetting(rancherApi, settingName);
+
+    try {
+      // Update setting: Local
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+      const select = settingsPage.unlabeledSelect();
+
+      await select.toggle();
+      await select.clickOptionWithLabel('Local');
+
+      let saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      let saveResp = await saveResponsePromise;
+
+      expect(saveResp.status()).toBe(200);
+      expect(saveResp.request().postDataJSON().value).toBe('true');
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText('Local');
+
+      // Update settings: Remote
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await select.toggle();
+      await select.clickOptionWithLabel('Remote');
+
+      saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      saveResp = await saveResponsePromise;
+
+      expect(saveResp.status()).toBe(200);
+      expect(saveResp.request().postDataJSON().value).toBe('false');
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText('Remote');
+
+      // Update settings: Dynamic
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await select.toggle();
+      await select.clickOptionWithLabel('Dynamic');
+
+      saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      saveResp = await saveResponsePromise;
+
+      expect(saveResp.status()).toBe(200);
+      expect(saveResp.request().postDataJSON().value).toBe('dynamic');
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText('Dynamic');
+
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await settingsPage.useDefaultButton().click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      const resetResp = await resetResponsePromise;
+
+      expect(resetResp.status()).toBe(200);
+    } finally {
+      await restore();
+    }
+  });
+
+  test('can update ui-brand', { tag: ['@noPrime', '@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
+    const settingName = 'ui-brand';
+    const burgerMenu = new BurgerMenuPo(page);
+    const restore = await snapshotSetting(rancherApi, settingName);
+
+    try {
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+      const input = settingsPage.settingInput();
+
+      await input.clear();
+      await input.fill(settingsData[settingName].new);
+
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      await saveResponsePromise;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+      // Check logos in top-level navigation header for updated logo
+      await burgerMenu.toggle();
+      await expect(burgerMenu.brandLogoImage()).toBeVisible();
+      await burgerMenu.toggle();
+
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await settingsPage.useDefaultButton().click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      await resetResponsePromise;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).not.toContainText(settingsData[settingName].new);
+    } finally {
+      await restore();
+    }
+  });
+
+  test('can update hide-local-cluster', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
+    const settingName = 'hide-local-cluster';
+    const restore = await snapshotSetting(rancherApi, settingName);
+
+    try {
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+      // Set radio button to "true" (first option)
+      await settingsPage.radioButton(0).click();
+
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      await saveResponsePromise;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText('true');
+
+      // Check home page for local cluster
+      const burgerMenu = new BurgerMenuPo(page);
+
+      await burgerMenu.toggle();
+      await burgerMenu.burgerMenuNavToMenuByLabel('Home');
+      const homePage = new HomePagePo(page);
+
+      await expect(homePage.body()).not.toContainText('local');
+
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      // Set radio button to "false" (second option)
+      await settingsPage.radioButton(1).click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      await resetResponsePromise;
+
+      const defaultVal = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName)).body
+        .default;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(defaultVal);
+    } finally {
+      await restore();
+    }
+  });
+
+  test(
+    'can update k3s-based-upgrader-uninstall-concurrency',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'k3s-based-upgrader-uninstall-concurrency';
+      const restore = await snapshotSetting(rancherApi, settingName);
+
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+        const input = settingsPage.settingInput();
+
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
+
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const saveResp = await saveResponsePromise;
+
+        expect(saveResp.status()).toBe(200);
+        expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const resetResp = await resetResponsePromise;
+
+        expect(resetResp.status()).toBe(200);
+
+        const defaultVal = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(defaultVal);
+      } finally {
+        await restore();
+      }
     },
   );
 
   test(
     'can update system-agent-upgrader-install-concurrency',
     { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page }) => {
+    async ({ page, rancherApi }) => {
       const settingName = 'system-agent-upgrader-install-concurrency';
+      const restore = await snapshotSetting(rancherApi, settingName);
 
-      await navToSettings(page);
-      await editSetting(page, settingName);
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-      const input = settingsPage.settingInput();
+        const input = settingsPage.settingInput();
 
-      await input.clear();
-      await input.fill(settingsData[settingName].new);
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
 
-      resetSettings.push(settingName);
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-      const saveResponsePromise = page.waitForResponse(
-        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-      );
+        await settingsPage.saveButton().click();
+        const saveResp = await saveResponsePromise;
 
-      await settingsPage.saveButton().click();
-      const saveResp = await saveResponsePromise;
+        expect(saveResp.status()).toBe(200);
+        expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
 
-      expect(saveResp.status()).toBe(200);
-      expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-      // Reset
-      await navToSettings(page);
-      await editSetting(page, settingName);
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-      await settingsPage.useDefaultButton().click();
-      const resetResponsePromise = page.waitForResponse(
-        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-      );
+        await settingsPage.saveButton().click();
+        const resetResp = await resetResponsePromise;
 
-      await settingsPage.saveButton().click();
-      const resetResp = await resetResponsePromise;
+        expect(resetResp.status()).toBe(200);
 
-      expect(resetResp.status()).toBe(200);
+        const defaultVal = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
 
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(defaultVal);
+      } finally {
+        await restore();
+      }
     },
   );
 
-  test('can update system-default-registry', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'system-default-registry';
+  test(
+    'can update system-default-registry',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'system-default-registry';
+      const restore = await snapshotSetting(rancherApi, settingName);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    const input = settingsPage.settingInput();
+        const input = settingsPage.settingInput();
 
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
 
-    resetSettings.push(settingName);
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+        await settingsPage.saveButton().click();
+        await saveResponsePromise;
 
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
+        await input.clear();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-    await input.clear();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
-  });
+        await settingsPage.saveButton().click();
+        await resetResponsePromise;
+      } finally {
+        await restore();
+      }
+    },
+  );
 });
 
 test.describe('Settings (Part 2) - Standard User', { tag: ['@globalSettings', '@standardUser'] }, () => {

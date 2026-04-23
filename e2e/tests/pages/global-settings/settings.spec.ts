@@ -29,39 +29,26 @@ const settingsClusterId = '_';
 
 test.describe('Settings', () => {
   test.describe.configure({ mode: 'serial' });
-  const settingsOriginal: Record<string, any> = {};
-  const resetSettings: string[] = [];
+  // Serial: tests mutate global singleton settings on a shared Rancher instance
   let settingsPage: SettingsPagePo;
 
-  test.beforeEach(async ({ login, page, rancherApi }) => {
+  test.beforeEach(async ({ login, page }) => {
     await login();
     settingsPage = new SettingsPagePo(page, settingsClusterId);
-
-    // Get all settings
-    const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings');
-
-    resp.body.data.forEach((s: any) => {
-      settingsOriginal[s.id] = s;
-    });
   });
 
-  test.afterEach(async ({ rancherApi }) => {
-    try {
-      for (const s of resetSettings) {
-        try {
-          const resource = settingsOriginal[s];
-          const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', s);
+  /** Snapshot a setting and return a restore function (handles resourceVersion refresh) */
+  async function snapshotSetting(rancherApi: any, name: string) {
+    const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', name);
+    const original = structuredClone(resp.body);
 
-          resource.metadata.resourceVersion = resp.body.metadata.resourceVersion;
-          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', s, resource);
-        } catch {
-          // Setting may already be at default or resource version may have changed
-        }
-      }
-    } finally {
-      resetSettings.length = 0;
-    }
-  });
+    return async () => {
+      const fresh = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', name);
+
+      original.metadata.resourceVersion = fresh.body.metadata.resourceVersion;
+      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', name, original);
+    };
+  }
 
   async function navToSettings(page: any) {
     const burgerMenu = new BurgerMenuPo(page);
@@ -89,110 +76,121 @@ test.describe('Settings', () => {
       const sessionIdleSetting = 'auth-user-session-idle-ttl-minutes';
       const sessionTtlSetting = 'auth-user-session-ttl-minutes';
 
-      // Precondition: session TTL must be >= idle TTL, otherwise admission webhook rejects
-      const ttlResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', sessionTtlSetting);
-      const currentTtl = parseInt(ttlResp.body.value || ttlResp.body.default || '960', 10);
+      const restoreIdle = await snapshotSetting(rancherApi, sessionIdleSetting);
+      const restoreTtl = await snapshotSetting(rancherApi, sessionTtlSetting);
 
-      if (currentTtl < 2) {
-        ttlResp.body.value = '960';
-        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', sessionTtlSetting, ttlResp.body);
-        resetSettings.push(sessionTtlSetting);
+      try {
+        // Precondition: session TTL must be >= idle TTL, otherwise admission webhook rejects
+        const ttlResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', sessionTtlSetting);
+        const currentTtl = parseInt(ttlResp.body.value || ttlResp.body.default || '960', 10);
+
+        if (currentTtl < 2) {
+          ttlResp.body.value = '960';
+          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', sessionTtlSetting, ttlResp.body);
+        }
+
+        // Navigate to settings and edit the idle TTL
+        await navToSettings(page);
+        await editSetting(page, sessionIdleSetting);
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${sessionIdleSetting}`);
+
+        await settingsPage.settingInput().clear();
+        await settingsPage.settingInput().fill(settingsData[sessionIdleSetting].new);
+
+        // Intercept ALL useractivities requests with a fixed expiresAt.
+        // Must be fixed (not dynamic) so the frontend countdown approaches zero.
+        // Must override ALL calls because Playwright keeps the page live (unlike Cypress cy.wait).
+        const expiresAt = new Date(Date.now() + VERY_LONG).toISOString();
+
+        await page.route('**/v1/ext.cattle.io.useractivities/*', async (route) => {
+          const fetchResp = await route.fetch();
+
+          if (fetchResp.status() !== 200) {
+            await route.fulfill({ response: fetchResp });
+
+            return;
+          }
+
+          const body = await fetchResp.json();
+
+          if (body.status?.expiresAt) {
+            body.status.expiresAt = expiresAt;
+          }
+
+          await route.fulfill({ response: fetchResp, json: body });
+        });
+
+        try {
+          // Save the setting
+          const saveResponse = page.waitForResponse(
+            (resp) =>
+              resp.url().includes('management.cattle.io.settings') &&
+              resp.url().includes(sessionIdleSetting) &&
+              resp.request().method() === 'PUT',
+          );
+
+          await settingsPage.saveButton().click();
+          const resp = await saveResponse;
+
+          expect(resp.status()).toBe(200);
+
+          // Verify the saved value shows in the list
+          await expect(settingsPage.settingsValue(sessionIdleSetting)).toContainText(
+            settingsData[sessionIdleSetting].new,
+          );
+
+          // Wait for the inactivity modal to appear (frontend shows it when expiresAt is near)
+          const modal = settingsPage.inactivityModalCard();
+
+          await expect(modal).toBeVisible({ timeout: VERY_LONG });
+          await expect(modal).toContainText('Session expiring');
+          await expect(modal).toContainText('Your session is about to expire due to inactivity');
+          await expect(modal).toContainText('Resume Session');
+
+          // Click "Resume Session" to dismiss — use force because modal overlay can intercept
+          await settingsPage.resumeSessionButton().click({ force: true });
+          await expect(modal).toBeHidden();
+
+          // Navigate away and wait — modal should NOT reappear (session was resumed)
+          await page.goto('./home', { waitUntil: 'domcontentloaded' });
+
+          // eslint-disable-next-line playwright/no-wait-for-timeout
+          await page.waitForTimeout(STANDARD);
+          await expect(modal).toBeHidden();
+        } finally {
+          await page.unroute('**/v1/ext.cattle.io.useractivities/*');
+        }
+      } finally {
+        await restoreIdle();
+        await restoreTtl();
       }
-
-      // Navigate to settings and edit the idle TTL
-      await navToSettings(page);
-      await editSetting(page, sessionIdleSetting);
-      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${sessionIdleSetting}`);
-
-      await settingsPage.settingInput().clear();
-      await settingsPage.settingInput().fill(settingsData[sessionIdleSetting].new);
-
-      // Intercept ALL useractivities requests with a fixed expiresAt 30s from now.
-      // Unlike Cypress (which blocks network during cy.wait), Playwright keeps the page live,
-      // so the frontend fires repeated GETs. If any GET returns the real far-future expiry,
-      // it cancels the modal timer. We override ALL requests until the route is removed.
-      // Fixed expiresAt — all intercepted responses claim session expires in 60s.
-      // Must be fixed (not dynamic) so the frontend countdown approaches zero.
-      // Must override ALL calls because Playwright keeps the page live (unlike Cypress cy.wait).
-      const expiresAt = new Date(Date.now() + VERY_LONG).toISOString();
-
-      await page.route('**/v1/ext.cattle.io.useractivities/*', async (route) => {
-        const fetchResp = await route.fetch();
-
-        if (fetchResp.status() !== 200) {
-          await route.fulfill({ response: fetchResp });
-
-          return;
-        }
-
-        const body = await fetchResp.json();
-
-        if (body.status?.expiresAt) {
-          body.status.expiresAt = expiresAt;
-        }
-
-        await route.fulfill({ response: fetchResp, json: body });
-      });
-
-      // Save the setting
-      const saveResponse = page.waitForResponse(
-        (resp) =>
-          resp.url().includes('management.cattle.io.settings') &&
-          resp.url().includes(sessionIdleSetting) &&
-          resp.request().method() === 'PUT',
-      );
-
-      await settingsPage.saveButton().click();
-      const resp = await saveResponse;
-
-      expect(resp.status()).toBe(200);
-      resetSettings.push(sessionIdleSetting);
-
-      // Verify the saved value shows in the list
-      await expect(settingsPage.settingsValue(sessionIdleSetting)).toContainText(settingsData[sessionIdleSetting].new);
-
-      // Wait for the inactivity modal to appear (frontend shows it when expiresAt is near)
-      const modal = settingsPage.inactivityModalCard();
-
-      await expect(modal).toBeVisible({ timeout: VERY_LONG });
-      await expect(modal).toContainText('Session expiring');
-      await expect(modal).toContainText('Your session is about to expire due to inactivity');
-      await expect(modal).toContainText('Resume Session');
-
-      // Click "Resume Session" to dismiss — use force because modal overlay can intercept
-      await modal.locator('button', { hasText: 'Resume Session' }).click({ force: true });
-      await expect(modal).toBeHidden();
-
-      // Clean up the route handler so real expiry flows again
-      await page.unroute('**/v1/ext.cattle.io.useractivities/*');
-
-      // Navigate away and wait — modal should NOT reappear (session was resumed)
-      await page.goto('./home', { waitUntil: 'domcontentloaded' });
-
-      // eslint-disable-next-line playwright/no-wait-for-timeout
-      await page.waitForTimeout(STANDARD);
-      await expect(modal).toBeHidden();
     },
   );
 
   test('has the correct title', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-    // Ensure private label is at default (may be left over from branding test)
-    const plResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-pl');
+    const restorePl = await snapshotSetting(rancherApi, 'ui-pl');
 
-    if (plResp.body.value && plResp.body.value !== plResp.body.default) {
-      plResp.body.value = plResp.body.default;
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-pl', plResp.body);
+    try {
+      // Ensure private label is at default (may be left over from branding test)
+      const plResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-pl');
+
+      if (plResp.body.value && plResp.body.value !== plResp.body.default) {
+        plResp.body.value = plResp.body.default;
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-pl', plResp.body);
+      }
+
+      await navToSettings(page);
+
+      const version = await rancherApi.getRancherVersion();
+      const expectedTitle =
+        version.RancherPrime === 'true'
+          ? 'Rancher Prime - Global Settings - Settings'
+          : 'Rancher - Global Settings - Settings';
+
+      await expect(page).toHaveTitle(expectedTitle);
+    } finally {
+      await restorePl();
     }
-
-    await navToSettings(page);
-
-    const version = await rancherApi.getRancherVersion();
-    const expectedTitle =
-      version.RancherPrime === 'true'
-        ? 'Rancher Prime - Global Settings - Settings'
-        : 'Rancher - Global Settings - Settings';
-
-    await expect(page).toHaveTitle(expectedTitle);
   });
 
   test('has the correct banner text', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
@@ -202,275 +200,68 @@ test.describe('Settings', () => {
 
   test('can update engine-iso-url', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'engine-iso-url';
+    const restore = await snapshotSetting(rancherApi, settingName);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+    try {
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    // Update
-    const input = settingsPage.settingInput();
+      // Update
+      const input = settingsPage.settingInput();
 
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
+      await input.clear();
+      await input.fill(settingsData[settingName].new);
 
-    resetSettings.push(settingName);
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+      await settingsPage.saveButton().click();
+      const saveResp = await saveResponsePromise;
 
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
+      expect(saveResp.status()).toBe(200);
+      const reqBody = saveResp.request().postDataJSON();
 
-    expect(saveResp.status()).toBe(200);
-    const reqBody = saveResp.request().postDataJSON();
+      expect(reqBody.value).toBe(settingsData[settingName].new);
 
-    expect(reqBody.value).toBe(settingsData[settingName].new);
+      // Verify value shown
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-    // Verify value shown
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+      // Check modified label
+      await settingsPage.scrollToBottom();
+      await expect(settingsPage.modifiedLabel(settingName)).toBeVisible();
 
-    // Check modified label
-    await settingsPage.scrollToBottom();
-    await expect(settingsPage.modifiedLabel(settingName)).toBeVisible();
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      await settingsPage.useDefaultButton().click();
 
-    await settingsPage.useDefaultButton().click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+      await settingsPage.saveButton().click();
+      const resetResp = await resetResponsePromise;
 
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
+      expect(resetResp.status()).toBe(200);
 
-    expect(resetResp.status()).toBe(200);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-    await expect(settingsPage.modifiedLabel(settingName)).not.toBeAttached();
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(
+        (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName)).body.default,
+      );
+      await expect(settingsPage.modifiedLabel(settingName)).not.toBeAttached();
+    } finally {
+      await restore();
+    }
   });
 
-  test('can update password-min-length', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+  test('can update password-min-length', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'password-min-length';
+    const restore = await snapshotSetting(rancherApi, settingName);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test('can update ingress-ip-domain', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'ingress-ip-domain';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
-
-    expect(resetResp.status()).toBe(200);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test('can update auth-user-info-max-age-seconds', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'auth-user-info-max-age-seconds';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
-
-    expect(resetResp.status()).toBe(200);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test('can update auth-user-session-ttl-minutes', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'auth-user-session-ttl-minutes';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
-
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
-
-    expect(resetResp.status()).toBe(200);
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test('can update auth-token-max-ttl-minutes', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'auth-token-max-ttl-minutes';
-
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-    const input = settingsPage.settingInput();
-
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
-
-    resetSettings.push(settingName);
-
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
-
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
-
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
-
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
-
-  test(
-    'can update kubeconfig-default-token-ttl-minutes',
-    { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page }) => {
-      const settingName = 'kubeconfig-default-token-ttl-minutes';
-
+    try {
       await navToSettings(page);
       await editSetting(page, settingName);
 
@@ -481,7 +272,51 @@ test.describe('Settings', () => {
       await input.clear();
       await input.fill(settingsData[settingName].new);
 
-      resetSettings.push(settingName);
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      await saveResponsePromise;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await settingsPage.useDefaultButton().click();
+
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      await resetResponsePromise;
+
+      const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+        .body.default;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+    } finally {
+      await restore();
+    }
+  });
+
+  test('can update ingress-ip-domain', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
+    const settingName = 'ingress-ip-domain';
+    const restore = await snapshotSetting(rancherApi, settingName);
+
+    try {
+      await navToSettings(page);
+      await editSetting(page, settingName);
+
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+      const input = settingsPage.settingInput();
+
+      await input.clear();
+      await input.fill(settingsData[settingName].new);
 
       const saveResponsePromise = page.waitForResponse(
         (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
@@ -495,7 +330,7 @@ test.describe('Settings', () => {
 
       await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-      // Reset
+      // Reset via UI
       await navToSettings(page);
       await editSetting(page, settingName);
 
@@ -509,90 +344,326 @@ test.describe('Settings', () => {
 
       expect(resetResp.status()).toBe(200);
 
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
+      const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+        .body.default;
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+    } finally {
+      await restore();
+    }
+  });
+
+  test(
+    'can update auth-user-info-max-age-seconds',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'auth-user-info-max-age-seconds';
+      const restore = await snapshotSetting(rancherApi, settingName);
+
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+        const input = settingsPage.settingInput();
+
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
+
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const saveResp = await saveResponsePromise;
+
+        expect(saveResp.status()).toBe(200);
+        expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const resetResp = await resetResponsePromise;
+
+        expect(resetResp.status()).toBe(200);
+
+        const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+      } finally {
+        await restore();
+      }
     },
   );
 
-  test('can update auth-user-info-resync-cron', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'auth-user-info-resync-cron';
+  test(
+    'can update auth-user-session-ttl-minutes',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'auth-user-session-ttl-minutes';
+      const restore = await snapshotSetting(rancherApi, settingName);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    const input = settingsPage.settingInput();
+        const input = settingsPage.settingInput();
 
-    await input.clear();
-    await input.fill(settingsData[settingName].new);
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
 
-    resetSettings.push(settingName);
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+        await settingsPage.saveButton().click();
+        const saveResp = await saveResponsePromise;
 
-    await settingsPage.saveButton().click();
-    const saveResp = await saveResponsePromise;
+        expect(saveResp.status()).toBe(200);
+        expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
 
-    expect(saveResp.status()).toBe(200);
-    expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+        await settingsPage.saveButton().click();
+        const resetResp = await resetResponsePromise;
 
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
+        expect(resetResp.status()).toBe(200);
 
-    expect(resetResp.status()).toBe(200);
+        const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+      } finally {
+        await restore();
+      }
+    },
+  );
 
-  test('can update kubeconfig-generate-token', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
-    const settingName = 'kubeconfig-generate-token';
+  test(
+    'can update auth-token-max-ttl-minutes',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'auth-token-max-ttl-minutes';
+      const restore = await snapshotSetting(rancherApi, settingName);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    // Set radio button to "false"
-    await settingsPage.radioButton(1).click();
+        const input = settingsPage.settingInput();
 
-    resetSettings.push(settingName);
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
+        await settingsPage.saveButton().click();
+        await saveResponsePromise;
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-    await settingsPage.saveButton().click();
-    await resetResponsePromise;
+        await settingsPage.saveButton().click();
+        await resetResponsePromise;
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsOriginal[settingName].default);
-  });
+        const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+      } finally {
+        await restore();
+      }
+    },
+  );
+
+  test(
+    'can update kubeconfig-default-token-ttl-minutes',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'kubeconfig-default-token-ttl-minutes';
+      const restore = await snapshotSetting(rancherApi, settingName);
+
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+        const input = settingsPage.settingInput();
+
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
+
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const saveResp = await saveResponsePromise;
+
+        expect(saveResp.status()).toBe(200);
+        expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const resetResp = await resetResponsePromise;
+
+        expect(resetResp.status()).toBe(200);
+
+        const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+      } finally {
+        await restore();
+      }
+    },
+  );
+
+  test(
+    'can update auth-user-info-resync-cron',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'auth-user-info-resync-cron';
+      const restore = await snapshotSetting(rancherApi, settingName);
+
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+        const input = settingsPage.settingInput();
+
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
+
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const saveResp = await saveResponsePromise;
+
+        expect(saveResp.status()).toBe(200);
+        expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        const resetResp = await resetResponsePromise;
+
+        expect(resetResp.status()).toBe(200);
+
+        const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+      } finally {
+        await restore();
+      }
+    },
+  );
+
+  test(
+    'can update kubeconfig-generate-token',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'kubeconfig-generate-token';
+      const restore = await snapshotSetting(rancherApi, settingName);
+
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+
+        // Set radio button to "false"
+        await settingsPage.radioButton(1).click();
+
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        await saveResponsePromise;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
+
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
+
+        await settingsPage.saveButton().click();
+        await resetResponsePromise;
+
+        const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+          .body.default;
+
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+      } finally {
+        await restore();
+      }
+    },
+  );
 
   test('can update agent-tls-mode', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'agent-tls-mode';
@@ -610,42 +681,50 @@ test.describe('Settings', () => {
 
     test.skip(probeResp.status !== 200, `Webhook rejects agent-tls-mode changes (${probeResp.status})`);
 
-    await navToSettings(page);
-    await editSetting(page, settingName);
+    const restore = await snapshotSetting(rancherApi, settingName);
 
-    await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+    try {
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    // Select "System Store" from dropdown
-    const select = settingsPage.unlabeledSelect();
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-    await select.toggle();
-    await select.clickOptionWithLabel('System Store');
+      // Select "System Store" from dropdown
+      const select = settingsPage.unlabeledSelect();
 
-    resetSettings.push(settingName);
+      await select.toggle();
+      await select.clickOptionWithLabel('System Store');
 
-    const saveResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+      const saveResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    await settingsPage.saveButton().click();
-    await saveResponsePromise;
+      await settingsPage.saveButton().click();
+      await saveResponsePromise;
 
-    await expect(settingsPage.advancedSettingRow(settingName)).toContainText('System Store');
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText('System Store');
 
-    // Reset
-    await navToSettings(page);
-    await editSetting(page, settingName);
+      // Reset via UI
+      await navToSettings(page);
+      await editSetting(page, settingName);
 
-    await settingsPage.useDefaultButton().click();
-    const resetResponsePromise = page.waitForResponse(
-      (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-    );
+      await settingsPage.useDefaultButton().click();
+      const resetResponsePromise = page.waitForResponse(
+        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+      );
 
-    await settingsPage.saveButton().click();
-    const resetResp = await resetResponsePromise;
+      await settingsPage.saveButton().click();
+      const resetResp = await resetResponsePromise;
 
-    expect(resetResp.status()).toBe(200);
-    expect(resetResp.request().postDataJSON().value).toBe(settingsOriginal[settingName].default);
+      expect(resetResp.status()).toBe(200);
+
+      const freshDefault = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName))
+        .body.default;
+
+      expect(resetResp.request().postDataJSON().value).toBe(freshDefault);
+    } finally {
+      await restore();
+    }
   });
 });
 

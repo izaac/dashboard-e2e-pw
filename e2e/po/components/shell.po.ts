@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { LONG } from '@/support/timeouts';
 
 /**
  * Shell PO — matches upstream Cypress Shell component.
@@ -20,7 +21,7 @@ export default class ShellPo extends ComponentPo {
     const actionMenu = await table.rowActionMenuOpen(resourceName);
 
     await actionMenu.getMenuItem('Execute Shell').click();
-    await expect(this.self().locator('.window.show-grid .text-success')).toContainText('Connected', { timeout: 30000 });
+    await expect(this.self().locator('.window.show-grid .text-success')).toContainText('Connected', { timeout: LONG });
   }
 
   async closeTerminal(): Promise<void> {

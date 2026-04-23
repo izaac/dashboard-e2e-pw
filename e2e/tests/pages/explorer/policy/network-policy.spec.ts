@@ -32,9 +32,9 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
 
     const resp = await createResponse;
 
-    expect(resp.status()).toBe(201);
-
     try {
+      expect(resp.status()).toBe(201);
+
       await networkPolicyPage.waitForPage();
       const sortableTable = networkPolicyPage.list().resourceTable().sortableTable();
 
@@ -86,9 +86,9 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
     const resp = await createResponse;
     const body = await resp.json();
 
-    expect(resp.status()).toBe(201);
-
     try {
+      expect(resp.status()).toBe(201);
+
       expect(body.spec.ingress).toEqual(
         expect.arrayContaining([expect.objectContaining({ ports: [expect.objectContaining({ port: portValue })] })]),
       );

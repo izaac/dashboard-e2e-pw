@@ -11,7 +11,7 @@
 | AddonConfigPo | addon-config.po.ts | ComponentPo | `.dashboard-root` | super, yamlEditor |
 | ArrayListPo | array-list.po.ts | ComponentPo | — | super, arrayListItem, if, closeArrayListItem, clickAdd, clearListItem, setValueAtIndex |
 | AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, expectToBeDisabled, expectToBeEnabled, waitForDisabledAppearanceToDisappear, label, action, apply, computedBackground |
-| BannersPo | banners.po.ts | ComponentPo | — | super, banner, bannerElement, closeButton |
+| BannersPo | banners.po.ts | ComponentPo | — | super, banner, bannerElement, closeButton, headerBanners |
 | ButtonDropdownPo | button-dropdown.po.ts | LabeledSelectPo | — | super, toggle |
 | ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, isSelected |
 | CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
@@ -289,7 +289,7 @@
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+11) |
 | PerformancePagePo | performance.po.ts | RootClusterPage | — | super, saveButton, inactivityCheckbox, inactivityInput, garbageCollectionResourceCount, namespaceFilteringCheckbox, websocketWebWorkerCheckbox, serverSidePaginationCheckbox (+11) |
-| SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+12) |
+| SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+13) |
 
 ## pages/users-and-auth/
 

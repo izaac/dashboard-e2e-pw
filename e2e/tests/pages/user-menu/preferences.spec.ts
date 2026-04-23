@@ -66,17 +66,17 @@ test.describe('User can update their preferences', () => {
 
     // Cycle through available languages and verify DOM lang attribute
     const languages: Record<string, number> = {
-      '[lang="en-us"]': 1,
-      '[lang="zh-hans"]': 2,
+      'en-us': 1,
+      'zh-hans': 2,
     };
 
-    for (const [selector, index] of Object.entries(languages)) {
+    for (const [langCode, index] of Object.entries(languages)) {
       await langDropdown.toggle();
       await langDropdown.isOpened();
       await expect(langDropdown.getOptions()).toHaveCount(2);
       await langDropdown.clickOption(index);
       await langDropdown.isClosed();
-      await prefPage.checkLangDomElement(selector);
+      await prefPage.checkLangDomElement(langCode);
     }
 
     // Regression test: https://github.com/rancher/dashboard/issues/10153
@@ -90,7 +90,7 @@ test.describe('User can update their preferences', () => {
 
     await nav.navToSideMenuEntryByLabel('事件');
 
-    const masthead = new ResourceListMastheadPo(page, '.dashboard-root');
+    const masthead = new ResourceListMastheadPo(page);
 
     await expect(masthead.title()).toContainText('事件');
 
@@ -115,7 +115,7 @@ test.describe('User can update their preferences', () => {
     await langDropdown.toggle();
     await langDropdown.clickOption(1);
     await prefSavePromise;
-    await prefPage.checkLangDomElement('[lang="en-us"]');
+    await prefPage.checkLangDomElement('en-us');
   });
 
   test('Can select a theme', { tag: ['@userMenu', '@adminUser', '@standardUser'] }, async ({ page, login }) => {
@@ -286,7 +286,9 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select Confirmation Setting',
     { tag: ['@userMenu', '@adminUser', '@standardUser'] },
-    async ({ page, login }) => {
+    async ({ page, login, rancherApi }) => {
+      // Ensure known starting state: checkbox unchecked
+      await rancherApi.setUserPreference({ 'scale-pool-prompt': 'false' });
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -337,7 +339,9 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select Enable "View in API"',
     { tag: ['@userMenu', '@adminUser', '@standardUser'] },
-    async ({ page, login }) => {
+    async ({ page, login, rancherApi }) => {
+      // Ensure known starting state: checkbox unchecked
+      await rancherApi.setUserPreference({ 'view-in-api': 'false' });
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -392,7 +396,9 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select Show system Namespaces',
     { tag: ['@userMenu', '@adminUser', '@standardUser'] },
-    async ({ page, login }) => {
+    async ({ page, login, rancherApi }) => {
+      // Ensure known starting state: checkbox unchecked
+      await rancherApi.setUserPreference({ 'all-namespaces': 'false' });
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -443,7 +449,9 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select Enable Dark/Light Theme keyboard shortcut toggle',
     { tag: ['@userMenu', '@adminUser', '@standardUser'] },
-    async ({ page, login }) => {
+    async ({ page, login, rancherApi }) => {
+      // Ensure known starting state: checkbox unchecked
+      await rancherApi.setUserPreference({ 'theme-shortcut': 'false' });
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -575,11 +583,13 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select Hide All Type Description Boxes',
     { tag: ['@userMenu', '@adminUser', '@standardUser'] },
-    async ({ page, login }) => {
+    async ({ page, login, rancherApi }) => {
+      // Ensure known starting state: descriptions visible (checkbox unchecked)
+      await rancherApi.setUserPreference({ 'hide-desc': '[]' });
       await login();
 
       const prefPage = new PreferencesPagePo(page);
-      const banners = new BannersPo(page, 'header > .banner');
+      const banners = BannersPo.headerBanners(page);
       const featureFlagsPage = new FeatureFlagsPagePo(page);
 
       await prefPage.goTo();
@@ -650,55 +660,51 @@ test.describe('User can update their preferences', () => {
     },
   );
 
-  test(
-    'Can select login landing page - home page',
-    { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, envMeta }) => {
-      await login();
+  test('Can select login landing page - home page', { tag: ['@userMenu', '@adminUser'] }, async ({ page, login }) => {
+    await login();
 
-      const prefPage = new PreferencesPagePo(page);
-      const userMenu = new UserMenuPo(page);
+    const prefPage = new PreferencesPagePo(page);
+    const userMenu = new UserMenuPo(page);
 
-      await prefPage.goTo();
-      await prefPage.waitForPage();
+    await prefPage.goTo();
+    await prefPage.waitForPage();
 
-      const radioGroup = prefPage.landingPageRadioBtn();
+    const radioGroup = prefPage.landingPageRadioBtn();
 
-      await radioGroup.checkVisible();
+    await radioGroup.checkVisible();
 
-      const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
-      );
+    const prefUpdatePromise = page.waitForResponse(
+      (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+    );
 
-      // Select "Home" (index 0)
-      await radioGroup.set(0);
+    // Select "Home" (index 0)
+    await radioGroup.set(0);
 
-      const resp = await prefUpdatePromise;
+    const resp = await prefUpdatePromise;
 
-      expect(resp.status()).toBe(200);
+    expect(resp.status()).toBe(200);
 
-      const reqBody = resp.request().postDataJSON();
-      const respBody = await resp.json();
+    const reqBody = resp.request().postDataJSON();
+    const respBody = await resp.json();
 
-      expect(reqBody.data).toHaveProperty('after-login-route', '"home"');
-      expect(respBody.data).toHaveProperty('after-login-route', '"home"');
+    expect(reqBody.data).toHaveProperty('after-login-route', '"home"');
+    expect(respBody.data).toHaveProperty('after-login-route', '"home"');
 
-      // Verify radio is checked
-      await radioGroup.isChecked(0);
+    // Verify radio is checked
+    await radioGroup.isChecked(0);
 
-      // Logout and verify landing page
-      await userMenu.clickMenuItem('Log Out');
-      await expect(page).toHaveURL(/logged-out/);
+    // Logout and verify landing page
+    await userMenu.clickMenuItem('Log Out');
+    await expect(page).toHaveURL(/logged-out/);
 
-      await login();
-      await expect(page).toHaveURL(/\/home/);
-    },
-  );
+    await login();
+    await expect(page).toHaveURL(/\/home/);
+  });
 
   test(
     'Can select login landing page - last visited',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, envMeta }) => {
+    async ({ page, login }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);
@@ -746,7 +752,7 @@ test.describe('User can update their preferences', () => {
   test(
     'Can select login landing page - specific cluster',
     { tag: ['@userMenu', '@adminUser'] },
-    async ({ page, login, envMeta }) => {
+    async ({ page, login }) => {
       await login();
 
       const prefPage = new PreferencesPagePo(page);

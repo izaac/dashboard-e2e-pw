@@ -2,7 +2,9 @@ import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class ResourceListMastheadPo extends ComponentPo {
-  constructor(page: Page, selector: string, parent?: Locator) {
+  static readonly DASHBOARD_ROOT = '.dashboard-root';
+
+  constructor(page: Page, selector = ResourceListMastheadPo.DASHBOARD_ROOT, parent?: Locator) {
     super(page, selector, parent);
   }
 
