@@ -6,7 +6,7 @@
 
 - [x] `user-retention.spec.ts` — 4x `expect(await ...value()).toBe()` → `toHaveValue()`
 - [x] `home.spec.ts` — 6x `await .innerText()` + manual expect → `toContainText()`
-- [ ] `settings-p2.spec.ts` — `await .innerText()` → `toContainText()`
+- [x] `settings-p2.spec.ts` — ✅ `await .innerText()` → `textContent()` + `toBeVisible()` guard
 - [x] `cloud-credentials.spec.ts` — `getAttributeValue('placeholder')` → `toHaveAttribute()`
 - [x] `cluster-list.spec.ts` — `await .innerText()` → `toContainText()`
 - [x] `feature-flags.spec.ts` — `await rowElements().count()` → `toHaveCount()`
@@ -49,7 +49,7 @@
 - [ ] `cilium-cni.spec.ts` — IPv6 test missing
 - [ ] `preferences.spec.ts` — language selection test missing
 - [ ] `prime.spec.ts` — auth page link test (needs AuthProviderPo)
-- [ ] `network-policy.spec.ts` — port validation test skipped
+- [x] `network-policy.spec.ts` — ✅ port validation unskipped (debounce wait + objectContaining fix)
 
 ### Large assertion gaps in existing tests
 
