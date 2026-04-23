@@ -178,7 +178,18 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
       }
     });
 
-    await rancherSetupConfigurePage.serverUrl().checkVisible();
+    const serverUrlField = rancherSetupConfigurePage.serverUrl();
+
+    await serverUrlField.checkVisible();
+
+    // Docker hostnames like "https://rancher-2" fail Rancher's URL validator (requires dots in host).
+    // Fix by appending ".svc" to make it a synthetic FQDN.
+    const currentServerUrl = await serverUrlField.value();
+    const hostPart = currentServerUrl.replace(/^https?:\/\//, '').replace(/[:/].*$/, '');
+
+    if (hostPart && !hostPart.includes('.')) {
+      await serverUrlField.set(currentServerUrl.replace(hostPart, `${hostPart}.svc`));
+    }
 
     await rancherSetupConfigurePage.termsAgreement().set();
     expect(await rancherSetupConfigurePage.canSubmit()).toBe(true);
