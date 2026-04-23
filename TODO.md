@@ -68,7 +68,7 @@
 
 - [x] Fleet delete assertions — add `checkRowCount` + `not.contain` after delete (~8 specs)
 - [x] YAML download content — verify kind/metadata.name, not just filename (~8 specs)
-- [ ] Response body deep checks — services, ingress, network-policy (~5 specs)
+- [x] Response body deep checks — ingress edit/headless `toMatchObject` for backend.service + tls
 
 ## Not yet validated (need credentials or infra)
 
