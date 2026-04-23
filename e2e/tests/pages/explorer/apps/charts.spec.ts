@@ -231,7 +231,7 @@ test.describe('Chart Details Page', { tag: ['@explorer', '@adminUser'] }, () => 
       const initialCount = await versionLinks.count();
 
       await showMoreBtn.click();
-      await expect(showMoreBtn).not.toBeAttached();
+      await expect(showMoreBtn).toContainText('Show Less');
 
       // After expanding, more versions should be visible
       const expandedCount = await versionLinks.count();
