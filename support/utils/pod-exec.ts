@@ -1,6 +1,8 @@
 import * as https from 'https';
 import WebSocket from 'ws';
 
+const DEFAULT_EXEC_TIMEOUT_MS = 30_000;
+
 /**
  * Decode a Kubernetes exec WebSocket frame.
  * The base64.channel.k8s.io subprotocol prefixes each message with a stream
@@ -8,8 +10,6 @@ import WebSocket from 'ws';
  * base64-encoded payload.
  */
 function decodeFrame(data: WebSocket.Data): { channel: number; text: string } {
-  // K8s base64.channel.k8s.io sends text frames: first char is channel digit (ASCII),
-  // rest is base64-encoded payload
   const raw = typeof data === 'string' ? data : Buffer.from(data as ArrayBuffer).toString('utf-8');
   const channel = parseInt(raw[0], 10);
   const text = Buffer.from(raw.slice(1), 'base64').toString('utf-8');
@@ -49,6 +49,7 @@ function buildExecUrl(
  * @param container - Container name (typically 'container-0')
  * @param command - Shell command to execute
  * @param bearerToken - Rancher API bearer token
+ * @param timeoutMs - Timeout in ms (default 30s). Rejects + closes socket if exceeded.
  * @returns Array of stdout messages received
  */
 export async function execInPod(
@@ -58,6 +59,7 @@ export async function execInPod(
   container: string,
   command: string,
   bearerToken: string,
+  timeoutMs = DEFAULT_EXEC_TIMEOUT_MS,
 ): Promise<string[]> {
   const wsUrl = apiUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
   const commands = ['/bin/sh', '-c', command];
@@ -66,6 +68,7 @@ export async function execInPod(
   const agent = new https.Agent({ rejectUnauthorized: false });
 
   return new Promise((resolve, reject) => {
+    let settled = false;
     const ws = new WebSocket(url, 'base64.channel.k8s.io', {
       headers: {
         Authorization: `Bearer ${bearerToken}`,
@@ -81,6 +84,30 @@ export async function execInPod(
     const stdout: string[] = [];
     const stderr: string[] = [];
 
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        ws.close();
+        reject(new Error(`WebSocket exec timed out after ${timeoutMs}ms: ${command}`));
+      }
+    }, timeoutMs);
+
+    function finish(error?: Error) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+
+      if (error) {
+        reject(error);
+      } else if (stderr.length > 0) {
+        reject(new Error(`WebSocket exec stderr: ${stderr.join('')}`));
+      } else {
+        resolve(stdout);
+      }
+    }
+
     ws.on('message', (data) => {
       const frame = decodeFrame(data);
 
@@ -88,15 +115,21 @@ export async function execInPod(
         stdout.push(frame.text);
       } else if (frame.channel === 2) {
         stderr.push(frame.text);
+      } else if (frame.channel === 3 && frame.text.trim()) {
+        // Channel 3 = K8s exec status. Non-empty means error.
+        try {
+          const status = JSON.parse(frame.text);
+
+          if (status.status !== 'Success') {
+            finish(new Error(`K8s exec failed: ${status.message || frame.text}`));
+          }
+        } catch {
+          finish(new Error(`K8s exec status: ${frame.text}`));
+        }
       }
     });
 
-    ws.on('close', () => {
-      resolve(stdout);
-    });
-
-    ws.on('error', (err) => {
-      reject(new Error(`WebSocket exec error: ${err.message}`));
-    });
+    ws.on('close', () => finish());
+    ws.on('error', (err) => finish(new Error(`WebSocket exec error: ${err.message}`)));
   });
 }

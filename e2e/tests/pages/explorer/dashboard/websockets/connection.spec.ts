@@ -8,14 +8,16 @@ test.describe('Pod management and WebSocket interaction', { tag: ['@jenkins', '@
     const nsName = `e2e-ws-ns-${Date.now()}`;
     const podName = `e2e-ws-pod-${Date.now()}`;
     const tokenDesc = `e2e-ws-token-${Date.now()}`;
+    let tokenId: string | undefined;
 
     await rancherApi.createNamespace(nsName);
 
-    const tokenResp = await rancherApi.createToken(tokenDesc);
-    const bearerToken = tokenResp.body.token;
-    const tokenId = tokenResp.body.id;
-
     try {
+      const tokenResp = await rancherApi.createToken(tokenDesc);
+      const bearerToken = tokenResp.body.token;
+
+      tokenId = tokenResp.body.id;
+
       await rancherApi.createPod(nsName, podName, podImage);
 
       // Wait for container ready — phase Running + container ready
@@ -63,7 +65,10 @@ test.describe('Pod management and WebSocket interaction', { tag: ['@jenkins', '@
 
       expect(rmOutput.some((msg) => msg.includes('Directory deleted successfully'))).toBe(true);
     } finally {
-      await rancherApi.deleteRancherResource('v3', 'tokens', tokenId, false);
+      if (tokenId) {
+        await rancherApi.deleteRancherResource('v3', 'tokens', tokenId, false);
+      }
+
       await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
     }
   });

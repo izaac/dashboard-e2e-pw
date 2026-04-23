@@ -158,7 +158,7 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const shell = new ShellPo(page);
 
-      await shell.openTerminal();
+      await shell.openTerminal(table, shellPodName);
       await shell.terminalStatus('Connected');
       await shell.closeTerminal();
     });

@@ -52,15 +52,11 @@ test.describe('Settings (Part 2)', () => {
   test.afterEach(async ({ rancherApi }) => {
     try {
       for (const s of resetSettings) {
-        try {
-          const resource = settingsOriginal[s];
-          const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', s);
+        const resource = settingsOriginal[s];
+        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', s);
 
-          resource.metadata.resourceVersion = resp.body.metadata.resourceVersion;
-          await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', s, resource);
-        } catch {
-          // Setting may already be at default or resource version may have changed
-        }
+        resource.metadata.resourceVersion = resp.body.metadata.resourceVersion;
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', s, resource);
       }
     } finally {
       resetSettings.length = 0;

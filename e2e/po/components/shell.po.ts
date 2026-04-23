@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 /**
  * Shell PO — matches upstream Cypress Shell component.
@@ -11,9 +12,14 @@ export default class ShellPo extends ComponentPo {
     super(page, '#horizontal-window-manager');
   }
 
-  async openTerminal(): Promise<void> {
-    await this.page.getByTestId('sortable-table-0-action-button').first().click();
-    await this.page.locator('[dropdown-menu-item]').filter({ hasText: 'Execute Shell' }).click();
+  /**
+   * Open a terminal for a specific resource by name via the row action menu.
+   * Requires a SortableTablePo to scope the action to the correct row.
+   */
+  async openTerminal(table: SortableTablePo, resourceName: string): Promise<void> {
+    const actionMenu = await table.rowActionMenuOpen(resourceName);
+
+    await actionMenu.getMenuItem('Execute Shell').click();
     await expect(this.self().locator('.window.show-grid .text-success')).toContainText('Connected', { timeout: 30000 });
   }
 
