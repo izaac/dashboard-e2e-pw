@@ -14,12 +14,11 @@
 
 ### Raw selectors in specs (move to POs)
 
-- [ ] `rancher-setup.spec.ts` — 3x `page.locator('[data-testid="local-login-username"]')` + `waitForTimeout(1000)`
-- [ ] `aks-cluster-provisioning.spec.ts` — 2x `.locator('button[type="submit"], .btn-primary')`
+- [ ] `rancher-setup.spec.ts` (setup/) — 3x `page.locator('[data-testid="local-login-username"]')` + `waitForTimeout(1000)`
 - [ ] `jwt-authentication.spec.ts` — `.locator('a, .accordion-title, ...').filter(...)` chain
 - [ ] `kontainer-drivers.spec.ts` — `driverRow.locator('[data-testid*="action-button"]')`
 - [ ] `replicasets.spec.ts` — `'.sortable-table'` passed to SortableTablePo constructor
-- [ ] `elemental.spec.ts` — `page.waitForSelector(...)` with raw CSS
+- [ ] `elemental.spec.ts` (extensions/) — `page.waitForSelector(...)` with raw CSS
 - [ ] `persistent-volume-claims.spec.ts` — `.evaluate((el) => el.classList.contains(...))`
 
 ### Missing cleanup / state restore
