@@ -95,15 +95,15 @@
 - [ ] `fleet-clusters.spec.ts` — 11 tests need AWS downstream clusters
 - [ ] `gitrepo.spec.ts` — Create GitRepo needs downstream clusters
 
-### Standard user account
+### Standard user account — ✅ all pass (111 passed, 10 skipped, Docker sharded run)
 
-- [ ] `branding.spec.ts` — 1 test (standard user visibility)
-- [ ] `settings.spec.ts` — 1 test (standard user restrictions)
-- [ ] `feature-flags.spec.ts` — 1 test (standard user restrictions)
-- [ ] `banners.spec.ts` — 1 test (standard user visibility)
-- [ ] `settings-p2.spec.ts` — 1 test (standard user restrictions)
-- [ ] `cluster-dashboard.spec.ts` — 1 test (project role access)
-- [ ] `get-support.spec.ts` — 1 test (standard user view)
+- [x] `branding.spec.ts` — 1 test (standard user visibility)
+- [x] `settings.spec.ts` — 1 test (standard user restrictions)
+- [x] `feature-flags.spec.ts` — 1 test (standard user restrictions)
+- [x] `banners.spec.ts` — 1 test (standard user visibility)
+- [x] `settings-p2.spec.ts` — 1 test (standard user restrictions)
+- [x] `cluster-dashboard.spec.ts` — 1 test (project role access)
+- [x] `get-support.spec.ts` — 1 test (standard user view)
 
 ### Elemental operator
 
