@@ -42,7 +42,7 @@
 - [ ] `roles.spec.ts` (users-and-auth) — 5 tests (filter, sort, pagination x2, std user)
 - [ ] `configmap.spec.ts` — 3 tests (pagination, sort, filter) skipped
 - [ ] `workspaces.spec.ts` — 3 tests (pagination, filter, sort) skipped
-- [ ] `websockets/connection.spec.ts` — 3 folder tests skipped
+- [x] `websockets/connection.spec.ts` — ✅ atomic WS exec test (mkdir/ls/rm via pod-exec helper)
 - [ ] `edit-fake-cluster.spec.ts` — 2 empty stubs (needs blueprint port)
 - [ ] `repositories.spec.ts` (apps) — Refresh describe block not ported
 - [ ] `settings.spec.ts` — inactivity modal test skipped
@@ -111,8 +111,8 @@
 
 ### WebSocket / shell access
 
-- [ ] `pods.spec.ts` — 1 test (pod shell exec, needs running pod)
-- [ ] `connection.spec.ts` — 1 test (WebSocket folder creation, needs TLS helper)
+- [x] `pods.spec.ts` — ✅ pod shell exec implemented (ShellPo + API pod creation)
+- [x] `connection.spec.ts` — ✅ atomic WS exec test (mkdir/ls/rm via `support/utils/pod-exec.ts`)
 
 ## Safety Guards
 
