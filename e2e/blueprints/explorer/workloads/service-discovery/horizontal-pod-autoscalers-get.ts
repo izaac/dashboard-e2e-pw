@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
 
 export const horizontalpodautoscalerGetResponseEmpty = {
   type: 'collection',
@@ -9,7 +9,7 @@ export const horizontalpodautoscalerGetResponseEmpty = {
   },
   actions: {},
   resourceType: 'autoscaling.horizontalpodautoscaler',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 0,
   data: [],
 };
@@ -23,7 +23,7 @@ export const horizontalpodautoscalerGetResponseSmallSet = {
   },
   actions: {},
   resourceType: 'autoscaling.horizontalpodautoscaler',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 1,
   data: [
     {

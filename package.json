@@ -37,7 +37,8 @@
     "local:down": "docker compose down",
     "local:down:sharded": "docker compose -f docker-compose.sharded.yml down -v",
     "local:report": "npx playwright show-report",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint:md": "markdownlint-cli2"
   },
   "dependencies": {
     "@axe-core/playwright": "4.10.1",
@@ -58,6 +59,7 @@
     "eslint-plugin-playwright": "2.2.0",
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
+    "markdownlint-cli2": "^0.22.1",
     "prettier": "3.5.3",
     "tsx": "4.21.0"
   },
@@ -65,6 +67,9 @@
     "*.ts": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix"
     ]
   },
   "repository": {
@@ -72,5 +77,8 @@
     "url": "https://github.com/rancher/dashboard.git",
     "directory": "playwright"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": ">=22"
+  }
 }

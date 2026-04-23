@@ -24,25 +24,119 @@ interface SpecEntry {
   suite: string;
   tests: string[];
   skippedTests: string[];
+  commentedOutTests: string[];
 }
 
-function extractTests(filePath: string, pattern: RegExp, skipPattern: RegExp): { tests: string[]; skipped: string[] } {
+/**
+ * Normalize a test name for fuzzy matching:
+ * - lowercase
+ * - strip leading "can " / "should " / "will " noise words
+ * - collapse whitespace
+ * - strip punctuation
+ */
+function normalizeTestName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/^can\s+/, '')
+    .replace(/^should\s+/, '')
+    .replace(/^will\s+/, '')
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Check if an upstream test name has a fuzzy match in a set of PW test names.
+ * Tries exact match first, then fuzzy.
+ */
+function hasMatch(upstreamName: string, pwNamesNormalized: Map<string, string>): string | null {
+  const norm = normalizeTestName(upstreamName);
+
+  // Direct lookup
+  if (pwNamesNormalized.has(norm)) {
+    return pwNamesNormalized.get(norm)!;
+  }
+
+  // Substring: upstream name contained in a PW name or vice versa
+  for (const [pwNorm, pwOrig] of pwNamesNormalized) {
+    if (pwNorm.includes(norm) || norm.includes(pwNorm)) {
+      return pwOrig;
+    }
+  }
+
+  return null;
+}
+
+function extractCypressTests(filePath: string): { tests: string[]; skipped: string[]; commented: string[] } {
   const raw = fs.readFileSync(filePath, 'utf-8');
 
-  // Strip comments to avoid counting commented-out tests
+  // Strip block comments
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  const tests: string[] = [];
+  const skipped: string[] = [];
+  const commented: string[] = [];
+
+  for (const line of src.split('\n')) {
+    const trimmed = line.trimStart();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    // Commented-out it()
+    const commentedMatch = trimmed.match(/^\/\/\s*it\(\s*['"`]([^'"`]+)['"`]/);
+
+    if (commentedMatch) {
+      commented.push(commentedMatch[1]);
+      continue;
+    }
+
+    if (trimmed.startsWith('//')) {
+      continue;
+    }
+
+    // it.skip()
+    const skipMatch = line.match(/\bit\.skip\(\s*['"`]([^'"`]+)['"`]/);
+
+    if (skipMatch) {
+      skipped.push(skipMatch[1]);
+      tests.push(skipMatch[1]);
+      continue;
+    }
+
+    // Live it()
+    const liveMatch = line.match(/\bit\(\s*['"`]([^'"`]+)['"`]/);
+
+    if (liveMatch) {
+      tests.push(liveMatch[1]);
+    }
+  }
+
+  return { tests, skipped, commented };
+}
+
+function extractPlaywrightTests(filePath: string): { tests: string[]; skipped: string[] } {
+  const raw = fs.readFileSync(filePath, 'utf-8');
+
   const src = raw
-    .replace(/\/\*[\s\S]*?\*\//g, '') // block comments
+    .replace(/\/\*[\s\S]*?\*\//g, '')
     .split('\n')
     .map((line) => (line.trimStart().startsWith('//') ? '' : line))
     .join('\n');
 
   const tests: string[] = [];
   const skipped: string[] = [];
+
+  const testPattern = /\btest\(\s*['"`]([^'"`]+)['"`]/g;
   let m;
 
-  while ((m = pattern.exec(src)) !== null) {
+  while ((m = testPattern.exec(src)) !== null) {
     tests.push(m[1]);
   }
+
+  const skipPattern = /\btest\.skip\(\s*['"`]([^'"`]+)['"`]/g;
 
   while ((m = skipPattern.exec(src)) !== null) {
     skipped.push(m[1]);
@@ -74,6 +168,7 @@ function collectSpecs(dir: string, root: string): SpecEntry[] {
         suite: suite || 'root',
         tests: [],
         skippedTests: [],
+        commentedOutTests: [],
       });
     }
   }
@@ -104,22 +199,16 @@ const upstreamSpecs = collectSpecs(UPSTREAM_TEST_ROOT, UPSTREAM_TEST_ROOT).filte
 );
 
 // Extract test names
-const itPattern = /\bit\(\s*['"`]([^'"`]+)['"`]/g;
-const itSkipPattern = /\bit\.skip\(\s*['"`]([^'"`]+)['"`]/g;
-// test.skip('name', callback) — first arg is a string = test definition (counts as test)
-// test.skip(condition, 'reason') — first arg is NOT a string = conditional skip (ignored)
-const testPattern = /\btest\(\s*['"`]([^'"`]+)['"`]/g;
-const testSkipDefPattern = /\btest\.skip\(\s*['"`]([^'"`]+)['"`]/g;
-
 for (const spec of upstreamSpecs) {
-  const { tests, skipped } = extractTests(spec.filePath, itPattern, itSkipPattern);
+  const { tests, skipped, commented } = extractCypressTests(spec.filePath);
 
-  spec.tests = [...tests, ...skipped];
+  spec.tests = tests;
   spec.skippedTests = skipped;
+  spec.commentedOutTests = commented;
 }
 
 for (const spec of pwSpecs) {
-  const { tests, skipped } = extractTests(spec.filePath, testPattern, testSkipDefPattern);
+  const { tests, skipped } = extractPlaywrightTests(spec.filePath);
 
   spec.tests = [...tests, ...skipped];
   spec.skippedTests = skipped;
@@ -138,6 +227,19 @@ for (const spec of upstreamSpecs) {
   upstreamByPath.set(normalizeSpecPath(spec.relativePath), spec);
 }
 
+// Global PW name index — maps normalized name → original name (for cross-spec matching)
+const globalPwNamesNormalized = new Map<string, string>();
+
+for (const spec of pwSpecs) {
+  for (const t of spec.tests) {
+    const norm = normalizeTestName(t);
+
+    if (!globalPwNamesNormalized.has(norm)) {
+      globalPwNamesNormalized.set(norm, t);
+    }
+  }
+}
+
 // Group upstream specs by suite
 const suites = new Map<string, SpecEntry[]>();
 
@@ -150,35 +252,35 @@ for (const spec of upstreamSpecs) {
   suites.get(suite)!.push(spec);
 }
 
-// Generate output
-const lines: string[] = [
-  '<!-- AUTO-GENERATED by scripts/generate-gap-map.ts — do not edit manually -->',
-  '# Assertion Gap Map',
-  '',
-  `Generated: ${new Date().toISOString().split('T')[0]}`,
-  '',
-  `Upstream Cypress: ${upstreamSpecs.length} specs, ${upstreamSpecs.reduce((s, e) => s + e.tests.length, 0)} tests`,
-  `Playwright: ${pwSpecs.length} specs, ${pwSpecs.reduce((s, e) => s + e.tests.length, 0)} tests`,
-  '',
-];
+// --- Compute metrics ---
 
-// Summary table
-lines.push('## Summary');
-lines.push('');
-lines.push('| Suite | Upstream Specs | Upstream Tests | PW Specs | PW Tests | Converted |');
-lines.push('|-------|---------------|----------------|----------|----------|-----------|');
+let totalUpstreamLiveTests = 0;
+let totalCoveredTests = 0;
+let totalUpstreamCommentedTests = 0;
 
-let totalUpSpecs = 0;
-let totalUpTests = 0;
-let totalPwSpecs = 0;
-let totalPwTests = 0;
+interface MissingTest {
+  name: string;
+  foundIn?: string; // PW spec where it was found (cross-spec match)
+}
+
+const specCoverage: {
+  suite: string;
+  upSpecs: number;
+  upLiveTests: number;
+  upCommentedTests: number;
+  pwSpecs: number;
+  pwTests: number;
+  coveredTests: number;
+}[] = [];
 
 for (const [suite, specs] of [...suites].sort((a, b) => a[0].localeCompare(b[0]))) {
   const upSpecCount = specs.length;
-  const upTestCount = specs.reduce((s, e) => s + e.tests.length, 0);
+  const upLiveCount = specs.reduce((s, e) => s + e.tests.length, 0);
+  const upCommentedCount = specs.reduce((s, e) => s + e.commentedOutTests.length, 0);
 
   let pwSpecCount = 0;
   let pwTestCount = 0;
+  let coveredCount = 0;
 
   for (const spec of specs) {
     const norm = normalizeSpecPath(spec.relativePath);
@@ -187,66 +289,104 @@ for (const [suite, specs] of [...suites].sort((a, b) => a[0].localeCompare(b[0])
     if (pw) {
       pwSpecCount++;
       pwTestCount += pw.tests.length;
+
+      // Same-spec name matching with fuzzy logic
+      const pwNamesNormalized = new Map<string, string>();
+
+      for (const t of pw.tests) {
+        pwNamesNormalized.set(normalizeTestName(t), t);
+      }
+
+      for (const upTest of spec.tests) {
+        const sameSpecMatch = hasMatch(upTest, pwNamesNormalized);
+
+        if (sameSpecMatch) {
+          coveredCount++;
+        } else {
+          // Cross-spec fuzzy match — test exists in PW but in a different spec
+          const crossSpecMatch = hasMatch(upTest, globalPwNamesNormalized);
+
+          if (crossSpecMatch) {
+            coveredCount++;
+          }
+        }
+      }
     }
   }
 
-  const pct = upTestCount > 0 ? Math.round((pwTestCount / upTestCount) * 100) : 0;
-  const status = pct === 100 ? '✅' : pct > 0 ? `${pct}%` : '—';
+  specCoverage.push({
+    suite,
+    upSpecs: upSpecCount,
+    upLiveTests: upLiveCount,
+    upCommentedTests: upCommentedCount,
+    pwSpecs: pwSpecCount,
+    pwTests: pwTestCount,
+    coveredTests: coveredCount,
+  });
 
-  lines.push(`| ${suite} | ${upSpecCount} | ${upTestCount} | ${pwSpecCount} | ${pwTestCount} | ${status} |`);
-
-  totalUpSpecs += upSpecCount;
-  totalUpTests += upTestCount;
-  totalPwSpecs += pwSpecCount;
-  totalPwTests += pwTestCount;
+  totalUpstreamLiveTests += upLiveCount;
+  totalUpstreamCommentedTests += upCommentedCount;
+  totalCoveredTests += coveredCount;
 }
 
-// PW-only specs (no upstream equivalent)
+// PW-only specs
 const pwOnlySpecs = pwSpecs.filter((s) => !upstreamByPath.has(normalizeSpecPath(s.relativePath)));
+const pwOnlyTestCount = pwOnlySpecs.reduce((s, e) => s + e.tests.length, 0);
+
+// Unconverted spec tests
+const unconvertedLiveTests = upstreamSpecs
+  .filter((s) => !pwByPath.has(normalizeSpecPath(s.relativePath)))
+  .reduce((s, e) => s + e.tests.length, 0);
+
+const totalPct = totalUpstreamLiveTests > 0 ? Math.round((totalCoveredTests / totalUpstreamLiveTests) * 100) : 0;
+
+// --- Generate output ---
+
+const lines: string[] = [
+  '<!-- AUTO-GENERATED by scripts/generate-gap-map.ts — do not edit manually -->',
+  '# Assertion Gap Map',
+  '',
+  `Generated: ${new Date().toISOString().split('T')[0]}`,
+  '',
+  `Upstream Cypress: ${upstreamSpecs.length} specs, ${totalUpstreamLiveTests} live tests (${totalUpstreamCommentedTests} commented out)`,
+  `Playwright: ${pwSpecs.length} specs, ${pwSpecs.reduce((s, e) => s + e.tests.length, 0)} tests (${pwOnlySpecs.length} PW-only specs, ${pwOnlyTestCount} PW-only tests)`,
+  '',
+  `**Upstream coverage: ${totalPct}%** (${totalCoveredTests}/${totalUpstreamLiveTests} upstream tests found in Playwright)`,
+  '',
+];
+
+// Summary table
+lines.push('## Summary');
+lines.push('');
+lines.push('| Suite | Upstream Specs | Upstream Live | Commented | PW Specs | PW Tests | Coverage |');
+lines.push('|-------|---------------|--------------|-----------|----------|----------|----------|');
+
+for (const row of specCoverage) {
+  const pct = row.upLiveTests > 0 ? Math.round((row.coveredTests / row.upLiveTests) * 100) : 0;
+  const status = pct === 100 ? '✅' : `${pct}%`;
+
+  lines.push(
+    `| ${row.suite} | ${row.upSpecs} | ${row.upLiveTests} | ${row.upCommentedTests} | ${row.pwSpecs} | ${row.pwTests} | ${status} |`,
+  );
+}
 
 if (pwOnlySpecs.length > 0) {
-  const pwOnlyTests = pwOnlySpecs.reduce((s, e) => s + e.tests.length, 0);
-
-  lines.push(`| *PW-only specs* | — | — | ${pwOnlySpecs.length} | ${pwOnlyTests} | — |`);
-  totalPwSpecs += pwOnlySpecs.length;
-  totalPwTests += pwOnlyTests;
+  lines.push(`| *PW-only specs* | — | — | — | ${pwOnlySpecs.length} | ${pwOnlyTestCount} | — |`);
 }
 
-const totalPct = totalUpTests > 0 ? Math.round((totalPwTests / totalUpTests) * 100) : 0;
-
 lines.push(
-  `| **TOTAL** | **${totalUpSpecs}** | **${totalUpTests}** | **${totalPwSpecs}** | **${totalPwTests}** | **${totalPct}%** |`,
+  `| **TOTAL** | **${upstreamSpecs.length}** | **${totalUpstreamLiveTests}** | **${totalUpstreamCommentedTests}** | **${pwSpecs.length}** | **${pwSpecs.reduce((s, e) => s + e.tests.length, 0)}** | **${totalPct}%** |`,
 );
 lines.push('');
 
-// Compute deficit/surplus for honest reporting
-let deficit = 0;
-let surplus = 0;
-
-for (const spec of upstreamSpecs) {
-  const norm = normalizeSpecPath(spec.relativePath);
-  const pw = pwByPath.get(norm);
-
-  if (!pw) {
-    deficit += spec.tests.length;
-    continue;
-  }
-
-  const delta = pw.tests.length - spec.tests.length;
-
-  if (delta < 0) {
-    deficit += Math.abs(delta);
-  } else if (delta > 0) {
-    surplus += delta;
-  }
-}
-
-lines.push(`**Missing tests (specs with fewer PW tests):** ${deficit}`);
-lines.push(`**Extra PW tests (specs with more PW tests):** ${surplus}`);
-lines.push(`**Net delta:** ${surplus - deficit >= 0 ? '+' : ''}${surplus - deficit}`);
+lines.push(`- **Unconverted spec tests** (no PW file): ${unconvertedLiveTests}`);
+lines.push(
+  `- **Missing by name** (PW file exists but upstream test not found, even with cross-spec fuzzy match): ${totalUpstreamLiveTests - totalCoveredTests - unconvertedLiveTests}`,
+);
+lines.push(`- **Upstream commented-out** (ported to PW as live tests): ${totalUpstreamCommentedTests}`);
 lines.push('');
 
-// Per-suite detail: unconverted specs
+// Unconverted Specs
 lines.push('## Unconverted Specs');
 lines.push('');
 
@@ -262,13 +402,13 @@ for (const [suite, specs] of [...suites].sort((a, b) => a[0].localeCompare(b[0])
 
   lines.push(`### ${suite}`);
   lines.push('');
-  lines.push('| Spec | Tests | Skipped |');
-  lines.push('|------|-------|---------|');
+  lines.push('| Spec | Live Tests | Commented | Skipped |');
+  lines.push('|------|-----------|-----------|---------|');
 
   for (const spec of unconverted) {
     const file = path.basename(spec.relativePath);
 
-    lines.push(`| ${file} | ${spec.tests.length} | ${spec.skippedTests.length} |`);
+    lines.push(`| ${file} | ${spec.tests.length} | ${spec.commentedOutTests.length} | ${spec.skippedTests.length} |`);
   }
 
   lines.push('');
@@ -279,11 +419,11 @@ if (!hasUnconverted) {
   lines.push('');
 }
 
-// Per-suite detail: converted specs with test count diff
+// Converted specs with test count diff
 lines.push('## Converted Specs (test count comparison)');
 lines.push('');
-lines.push('| Spec | Upstream Tests | PW Tests | Delta |');
-lines.push('|------|---------------|----------|-------|');
+lines.push('| Spec | Upstream Live | Upstream Commented | PW Tests | Delta |');
+lines.push('|------|--------------|-------------------|----------|-------|');
 
 for (const spec of upstreamSpecs) {
   const norm = normalizeSpecPath(spec.relativePath);
@@ -297,25 +437,50 @@ for (const spec of upstreamSpecs) {
   const deltaStr = delta === 0 ? '—' : delta > 0 ? `+${delta}` : `${delta}`;
 
   if (delta !== 0) {
-    lines.push(`| ${spec.relativePath} | ${spec.tests.length} | ${pw.tests.length} | ${deltaStr} |`);
+    lines.push(
+      `| ${spec.relativePath} | ${spec.tests.length} | ${spec.commentedOutTests.length} | ${pw.tests.length} | ${deltaStr} |`,
+    );
   }
 }
 
 lines.push('');
 
-// Missing tests detail: show which specific tests are missing per spec
-const specsWithMissing: { spec: string; missing: string[] }[] = [];
+// Missing tests detail — only show tests not found even with cross-spec fuzzy match
+const specsWithMissing: { spec: string; missing: MissingTest[] }[] = [];
 
 for (const spec of upstreamSpecs) {
   const norm = normalizeSpecPath(spec.relativePath);
   const pw = pwByPath.get(norm);
 
-  if (!pw || pw.tests.length >= spec.tests.length) {
+  if (!pw) {
     continue;
   }
 
-  const pwLower = new Set(pw.tests.map((t) => t.toLowerCase().trim()));
-  const missing = spec.tests.filter((t) => !pwLower.has(t.toLowerCase().trim()));
+  const pwNamesNormalized = new Map<string, string>();
+
+  for (const t of pw.tests) {
+    pwNamesNormalized.set(normalizeTestName(t), t);
+  }
+
+  const missing: MissingTest[] = [];
+
+  for (const upTest of spec.tests) {
+    // Same-spec match
+    const sameSpecMatch = hasMatch(upTest, pwNamesNormalized);
+
+    if (sameSpecMatch) {
+      continue;
+    }
+
+    // Cross-spec match
+    const crossSpecMatch = hasMatch(upTest, globalPwNamesNormalized);
+
+    if (crossSpecMatch) {
+      missing.push({ name: upTest, foundIn: crossSpecMatch });
+    } else {
+      missing.push({ name: upTest });
+    }
+  }
 
   if (missing.length > 0) {
     specsWithMissing.push({ spec: spec.relativePath, missing });
@@ -323,16 +488,98 @@ for (const spec of upstreamSpecs) {
 }
 
 if (specsWithMissing.length > 0) {
-  lines.push('## Missing Tests (by name match)');
-  lines.push('');
-  lines.push('> Tests present upstream but not found by name in Playwright. Some may exist under different names.');
+  lines.push('## Missing Tests');
   lines.push('');
 
-  for (const { spec, missing } of specsWithMissing) {
+  const trulyMissing = specsWithMissing.filter((s) => s.missing.some((m) => !m.foundIn));
+  const crossSpec = specsWithMissing.filter((s) => s.missing.some((m) => m.foundIn));
+
+  if (trulyMissing.length > 0) {
+    lines.push('### Not found in any Playwright spec');
+    lines.push('');
+
+    for (const { spec, missing } of trulyMissing) {
+      const notFound = missing.filter((m) => !m.foundIn);
+
+      if (notFound.length === 0) {
+        continue;
+      }
+
+      lines.push(`**${spec}** (${notFound.length} tests)`);
+      lines.push('');
+
+      for (const m of notFound) {
+        lines.push(`- ${m.name}`);
+      }
+
+      lines.push('');
+    }
+  }
+
+  if (crossSpec.length > 0) {
+    lines.push('### Found in a different Playwright spec (cross-spec match)');
+    lines.push('');
+    lines.push('> These upstream tests exist in Playwright but under a different spec file.');
+    lines.push('');
+
+    for (const { spec, missing } of crossSpec) {
+      const found = missing.filter((m) => m.foundIn);
+
+      if (found.length === 0) {
+        continue;
+      }
+
+      lines.push(`**${spec}**`);
+      lines.push('');
+
+      for (const m of found) {
+        lines.push(`- \`${m.name}\` → PW: \`${m.foundIn}\``);
+      }
+
+      lines.push('');
+    }
+  }
+}
+
+// Commented-out upstream tests that PW ported as live
+const portedFromComments: { spec: string; tests: string[] }[] = [];
+
+for (const spec of upstreamSpecs) {
+  if (spec.commentedOutTests.length === 0) {
+    continue;
+  }
+
+  const norm = normalizeSpecPath(spec.relativePath);
+  const pw = pwByPath.get(norm);
+
+  if (!pw) {
+    continue;
+  }
+
+  const pwNamesNormalized = new Map<string, string>();
+
+  for (const t of pw.tests) {
+    pwNamesNormalized.set(normalizeTestName(t), t);
+  }
+
+  const ported = spec.commentedOutTests.filter((t) => hasMatch(t, pwNamesNormalized));
+
+  if (ported.length > 0) {
+    portedFromComments.push({ spec: spec.relativePath, tests: ported });
+  }
+}
+
+if (portedFromComments.length > 0) {
+  lines.push('## Ported from Upstream Comments');
+  lines.push('');
+  lines.push('> Tests that were commented out upstream but implemented as live tests in Playwright.');
+  lines.push('');
+
+  for (const { spec, tests } of portedFromComments) {
     lines.push(`### ${spec}`);
     lines.push('');
 
-    for (const t of missing) {
+    for (const t of tests) {
       lines.push(`- ${t}`);
     }
 
@@ -347,5 +594,8 @@ const output = lines.join('\n');
 fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
 fs.writeFileSync(OUTPUT, output);
 console.log(`Gap map updated: ${OUTPUT}`);
-console.log(`  Upstream: ${totalUpSpecs} specs, ${totalUpTests} tests`);
-console.log(`  Playwright: ${totalPwSpecs} specs, ${totalPwTests} tests (${totalPct}%)`);
+console.log(
+  `  Upstream: ${upstreamSpecs.length} specs, ${totalUpstreamLiveTests} live tests (${totalUpstreamCommentedTests} commented out)`,
+);
+console.log(`  Playwright: ${pwSpecs.length} specs, ${pwSpecs.reduce((s, e) => s + e.tests.length, 0)} tests`);
+console.log(`  Coverage: ${totalPct}% (${totalCoveredTests}/${totalUpstreamLiveTests})`);

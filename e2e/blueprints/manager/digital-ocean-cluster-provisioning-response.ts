@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 export function clusterProvDigitalOceanSingleResponse(
   clusterName: string,
@@ -11,7 +11,7 @@ export function clusterProvDigitalOceanSingleResponse(
     createTypes: { 'provisioning.cattle.io.cluster': 'https://localhost:8005/v1/provisioning.cattle.io.clusters' },
     actions: {},
     resourceType: 'provisioning.cattle.io.cluster',
-    revision: CYPRESS_SAFE_RESOURCE_REVISION,
+    revision: SAFE_RESOURCE_REVISION,
     count: 9,
     data: [
       {
@@ -147,7 +147,7 @@ export function clusterProvDigitalOceanSingleResponse(
               message: 'Resource is always ready',
             },
           ],
-          resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+          resourceVersion: SAFE_RESOURCE_REVISION,
           state: {
             error: false,
             message: 'Resource is Ready',

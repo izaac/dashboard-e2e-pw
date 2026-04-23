@@ -29,6 +29,7 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    command: ["sh", "-c", "npx playwright test --reporter=line; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results /app/playwright-report 2>/dev/null; exit $$rc"]
     volumes:
       - ./test-results:/app/test-results
       - ./playwright-report:/app/playwright-report

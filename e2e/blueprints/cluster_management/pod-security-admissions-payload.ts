@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
 export const createPayloadData = {
   id: 'e2e-pod-security-admission-1705617529465',
@@ -23,7 +23,7 @@ export const createPayloadData = {
   metadata: {
     fields: ['e2e-pod-security-admission-1705617529465', '18s'],
     name: 'e2e-pod-security-admission-1705617529465',
-    resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+    resourceVersion: SAFE_RESOURCE_REVISION,
   },
   description: 'e2e-pod-security-admission-1705617529465-description',
 };
@@ -51,7 +51,7 @@ export const updatePayloadData = {
   metadata: {
     fields: ['e2e-pod-security-admission-1705628550961', '7s'],
     name: 'e2e-pod-security-admission-1705628550961',
-    resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+    resourceVersion: SAFE_RESOURCE_REVISION,
   },
   description: 'e2e-pod-security-admission-1705628550961-description-edit',
 };

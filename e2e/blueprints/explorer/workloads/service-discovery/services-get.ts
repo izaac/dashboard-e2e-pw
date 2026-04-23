@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
 
 // GET /v1/services - return empty services data
 export const servicesGetReponseEmpty = {
@@ -7,7 +7,7 @@ export const servicesGetReponseEmpty = {
   createTypes: { service: 'https://yonasb29.qa.rancher.space/v1/services' },
   actions: {},
   resourceType: 'service',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 0,
   data: [],
 };
@@ -19,7 +19,7 @@ export const servicesGetResponseSmallSet = {
   createTypes: { service: 'https://yonasb29.qa.rancher.space/v1/services' },
   actions: {},
   resourceType: 'service',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 3,
   data: [
     {
@@ -70,7 +70,7 @@ export const servicesGetResponseSmallSet = {
             message: 'Resource is current',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Service is ready',
@@ -147,7 +147,7 @@ export const servicesGetResponseSmallSet = {
             state: 'deployed',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Service is ready',
@@ -197,7 +197,7 @@ export const servicesGetResponseSmallSet = {
         name: 'kubernetes',
         namespace: 'default',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: {
           error: false,
           message: 'Service is ready',

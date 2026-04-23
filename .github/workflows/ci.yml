@@ -30,5 +30,36 @@ jobs:
       - name: Prettier
         run: npx prettier --check '**/*.ts'
 
+      - name: Markdown
+        run: yarn lint:md
+
       - name: TypeScript
         run: npx tsc --noEmit
+
+  # smoke:
+  #   name: Smoke Tests (@generic)
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 20
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Run @generic tests against live Rancher
+  #       run: docker compose up --build --abort-on-container-exit --exit-code-from tests
+  #       env:
+  #         GREP_TAGS: @generic
+  #         HOST_UID: 1001
+  #         HOST_GID: 116
+  #
+  #     - name: Upload test results
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: smoke-results
+  #         path: |
+  #           test-results/
+  #           playwright-report/
+  #         retention-days: 7
+  #
+  #     - name: Teardown
+  #       if: always()
+  #       run: docker compose down -v

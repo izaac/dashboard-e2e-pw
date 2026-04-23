@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
 
 export const clusterRolesGetResponseEmpty = {
   type: 'collection',
@@ -9,7 +9,7 @@ export const clusterRolesGetResponseEmpty = {
   },
   actions: {},
   resourceType: 'rbac.authorization.k8s.io.clusterrole',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 0,
   data: [],
 };
@@ -23,7 +23,7 @@ export const clusterRolesResponseSmallSet = {
   },
   actions: {},
   resourceType: 'rbac.authorization.k8s.io.clusterrole',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 2,
   data: [
     {
@@ -48,7 +48,7 @@ export const clusterRolesResponseSmallSet = {
         labels: { 'kubernetes.io/bootstrapping': 'rbac-defaults' },
         name: 'admin',
         relationships: null,
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: 'fc508973-7781-4865-abaa-6563b197cf97',
       },
@@ -80,7 +80,7 @@ export const clusterRolesResponseSmallSet = {
             state: 'deployed',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: '7aa8e5b8-a428-4c33-8acf-7be8889e6c1c',
       },

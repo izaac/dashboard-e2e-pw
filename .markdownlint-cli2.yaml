@@ -1,0 +1,9 @@
+globs:
+  - "*.md"
+  - "docs/**/*.md"
+  - "e2e/po/UPSTREAM-DIFF.md"
+  - ".github/**/*.md"
+
+ignores:
+  - "docs/ASSERTION-GAP-MAP.md"
+  - "e2e/po/INDEX.md"

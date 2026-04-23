@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../../blueprint.utils';
 
 export const deploymentGetResponse = {
   id: 'default/test-deployment',
@@ -156,7 +156,7 @@ export const deploymentGetResponse = {
         message: 'ReplicaSet is available. Replicas: 1',
       },
     ],
-    resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+    resourceVersion: SAFE_RESOURCE_REVISION,
     state: {
       error: false,
       message: 'Deployment is available. Replicas: 1',

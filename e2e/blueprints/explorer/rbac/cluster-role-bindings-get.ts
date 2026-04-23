@@ -1,4 +1,4 @@
-import { CYPRESS_SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
+import { SAFE_RESOURCE_REVISION } from '../../blueprint.utils';
 
 export const clusterRoleBindingGetResponseEmpty = {
   type: 'collection',
@@ -9,7 +9,7 @@ export const clusterRoleBindingGetResponseEmpty = {
   },
   actions: {},
   resourceType: 'rbac.authorization.k8s.io.clusterrolebinding',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 0,
   data: [],
 };
@@ -23,7 +23,7 @@ export const clusterRoleBindingResponseSmallSet = {
   },
   actions: {},
   resourceType: 'rbac.authorization.k8s.io.clusterrolebinding',
-  revision: CYPRESS_SAFE_RESOURCE_REVISION,
+  revision: SAFE_RESOURCE_REVISION,
   count: 2,
   data: [
     {
@@ -55,7 +55,7 @@ export const clusterRoleBindingResponseSmallSet = {
             state: 'deployed',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: 'c6486bda-cb25-4a16-837f-c09b5a96cb5a',
       },
@@ -91,7 +91,7 @@ export const clusterRoleBindingResponseSmallSet = {
             state: 'deployed',
           },
         ],
-        resourceVersion: CYPRESS_SAFE_RESOURCE_REVISION,
+        resourceVersion: SAFE_RESOURCE_REVISION,
         state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
         uid: '103e1c52-ad27-4359-90f3-fc2329606819',
       },

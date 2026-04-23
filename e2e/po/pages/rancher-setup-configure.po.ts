@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
@@ -16,6 +15,11 @@ export class RancherSetupConfigurePage extends PagePo {
 
   async goTo(): Promise<void> {
     await super.goTo();
+  }
+
+  /** Bootstrap/current password field — visible when entering setup directly (CATTLE_BOOTSTRAP_PASSWORD flow) */
+  bootstrapPasswordInput(): Locator {
+    return this.page.getByRole('textbox', { name: 'Bootstrap Password' });
   }
 
   choosePassword(): RadioGroupInputPo {

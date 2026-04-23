@@ -43,7 +43,7 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; echo $? > /blobs/shard-1.exit"]
+    command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-1.exit"]
     volumes:
       - blob-reports:/blobs
       - ./test-results:/app/test-results
@@ -60,7 +60,7 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; echo $? > /blobs/shard-2.exit"]
+    command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
     volumes:
       - blob-reports:/blobs
       - ./test-results:/app/test-results
@@ -87,6 +87,7 @@ services:
         for f in /blobs/shard-*.exit; do echo "$$(basename $$f .exit): exit $$(cat $$f)"; done
         echo ""
         echo "Report written to playwright-report/"
+        chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /report 2>/dev/null
     volumes:
       - blob-reports:/blobs
       - ./playwright-report:/report

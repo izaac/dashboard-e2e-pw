@@ -9,9 +9,10 @@ Everything you need to run the Playwright test suite for Rancher Dashboard, whet
 ### What you need installed
 
 - **Git** — check with `git --version`
-- **Node.js 24+** — check with `node --version` ([download](https://nodejs.org/))
-- **Yarn** — check with `yarn --version`. If you have Node 24+ with Corepack: `corepack enable` then `corepack prepare yarn@stable --activate`
-- **Docker** — only if you want Docker mode (see sections 4–6). Needs at least 6 GB RAM allocated.
+- **Node.js 22+** — check with `node --version` ([download](https://nodejs.org/))
+- **Yarn** — check with `yarn --version`. If you have Node 24+ with Corepack: `corepack enable`
+  then `corepack prepare yarn@stable --activate`
+- **Docker** — only if you want Docker mode (see sections 4–5). Needs at least 6 GB RAM allocated.
 
 ### Set up the project
 
@@ -125,7 +126,8 @@ yarn test:list         # list without running
 
 ## 3. Filtering by Tags
 
-Tags are how you pick which tests to run. The full suite has hundreds of tests and many of them need specific infrastructure, so you'll almost always want to narrow things down.
+Tags are how you pick which tests to run. The full suite has hundreds of tests and many of them
+need specific infrastructure, so you'll almost always want to narrow things down.
 
 ### What are tags?
 
@@ -195,153 +197,147 @@ The `+` is the separator between filter tokens. `-@tag` means exclude.
 | `@charts`          | Helm chart install/uninstall                          |
 | `@provisioning`    | Cluster provisioning tests                            |
 | `@prime`           | SUSE Prime edition only                               |
-| `@noVai`           | Tests that disable VAI (ui-sql-cache)                 |
-| `@needsInfra`      | Needs cloud creds (AWS, Azure, GKE) — skip locally    |
-| `@extensions`      | UI extensions                                         |
-| `@flaky`           | Known unstable tests                                  |
-
-### Common recipes
-
-| What you want                   | Command                                                        |
-| ------------------------------- | -------------------------------------------------------------- |
-| Quick smoke test                | `GREP_TAGS="@generic" npx playwright test`                     |
-| All admin tests, no cloud stuff | `GREP_TAGS="@adminUser+-@needsInfra" npx playwright test`      |
-| Everything except flaky         | `GREP_TAGS="@adminUser+-@flaky" npx playwright test`           |
-| Just explorer features          | `GREP_TAGS="@explorer" npx playwright test`                    |
-| Global settings only            | `GREP_TAGS="@globalSettings" npx playwright test`              |
-| Navigation + user menu          | Run them separately — tags don't combine with OR               |
-
-> **Tip:** Start with `@generic` for your first run. It's fast (~17 tests) and verifies your setup
-> is working before you tackle the bigger suites.
+| `@noPrime`         | Non-Prime editions                                    |
+| `@noVai`           | Tests requiring VAI disabled (ui-sql-cache off)       |
+| `@needsInfra`      | Needs cloud creds or external infrastructure          |
+| `@elemental`       | Elemental extension tests                             |
+| `@accessibility`   | Accessibility (axe-core) scans                        |
 
 ---
 
-## 4. Running Tests with Docker (Single Rancher)
+## 4. Running Tests with Docker
 
 Don't have a Rancher instance? Docker Compose can start one for you.
 
-### Quick start — everything in one command
+### Single Rancher instance
 
 ```bash
 docker compose up
 ```
-
-That's it. This boots Rancher, waits for it to be healthy, then runs the tests.
 
 > **First time?** It takes 10–15 minutes. Docker needs to pull the Rancher image (~2 GB) and
-> Rancher itself takes 2–5 minutes to boot. Subsequent runs are much faster.
+> the Playwright container. Subsequent runs reuse cached images.
 
-### Step by step (more control)
+This starts two containers:
+
+1. **Rancher** — boots with a bootstrap password, waits until healthy
+2. **Tests** — runs the full suite against that Rancher instance
+
+The test container waits for Rancher's healthcheck to pass before starting. You don't need to
+do anything — just wait.
+
+### Run a subset of tests
 
 ```bash
-# Start Rancher in the background (keep it running between test runs)
-docker compose up rancher -d
-# or: yarn local:up
+# Quick smoke test (~17 tests)
+GREP_TAGS="@generic" docker compose up
 
-# Run tests against that Rancher
-docker compose up tests
-# or: yarn local:test
-
-# Run with a tag filter
-GREP_TAGS="@generic" docker compose up tests
-
-# Stop everything
-docker compose down
-# or: yarn local:down
-
-# View the HTML report
-npx playwright show-report
-# or: yarn local:report
+# Just admin tests
+GREP_TAGS="@adminUser" docker compose up
 ```
 
-### What happens behind the scenes
-
-1. Docker pulls the Rancher image (first time only, ~2 GB)
-2. Rancher boots up inside the container (2–5 minutes)
-3. A healthcheck pings `https://localhost/dashboard/auth/login` every 15 seconds, up to 40 retries
-4. Once healthy, the test container starts
-5. The setup spec bootstraps Rancher (creates the admin password, performs first login)
-6. Tests run sequentially against that Rancher instance
-7. Results land in `test-results/` and `playwright-report/` on your machine
-
-> **Standard user tests:** Tests tagged `@standardUser` need a non-admin user. The test fixture
-> creates a `standard_user` account automatically on first run — no manual setup needed. This
-> happens transparently whether you're using Docker or running against your own Rancher instance.
-
-### Use a different Rancher version
+### Run with a specific Rancher version
 
 ```bash
-# Rancher 2.14
 RANCHER_IMAGE=docker.io/rancher/rancher:v2.14.0 docker compose up
-
-# Rancher 2.13
-RANCHER_IMAGE=docker.io/rancher/rancher:v2.13.0 docker compose up
-
-# Latest development build (this is the default)
-docker compose up
 ```
 
-### Change the password
+### Override the password
 
 ```bash
 RANCHER_PASSWORD=mysecretpassword docker compose up
 ```
 
-This sets both the bootstrap password and the test login password.
+> **Rancher 2.13+ requires passwords ≥12 characters.** The default `RANCHER_PASSWORD` is
+> `password1234`. Do not use short passwords like `admin` — the setup page rejects them.
 
----
-
-## 5. Running Tests with Docker (Sharded — 2 Ranchers)
-
-Instead of running all tests against one Rancher, you can spin up two Rancher instances and split the work across them. This cuts the wall-clock time roughly in half.
+### Stop everything
 
 ```bash
-# Run both shards
-docker compose -f docker-compose.sharded.yml up
-
-# With tag filter
-GREP_TAGS="@adminUser+-@needsInfra" docker compose -f docker-compose.sharded.yml up
-
-# Yarn shortcut
-yarn local:test:sharded
-
-# Stop and clean up volumes
-docker compose -f docker-compose.sharded.yml down -v
-# or: yarn local:down:sharded
+docker compose down
 ```
 
-### What happens
+### Sharded (2 Rancher instances, ~2× faster, ~10 GB RAM)
 
-1. Two Rancher containers (`rancher-1` and `rancher-2`) boot in parallel
-2. Two test runners each get half of the tests (`--shard=1/2`, `--shard=2/2`)
-3. Each shard bootstraps its own Rancher independently
-4. When both finish, a merge service combines the reports into one
-5. Final report lands in `playwright-report/`
+```bash
+docker compose -f docker-compose.sharded.yml up
+```
 
-### Resource requirements
+Results merge into `playwright-report/` when both shards finish.
 
-| Setup           | RAM needed | Relative speed |
-| --------------- | ---------- | -------------- |
-| Single Rancher  | ~6 GB      | 1×             |
-| 2 Ranchers      | ~10 GB     | ~2× faster     |
+### NixOS
 
-> **Heads up:** Two Rancher instances are hungry. Make sure Docker has enough memory allocated
-> (check Docker Desktop → Settings → Resources if you're on Mac/Windows).
+NixOS kernels ship nftables only (no legacy iptables). Use the nftables overlay:
+
+```bash
+# Single
+docker compose -f docker-compose.yml -f docker-compose.nix.yml up
+
+# Sharded
+docker compose -f docker-compose.sharded.yml -f docker-compose.nix.yml up
+```
+
+This builds a patched Rancher image that replaces iptables-legacy with iptables-nft.
+Only needed on NixOS — other distros work with the stock image.
+
+### Docker environment variables
+
+| Variable           | Default                              | What it does                                          |
+| ------------------ | ------------------------------------ | ----------------------------------------------------- |
+| `RANCHER_IMAGE`    | `docker.io/rancher/rancher:head`     | Which Rancher Docker image to use                     |
+| `RANCHER_PASSWORD` | `password1234`                       | Bootstrap + test password (≥12 chars)                 |
+| `GREP_TAGS`        | *(empty)*                            | Tag filter (e.g. `@adminUser+-@prime`)                |
+| `HOST_UID`         | `1000`                               | UID for `chown` on test-results                       |
+| `HOST_GID`         | `100`                                | GID for `chown` on test-results                       |
 
 ---
 
-## 6. Environment Variables Reference
+## 5. Docker Gotchas
 
-All the environment variables the test suite understands, in one place.
+### Stale images (most common issue)
 
-### Core (most people need these)
+Docker Compose caches build layers aggressively. After editing specs, POs, or blueprints,
+**you must delete the old images** or they will run old code:
 
-| Variable                   | Required           | Default                            | What it does                                                                |
-| -------------------------- | ------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
-| `TEST_BASE_URL`            | Yes                | `https://localhost:8005`           | URL of your Rancher Dashboard (include `/dashboard` in path)                |
-| `TEST_PASSWORD`            | Yes (native mode)  | —                                  | Password for logging into Rancher                                           |
-| `TEST_USERNAME`            | No                 | `admin`                            | Username for login                                                          |
-| `CATTLE_BOOTSTRAP_PASSWORD`| Setup only         | —                                  | Password for first-time Rancher setup (Docker Compose sets this for you)    |
+```bash
+docker image rm dashboard-e2e-pw-tests
+docker compose up --build
+```
+
+`--build` alone is not enough — layer caching reuses the `COPY . .` step if the previous
+layer (yarn install) didn't change. Delete images or use `--no-cache`:
+
+```bash
+docker compose build --no-cache tests
+```
+
+### .dockerignore is critical
+
+Without `.dockerignore`, `COPY . .` sends `node_modules/` (500 MB+) into the build context,
+bloating images and slowing builds. The repo includes a `.dockerignore` that excludes
+`node_modules`, `test-results`, `playwright-report`, `.git`, and local config files.
+
+### test-results owned by root
+
+Containers run as root, so `test-results/` files are root-owned on the host. The compose files
+include a `chown` step using `HOST_UID`/`HOST_GID`. If you still get permission errors:
+
+```bash
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build
+```
+
+---
+
+## 6. Environment Variables
+
+### Core
+
+| Variable                    | Required          | Default                         | Description                                                                |
+| --------------------------- | ----------------- | ------------------------------- | -------------------------------------------------------------------------- |
+| `TEST_BASE_URL`             | Yes               | `https://localhost:8005`        | URL of your Rancher Dashboard (include `/dashboard` in path)               |
+| `TEST_PASSWORD`             | Yes (native mode) | —                               | Password for logging into Rancher                                          |
+| `TEST_USERNAME`             | No                | `admin`                         | Username for login                                                         |
+| `CATTLE_BOOTSTRAP_PASSWORD` | Setup only        | —                               | Password for first-time Rancher setup (Docker Compose sets this for you)   |
 
 ### Filtering
 
@@ -359,13 +355,6 @@ All the environment variables the test suite understands, in one place.
 | `TEST_NO_SCREENSHOTS` | No       | —        | Set to `true` to disable failure screenshots   |
 | `TEST_NO_VIDEOS`      | No       | —        | Set to `true` to disable failure videos        |
 
-### Docker mode
-
-| Variable           | Required | Default                              | What it does                                          |
-| ------------------ | -------- | ------------------------------------ | ----------------------------------------------------- |
-| `RANCHER_IMAGE`    | No       | `docker.io/rancher/rancher:head`     | Which Rancher Docker image to use                     |
-| `RANCHER_PASSWORD`  | No       | `password1234`                       | Bootstrap + test password (used by Docker Compose)    |
-
 ### Cloud credentials (for `@needsInfra` tests)
 
 These are only needed if you're running tests tagged `@needsInfra`. Most people can skip these entirely.
@@ -374,7 +363,7 @@ These are only needed if you're running tests tagged `@needsInfra`. Most people 
 | --------------------------- | ------------------- |
 | `AWS_ACCESS_KEY_ID`         | AWS provisioning    |
 | `AWS_SECRET_ACCESS_KEY`     | AWS provisioning    |
-| `AZURE_AKS_SUBSCRIPTION_ID`| Azure provisioning  |
+| `AZURE_AKS_SUBSCRIPTION_ID` | Azure provisioning  |
 | `AZURE_CLIENT_ID`           | Azure provisioning  |
 | `AZURE_CLIENT_SECRET`       | Azure provisioning  |
 | `GKE_SERVICE_ACCOUNT`       | GKE provisioning    |
@@ -420,9 +409,9 @@ failure types, and reproducing issues — see [Debugging Failures](DEBUGGING-FAI
 
 ### "Rancher takes forever to start"
 
-Rancher is a full Kubernetes distribution — it genuinely needs a few minutes to start. The healthcheck retries up to 40 times (every 15 seconds) before giving up.
+Rancher is a full Kubernetes distribution — it genuinely needs a few minutes to start. The
+healthcheck retries up to 40 times (every 15 seconds) before giving up.
 
-**Things to try:**
 - Make sure Docker has at least 6 GB of RAM allocated
 - Check `docker logs <rancher-container>` for errors
 - On slower machines, Rancher might need more time — this is normal
@@ -458,4 +447,10 @@ This usually means the browser ran out of shared memory.
 
 ### "Certificate errors / TLS warnings"
 
-The test suite sets `NODE_TLS_REJECT_UNAUTHORIZED=0` automatically because Rancher's default certificate is self-signed. If you're still hitting TLS issues, check whether something in your environment is overriding this.
+The test suite sets `NODE_TLS_REJECT_UNAUTHORIZED=0` automatically because Rancher's default
+certificate is self-signed. If you're still hitting TLS issues, check whether something in your
+environment is overriding this.
+
+### "Stale Docker images running old code"
+
+See [Docker Gotchas](#5-docker-gotchas) — delete old images after editing source files.
