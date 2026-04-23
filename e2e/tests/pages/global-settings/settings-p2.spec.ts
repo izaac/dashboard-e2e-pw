@@ -85,7 +85,10 @@ test.describe('Settings (Part 2)', () => {
   test('can update but not reset server-url', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     await navToSettings(page);
 
-    const serverUrlValue = await settingsPage.settingsValue('server-url').innerText();
+    const serverUrlLocator = settingsPage.settingsValue('server-url');
+
+    await expect(serverUrlLocator).toBeVisible();
+    const serverUrlValue = (await serverUrlLocator.textContent()) ?? '';
 
     await editSetting(page, 'server-url');
 

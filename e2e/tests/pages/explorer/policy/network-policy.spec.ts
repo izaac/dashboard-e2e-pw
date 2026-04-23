@@ -50,9 +50,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
     }
   });
 
-  test.skip('port value is sent correctly in request payload', async ({ page, login, rancherApi }) => {
-    // Debounce trap: port input value not propagated to request body before save.
-    // Needs waitForDebounce() or PO fix — same pattern as ingress RulePath.
+  test('port value is sent correctly in request payload', async ({ page, login, rancherApi }) => {
     await login();
 
     const networkPolicyName = `np-port-${Date.now()}`;
@@ -74,6 +72,10 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
     await createPage.addAllowedPortButton().click();
     await createPage.ingressRuleItemPortInput(0).fill(portValue.toString());
 
+    // Vue debounce trap: port input emits after 500ms delay
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(600);
+
     const createResponse = page.waitForResponse(
       (resp) => resp.url().includes('/v1/networking.k8s.io.networkpolicies') && resp.request().method() === 'POST',
     );
@@ -85,7 +87,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
 
     expect(resp.status()).toBe(201);
     expect(body.spec.ingress).toEqual(
-      expect.arrayContaining([expect.objectContaining({ ports: [{ port: portValue }] })]),
+      expect.arrayContaining([expect.objectContaining({ ports: [expect.objectContaining({ port: portValue })] })]),
     );
 
     try {
