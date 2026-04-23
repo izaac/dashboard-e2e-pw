@@ -7,6 +7,7 @@ import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import UiPluginsPagePo from '@/e2e/po/pages/explorer/uiplugins.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { EXTRA_LONG, LONG, STANDARD, VERY_LONG } from '@/support/timeouts';
 
 const cluster = 'local';
 const DISABLED_CACHE_EXTENSION_NAME = 'large-extension';
@@ -185,7 +186,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     for (const extName of builtinExtensions) {
       const card = extensionsPo.extensionCard(extName);
 
-      await expect(card).toBeVisible({ timeout: 10000 });
+      await expect(card).toBeVisible({ timeout: STANDARD });
       await extensionsPo.extensionCardClick(extName);
       await expect(extensionsPo.extensionDetailsTitle()).toContainText(extName);
       await extensionsPo.extensionDetailsCloseClick();
@@ -428,7 +429,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
 test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'] }, () => {
   // These tests install/uninstall extensions which can take time
-  test.describe.configure({ mode: 'serial', timeout: 120_000 });
+  test.describe.configure({ mode: 'serial', timeout: EXTRA_LONG });
 
   test.beforeAll(async ({ rancherApi }) => {
     // Ensure the plugin examples repo exists
@@ -632,7 +633,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     await expect(extensionsPo.loading()).not.toBeAttached();
 
     // Wait for the large-extension card to appear before interacting
-    await expect(extensionsPo.extensionCard(DISABLED_CACHE_EXTENSION_NAME)).toBeVisible({ timeout: 30000 });
+    await expect(extensionsPo.extensionCard(DISABLED_CACHE_EXTENSION_NAME)).toBeVisible({ timeout: LONG });
 
     // Click on install button on card
     await extensionsPo.extensionCardInstallClick(DISABLED_CACHE_EXTENSION_NAME);
@@ -642,7 +643,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     await extensionsPo.installModal().installButton().click();
 
     // Check the extension reload banner and reload the page (large extension needs extra time)
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
+    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
     await extensionsPo.extensionReloadClick();
 
     // Make sure extension card is in the installed tab

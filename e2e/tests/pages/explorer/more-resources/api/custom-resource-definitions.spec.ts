@@ -4,6 +4,7 @@ import { crdsGetResponseSmallSet } from '@/e2e/blueprints/explorer/more-resource
 import * as fs from 'fs';
 import * as path from 'path';
 import * as jsyaml from 'js-yaml';
+import { STANDARD } from '@/support/timeouts';
 
 const cluster = 'local';
 
@@ -95,7 +96,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
 
       await expect(crdsPage.sortableTable().rowCell(crdsPage.sortableTable().rowElements().first(), 2)).not.toHaveText(
         firstRowBefore,
-        { timeout: 10000 },
+        { timeout: STANDARD },
       );
     });
 

@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import UserRetentionPo from '@/e2e/po/pages/users-and-auth/user.retention.po';
 import type { RancherApi } from '@/support/fixtures/rancher-api';
+import { EXTENDED } from '@/support/timeouts';
 
 async function updateUserRetentionSetting(
   rancherApi: RancherApi,
@@ -120,7 +121,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       // The save may trigger a route change; retry goto if ERR_ABORTED
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          await page.goto('./c/_/auth/management.cattle.io.user', { waitUntil: 'domcontentloaded', timeout: 15000 });
+          await page.goto('./c/_/auth/management.cattle.io.user', { waitUntil: 'domcontentloaded', timeout: EXTENDED });
           break;
         } catch {
           await page.waitForLoadState('domcontentloaded').catch(() => {

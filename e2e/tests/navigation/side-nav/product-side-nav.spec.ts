@@ -4,6 +4,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { WorkloadsDeploymentsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
+import { LONG } from '@/support/timeouts';
 
 const workloadName = `test-deployment-kubectl-${Date.now()}`;
 const namespace = 'default';
@@ -64,7 +65,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     await clusterDashboard.waitForPage();
     const productNav = new ProductNavPo(page);
 
-    await expect(productNav.groups().first()).toBeAttached({ timeout: 30000 });
+    await expect(productNav.groups().first()).toBeAttached({ timeout: LONG });
   });
 
   test('Can access to first navigation link on click', async ({ page }) => {

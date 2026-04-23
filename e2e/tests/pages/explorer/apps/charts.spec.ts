@@ -3,6 +3,7 @@ import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import { SHORT_TIMEOUT_OPT, POLL_ITERATION_TIMEOUT } from '@/support/utils/timeouts';
+import { LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
 
@@ -30,7 +31,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     await chartsPage.goTo();
     await chartsPage.waitForPage();
 
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
+    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
 
     const chartName = 'Logging';
 
@@ -60,7 +61,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 
     await chartsPage.goTo();
     await chartsPage.waitForPage();
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
+    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
 
     await chartsPage.clickChart('Logging');
 
@@ -105,7 +106,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await chartsPage.goTo();
       await chartsPage.waitForPage();
-      await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
+      await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
 
       await expect(chartsPage.getFilterOptionByName('Rancher')).toBeAttached();
       await expect(chartsPage.getFilterOptionByName('RKE2')).toBeAttached();
@@ -130,7 +131,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 
     await chartsPage.goTo();
     await chartsPage.waitForPage();
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
+    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
 
     // Type a non-existent search term to trigger empty state
     await chartsPage.chartsSearchFilterInput().fill('zzz-nonexistent-chart-e2e');
@@ -151,7 +152,7 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
 
     await chartsPage.goTo();
     await chartsPage.waitForPage();
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
+    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
 
     const totalCharts = await chartsPage.totalChartsCount();
 

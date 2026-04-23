@@ -5,6 +5,7 @@ import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default abstract class RoleEditPo extends PagePo {
   private static createPath(clusterId: string, resource: string, roleId?: string) {
@@ -40,7 +41,7 @@ export default abstract class RoleEditPo extends PagePo {
   async saveAndWaitForRequests(method: string, url: string): Promise<any> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(url) && resp.request().method() === method,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.saveCreateForm().click();

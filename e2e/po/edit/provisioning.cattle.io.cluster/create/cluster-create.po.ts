@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import BannersPo from '@/e2e/po/components/banners.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default class ClusterManagerCreatePagePo extends PagePo {
   private static createPath(clusterId: string, queryParams?: string) {
@@ -34,9 +35,9 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     const el = this.self().locator('.grid .name').filter({ hasText: name });
 
     if (assertion === 'toBeVisible') {
-      await expect(el).toBeVisible({ timeout: 10000 });
+      await expect(el).toBeVisible({ timeout: STANDARD });
     } else {
-      await expect(el).not.toBeVisible({ timeout: 10000 });
+      await expect(el).not.toBeVisible({ timeout: STANDARD });
     }
   }
 

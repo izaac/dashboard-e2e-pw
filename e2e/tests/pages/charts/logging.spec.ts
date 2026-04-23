@@ -10,6 +10,7 @@ import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG, STANDARD } from '@/support/timeouts';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
@@ -176,7 +177,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     for (const ns of namespaces) {
       // Type into the currently focused search input
       await page.keyboard.type(ns);
-      await expect(loggingPo.dropdownOptions().first()).toBeVisible({ timeout: 10000 });
+      await expect(loggingPo.dropdownOptions().first()).toBeVisible({ timeout: STANDARD });
       await loggingPo.dropdownOptions().filter({ hasText: ns }).first().click();
     }
 
@@ -202,7 +203,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     await loggingPo.rowDetailLink(flowName).click();
 
     // Verify rule item is visible (the detail page shows match rules in array-list items)
-    await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: 30000 });
+    await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: LONG });
   });
 
   // testing https://github.com/rancher/dashboard/issues/4849
@@ -242,10 +243,10 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
     // Verify both charts exist
     await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartApp)).toBeVisible({
-      timeout: 30000,
+      timeout: LONG,
     });
     await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartCrd)).toBeVisible({
-      timeout: 30000,
+      timeout: LONG,
     });
 
     // Navigate to Cluster Tools and delete
@@ -301,10 +302,10 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
     // Verify chart rows are gone
     await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartApp)).not.toBeVisible({
-      timeout: 30000,
+      timeout: LONG,
     });
     await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartCrd)).not.toBeVisible({
-      timeout: 30000,
+      timeout: LONG,
     });
   });
 

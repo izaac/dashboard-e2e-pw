@@ -8,6 +8,7 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import describeSubnetsResponse from '@/e2e/blueprints/manager/describe-subnets-response';
 import describeVpcsResponse from '@/e2e/blueprints/manager/describe-vpcs-response';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { DEBOUNCE, LONG } from '@/support/timeouts';
 
 const MEDIUM_TIMEOUT = 120_000;
 const LONG_TIMEOUT = 360_000;
@@ -71,7 +72,7 @@ test.describe(
         );
         const pageLoadPromise = page.waitForResponse(
           (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
-          { timeout: 30000 },
+          { timeout: LONG },
         );
 
         await cloudCredForm.saveCreateForm().cruResource().saveOrCreate().click();
@@ -271,7 +272,7 @@ test.describe(
 
         const confirmBtn = clusterDetails.poolsList('machine').scalePoolDownConfirm();
 
-        if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        if (await confirmBtn.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
           await confirmBtn.click();
         }
 

@@ -5,6 +5,7 @@ import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import PasswordPo from '@/e2e/po/components/password.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default class AccountPagePo extends PagePo {
   static url = '/account';
@@ -16,7 +17,7 @@ export default class AccountPagePo extends PagePo {
   async waitForRequests(): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('/v3/tokens') && resp.status() === 200,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.goTo();

@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { EXTRA_LONG, VERY_LONG } from '@/support/timeouts';
 
 const gitRepoUrl = 'https://github.com/rancher/charts';
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
@@ -33,7 +34,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
       // Wait for repo to become active
       await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
-      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
+      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: EXTRA_LONG });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
     }
@@ -166,7 +167,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     const resp = await refreshResp;
 
     expect(resp.status()).toBe(200);
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
+    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: EXTRA_LONG });
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
@@ -223,8 +224,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.waitForPage();
 
       // Wait for repos to be active before selecting — websocket updates can clear checkboxes
-      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 60000 });
-      await expect(repositoriesPage.list().details(`${repoName}basic`, 1)).toContainText('Active', { timeout: 60000 });
+      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: VERY_LONG });
+      await expect(repositoriesPage.list().details(`${repoName}basic`, 1)).toContainText('Active', {
+        timeout: VERY_LONG,
+      });
 
       await repositoriesPage.list().resourceTable().sortableTable().rowSelectCtlWithName(repoName).set();
       await repositoriesPage.list().resourceTable().sortableTable().rowSelectCtlWithName(`${repoName}basic`).set();
@@ -432,7 +435,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
     const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
     await actionMenu.getMenuItem('Enable').click();
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 60000 });
+    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: VERY_LONG });
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);

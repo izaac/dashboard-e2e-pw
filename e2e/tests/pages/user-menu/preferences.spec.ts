@@ -4,6 +4,7 @@ import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG } from '@/support/timeouts';
 
 test.describe('User can update their preferences', () => {
   test.describe.configure({ mode: 'serial' });
@@ -668,7 +669,7 @@ test.describe('User can update their preferences', () => {
       // "Last visited" should redirect to wherever user was before logout (prefs page)
       // Some Rancher versions redirect to prefs, others to the cluster explorer or home
       // The SPA may initially land on /home before processing the preference redirect
-      await expect(page).toHaveURL(/\/(prefs|c\/local|home)/, { timeout: 30000 });
+      await expect(page).toHaveURL(/\/(prefs|c\/local|home)/, { timeout: LONG });
     },
   );
 
@@ -717,7 +718,7 @@ test.describe('User can update their preferences', () => {
 
       await login();
       // The SPA may initially land on /home before processing the preference redirect
-      await expect(page).toHaveURL(/\/(explore|c\/local|home)/, { timeout: 30000 });
+      await expect(page).toHaveURL(/\/(explore|c\/local|home)/, { timeout: LONG });
     },
   );
 });

@@ -6,6 +6,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import GenericPrompt from '@/e2e/po/prompts/genericPrompt.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import type { RancherApi } from '@/support/fixtures/rancher-api';
+import { LONG } from '@/support/timeouts';
 
 const OIDC_CREATE_DATA = {
   APP_NAME: 'some-app-name',
@@ -224,7 +225,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
       (resp) =>
         resp.url().includes(`/v1/management.cattle.io.oidcclients/${OIDC_CREATE_DATA.APP_NAME}`) &&
         resp.request().method() === 'PUT',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
 
     await oidcClientDetailPage.addNewSecretBtnClick();

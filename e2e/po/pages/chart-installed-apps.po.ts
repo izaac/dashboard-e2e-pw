@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
+import { LONG } from '@/support/timeouts';
 
 export default class ChartInstalledAppsListPagePo extends PagePo {
   private terminal: KubectlPo;
@@ -36,7 +37,7 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {
-      await expect(this.appsList().resourceTableDetails(item, 1)).toContainText('Deployed', { timeout: 30000 });
+      await expect(this.appsList().resourceTableDetails(item, 1)).toContainText('Deployed', { timeout: LONG });
     }
 
     // Additional wait for everything to be set up

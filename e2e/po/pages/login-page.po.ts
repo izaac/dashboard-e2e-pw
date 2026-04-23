@@ -5,6 +5,7 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import PasswordPo from '@/e2e/po/components/password.po';
 import ComponentPo from '@/e2e/po/components/component.po';
+import { DEBOUNCE } from '@/support/timeouts';
 
 export class LoginPagePo extends PagePo {
   static url = '/auth/login';
@@ -43,7 +44,7 @@ export class LoginPagePo extends PagePo {
   async switchToLocal(): Promise<void> {
     if (
       await this.useLocal()
-        .isVisible({ timeout: 3000 })
+        .isVisible({ timeout: DEBOUNCE })
         .catch(() => false)
     ) {
       await this.useLocal().click();

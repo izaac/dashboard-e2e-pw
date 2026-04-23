@@ -9,6 +9,7 @@ import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.p
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import PagePo from '@/e2e/po/pages/page.po';
+import { LONG } from '@/support/timeouts';
 
 const chartNamespace = 'compliance-operator-system';
 
@@ -102,18 +103,18 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await namespacePicker.closeDropdown();
 
         // Wait for the apps list to be visible
-        await expect(installedAppsPage.appsList().self()).toBeVisible({ timeout: 30000 });
+        await expect(installedAppsPage.appsList().self()).toBeVisible({ timeout: LONG });
 
         await installedAppsPage.appsList().checkVisible();
         await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
 
         // Verify compliance components are present
         await expect(installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance')).toBeVisible(
-          { timeout: 30000 },
+          { timeout: LONG },
         );
         await expect(
           installedAppsPage.appsList().sortableTable().rowElementWithName('rancher-compliance-crd'),
-        ).toBeVisible({ timeout: 30000 });
+        ).toBeVisible({ timeout: LONG });
 
         const basePage = new PagePo(page, '/c/local/compliance');
 

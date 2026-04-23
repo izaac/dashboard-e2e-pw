@@ -4,6 +4,7 @@ import ComponentPo from '@/e2e/po/components/component.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 import ListRowPo from '@/e2e/po/components/list-row.po';
+import { STANDARD, LONG } from '@/support/timeouts';
 
 export default class SortableTablePo extends ComponentPo {
   constructor(page: Page, selector: string, parent?: Locator) {
@@ -248,11 +249,11 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   async checkLoadingIndicatorNotVisible(): Promise<void> {
-    await expect(this.page.locator('tbody .data-loading')).not.toBeAttached({ timeout: 10000 });
+    await expect(this.page.locator('tbody .data-loading')).not.toBeAttached({ timeout: STANDARD });
   }
 
   async checkNoRowsNotVisible(): Promise<void> {
-    await expect(this.page.locator('tbody .no-rows')).not.toBeAttached({ timeout: 10000 });
+    await expect(this.page.locator('tbody .no-rows')).not.toBeAttached({ timeout: STANDARD });
   }
 
   async checkVisible(): Promise<void> {
@@ -335,7 +336,7 @@ export default class SortableTablePo extends ComponentPo {
     const rows = await this.rowNames(rowNameSelector);
 
     if (rows.includes(name)) {
-      await expect(this.self().locator(rowNameSelector).filter({ hasText: name })).not.toBeAttached({ timeout: 30000 });
+      await expect(this.self().locator(rowNameSelector).filter({ hasText: name })).not.toBeAttached({ timeout: LONG });
     }
   }
 }

@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
+import { LONG } from '@/support/timeouts';
 
 export default class ClusterToolsPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -27,7 +28,7 @@ export default class ClusterToolsPagePo extends PagePo {
   private async clickAction(chartName: string, actionLabel: string): Promise<void> {
     const card = this.getCardByName(chartName);
 
-    await expect(card).toBeVisible({ timeout: 30000 });
+    await expect(card).toBeVisible({ timeout: LONG });
 
     // Open the action menu dropdown
     await card.locator('[data-testid="item-card-header-action-menu"]').click();

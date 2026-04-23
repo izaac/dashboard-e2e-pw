@@ -6,6 +6,7 @@ import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-man
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { EXTRA_LONG, LONG, VERY_LONG } from '@/support/timeouts';
 
 const downloadUrl =
   'https://github.com/rancher-plugins/kontainer-engine-driver-example/releases/download/v0.2.3/kontainer-engine-driver-example-copy1-linux-amd64';
@@ -38,7 +39,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     const refreshResp = page.waitForResponse(
       (r) => r.url().includes('/v3/kontainerdrivers?action=refresh') && r.request().method() === 'POST',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
 
     await driversPage.refreshKubMetadata().click({ force: true });
@@ -87,7 +88,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     try {
       // Wait for driver to become active
-      await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: 120000 });
+      await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: EXTRA_LONG });
 
       // Verify driver appears on cluster create page
       await clusterList.goTo();
@@ -183,8 +184,8 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await driversPage.list().resourceTable().sortableTable().checkVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Inactive', { timeout: 30000 });
-    await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Inactive', { timeout: 30000 });
+    await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Inactive', { timeout: LONG });
+    await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Inactive', { timeout: LONG });
 
     await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(openTelekomDriver).set();
     await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(oracleDriver).set();
@@ -202,8 +203,8 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     expect(respOTC.status()).toBe(200);
     expect(respOracle.status()).toBe(200);
 
-    await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Active', { timeout: 60000 });
-    await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Active', { timeout: 60000 });
+    await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Active', { timeout: VERY_LONG });
+    await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Active', { timeout: VERY_LONG });
 
     await clusterList.goTo();
     await clusterList.waitForPage();
@@ -243,8 +244,8 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await driversPage.list().resourceTable().sortableTable().checkVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Active', { timeout: 60000 });
-    await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Active', { timeout: 60000 });
+    await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Active', { timeout: VERY_LONG });
+    await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Active', { timeout: VERY_LONG });
 
     await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(openTelekomDriver).set();
     await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(oracleDriver).set();

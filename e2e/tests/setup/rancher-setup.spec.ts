@@ -4,6 +4,7 @@ import { RancherSetupConfigurePage } from '@/e2e/po/pages/rancher-setup-configur
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { BRIEF, EXTENDED, STANDARD } from '@/support/timeouts';
 
 /**
  * Rancher setup — equivalent of cypress/e2e/tests/setup/rancher-setup.spec.ts
@@ -31,7 +32,7 @@ async function detectBootstrapState(page: import('@playwright/test').Page): Prom
   await homePage.goTo();
 
   // Wait for SPA redirect to settle — unauthenticated users land on /auth/login or /auth/setup
-  await expect(page).toHaveURL(/\/auth\/(login|setup)/, { timeout: 15000 });
+  await expect(page).toHaveURL(/\/auth\/(login|setup)/, { timeout: EXTENDED });
 
   const url = page.url();
 
@@ -46,7 +47,7 @@ async function detectBootstrapState(page: import('@playwright/test').Page): Prom
   const usernameField = page.getByTestId('local-login-username');
 
   try {
-    await usernameField.waitFor({ state: 'visible', timeout: 5000 });
+    await usernameField.waitFor({ state: 'visible', timeout: BRIEF });
     cachedState = 'bootstrapped';
   } catch {
     cachedState = 'needs-login';
@@ -66,7 +67,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     test.skip(state !== 'needs-login', `Bootstrap state: ${state}`);
 
-    await expect(page).not.toHaveURL(/\/home/, { timeout: 10000 });
+    await expect(page).not.toHaveURL(/\/home/, { timeout: STANDARD });
 
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
 

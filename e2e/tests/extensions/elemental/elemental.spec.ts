@@ -5,6 +5,7 @@ import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 
 import * as jsyaml from 'js-yaml';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { BRIEF, LONG } from '@/support/timeouts';
 
 const EXTENSION_NAME = 'elemental';
 const EXTENSION_VERSION = '3.0.1';
@@ -85,7 +86,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     await extensionsPo.installModal().installButton().click();
 
     // check the extension reload banner and reload the page
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 30000 });
+    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: LONG });
     await extensionsPo.extensionReloadClick();
 
     // make sure extension card is in the installed tab
@@ -121,7 +122,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // Check if operator is already installed — if the install button is not visible, operator is set up
     const installBtn = elementalPo.dashboard().chartsInstallButton();
-    const operatorNeedsInstall = await installBtn.isVisible({ timeout: 5000 }).catch(() => false);
+    const operatorNeedsInstall = await installBtn.isVisible({ timeout: BRIEF }).catch(() => false);
 
     if (!operatorNeedsInstall) {
       // Operator already installed — just verify the dashboard title

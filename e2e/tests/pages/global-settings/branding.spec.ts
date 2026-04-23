@@ -8,6 +8,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import * as fs from 'fs';
 import * as path from 'path';
+import { BRIEF } from '@/support/timeouts';
 
 const settings = {
   privateLabel: {
@@ -196,7 +197,7 @@ test.describe('Branding', () => {
 
     await burgerMenu.toggle();
     await burgerMenu.home().click();
-    await expect(page).toHaveTitle(new RegExp(`${settings.privateLabel.original} - Homepage`), { timeout: 5000 });
+    await expect(page).toHaveTitle(new RegExp(`${settings.privateLabel.original} - Homepage`), { timeout: BRIEF });
 
     // Also reset via API in case UI test failed partway
     try {

@@ -5,6 +5,7 @@ import {
   HarvesterClusterPagePo,
 } from '@/e2e/po/pages/virtualization-mgmt/harvester-clusters.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
+import { LONG, VERY_LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = '/v1/catalog.cattle.io.clusterrepos';
 
@@ -57,18 +58,18 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
         resp.url().includes(CLUSTER_REPOS_BASE_URL) &&
         resp.request().method() === 'POST' &&
         !resp.url().includes('?action='),
-      { timeout: 30000 },
+      { timeout: LONG },
     );
     const updateHarvesterChartPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
     const installPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
         resp.request().method() === 'POST',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
 
     // install harvester extension
@@ -108,13 +109,13 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     const updateAfterInstallPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: 60000 },
+      { timeout: VERY_LONG },
     );
 
     await harvesterPo.waitForPage();
     await updateAfterInstallPromise;
 
-    await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: 30000 });
+    await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: LONG });
 
     // verify harvester extension added to extensions page
     await extensionsPo.goTo();
@@ -128,13 +129,13 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(
       appRepoList.list().resourceTable().sortableTable().rowElementWithName(harvesterGitRepoName),
     ).toBeVisible();
-    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: 60000 });
+    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: VERY_LONG });
 
     // begin process of importing harvester cluster
     const updateChartOnNavPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: 60000 },
+      { timeout: VERY_LONG },
     );
 
     await harvesterPo.goTo();
@@ -143,7 +144,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     const createClusterPromise = page.waitForResponse(
       (resp) => resp.url().includes('/v3/clusters') && resp.request().method() === 'POST',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
 
     await harvesterPo.importHarvesterClusterButton().click();
@@ -226,7 +227,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(
       appRepoList.list().resourceTable().sortableTable().rowElementWithName(harvesterGitRepoName),
     ).toBeVisible();
-    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: 60000 });
+    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: VERY_LONG });
 
     await extensionsPo.goTo();
     await extensionsPo.waitForPage(undefined, 'available');
@@ -241,7 +242,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
         resp.request().method() === 'POST',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
 
     await extensionsPo.installModal().selectVersionClick(1);
@@ -260,7 +261,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await extensionsPo.goTo();
     await extensionsPo.waitForPage(undefined, 'installed');
 
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
+    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
     await extensionsPo.extensionReloadClick();
     await expect(extensionsPo.loading()).not.toBeAttached();
 
@@ -268,7 +269,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       const updateOnNavPromise = page.waitForResponse(
         (resp) =>
           resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-        { timeout: 60000 },
+        { timeout: VERY_LONG },
       );
 
       await harvesterPo.goTo();
@@ -297,7 +298,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await extensionsPo.goTo();
     await extensionsPo.waitForPage();
     await expect(extensionsPo.loading()).not.toBeAttached();
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
+    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
     await extensionsPo.extensionReloadClick();
     await expect(extensionsPo.loading()).not.toBeAttached();
 
@@ -332,7 +333,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(
       appRepoList.list().resourceTable().sortableTable().rowElementWithName(harvesterGitRepoName),
     ).toBeVisible();
-    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: 60000 });
+    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: VERY_LONG });
 
     await extensionsPo.goTo();
     await extensionsPo.waitForPage(undefined, 'available');
@@ -351,7 +352,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
         resp.request().method() === 'POST',
-      { timeout: 30000 },
+      { timeout: LONG },
     );
 
     await extensionsPo.installModal().selectVersionClick(2, false);
@@ -367,11 +368,11 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     expect(installStatus3).toBe(201);
 
     // Wait for page to transition to installed tab (matches upstream order)
-    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: 30000 });
+    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: LONG });
 
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
+    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
     await extensionsPo.extensionReloadClick();
-    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: 30000 });
+    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: LONG });
 
     // check harvester version on card - should be the latest available version
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);
@@ -383,7 +384,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       const updateOnNavPromise = page.waitForResponse(
         (resp) =>
           resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-        { timeout: 60000 },
+        { timeout: VERY_LONG },
       );
 
       await harvesterPo.goTo();
@@ -400,12 +401,12 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=upgrade`) &&
         resp.request().method() === 'POST',
-      { timeout: 60000 },
+      { timeout: VERY_LONG },
     );
     const updateAfterUpgradePromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: 60000 },
+      { timeout: VERY_LONG },
     );
 
     await harvesterPo.updateOrInstallButton().click();
@@ -425,8 +426,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await harvesterPo.updateOrInstallButton().checkNotExists();
 
     await extensionsPo.goTo();
-    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: 30000 });
-    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: 30000 });
+    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: LONG });
+    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: LONG });
     // check harvester version on card after update - should be latest
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);
 

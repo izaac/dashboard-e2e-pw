@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default class CruResourcePo extends ComponentPo {
   constructor(page: Page, selector: string, parent?: Locator) {
@@ -30,7 +31,7 @@ export default class CruResourcePo extends ComponentPo {
   async saveAndWaitForRequests(method: string, endpoint: string): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(endpoint) && resp.request().method() === method,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.saveOrCreate().click();

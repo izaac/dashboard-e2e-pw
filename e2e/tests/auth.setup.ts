@@ -1,5 +1,6 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
+import { DEBOUNCE, VERY_LONG } from '@/support/timeouts';
 
 // Unique auth file per Rancher instance — matches playwright.config.ts logic
 const authPort = (() => {
@@ -132,7 +133,7 @@ setup('authenticate as admin', async ({ page }) => {
 
   const useLocal = page.locator('[data-testid="login-useLocal"]');
 
-  if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
+  if (await useLocal.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
     await useLocal.click();
   }
 
@@ -144,7 +145,7 @@ setup('authenticate as admin', async ({ page }) => {
   await page.locator('[data-testid="login-submit"]').click();
 
   // Wait for home page — confirms auth is fully established and localStorage is populated
-  await expect(page).toHaveURL(/\/home/, { timeout: 60000 });
+  await expect(page).toHaveURL(/\/home/, { timeout: VERY_LONG });
 
   await page.context().storageState({ path: ADMIN_AUTH_FILE });
 });

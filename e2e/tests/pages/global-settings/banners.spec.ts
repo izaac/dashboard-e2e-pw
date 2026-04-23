@@ -7,6 +7,7 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import type { RancherApi } from '@/support/fixtures/rancher-api';
+import { VERY_LONG } from '@/support/timeouts';
 
 const settings = {
   bannerLabel: 'Rancher e2e',
@@ -457,7 +458,7 @@ test.describe('Banners', () => {
         await loginPage.username().set(envMeta.username);
         await loginPage.password().set(envMeta.password);
         await loginPage.submitButton().click();
-        await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
+        await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: VERY_LONG });
 
         // Verify settings persisted
         await bannersPage.goTo();

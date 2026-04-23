@@ -8,6 +8,7 @@ import {
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.application.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
 import { HeaderPo } from '@/e2e/po/components/header.po';
+import { STANDARD } from '@/support/timeouts';
 
 /**
  * Git Repo spec — converted from upstream fleet/gitrepo.spec.ts.
@@ -109,7 +110,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
       const expectedTabs = ['Bundles', 'Resources', 'Conditions', 'Recent Events'];
       const tabs = gitRepoDetails.gitRepoTabs().allTabs();
 
-      await expect(tabs).toHaveCount(expectedTabs.length, { timeout: 10000 });
+      await expect(tabs).toHaveCount(expectedTabs.length, { timeout: STANDARD });
 
       for (const name of expectedTabs) {
         await expect(tabs.filter({ hasText: name })).toHaveCount(1);

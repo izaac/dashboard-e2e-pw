@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { DEBOUNCE } from '@/support/timeouts';
 
 const namespace = 'fleet-default';
 
@@ -373,7 +374,7 @@ test.describe(
       const jwtAuthPage = new JWTAuthenticationPagePo(page);
 
       const advancedGroup = jwtAuthPage.sideNav().groupByName('Advanced');
-      const advancedVisible = await advancedGroup.isVisible({ timeout: 3000 }).catch((e: Error) => {
+      const advancedVisible = await advancedGroup.isVisible({ timeout: DEBOUNCE }).catch((e: Error) => {
         if (!e.message.includes('strict mode violation')) {
           throw e;
         }

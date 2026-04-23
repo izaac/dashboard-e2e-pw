@@ -4,6 +4,7 @@ import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG, STANDARD } from '@/support/timeouts';
 
 const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
@@ -521,7 +522,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       // Verify login with new password by logging out and back in
       await page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
       await login({ username: actualUsername, password: newPassword });
-      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 30000 });
+      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: LONG });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
     }
@@ -631,7 +632,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
             resp.url().includes('/v3/globalrolebindings') &&
             resp.request().method() === 'POST' &&
             resp.status() === 201,
-          { timeout: 10000 },
+          { timeout: STANDARD },
         )
         .catch(() => {
           /* second binding may have already resolved */

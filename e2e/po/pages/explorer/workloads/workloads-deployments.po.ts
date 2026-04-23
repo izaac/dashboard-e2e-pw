@@ -6,6 +6,7 @@ import {
   WorkloadDetailsPageBasePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 import RedeployDialogPo from '@/e2e/po/components/workloads/redeploy-dialog.po';
+import { LONG } from '@/support/timeouts';
 
 type WorkloadType = 'apps.deployment';
 
@@ -91,8 +92,8 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
 
   /** Wait for scale buttons to be enabled and no pending indicators visible */
   async waitForScaleComplete(): Promise<void> {
-    await expect(this.scaleUpButton()).toBeEnabled({ timeout: 30000 });
-    await expect(this.scaleDownButton()).toBeEnabled({ timeout: 30000 });
+    await expect(this.scaleUpButton()).toBeEnabled({ timeout: LONG });
+    await expect(this.scaleDownButton()).toBeEnabled({ timeout: LONG });
     await expect(this.page.locator('.plus-minus').filter({ hasText: 'Pending' })).not.toBeVisible();
   }
 }

@@ -8,6 +8,7 @@ import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import BannersPo from '@/e2e/po/components/banners.po';
+import { LONG, VERY_LONG } from '@/support/timeouts';
 
 // --------------- Install Extension Dialog ---------------
 
@@ -321,7 +322,7 @@ export default class ExtensionsPagePo extends PagePo {
     await this.extensionCardInstallClick(extensionName);
     await this.installModal().checkVisible();
     await this.installModal().installButton().click();
-    await expect(this.extensionReloadBanner()).toBeVisible({ timeout: 60000 });
+    await expect(this.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
     await this.extensionReloadClick();
   }
 
@@ -368,10 +369,10 @@ export default class ExtensionsPagePo extends PagePo {
     await this.page.locator('[data-testid="action-button-async-button"]').click();
 
     if (waitForActiveState) {
-      await expect(this.page).toHaveURL(/catalog\.cattle\.io\.clusterrepo/, { timeout: 30000 });
+      await expect(this.page).toHaveURL(/catalog\.cattle\.io\.clusterrepo/, { timeout: LONG });
       await expect(
         this.page.locator('tbody tr').filter({ hasText: name }).locator('td.col-badge-state-formatter'),
-      ).toContainText('Active', { timeout: 60000 });
+      ).toContainText('Active', { timeout: VERY_LONG });
     }
   }
 }

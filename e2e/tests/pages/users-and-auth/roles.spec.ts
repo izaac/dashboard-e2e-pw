@@ -8,6 +8,7 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import * as jsyaml from 'js-yaml';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { STANDARD } from '@/support/timeouts';
 
 const globalRoleYaml = `apiVersion: management.cattle.io/v3
 kind: GlobalRole
@@ -328,7 +329,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
       const deleteResponse = page.waitForResponse(
         (resp) => resp.url().includes('/v3/globalRoles/') && resp.request().method() === 'DELETE',
-        { timeout: 10000 },
+        { timeout: STANDARD },
       );
 
       await promptRemove.remove();
@@ -566,7 +567,7 @@ rules:
 
       const deleteResponse = page.waitForResponse(
         (resp) => resp.url().includes('/v3/roleTemplates/') && resp.request().method() === 'DELETE',
-        { timeout: 10000 },
+        { timeout: STANDARD },
       );
 
       await promptRemove.remove();

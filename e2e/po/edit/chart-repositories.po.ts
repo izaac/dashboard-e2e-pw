@@ -5,6 +5,7 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default class ChartRepositoriesCreateEditPo extends PagePo {
   private static createPath(clusterId: string, product: 'apps' | 'manager', repoName?: string) {
@@ -157,7 +158,7 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
   async saveAndWaitForRequests(method: string, url: string): Promise<Response> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(url) && resp.request().method() === method,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.saveCreateForm().click();

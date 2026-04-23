@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import VersionNumberPo from '@/e2e/po/components/version-number.po';
+import { LONG } from '@/support/timeouts';
 
 /**
  * Page object for the product side navigation panel.
@@ -61,7 +62,7 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Navigate to a side menu group by label */
   async navToSideMenuGroupByLabel(label: string): Promise<void> {
-    await expect(this.self()).toBeAttached({ timeout: 30000 });
+    await expect(this.self()).toBeAttached({ timeout: LONG });
     await this.self().locator('.accordion.has-children').getByText(label).click();
   }
 
@@ -74,7 +75,7 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Find a side menu entry by exact label text */
   async sideMenuEntryByLabel(label: string): Promise<Locator> {
-    await expect(this.self()).toBeAttached({ timeout: 30000 });
+    await expect(this.self()).toBeAttached({ timeout: LONG });
 
     const labels = this.self().locator('.child.nav-type a .label');
     const count = await labels.count();

@@ -7,6 +7,7 @@ import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import ColorInputPo from '@/e2e/po/components/color-input.po';
 import ToggleSwitchPo from '@/e2e/po/components/toggle-switch.po';
+import { STANDARD } from '@/support/timeouts';
 
 /**
  * Lightweight checkbox wrapper for banner checkboxes found by label text.
@@ -26,7 +27,7 @@ export class BannerCheckboxPo {
     const checkbox = this.container.locator('span.checkbox-custom');
 
     await checkbox.scrollIntoViewIfNeeded();
-    await checkbox.click({ timeout: 10000 });
+    await checkbox.click({ timeout: STANDARD });
   }
 
   async ensureChecked(): Promise<void> {

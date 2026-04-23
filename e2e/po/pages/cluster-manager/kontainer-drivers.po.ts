@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default class KontainerDriversPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -19,7 +20,7 @@ export default class KontainerDriversPagePo extends PagePo {
     const responsePromise = this.page.waitForResponse(
       (resp) =>
         resp.url().includes('/v3/kontainerDrivers/') && resp.request().method() === 'GET' && resp.status() === 200,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.goTo();

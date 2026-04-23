@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG } from '@/support/timeouts';
 
 /**
  * Page object for a single Chart detail/install page.
@@ -30,7 +31,7 @@ export class ChartPage extends PagePo {
     await chartsPage.goTo();
 
     // Wait for charts to finish loading before searching
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: 30000 });
+    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
 
     await chartsPage.chartsSearchFilterInput().fill(chartName);
 

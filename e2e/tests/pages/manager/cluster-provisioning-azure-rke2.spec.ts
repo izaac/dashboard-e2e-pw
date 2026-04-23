@@ -3,6 +3,7 @@ import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-man
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { PROVISIONING } from '@/support/timeouts';
 
 /**
  * Running this test will delete all Azure cloud credentials from the target cluster.
@@ -167,7 +168,7 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible({ timeout: 300000 });
+      await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible({ timeout: PROVISIONING });
 
       await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('Azure');
       await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('RKE2');
@@ -217,7 +218,7 @@ test.describe(
       await clusterDetails.snapshotsTab().click();
       await expect(page).toHaveURL(/snapshots/);
       await expect(clusterDetails.snapshotsList().checkSnapshotExist(`on-demand-${clusterName}`)).toBeVisible({
-        timeout: 300000,
+        timeout: PROVISIONING,
       });
     });
 
@@ -241,7 +242,7 @@ test.describe(
 
         await clusterList.waitForPage();
         await expect(clusterList.sortableTable().rowElementWithName(clusterName)).not.toBeAttached({
-          timeout: 300000,
+          timeout: PROVISIONING,
         });
       } finally {
         await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterName, false);

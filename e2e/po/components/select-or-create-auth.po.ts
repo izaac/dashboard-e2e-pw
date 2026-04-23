@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import { BRIEF } from '@/support/timeouts';
 
 export default class SelectOrCreateAuthPo extends ComponentPo {
   authSelect(): LabeledSelectPo {
@@ -43,6 +44,6 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
   }
 
   async waitForNotLoading(): Promise<void> {
-    await expect(this.loading()).not.toBeAttached({ timeout: 5000 });
+    await expect(this.loading()).not.toBeAttached({ timeout: BRIEF });
   }
 }

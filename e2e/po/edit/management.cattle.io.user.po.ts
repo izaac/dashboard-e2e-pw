@@ -5,6 +5,7 @@ import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { STANDARD } from '@/support/timeouts';
 
 class GlobalRoleBindingsPo extends ComponentPo {
   constructor(page: Page) {
@@ -70,7 +71,7 @@ export default class MgmtUserEditPo extends PagePo {
   async saveAndWaitForRequests(method: string, url: string): Promise<Response> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(url) && resp.request().method() === method,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.resourceDetail().cruResource().saveOrCreate().click();

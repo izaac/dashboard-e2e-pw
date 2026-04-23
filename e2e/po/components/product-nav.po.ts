@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
+import { VERY_LONG } from '@/support/timeouts';
 
 export default class ProductNavPo extends ComponentPo {
   constructor(page: Page) {
@@ -12,7 +13,7 @@ export default class ProductNavPo extends ComponentPo {
   }
 
   async navToSideMenuGroupByLabel(label: string): Promise<void> {
-    await expect(this.page.locator('.side-nav')).toBeVisible({ timeout: 60000 });
+    await expect(this.page.locator('.side-nav')).toBeVisible({ timeout: VERY_LONG });
     await this.self().locator('.accordion.has-children').filter({ hasText: label }).click();
   }
 
@@ -23,7 +24,7 @@ export default class ProductNavPo extends ComponentPo {
   }
 
   async navToSideMenuEntryByLabel(label: string): Promise<void> {
-    await expect(this.sideMenuEntryByLabel(label)).toBeVisible({ timeout: 60000 });
+    await expect(this.sideMenuEntryByLabel(label)).toBeVisible({ timeout: VERY_LONG });
     await this.sideMenuEntryByLabel(label).click({ force: true });
   }
 }

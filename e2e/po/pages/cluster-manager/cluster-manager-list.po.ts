@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ProvClusterListPo from '@/e2e/po/lists/provisioning.cattle.io.cluster.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import { STANDARD } from '@/support/timeouts';
 
 export default class ClusterManagerListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -49,7 +50,7 @@ export default class ClusterManagerListPagePo extends PagePo {
   async goToClusterListAndGetClusterDetails(clusterName: string): Promise<{ id: string }> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('/v3/clusters') && resp.request().method() === 'GET' && resp.status() === 200,
-      { timeout: 10000 },
+      { timeout: STANDARD },
     );
 
     await this.goTo();

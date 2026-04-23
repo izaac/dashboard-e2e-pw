@@ -5,6 +5,7 @@ import ArrayListPo from '@/e2e/po/components/array-list.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
+import { DEBOUNCE, EXTENDED } from '@/support/timeouts';
 
 export class IngressCreateEditPo extends PagePo {
   private static createPath(clusterId: string, namespace?: string, id?: string) {
@@ -112,8 +113,8 @@ export class IngressCreateEditPo extends PagePo {
       await select.toggle();
       const option = select.getOptions().filter({ hasText: label }).first();
 
-      await expect(option).toBeVisible({ timeout: 3000 });
-      await option.click({ timeout: 3000 });
-    }).toPass({ timeout: 15000, intervals: [500, 1000, 2000] });
+      await expect(option).toBeVisible({ timeout: DEBOUNCE });
+      await option.click({ timeout: DEBOUNCE });
+    }).toPass({ timeout: EXTENDED, intervals: [500, 1000, 2000] });
   }
 }

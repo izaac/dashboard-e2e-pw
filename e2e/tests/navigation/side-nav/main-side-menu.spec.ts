@@ -4,6 +4,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
 import { generateFakeClusterDataAndIntercepts } from '@/support/blueprints/nav/fake-cluster';
+import { LONG } from '@/support/timeouts';
 
 const longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description';
 const fakeProvClusterId = 'some-fake-cluster-id';
@@ -41,7 +42,7 @@ test.describe('Side Menu: main', () => {
         await sideNav.navToSideMenuEntryByLabel('Projects/Namespaces');
 
         // Wait for Projects/Namespaces page to load before checking burger menu
-        await expect(page).toHaveURL(/\/projectsnamespaces/, { timeout: 30000 });
+        await expect(page).toHaveURL(/\/projectsnamespaces/, { timeout: LONG });
 
         // Check burger menu cluster visibility (side menu is always in DOM)
         const burgerMenu = new BurgerMenuPo(page);

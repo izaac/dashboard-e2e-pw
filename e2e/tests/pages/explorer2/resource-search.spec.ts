@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import ResourceSearchDialog from '@/e2e/po/prompts/ResourceSearchDialog.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import { STANDARD } from '@/support/timeouts';
 
 test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test.beforeEach(async ({ page, login }) => {
@@ -43,7 +44,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
 
     await dialog.searchBox().fill('provisioning.cattle');
 
-    await expect(dialog.results()).toHaveCount(1, { timeout: 10000 });
+    await expect(dialog.results()).toHaveCount(1, { timeout: STANDARD });
     await expect(dialog.results().first()).toHaveText('Clusters (clusters.provisioning.cattle.io)');
 
     await page.keyboard.press('Escape');

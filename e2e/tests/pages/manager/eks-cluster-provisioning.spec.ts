@@ -4,6 +4,7 @@ import ClusterManagerCreateEKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import * as eksDefaultSettings from '@/e2e/blueprints/cluster_management/eks-default-settings';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG } from '@/support/timeouts';
 
 const eksSettings = {
   eksRegion: eksDefaultSettings.DEFAULT_REGION,
@@ -75,7 +76,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       );
       const pageLoadPromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
-        { timeout: 30000 },
+        { timeout: LONG },
       );
 
       await cloudCredForm.saveCreateForm().cruResource().saveOrCreate().click();

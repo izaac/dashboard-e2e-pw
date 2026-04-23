@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import ChartRepositoriesCreateEditPo from '@/e2e/po/edit/chart-repositories.po';
+import { LONG } from '@/support/timeouts';
 
 test.describe('Apps', () => {
   test.describe.configure({ mode: 'serial' });
@@ -123,7 +124,7 @@ test.describe('Apps', () => {
 
         await appRepoList.sortableTable().checkLoadingIndicatorNotVisible();
         await expect(appRepoList.sortableTable().rowElementWithName('Rancher')).toBeVisible();
-        await expect(appRepoList.list().state('Rancher')).toContainText('Active', { timeout: 30000 });
+        await expect(appRepoList.list().state('Rancher')).toContainText('Active', { timeout: LONG });
       });
     });
   });
