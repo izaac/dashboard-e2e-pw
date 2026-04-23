@@ -100,6 +100,23 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
       await sortableTable.checkVisible();
       await sortableTable.groupByButtons(1).click();
 
+      // Grouped headers should NOT include Namespace (upstream parity)
+      const expectedGroupedHeaders = [
+        'State',
+        'Name',
+        'Status',
+        'Volume',
+        'Capacity',
+        'Access Modes',
+        'Storage Class',
+        'VolumeAttributesClass',
+        'Volume Mode',
+        'Age',
+      ];
+      const groupedHeaders = await sortableTable.headerNames();
+
+      expect(groupedHeaders).toEqual(expectedGroupedHeaders);
+
       await expect(sortableTable.groupRows().first()).toBeVisible(SHORT_TIMEOUT_OPT);
     });
   });

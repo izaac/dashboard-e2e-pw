@@ -316,6 +316,18 @@ test.describe('Settings (Part 2)', () => {
       const resetResp = await resetResponsePromise;
 
       expect(resetResp.status()).toBe(200);
+
+      // Verify visual display matches the default value (upstream parity)
+      const defaultValue = resetResp.request().postDataJSON().value;
+      let visualDefault = 'Dynamic';
+
+      if (defaultValue === 'true') {
+        visualDefault = 'Local';
+      } else if (defaultValue === 'false') {
+        visualDefault = 'Remote';
+      }
+
+      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(visualDefault);
     } finally {
       await restore();
     }
@@ -349,6 +361,10 @@ test.describe('Settings (Part 2)', () => {
       // Check logos in top-level navigation header for updated logo
       await burgerMenu.toggle();
       await expect(burgerMenu.brandLogoImage()).toBeVisible();
+      const suseLogoWidth = await burgerMenu.brandLogoImage().evaluate((el) => el.getBoundingClientRect().width);
+
+      expect(suseLogoWidth).toBeGreaterThanOrEqual(198);
+      expect(suseLogoWidth).toBeLessThanOrEqual(202);
       await burgerMenu.toggle();
 
       // Reset via UI
@@ -364,6 +380,14 @@ test.describe('Settings (Part 2)', () => {
       await resetResponsePromise;
 
       await expect(settingsPage.advancedSettingRow(settingName)).not.toContainText(settingsData[settingName].new);
+
+      // Check side menu logo reverted to default Rancher width (upstream parity)
+      await burgerMenu.toggle();
+      await expect(burgerMenu.brandLogoImage()).toBeVisible();
+      const sideDefaultWidth = await burgerMenu.brandLogoImage().evaluate((el) => el.getBoundingClientRect().width);
+
+      expect(sideDefaultWidth).toBeGreaterThanOrEqual(165);
+      expect(sideDefaultWidth).toBeLessThanOrEqual(170);
     } finally {
       await restore();
     }

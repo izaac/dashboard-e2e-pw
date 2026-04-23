@@ -411,6 +411,7 @@ test.describe('Feature Flags - Standard User', { tag: ['@globalSettings', '@stan
 
     const featureFlags = [
       'continuous-delivery',
+      'Install Fleet when starting Rancher',
       'harvester',
       'harvester-baremetal-container-workload',
       'istio-virtual-service-ui',
