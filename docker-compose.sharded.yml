@@ -1,5 +1,6 @@
 # Sharded test execution — 2 Rancher instances running tests in parallel.
 # Usage: docker compose -f docker-compose.sharded.yml up
+# NixOS: docker compose -f docker-compose.sharded.yml -f docker-compose.nix.yml up
 # Results merged into playwright-report/ after all shards complete.
 
 services:
@@ -8,10 +9,10 @@ services:
     privileged: true
     restart: unless-stopped
     environment:
-      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login"]
+      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
       interval: 15s
       timeout: 5s
       retries: 40
@@ -22,10 +23,10 @@ services:
     privileged: true
     restart: unless-stopped
     environment:
-      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login"]
+      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
       interval: 15s
       timeout: 5s
       retries: 40
@@ -38,8 +39,8 @@ services:
         condition: service_healthy
     environment:
       TEST_BASE_URL: https://rancher-1/dashboard
-      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
-      TEST_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
@@ -55,8 +56,8 @@ services:
         condition: service_healthy
     environment:
       TEST_BASE_URL: https://rancher-2/dashboard
-      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-admin}
-      TEST_PASSWORD: ${RANCHER_PASSWORD:-admin}
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
