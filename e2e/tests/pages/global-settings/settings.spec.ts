@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
+import { STANDARD, VERY_LONG, EXTRA_LONG } from '@/support/timeouts';
 
 const BANNER_TEXT =
   "Typical users will not need to change these. Proceed with caution, incorrect values can break your Explorer installation. Settings which have been customized from default settings are tagged 'Modified'.";
@@ -80,19 +81,97 @@ test.describe('Settings', () => {
     await expect(page).toHaveURL(new RegExp(settingName));
   }
 
-  // Upstream Cypress test intercepts GET/PUT to ext.cattle.io.useractivities and manipulates
-  // expiresAt timestamps to trigger the inactivity modal within ~30s, then waits 12s for the
-  // modal to appear. This requires fine-grained request interception with mutable response
-  // bodies (Cypress req.continue + res.send), call-count gating, and long cy.wait() delays.
-  // Playwright's page.route can fulfill or abort but cannot selectively modify responses on
-  // the Nth call in the same ergonomic way. Converting this faithfully would require a
-  // stateful route handler plus real wall-clock waits (>40s total), making the test slow and
-  // fragile. Deferring until a lighter approach (e.g. clock mocking) is viable.
-  test.skip(
+  test(
     'Inactivity modal: can update auth-user-session-idle-ttl-minutes and show modal',
     { tag: ['@globalSettings', '@adminUser'] },
-    async () => {
-      // Intentionally empty — see skip reason above
+    async ({ page, rancherApi }) => {
+      test.setTimeout(EXTRA_LONG);
+      const sessionIdleSetting = 'auth-user-session-idle-ttl-minutes';
+      const sessionTtlSetting = 'auth-user-session-ttl-minutes';
+
+      // Precondition: session TTL must be >= idle TTL, otherwise admission webhook rejects
+      const ttlResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', sessionTtlSetting);
+      const currentTtl = parseInt(ttlResp.body.value || ttlResp.body.default || '960', 10);
+
+      if (currentTtl < 2) {
+        ttlResp.body.value = '960';
+        await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', sessionTtlSetting, ttlResp.body);
+        resetSettings.push(sessionTtlSetting);
+      }
+
+      // Navigate to settings and edit the idle TTL
+      await navToSettings(page);
+      await editSetting(page, sessionIdleSetting);
+      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${sessionIdleSetting}`);
+
+      await settingsPage.settingInput().clear();
+      await settingsPage.settingInput().fill(settingsData[sessionIdleSetting].new);
+
+      // Intercept ALL useractivities requests with a fixed expiresAt 30s from now.
+      // Unlike Cypress (which blocks network during cy.wait), Playwright keeps the page live,
+      // so the frontend fires repeated GETs. If any GET returns the real far-future expiry,
+      // it cancels the modal timer. We override ALL requests until the route is removed.
+      // Fixed expiresAt — all intercepted responses claim session expires in 60s.
+      // Must be fixed (not dynamic) so the frontend countdown approaches zero.
+      // Must override ALL calls because Playwright keeps the page live (unlike Cypress cy.wait).
+      const expiresAt = new Date(Date.now() + VERY_LONG).toISOString();
+
+      await page.route('**/v1/ext.cattle.io.useractivities/*', async (route) => {
+        const fetchResp = await route.fetch();
+
+        if (fetchResp.status() !== 200) {
+          await route.fulfill({ response: fetchResp });
+
+          return;
+        }
+
+        const body = await fetchResp.json();
+
+        if (body.status?.expiresAt) {
+          body.status.expiresAt = expiresAt;
+        }
+
+        await route.fulfill({ response: fetchResp, json: body });
+      });
+
+      // Save the setting
+      const saveResponse = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('management.cattle.io.settings') &&
+          resp.url().includes(sessionIdleSetting) &&
+          resp.request().method() === 'PUT',
+      );
+
+      await settingsPage.saveButton().click();
+      const resp = await saveResponse;
+
+      expect(resp.status()).toBe(200);
+      resetSettings.push(sessionIdleSetting);
+
+      // Verify the saved value shows in the list
+      await expect(settingsPage.settingsValue(sessionIdleSetting)).toContainText(settingsData[sessionIdleSetting].new);
+
+      // Wait for the inactivity modal to appear (frontend shows it when expiresAt is near)
+      const modal = settingsPage.inactivityModalCard();
+
+      await expect(modal).toBeVisible({ timeout: VERY_LONG });
+      await expect(modal).toContainText('Session expiring');
+      await expect(modal).toContainText('Your session is about to expire due to inactivity');
+      await expect(modal).toContainText('Resume Session');
+
+      // Click "Resume Session" to dismiss — use force because modal overlay can intercept
+      await modal.locator('button', { hasText: 'Resume Session' }).click({ force: true });
+      await expect(modal).toBeHidden();
+
+      // Clean up the route handler so real expiry flows again
+      await page.unroute('**/v1/ext.cattle.io.useractivities/*');
+
+      // Navigate away and wait — modal should NOT reappear (session was resumed)
+      await page.goto('./home', { waitUntil: 'domcontentloaded' });
+
+      // eslint-disable-next-line playwright/no-wait-for-timeout
+      await page.waitForTimeout(STANDARD);
+      await expect(modal).toBeHidden();
     },
   );
 

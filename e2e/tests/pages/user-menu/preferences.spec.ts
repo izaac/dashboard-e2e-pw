@@ -3,6 +3,10 @@ import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BannersPo from '@/e2e/po/components/banners.po';
+import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
+import ProductNavPo from '@/e2e/po/components/product-nav.po';
+import { HeaderPo } from '@/e2e/po/components/header.po';
+import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 import { LONG } from '@/support/timeouts';
 
@@ -47,6 +51,72 @@ test.describe('User can update their preferences', () => {
       await expect(prefPage.title()).toHaveText('Preferences');
     },
   );
+
+  test('Can select a language', { tag: ['@userMenu', '@adminUser', '@standardUser'] }, async ({ page, login }) => {
+    await login();
+
+    const prefPage = new PreferencesPagePo(page);
+
+    await prefPage.goTo();
+    await prefPage.waitForPage();
+
+    const langDropdown = prefPage.languageDropdownMenu();
+
+    await expect(langDropdown.self()).toBeVisible();
+
+    // Cycle through available languages and verify DOM lang attribute
+    const languages: Record<string, number> = {
+      '[lang="en-us"]': 1,
+      '[lang="zh-hans"]': 2,
+    };
+
+    for (const [selector, index] of Object.entries(languages)) {
+      await langDropdown.toggle();
+      await langDropdown.isOpened();
+      await expect(langDropdown.getOptions()).toHaveCount(2);
+      await langDropdown.clickOption(index);
+      await langDropdown.isClosed();
+      await prefPage.checkLangDomElement(selector);
+    }
+
+    // Regression test: https://github.com/rancher/dashboard/issues/10153
+    // Navigate to cluster dashboard while in Chinese, verify sidebar uses translated label
+    const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+    await clusterDashboard.goTo();
+    await clusterDashboard.waitForPage();
+
+    const nav = new ProductNavPo(page);
+
+    await nav.navToSideMenuEntryByLabel('事件');
+
+    const masthead = new ResourceListMastheadPo(page, '.dashboard-root');
+
+    await expect(masthead.title()).toContainText('事件');
+
+    // kubectl explain tooltip should remain in English
+    const header = new HeaderPo(page);
+
+    await header.showKubectlExplainTooltip();
+    await expect(header.getKubectlExplainTooltipContent()).toContainText('Describe Resource');
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await header.showKubectlExplainTooltip();
+    await expect(header.getKubectlExplainTooltipContent()).toContainText('Describe Resource');
+
+    // Restore to English — wait for the preference save to complete before test ends
+    // to avoid a race with afterEach's own preference PUT
+    await prefPage.goTo();
+    await prefPage.waitForPage();
+    const prefSavePromise = page.waitForResponse(
+      (resp) => resp.url().includes('userpreferences') && resp.request().method() === 'PUT',
+    );
+
+    await langDropdown.toggle();
+    await langDropdown.clickOption(1);
+    await prefSavePromise;
+    await prefPage.checkLangDomElement('[lang="en-us"]');
+  });
 
   test('Can select a theme', { tag: ['@userMenu', '@adminUser', '@standardUser'] }, async ({ page, login }) => {
     await login();
