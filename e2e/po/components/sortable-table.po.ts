@@ -293,6 +293,31 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('thead tr').locator('th').nth(index).locator('.sort');
   }
 
+  /** Find the sort handle for a column by its visible header text (avoids checkbox off-by-one) */
+  sortByName(columnName: string): Locator {
+    return this.self().locator(`thead tr th:has(.table-header-container .content:text("${columnName}")) .sort`);
+  }
+
+  /** Verify the sort icon direction on a column identified by header text */
+  async checkSortOrderByName(columnName: string, direction: 'up' | 'down'): Promise<void> {
+    const th = this.self().locator(`thead tr th:has(.table-header-container .content:text("${columnName}"))`);
+
+    // Active sort column has 2 icons: faded base icon + direction icon (last)
+    const dirIcon = th.locator(`.sort .icon-stack > i.icon-sort-${direction}`);
+
+    await expect(dirIcon).toBeVisible();
+  }
+
+  /** Verify the sort icon direction on a given column header (mirrors upstream HeaderRowPo.checkSortOrder) */
+  async checkSortOrder(colIndex: number, direction: 'up' | 'down'): Promise<void> {
+    const dirIcon = this.self()
+      .locator('thead tr th')
+      .nth(colIndex)
+      .locator(`.sort .icon-stack > i.icon-sort-${direction}`);
+
+    await expect(dirIcon).toBeVisible();
+  }
+
   async deleteItemWithUI(name: string): Promise<void> {
     const actionMenu = await this.rowActionMenuOpen(name);
 

@@ -345,6 +345,9 @@ and that's what gets submitted.
 - The summary classifies failures (timeout, selector, API error, assertion, crash, navigation), cross-references
   network errors, and flags DOM state (loading spinners, login page visible, error banners).
 - Only dive into individual `test-results/<test-dir>/` artifacts if the summary is insufficient.
+- **DOM snapshot escalation:** If the failure summary is not enough to resolve locator or UI action issues, read the
+  full `dom-snapshot.html` from `test-results/<test-dir>/` to inspect the actual DOM structure. Confirm findings against
+  the failure screenshot (`test-failed-*.png`). Do NOT guess selectors — verify them against the real DOM.
 - Fix one failure at a time. Re-run the single failing test after each fix. Do not batch fixes blindly.
 
 ---

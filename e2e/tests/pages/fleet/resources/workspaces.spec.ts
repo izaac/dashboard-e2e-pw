@@ -5,7 +5,8 @@ import {
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.fleetworkspace.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { fleetWorkspacesSmallResponse } from '@/e2e/blueprints/fleet/workspaces-get';
+import { fleetWorkspacesSmallResponse, fleetWorkspacesLargeResponse } from '@/e2e/blueprints/fleet/workspaces-get';
+import { setTablePreferences, restoreTablePreferences } from '@/e2e/tests/pages/explorer2/workloads/pagination.utils';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
 
@@ -26,20 +27,127 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       expect(actualHeaders).toEqual(expectedHeaders);
     });
 
-    test('pagination is visible and user is able to navigate through workspace data', async ({
-      page,
-      login,
-      rancherApi,
-    }) => {
-      test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
+    test('pagination is visible and navigable with large dataset', async ({ page, login, rancherApi }) => {
+      const MOCK_COUNT = 25;
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+      const mockData = fleetWorkspacesLargeResponse(MOCK_COUNT);
+
+      try {
+        await page.route(/\/v1\/management\.cattle\.io\.fleetworkspaces/, (route) => {
+          const url = route.request().url();
+
+          if (url.includes('watch=true') || url.includes('resourceVersion')) {
+            return route.abort();
+          }
+
+          return route.fulfill({ json: mockData });
+        });
+
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const table = listPage.list().resourceTable().sortableTable();
+
+        await table.checkVisible();
+        await table.checkLoadingIndicatorNotVisible();
+
+        await expect(table.pagination()).toBeVisible();
+        await expect(table.paginationText()).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+
+        await expect(table.paginationBeginButton()).toBeDisabled();
+        await expect(table.paginationPrevButton()).toBeDisabled();
+        await expect(table.paginationNextButton()).toBeEnabled();
+        await expect(table.paginationEndButton()).toBeEnabled();
+
+        // Navigate right → page 2
+        await table.paginationNextButton().click();
+        await expect(table.paginationText()).toContainText(`11 - 20 of ${MOCK_COUNT}`);
+        await expect(table.paginationBeginButton()).toBeEnabled();
+
+        // Navigate left → page 1
+        await table.paginationPrevButton().click();
+        await expect(table.paginationText()).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+
+        // Navigate to last page
+        await table.paginationEndButton().click();
+        await expect(table.paginationText()).toContainText(`21 - ${MOCK_COUNT} of ${MOCK_COUNT}`);
+
+        // Navigate to first page
+        await table.paginationBeginButton().click();
+        await expect(table.paginationText()).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
+      }
     });
 
     test('filter workspace', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Requires creating multiple workspaces — expensive setup');
+      const wsName = rancherApi.createE2EResourceName('fleet-ws-filt');
+
+      await rancherApi.createRancherResource('v3', 'fleetworkspaces', {
+        metadata: { name: wsName },
+        name: wsName,
+      });
+
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+
+      try {
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const table = listPage.list().resourceTable().sortableTable();
+
+        await table.checkVisible();
+        await table.checkLoadingIndicatorNotVisible();
+
+        // Filter by created workspace name
+        await table.filter(wsName);
+        await table.checkRowCount(false, 1);
+        await expect(table.rowElementWithName(wsName)).toBeVisible();
+
+        // Reset filter — verify the default workspaces reappear
+        await table.resetFilter();
+        await expect(table.rowElementWithName('fleet-default')).toBeVisible();
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
+        await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', wsName, false);
+      }
     });
 
     test('sorting changes the order of paginated workspace data', async ({ page, login, rancherApi }) => {
-      test.skip(true, 'Requires creating 26+ workspaces — expensive setup');
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+
+      try {
+        await login();
+        const listPage = new FleetWorkspaceListPagePo(page);
+
+        await listPage.goTo();
+        await listPage.waitForPage();
+
+        const table = listPage.list().resourceTable().sortableTable();
+
+        await table.checkVisible();
+        await table.checkLoadingIndicatorNotVisible();
+
+        // Click State (col 1) to clear any existing Name sort state
+        await table.sort(1).click();
+        await table.checkSortOrder(1, 'down');
+
+        // Click Name (col 2) — first click sets ASC
+        await table.sort(2).click();
+        await table.checkSortOrder(2, 'down');
+
+        // Toggle to DESC
+        await table.sort(2).click();
+        await table.checkSortOrder(2, 'up');
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
+      }
     });
 
     test('pagination is hidden', async ({ page, login }) => {

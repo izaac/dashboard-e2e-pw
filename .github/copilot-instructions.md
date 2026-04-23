@@ -28,6 +28,9 @@
 - Check `e2e/po/INDEX.md` before creating new Page Objects
 - Run `yarn summarize-failures` before investigating test
   failures
+- If the failure summary doesn't resolve locator/UI issues,
+  read the full `dom-snapshot.html` and confirm with the
+  failure screenshot — never guess selectors
 
 ## Never
 

@@ -166,6 +166,62 @@ const globalRolesGetResponseSmallSet = {
 
 import type { Page } from '@playwright/test';
 
+/** Generate N global roles for pagination/filter/sort tests */
+export function globalRolesLargeResponse(count: number, uniqueName = 'aaaa-unique-global-role') {
+  const resourceType = 'management.cattle.io.globalrole';
+  const data = [];
+
+  // Unique item sorts first alphabetically
+  data.push({
+    id: uniqueName,
+    type: resourceType,
+    apiVersion: 'management.cattle.io/v3',
+    builtin: false,
+    displayName: uniqueName,
+    kind: 'GlobalRole',
+    metadata: {
+      fields: [uniqueName, 'Completed', '1m'],
+      name: uniqueName,
+      creationTimestamp: '2024-06-27T20:32:52Z',
+      resourceVersion: SAFE_RESOURCE_REVISION,
+      state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
+    },
+    rules: [{ apiGroups: ['*'], resources: ['events'], verbs: ['get'] }],
+    status: { summary: 'Completed' },
+  });
+
+  for (let i = 1; i < count; i++) {
+    const padded = String(i).padStart(3, '0');
+    const name = `global-role-${padded}`;
+
+    data.push({
+      id: name,
+      type: resourceType,
+      apiVersion: 'management.cattle.io/v3',
+      builtin: false,
+      displayName: name,
+      kind: 'GlobalRole',
+      metadata: {
+        fields: [name, 'Completed', '1m'],
+        name,
+        creationTimestamp: '2024-06-27T20:32:52Z',
+        resourceVersion: SAFE_RESOURCE_REVISION,
+        state: { error: false, message: 'Resource is current', name: 'active', transitioning: false },
+      },
+      rules: [{ apiGroups: ['*'], resources: ['events'], verbs: ['get'] }],
+      status: { summary: 'Completed' },
+    });
+  }
+
+  return {
+    type: 'collection',
+    resourceType,
+    revision: SAFE_RESOURCE_REVISION,
+    count: data.length,
+    data,
+  };
+}
+
 export async function generateGlobalRolesDataSmall(page: Page): Promise<void> {
   await page.route('**/v1/management.cattle.io.globalroles?*', (route) =>
     route.fulfill({

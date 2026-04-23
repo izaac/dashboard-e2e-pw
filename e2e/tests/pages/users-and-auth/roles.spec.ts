@@ -6,6 +6,8 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
+import { globalRolesLargeResponse } from '@/e2e/blueprints/roles/global-roles-get';
+import { setTablePreferences, restoreTablePreferences } from '@/e2e/tests/pages/explorer2/workloads/pagination.utils';
 import * as jsyaml from 'js-yaml';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 import { STANDARD } from '@/support/timeouts';
@@ -673,6 +675,128 @@ rules:
         expect(download.suggestedFilename()).toContain(roleName);
       } finally {
         await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleName, false);
+      }
+    });
+  });
+
+  test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
+    const MOCK_COUNT = 25;
+
+    test('pagination is visible and navigable with large dataset', async ({ page, login, rancherApi }) => {
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+      const mockData = globalRolesLargeResponse(MOCK_COUNT);
+
+      try {
+        await page.route(/\/v1\/management\.cattle\.io\.globalroles/, (route) => {
+          const url = route.request().url();
+
+          if (url.includes('watch=true') || url.includes('resourceVersion')) {
+            return route.abort();
+          }
+
+          return route.fulfill({ json: mockData });
+        });
+
+        await login();
+        const roles = new RolesPo(page);
+
+        await roles.goTo();
+        await roles.waitForPage();
+
+        const table = roles.list('GLOBAL').resourceTable().sortableTable();
+
+        await table.checkVisible();
+        await table.checkLoadingIndicatorNotVisible();
+
+        // Roles page has 3 tabs with separate pagination — scope to GLOBAL tab
+        const paging = roles.paginatedTab('GLOBAL');
+
+        await expect(paging).toBeVisible();
+        await expect(paging.locator('span')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+
+        await expect(paging.locator('button').nth(0)).toBeDisabled();
+        await expect(paging.locator('button').nth(1)).toBeDisabled();
+        await expect(paging.locator('button').nth(2)).toBeEnabled();
+        await expect(paging.locator('button').nth(3)).toBeEnabled();
+
+        // Navigate right → page 2
+        await paging.locator('button').nth(2).click();
+        await expect(paging.locator('span')).toContainText(`11 - 20 of ${MOCK_COUNT}`);
+        await expect(paging.locator('button').nth(0)).toBeEnabled();
+
+        // Navigate left → page 1
+        await paging.locator('button').nth(1).click();
+        await expect(paging.locator('span')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+
+        // Navigate to last page
+        await paging.locator('button').nth(3).click();
+        await expect(paging.locator('span')).toContainText(`21 - ${MOCK_COUNT} of ${MOCK_COUNT}`);
+
+        // Navigate to first page
+        await paging.locator('button').nth(0).click();
+        await expect(paging.locator('span')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
+      }
+    });
+
+    test('filter global roles', async ({ page, login, rancherApi }) => {
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+
+      try {
+        await login();
+        const roles = new RolesPo(page);
+
+        await roles.goTo();
+        await roles.waitForPage();
+
+        const table = roles.list('GLOBAL').resourceTable().sortableTable();
+
+        await table.checkVisible();
+        await table.checkLoadingIndicatorNotVisible();
+
+        // Filter by a known built-in role display name
+        await table.filter('Administrator');
+        await table.checkRowCount(false, 1);
+        await expect(table.rowElementWithName('Administrator')).toBeVisible();
+
+        // Filter by a different known role
+        await table.filter('Manage Settings');
+        await table.checkRowCount(false, 1);
+        await expect(table.rowElementWithName('Manage Settings')).toBeVisible();
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
+      }
+    });
+
+    test('sorting changes the order of paginated global roles data', async ({ page, login, rancherApi }) => {
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+
+      try {
+        await login();
+        const roles = new RolesPo(page);
+
+        await roles.goTo();
+        await roles.waitForPage();
+
+        const table = roles.list('GLOBAL').resourceTable().sortableTable();
+
+        await table.checkVisible();
+        await table.checkLoadingIndicatorNotVisible();
+
+        // Upstream sorts by Display Name (col 2) — click State (col 1) first to clear
+        await table.sort(1).click();
+        await table.checkSortOrder(1, 'down');
+
+        // Click Display Name (col 2) — ASC
+        await table.sort(2).click();
+        await table.checkSortOrder(2, 'down');
+
+        // Toggle to DESC
+        await table.sort(2).click();
+        await table.checkSortOrder(2, 'up');
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
       }
     });
   });
