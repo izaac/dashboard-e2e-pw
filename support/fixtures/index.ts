@@ -1,4 +1,5 @@
 import { test as base, expect, request as pwRequest } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { RancherApi } from './rancher-api';
 import type { TestEnvMetadata } from '@/globals';
 import * as fs from 'fs';
@@ -15,6 +16,51 @@ type RancherTestFixtures = {
 type RancherWorkerFixtures = {
   rancherApi: RancherApi;
 };
+
+/**
+ * Fill credentials and submit the login form.
+ * Extracted so both the initial login and re-auth paths share the same logic.
+ */
+async function performLogin(page: Page, username: string, password: string): Promise<void> {
+  const useLocal = page.locator('[data-testid="login-useLocal"]');
+
+  if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await useLocal.click();
+  }
+
+  // Dismiss consent banner if present (branding tests may leave one behind)
+  const consentBanner = page.locator('#banner-consent .banner-dialog');
+
+  if (await consentBanner.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await consentBanner.locator('button').click();
+  }
+
+  await page
+    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+    .last()
+    .fill(username);
+  await page.locator('[data-testid="local-login-password"] input').fill(password);
+
+  // Re-check consent banner — it may appear after page load (lazy rendering)
+  if (await consentBanner.isVisible({ timeout: 500 }).catch(() => false)) {
+    await consentBanner.locator('button').click();
+  }
+
+  // Listen for the login POST response BEFORE clicking submit.
+  // This mirrors Cypress `cy.wait('@loginReq')` — guarantees R_SESS cookie
+  // is set before we proceed (the URL may change before Set-Cookie is processed).
+  const loginResponse = page.waitForResponse(
+    (resp) =>
+      (resp.url().includes('/v3-public/localProviders/local') || resp.url().includes('/v1-public/login')) &&
+      resp.request().method() === 'POST',
+  );
+
+  await page.locator('[data-testid="login-submit"]').click();
+  await loginResponse;
+
+  // Wait for the SPA to navigate away from the login page
+  await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
+}
 
 export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
   /** Auto-capture console logs, network requests, and attach debug artifacts on failure */
@@ -177,7 +223,22 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
             return;
           }
 
-          // Session expired — fall through to re-login
+          // Session expired — nuke all browser state so the SPA starts clean.
+          // Without this, Rancher's Vuex store keeps stale auth data and the
+          // login page enters a stuck "Logging in..." state after ?timed-out.
+          await page.context().clearCookies();
+          await page.evaluate(() => {
+            try {
+              localStorage.clear();
+            } catch {
+              /* noop */
+            }
+            try {
+              sessionStorage.clear();
+            } catch {
+              /* noop */
+            }
+          });
           await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
         }
       } else {
@@ -186,44 +247,7 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       }
 
-      const useLocal = page.locator('[data-testid="login-useLocal"]');
-
-      if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await useLocal.click();
-      }
-
-      // Dismiss consent banner if present (branding tests may leave one behind)
-      const consentBanner = page.locator('#banner-consent .banner-dialog');
-
-      if (await consentBanner.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await consentBanner.locator('button').click();
-      }
-
-      await page
-        .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
-        .last()
-        .fill(username);
-      await page.locator('[data-testid="local-login-password"] input').fill(password);
-
-      // Re-check consent banner — it may appear after page load (lazy rendering)
-      if (await consentBanner.isVisible({ timeout: 500 }).catch(() => false)) {
-        await consentBanner.locator('button').click();
-      }
-
-      // Listen for the login POST response BEFORE clicking submit.
-      // This mirrors Cypress `cy.wait('@loginReq')` — guarantees R_SESS cookie
-      // is set before we proceed (the URL may change before Set-Cookie is processed).
-      const loginResponse = page.waitForResponse(
-        (resp) =>
-          (resp.url().includes('/v3-public/localProviders/local') || resp.url().includes('/v1-public/login')) &&
-          resp.request().method() === 'POST',
-      );
-
-      await page.locator('[data-testid="login-submit"]').click();
-      await loginResponse;
-
-      // Wait for the SPA to navigate away from the login page
-      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
+      await performLogin(page, username, password);
     };
 
     await use(doLogin);

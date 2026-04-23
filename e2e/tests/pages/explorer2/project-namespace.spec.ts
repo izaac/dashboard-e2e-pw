@@ -187,7 +187,6 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
-          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
@@ -231,7 +230,6 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
-          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
@@ -272,7 +270,6 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
-          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
