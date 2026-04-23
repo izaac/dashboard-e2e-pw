@@ -233,8 +233,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
         (r) => r.url().includes(`catalog.cattle.io.clusterrepos/${repoName}`) && r.request().method() === 'DELETE',
       );
       const deleteResp2 = page.waitForResponse(
-        (r) =>
-          r.url().includes(`catalog.cattle.io.clusterrepos/${repoName}basic`) && r.request().method() === 'DELETE',
+        (r) => r.url().includes(`catalog.cattle.io.clusterrepos/${repoName}basic`) && r.request().method() === 'DELETE',
       );
 
       await repositoriesPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();

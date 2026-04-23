@@ -1,4 +1,4 @@
-export function machineSelectorConfigPayload(registryHost: string):Array<object> {
+export function machineSelectorConfigPayload(registryHost: string): Array<object> {
   return [
     {
       config: {
@@ -9,14 +9,14 @@ export function machineSelectorConfigPayload(registryHost: string):Array<object>
   ];
 }
 
-export function registriesWithSecretPayload(registryAuthHost: string, registrySecret: string):object {
+export function registriesWithSecretPayload(registryAuthHost: string, registrySecret: string): object {
   return {
     configs: {
       [registryAuthHost]: {
         authConfigSecretName: registrySecret,
-        caBundle:             null,
-        insecureSkipVerify:   false,
-        tlsSecretName:        null
+        caBundle: null,
+        insecureSkipVerify: false,
+        tlsSecretName: null,
       },
     },
     mirrors: {},

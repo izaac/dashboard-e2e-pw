@@ -82,10 +82,7 @@ test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       ns1 = `e2e-cj-list-${Date.now()}`;
       ns2 = `e2e-cj-unique-${Date.now()}`;
 
-      await Promise.all([
-        rancherApi.createNamespace(ns1),
-        rancherApi.createNamespace(ns2),
-      ]);
+      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
 
       uniqueName = `e2e-unique-${Date.now()}`;
 

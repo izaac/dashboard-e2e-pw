@@ -17,7 +17,9 @@ export default class ProductNavPo extends ComponentPo {
   }
 
   sideMenuEntryByLabel(label: string): Locator {
-    return this.self().locator('.child.nav-type a .label').filter({ hasText: new RegExp(`^${label}$`) });
+    return this.self()
+      .locator('.child.nav-type a .label')
+      .filter({ hasText: new RegExp(`^${label}$`) });
   }
 
   async navToSideMenuEntryByLabel(label: string): Promise<void> {

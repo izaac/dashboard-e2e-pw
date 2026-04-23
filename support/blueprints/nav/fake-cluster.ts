@@ -13,15 +13,18 @@ import {
  *
  * Must be called BEFORE navigating to the page that triggers these requests.
  */
-export async function generateFakeClusterDataAndIntercepts(page: Page, {
-  fakeProvClusterId = 'some-prov-cluster-id',
-  fakeMgmtClusterId = 'some-mgmt-cluster-id',
-  longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description'
-}: {
-  fakeProvClusterId?: string;
-  fakeMgmtClusterId?: string;
-  longClusterDescription?: string;
-}): Promise<void> {
+export async function generateFakeClusterDataAndIntercepts(
+  page: Page,
+  {
+    fakeProvClusterId = 'some-prov-cluster-id',
+    fakeMgmtClusterId = 'some-mgmt-cluster-id',
+    longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description',
+  }: {
+    fakeProvClusterId?: string;
+    fakeMgmtClusterId?: string;
+    longClusterDescription?: string;
+  },
+): Promise<void> {
   // Intercept fleet clusters - add description to local and inject fake cluster
   await page.route('**/v1/fleet.cattle.io.clusters?*', async (route) => {
     const response = await route.fetch();
@@ -35,10 +38,10 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
     }
 
     body.data.push({
-      id:       `fleet-default/${fakeProvClusterId}`,
-      type:     'fleet.cattle.io.cluster',
+      id: `fleet-default/${fakeProvClusterId}`,
+      type: 'fleet.cattle.io.cluster',
       metadata: {
-        name:      fakeProvClusterId,
+        name: fakeProvClusterId,
         namespace: 'fleet-default',
       },
       status: { display: { readyClusters: 1, state: 'Ready' } },
@@ -60,20 +63,20 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
     }
 
     body.data.push({
-      id:       `fleet-default/${fakeProvClusterId}`,
-      type:     'provisioning.cattle.io.cluster',
+      id: `fleet-default/${fakeProvClusterId}`,
+      type: 'provisioning.cattle.io.cluster',
       metadata: {
-        name:        fakeProvClusterId,
-        namespace:   'fleet-default',
+        name: fakeProvClusterId,
+        namespace: 'fleet-default',
         annotations: {},
       },
-      spec:   { rkeConfig: {} },
+      spec: { rkeConfig: {} },
       status: {
-        agentDeployed:    true,
-        clusterName:      fakeMgmtClusterId,
+        agentDeployed: true,
+        clusterName: fakeMgmtClusterId,
         clientSecretName: `${fakeProvClusterId}-kubeconfig`,
-        conditions:       [{ type: 'Ready', status: 'True' }],
-        ready:            true,
+        conditions: [{ type: 'Ready', status: 'True' }],
+        ready: true,
       },
     });
 
@@ -92,23 +95,23 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
     }
 
     body.data.push({
-      id:   fakeMgmtClusterId,
+      id: fakeMgmtClusterId,
       type: 'management.cattle.io.cluster',
       metadata: {
         name: fakeMgmtClusterId,
         state: { name: 'active', error: false, transitioning: false },
       },
       spec: {
-        displayName:   fakeProvClusterId,
-        description:   '',
+        displayName: fakeProvClusterId,
+        description: '',
         desiredAgentImage: '',
-        internal:      false,
+        internal: false,
       },
       status: {
-        conditions:  [{ type: 'Ready', status: 'True' }],
-        driver:      'rke2',
-        provider:    'rke2',
-        nodeCount:   1,
+        conditions: [{ type: 'Ready', status: 'True' }],
+        driver: 'rke2',
+        provider: 'rke2',
+        nodeCount: 1,
       },
     });
 
@@ -119,19 +122,21 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
   await page.route(`**/k8s/clusters/${fakeMgmtClusterId}/v1/counts?*`, async (route) => {
     await route.fulfill({
       status: 200,
-      json:   {
-        data: [{
-          id:     'count',
-          type:   'count',
-          counts: {
-            namespace:                     { summary: { count: 10 } },
-            node:                          { summary: { count: 1 } },
-            pod:                           { summary: { count: 5 } },
-            'apps.daemonset':              { summary: { count: 2 } },
-            'apps.deployment':             { summary: { count: 3 } },
-            'management.cattle.io.setting': { summary: { count: 10 } },
+      json: {
+        data: [
+          {
+            id: 'count',
+            type: 'count',
+            counts: {
+              namespace: { summary: { count: 10 } },
+              node: { summary: { count: 1 } },
+              pod: { summary: { count: 5 } },
+              'apps.daemonset': { summary: { count: 2 } },
+              'apps.deployment': { summary: { count: 3 } },
+              'management.cattle.io.setting': { summary: { count: 10 } },
+            },
           },
-        }],
+        ],
       },
     });
   });
@@ -140,17 +145,19 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
   await page.route(`**/k8s/clusters/${fakeMgmtClusterId}/v1/namespaces?*`, async (route) => {
     await route.fulfill({
       status: 200,
-      json:   {
-        data: [{
-          id:       'default',
-          type:     'namespace',
-          metadata: {
-            name:            'default',
-            state:           { name: 'active', error: false, transitioning: false },
-            resourceVersion: '1',
+      json: {
+        data: [
+          {
+            id: 'default',
+            type: 'namespace',
+            metadata: {
+              name: 'default',
+              state: { name: 'active', error: false, transitioning: false },
+              resourceVersion: '1',
+            },
+            status: { phase: 'Active' },
           },
-          status: { phase: 'Active' },
-        }],
+        ],
       },
     });
   });
@@ -159,7 +166,7 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
   await page.route(`**/k8s/clusters/${fakeMgmtClusterId}/v1/schemas?*`, async (route) => {
     await route.fulfill({
       status: 200,
-      json:   {
+      json: {
         data: [
           generateFakeNodeSchema(fakeMgmtClusterId),
           generateFakeCountSchema(fakeMgmtClusterId),
@@ -175,7 +182,7 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
   await page.route(`**/k8s/clusters/${fakeMgmtClusterId}/v1/pods?*`, async (route) => {
     await route.fulfill({
       status: 200,
-      json:   { data: [] },
+      json: { data: [] },
     });
   });
 
@@ -183,7 +190,7 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
   await page.route(`**/k8s/clusters/${fakeMgmtClusterId}/v1/nodes?*`, async (route) => {
     await route.fulfill({
       status: 200,
-      json:   { data: [] },
+      json: { data: [] },
     });
   });
 
@@ -191,7 +198,7 @@ export async function generateFakeClusterDataAndIntercepts(page: Page, {
   await page.route(`**/k8s/clusters/${fakeMgmtClusterId}/v1/apps.daemonsets?*`, async (route) => {
     await route.fulfill({
       status: 200,
-      json:   { data: [] },
+      json: { data: [] },
     });
   });
 }

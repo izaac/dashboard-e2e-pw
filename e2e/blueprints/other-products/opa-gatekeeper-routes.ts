@@ -198,7 +198,10 @@ const k8sSchemas = [
   {
     id: 'status.gatekeeper.sh.constrainttemplatepodstatus',
     type: 'schema',
-    links: schemaLinks('status.gatekeeper.sh.constrainttemplatepodstatus', 'status.gatekeeper.sh.constrainttemplatepodstatuses'),
+    links: schemaLinks(
+      'status.gatekeeper.sh.constrainttemplatepodstatus',
+      'status.gatekeeper.sh.constrainttemplatepodstatuses',
+    ),
     pluralName: 'status.gatekeeper.sh.constrainttemplatepodstatuses',
     attributes: {
       group: 'status.gatekeeper.sh',
@@ -214,7 +217,10 @@ const k8sSchemas = [
   {
     id: 'status.gatekeeper.sh.expansiontemplatepodstatus',
     type: 'schema',
-    links: schemaLinks('status.gatekeeper.sh.expansiontemplatepodstatus', 'status.gatekeeper.sh.expansiontemplatepodstatuses'),
+    links: schemaLinks(
+      'status.gatekeeper.sh.expansiontemplatepodstatus',
+      'status.gatekeeper.sh.expansiontemplatepodstatuses',
+    ),
     pluralName: 'status.gatekeeper.sh.expansiontemplatepodstatuses',
     attributes: {
       group: 'status.gatekeeper.sh',
@@ -302,20 +308,59 @@ export async function setupOpaGatekeeperRoutes(page: Page): Promise<void> {
   // Mock all gatekeeper resource collection endpoints.
   // Use regex to match both with and without query params.
   const mockedCollections: [RegExp, object][] = [
-    [/\/k8s\/clusters\/local\/v1\/constraints\.gatekeeper\.sh\.k8sallowedrepos(\?|$)/, emptyCollection('constraints.gatekeeper.sh.k8sallowedrepos')],
-    [/\/k8s\/clusters\/local\/v1\/constraints\.gatekeeper\.sh\.k8srequiredlabels(\?|$)/, emptyCollection('constraints.gatekeeper.sh.k8srequiredlabels')],
+    [
+      /\/k8s\/clusters\/local\/v1\/constraints\.gatekeeper\.sh\.k8sallowedrepos(\?|$)/,
+      emptyCollection('constraints.gatekeeper.sh.k8sallowedrepos'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/constraints\.gatekeeper\.sh\.k8srequiredlabels(\?|$)/,
+      emptyCollection('constraints.gatekeeper.sh.k8srequiredlabels'),
+    ],
     [/\/k8s\/clusters\/local\/v1\/templates\.gatekeeper\.sh\.constrainttemplates(\?|$)/, constraintTemplatesGet],
-    [/\/k8s\/clusters\/local\/v1\/config\.gatekeeper\.sh\.configs(\?|$)/, emptyCollection('config.gatekeeper.sh.config')],
-    [/\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.assign(\?|$)/, emptyCollection('mutations.gatekeeper.sh.assign')],
-    [/\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.assignmetadata(\?|$)/, emptyCollection('mutations.gatekeeper.sh.assignmetadata')],
-    [/\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.assignimage(\?|$)/, emptyCollection('mutations.gatekeeper.sh.assignimage')],
-    [/\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.modifyset(\?|$)/, emptyCollection('mutations.gatekeeper.sh.modifyset')],
-    [/\/k8s\/clusters\/local\/v1\/externaldata\.gatekeeper\.sh\.providers(\?|$)/, emptyCollection('externaldata.gatekeeper.sh.provider')],
-    [/\/k8s\/clusters\/local\/v1\/expansion\.gatekeeper\.sh\.expansiontemplate(\?|$)/, emptyCollection('expansion.gatekeeper.sh.expansiontemplate')],
-    [/\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.constraintpodstatuses(\?|$)/, emptyCollection('status.gatekeeper.sh.constraintpodstatus')],
-    [/\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.constrainttemplatepodstatuses(\?|$)/, emptyCollection('status.gatekeeper.sh.constrainttemplatepodstatus')],
-    [/\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.expansiontemplatepodstatuses(\?|$)/, emptyCollection('status.gatekeeper.sh.expansiontemplatepodstatus')],
-    [/\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.mutatorpodstatuses(\?|$)/, emptyCollection('status.gatekeeper.sh.mutatorpodstatus')],
+    [
+      /\/k8s\/clusters\/local\/v1\/config\.gatekeeper\.sh\.configs(\?|$)/,
+      emptyCollection('config.gatekeeper.sh.config'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.assign(\?|$)/,
+      emptyCollection('mutations.gatekeeper.sh.assign'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.assignmetadata(\?|$)/,
+      emptyCollection('mutations.gatekeeper.sh.assignmetadata'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.assignimage(\?|$)/,
+      emptyCollection('mutations.gatekeeper.sh.assignimage'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/mutations\.gatekeeper\.sh\.modifyset(\?|$)/,
+      emptyCollection('mutations.gatekeeper.sh.modifyset'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/externaldata\.gatekeeper\.sh\.providers(\?|$)/,
+      emptyCollection('externaldata.gatekeeper.sh.provider'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/expansion\.gatekeeper\.sh\.expansiontemplate(\?|$)/,
+      emptyCollection('expansion.gatekeeper.sh.expansiontemplate'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.constraintpodstatuses(\?|$)/,
+      emptyCollection('status.gatekeeper.sh.constraintpodstatus'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.constrainttemplatepodstatuses(\?|$)/,
+      emptyCollection('status.gatekeeper.sh.constrainttemplatepodstatus'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.expansiontemplatepodstatuses(\?|$)/,
+      emptyCollection('status.gatekeeper.sh.expansiontemplatepodstatus'),
+    ],
+    [
+      /\/k8s\/clusters\/local\/v1\/status\.gatekeeper\.sh\.mutatorpodstatuses(\?|$)/,
+      emptyCollection('status.gatekeeper.sh.mutatorpodstatus'),
+    ],
   ];
 
   for (const [pattern, body] of mockedCollections) {
