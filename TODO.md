@@ -45,9 +45,9 @@
 - [x] `websockets/connection.spec.ts` — ✅ atomic WS exec test (mkdir/ls/rm via pod-exec helper)
 - [ ] `edit-fake-cluster.spec.ts` — 2 empty stubs (needs blueprint port)
 - [ ] `repositories.spec.ts` (apps) — Refresh describe block not ported
-- [ ] `settings.spec.ts` — inactivity modal test skipped
+- [x] `settings.spec.ts` — ✅ inactivity modal test (route intercept, fixed expiresAt, Resume Session)
 - [ ] `cilium-cni.spec.ts` — IPv6 test missing
-- [ ] `preferences.spec.ts` — language selection test missing
+- [x] `preferences.spec.ts` — ✅ language selection test (en-us/zh-hans cycle, DOM lang, translated nav)
 - [ ] `prime.spec.ts` — auth page link test (needs AuthProviderPo)
 - [x] `network-policy.spec.ts` — ✅ port validation unskipped (debounce wait + objectContaining fix)
 
