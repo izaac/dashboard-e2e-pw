@@ -160,4 +160,24 @@
 
 - [ ] Qase IDs — to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
-- [ ] GitHub Actions workflow for PR validation (lint + typecheck)
+- [x] GitHub Actions workflow for PR validation (lint + typecheck)
+
+## Unconverted Cypress Blueprints (excluded from tsconfig)
+
+These files still contain `cy.intercept` / `Cypress.Chainable` references.
+Convert to Playwright factory functions when porting their parent spec.
+
+- [ ] `e2e/blueprints/account-and-apikeys/tokens-get.ts`
+- [ ] `e2e/blueprints/charts/charts.ts`
+- [ ] `e2e/blueprints/explorer/rbac/third-party-principals-get.ts`
+- [ ] `e2e/blueprints/explorer/storage/persistent-volume-claims-get.ts`
+- [ ] `e2e/blueprints/explorer/storage/persistent-volumes-get.ts`
+- [ ] `e2e/blueprints/explorer/storage/storage-classes-get.ts`
+- [ ] `e2e/blueprints/explorer/workloads/cronjobs/cronjobs-get.ts`
+- [ ] `e2e/blueprints/explorer/workloads/daemonsets/daemonsets-get.ts`
+- [ ] `e2e/blueprints/explorer/workloads/deployments/deployments-get.ts`
+- [ ] `e2e/blueprints/explorer/workloads/jobs/jobs-get.ts`
+- [ ] `e2e/blueprints/explorer/workloads/pods/pods-get.ts`
+- [ ] `e2e/blueprints/explorer/workloads/statefulsets/statefulsets-get.ts`
+- [ ] `e2e/blueprints/nav/fake-cluster.ts`
+- [ ] `e2e/blueprints/settings/branding-settings.ts`
