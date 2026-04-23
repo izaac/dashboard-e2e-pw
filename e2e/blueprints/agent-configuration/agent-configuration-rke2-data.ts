@@ -1,12 +1,12 @@
 // requests and limits data
 export const requestAndLimitsData = {
   request: {
-    cpu:    1,
-    memory: 1
+    cpu: 1,
+    memory: 1,
   },
   limit: {
-    cpu:    2,
-    memory: 2
+    cpu: 2,
+    memory: 2,
   },
 };
 
@@ -17,34 +17,34 @@ export const requestAndLimitsData = {
   */
 export const tolerationsData = [
   {
-    key:      'key1',
+    key: 'key1',
     operator: 1,
-    effect:   1
+    effect: 1,
   },
   {
-    key:      'key2',
+    key: 'key2',
     operator: 2,
-    value:    'val2',
-    effect:   1
+    value: 'val2',
+    effect: 1,
   },
   {
-    key:      'key3',
+    key: 'key3',
     operator: 2,
-    value:    'val3',
-    effect:   2
+    value: 'val3',
+    effect: 2,
   },
   {
-    key:      'key4',
+    key: 'key4',
     operator: 2,
-    value:    'val4',
-    effect:   3
+    value: 'val4',
+    effect: 3,
   },
   {
-    key:      'key5',
+    key: 'key5',
     operator: 2,
-    value:    'val5',
-    effect:   4,
-    seconds:  45
+    value: 'val5',
+    effect: 4,
+    seconds: 45,
   },
 ];
 
@@ -61,124 +61,124 @@ export const tolerationsData = [
   */
 export const podAffinityData = [
   {
-    affinityType:  1,
-    priority:      1,
+    affinityType: 1,
+    priority: 1,
     namespaceType: 0,
-    expressions:   [
+    expressions: [
       {
-        key:      'key1',
+        key: 'key1',
         operator: 1,
-        value:    'val1'
+        value: 'val1',
       },
       {
-        key:      'key2',
+        key: 'key2',
         operator: 2,
-        value:    'val2'
+        value: 'val2',
       },
       {
-        key:      'key3',
+        key: 'key3',
         operator: 3,
       },
       {
-        key:      'key4',
+        key: 'key4',
         operator: 4,
       },
     ],
     topology: 'some-topology1',
-    weight:   10,
+    weight: 10,
   },
   {
-    affinityType:  1,
-    priority:      2,
+    affinityType: 1,
+    priority: 2,
     namespaceType: 1,
-    expressions:   [
+    expressions: [
       {
-        key:      'key1',
+        key: 'key1',
         operator: 1,
-        value:    'val1'
+        value: 'val1',
       },
       {
-        key:      'key2',
+        key: 'key2',
         operator: 2,
-        value:    'val2'
+        value: 'val2',
       },
       {
-        key:      'key3',
+        key: 'key3',
         operator: 3,
       },
       {
-        key:      'key4',
+        key: 'key4',
         operator: 4,
       },
     ],
-    topology: 'some-topology2'
+    topology: 'some-topology2',
   },
   {
-    affinityType:  1,
-    priority:      2,
+    affinityType: 1,
+    priority: 2,
     namespaceType: 2,
-    namespaces:    'system,fleet-default',
-    topology:      'some-topology3'
+    namespaces: 'system,fleet-default',
+    topology: 'some-topology3',
   },
   {
-    affinityType:  2,
-    priority:      1,
+    affinityType: 2,
+    priority: 1,
     namespaceType: 0,
-    expressions:   [
+    expressions: [
       {
-        key:      'key1',
+        key: 'key1',
         operator: 1,
-        value:    'val1'
+        value: 'val1',
       },
       {
-        key:      'key2',
+        key: 'key2',
         operator: 2,
-        value:    'val2'
+        value: 'val2',
       },
       {
-        key:      'key3',
+        key: 'key3',
         operator: 3,
       },
       {
-        key:      'key4',
+        key: 'key4',
         operator: 4,
       },
     ],
     topology: 'some-topology1',
-    weight:   10,
+    weight: 10,
   },
   {
-    affinityType:  2,
-    priority:      2,
+    affinityType: 2,
+    priority: 2,
     namespaceType: 1,
-    expressions:   [
+    expressions: [
       {
-        key:      'key1',
+        key: 'key1',
         operator: 1,
-        value:    'val1'
+        value: 'val1',
       },
       {
-        key:      'key2',
+        key: 'key2',
         operator: 2,
-        value:    'val2'
+        value: 'val2',
       },
       {
-        key:      'key3',
+        key: 'key3',
         operator: 3,
       },
       {
-        key:      'key4',
+        key: 'key4',
         operator: 4,
       },
     ],
-    topology: 'some-topology2'
+    topology: 'some-topology2',
   },
   {
-    affinityType:  2,
-    priority:      2,
+    affinityType: 2,
+    priority: 2,
     namespaceType: 2,
-    namespaces:    'system,fleet-default',
-    topology:      'some-topology3'
+    namespaces: 'system,fleet-default',
+    topology: 'some-topology3',
   },
 ];
 
@@ -194,82 +194,82 @@ export const podAffinityData = [
   */
 export const nodeAffinityData = [
   {
-    priority:    1,
+    priority: 1,
     expressions: [
       {
         matching: 1,
-        key:      'key1',
+        key: 'key1',
         operator: 1,
-        value:    'val1'
+        value: 'val1',
       },
       {
         matching: 1,
-        key:      'key2',
+        key: 'key2',
         operator: 2,
-        value:    'val2'
+        value: 'val2',
       },
       {
         matching: 1,
-        key:      'key3',
+        key: 'key3',
         operator: 3,
       },
       {
         matching: 1,
-        key:      'key4',
+        key: 'key4',
         operator: 4,
       },
       {
         matching: 1,
-        key:      'key5',
+        key: 'key5',
         operator: 5,
-        value:    'val5'
+        value: 'val5',
       },
       {
         matching: 1,
-        key:      'key6',
+        key: 'key6',
         operator: 6,
-        value:    'val6'
+        value: 'val6',
       },
     ],
     weight: 10,
   },
   {
-    priority:    2,
+    priority: 2,
     expressions: [
       {
         matching: 2,
-        key:      'key1',
+        key: 'key1',
         operator: 1,
-        value:    'val1'
+        value: 'val1',
       },
       {
         matching: 2,
-        key:      'key2',
+        key: 'key2',
         operator: 2,
-        value:    'val2'
+        value: 'val2',
       },
       {
         matching: 2,
-        key:      'key3',
+        key: 'key3',
         operator: 3,
       },
       {
         matching: 2,
-        key:      'key4',
+        key: 'key4',
         operator: 4,
       },
       {
         matching: 2,
-        key:      'key5',
+        key: 'key5',
         operator: 5,
-        value:    'val5'
+        value: 'val5',
       },
       {
         matching: 2,
-        key:      'key6',
+        key: 'key6',
         operator: 6,
-        value:    'val6'
+        value: 'val6',
       },
-    ]
+    ],
   },
 ];

@@ -7,8 +7,8 @@ export class MonitoringTab extends ComponentPo {
   }
 
   async scrollToTabBottom(): Promise<void> {
-    await this.page.locator('.main-layout > .outlet > .outer-container').evaluate(
-      (el) => el.scrollTo(0, el.scrollHeight)
-    );
+    await this.page
+      .locator('.main-layout > .outlet > .outer-container')
+      .evaluate((el) => el.scrollTo(0, el.scrollHeight));
   }
 }

@@ -50,7 +50,7 @@ export default class ProductNavPo extends ComponentPo {
   /** Get all visible child links */
   visibleNavTypes(): Locator {
     return this.self().locator(
-      '.accordion.expanded li.nav-type>a, .accordion:not(.has-children):not(.expanded) li.nav-type>a'
+      '.accordion.expanded li.nav-type>a, .accordion:not(.has-children):not(.expanded) li.nav-type>a',
     );
   }
 

@@ -1,9 +1,9 @@
 const settingTemplate = {
-  type:       'management.cattle.io.setting',
+  type: 'management.cattle.io.setting',
   apiVersion: 'management.cattle.io/v3',
-  kind:       'Setting',
-  metadata:   { name: 'setting' },
-  value:      ''
+  kind: 'Setting',
+  metadata: { name: 'setting' },
+  value: '',
 };
 
 export type BooleanString = 'true' | 'false';

@@ -4,8 +4,9 @@ import baseConfig, { baseURL } from './playwright.config';
 /**
  * Qase integration
  */
-const qaseEnabled = (process.env.QASE_REPORT === 'true' || process.env.qase_report === 'true')
-  && !!(process.env.QASE_AUTOMATION_TOKEN || process.env.qase_automation_token);
+const qaseEnabled =
+  (process.env.QASE_REPORT === 'true' || process.env.qase_report === 'true') &&
+  !!(process.env.QASE_AUTOMATION_TOKEN || process.env.qase_automation_token);
 
 if (qaseEnabled) {
   console.log('Qase: Reporting enabled. Automation token is defined.');
@@ -30,7 +31,10 @@ if (qaseEnabled) {
         project: process.env.QASE_PROJECT || process.env.qase_project || 'SANDBOX',
         uploadAttachments: true,
         run: {
-          title: `UI E2E - ${process.env.RANCHER_IMAGE_TAG || 'unknown'} - ${process.env.GREP_TAGS || 'none'} - ${new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC')}`,
+          title: `UI E2E - ${process.env.RANCHER_IMAGE_TAG || 'unknown'} - ${process.env.GREP_TAGS || 'none'} - ${new Date()
+            .toISOString()
+            .replace('T', ' ')
+            .replace(/\.\d+Z$/, ' UTC')}`,
           description: `Rancher Version: ${process.env.RANCHER_VERSION || 'unknown'} | Tags: ${process.env.GREP_TAGS || 'none'}`,
           complete: true,
         },

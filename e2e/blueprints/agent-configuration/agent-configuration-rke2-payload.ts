@@ -4,575 +4,499 @@ export const payloadComparisonData = {
       nodeAffinity: {
         preferredDuringSchedulingIgnoredDuringExecution: [
           {
-            weight:     10,
+            weight: 10,
             preference: {
               matchExpressions: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
+                  key: 'key3',
                   operator: 'Exists',
                 },
                 {
-                  key:      'key4',
+                  key: 'key4',
                   operator: 'DoesNotExist',
                 },
                 {
-                  key:      'key5',
+                  key: 'key5',
                   operator: 'Lt',
-                  values:   [
-                    'val5'
-                  ]
+                  values: ['val5'],
                 },
                 {
-                  key:      'key6',
+                  key: 'key6',
                   operator: 'Gt',
-                  values:   [
-                    'val6'
-                  ]
-                }
+                  values: ['val6'],
+                },
               ],
-            }
-          }
+            },
+          },
         ],
         requiredDuringSchedulingIgnoredDuringExecution: {
           nodeSelectorTerms: [
             {
               matchFields: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
+                  key: 'key3',
                   operator: 'Exists',
                 },
                 {
-                  key:      'key4',
+                  key: 'key4',
                   operator: 'DoesNotExist',
                 },
                 {
-                  key:      'key5',
+                  key: 'key5',
                   operator: 'Lt',
-                  values:   [
-                    'val5'
-                  ]
+                  values: ['val5'],
                 },
                 {
-                  key:      'key6',
+                  key: 'key6',
                   operator: 'Gt',
-                  values:   [
-                    'val6'
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+                  values: ['val6'],
+                },
+              ],
+            },
+          ],
+        },
       },
       podAntiAffinity: {
         requiredDuringSchedulingIgnoredDuringExecution: [
           {
             namespaceSelector: {},
-            labelSelector:     {
+            labelSelector: {
               matchExpressions: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
-                  operator: 'Exists'
+                  key: 'key3',
+                  operator: 'Exists',
                 },
                 {
-                  key:      'key4',
-                  operator: 'DoesNotExist'
-                }
-              ]
+                  key: 'key4',
+                  operator: 'DoesNotExist',
+                },
+              ],
             },
-            topologyKey: 'some-topology2'
+            topologyKey: 'some-topology2',
           },
           {
-            namespaces: [
-              'system',
-              'fleet-default'
-            ],
-            topologyKey: 'some-topology3'
-          }
+            namespaces: ['system', 'fleet-default'],
+            topologyKey: 'some-topology3',
+          },
         ],
         preferredDuringSchedulingIgnoredDuringExecution: [
           {
             podAffinityTerm: {
-              namespaces:    null,
+              namespaces: null,
               labelSelector: {
                 matchExpressions: [
                   {
-                    key:      'key1',
+                    key: 'key1',
                     operator: 'In',
-                    values:   [
-                      'val1'
-                    ]
+                    values: ['val1'],
                   },
                   {
-                    key:      'key2',
+                    key: 'key2',
                     operator: 'NotIn',
-                    values:   [
-                      'val2'
-                    ]
+                    values: ['val2'],
                   },
                   {
-                    key:      'key3',
-                    operator: 'Exists'
+                    key: 'key3',
+                    operator: 'Exists',
                   },
                   {
-                    key:      'key4',
-                    operator: 'DoesNotExist'
-                  }
-                ]
+                    key: 'key4',
+                    operator: 'DoesNotExist',
+                  },
+                ],
               },
-              topologyKey: 'some-topology1'
+              topologyKey: 'some-topology1',
             },
-            weight: 10
-          }
-        ]
+            weight: 10,
+          },
+        ],
       },
       podAffinity: {
         requiredDuringSchedulingIgnoredDuringExecution: [
           {
             namespaceSelector: {},
-            labelSelector:     {
+            labelSelector: {
               matchExpressions: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
-                  operator: 'Exists'
+                  key: 'key3',
+                  operator: 'Exists',
                 },
                 {
-                  key:      'key4',
-                  operator: 'DoesNotExist'
-                }
-              ]
+                  key: 'key4',
+                  operator: 'DoesNotExist',
+                },
+              ],
             },
-            topologyKey: 'some-topology2'
+            topologyKey: 'some-topology2',
           },
           {
-            namespaces: [
-              'system',
-              'fleet-default'
-            ],
-            topologyKey: 'some-topology3'
-          }
+            namespaces: ['system', 'fleet-default'],
+            topologyKey: 'some-topology3',
+          },
         ],
         preferredDuringSchedulingIgnoredDuringExecution: [
           {
             podAffinityTerm: {
-              namespaces:    null,
-              weight:        10,
+              namespaces: null,
+              weight: 10,
               labelSelector: {
                 matchExpressions: [
                   {
-                    key:      'key1',
+                    key: 'key1',
                     operator: 'In',
-                    values:   [
-                      'val1'
-                    ]
+                    values: ['val1'],
                   },
                   {
-                    key:      'key2',
+                    key: 'key2',
                     operator: 'NotIn',
-                    values:   [
-                      'val2'
-                    ]
+                    values: ['val2'],
                   },
                   {
-                    key:      'key3',
-                    operator: 'Exists'
+                    key: 'key3',
+                    operator: 'Exists',
                   },
                   {
-                    key:      'key4',
-                    operator: 'DoesNotExist'
-                  }
-                ]
+                    key: 'key4',
+                    operator: 'DoesNotExist',
+                  },
+                ],
               },
-              topologyKey: 'some-topology1'
+              topologyKey: 'some-topology1',
             },
-            weight: 10
-          }
-        ]
-      }
+            weight: 10,
+          },
+        ],
+      },
     },
     appendTolerations: [
       {
-        key:      'key1',
+        key: 'key1',
         operator: 'Exists',
       },
       {
-        key:      'key2',
+        key: 'key2',
         operator: 'Equal',
-        value:    'val2',
+        value: 'val2',
       },
       {
-        key:      'key3',
+        key: 'key3',
         operator: 'Equal',
-        value:    'val3',
-        effect:   'NoSchedule'
+        value: 'val3',
+        effect: 'NoSchedule',
       },
       {
-        key:      'key4',
+        key: 'key4',
         operator: 'Equal',
-        value:    'val4',
-        effect:   'PreferNoSchedule'
+        value: 'val4',
+        effect: 'PreferNoSchedule',
       },
       {
-        key:               'key5',
-        operator:          'Equal',
-        value:             'val5',
-        effect:            'NoExecute',
-        tolerationSeconds: 45
-      }
+        key: 'key5',
+        operator: 'Equal',
+        value: 'val5',
+        effect: 'NoExecute',
+        tolerationSeconds: 45,
+      },
     ],
     overrideResourceRequirements: {
       requests: {
-        cpu:    '1m',
-        memory: '1Mi'
+        cpu: '1m',
+        memory: '1Mi',
       },
       limits: {
-        cpu:    '2m',
-        memory: '2Mi'
-      }
-    }
+        cpu: '2m',
+        memory: '2Mi',
+      },
+    },
   },
   fleetAgentDeploymentCustomization: {
     overrideAffinity: {
       nodeAffinity: {
         preferredDuringSchedulingIgnoredDuringExecution: [
           {
-            weight:     10,
+            weight: 10,
             preference: {
               matchExpressions: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
+                  key: 'key3',
                   operator: 'Exists',
                 },
                 {
-                  key:      'key4',
+                  key: 'key4',
                   operator: 'DoesNotExist',
                 },
                 {
-                  key:      'key5',
+                  key: 'key5',
                   operator: 'Lt',
-                  values:   [
-                    'val5'
-                  ]
+                  values: ['val5'],
                 },
                 {
-                  key:      'key6',
+                  key: 'key6',
                   operator: 'Gt',
-                  values:   [
-                    'val6'
-                  ]
-                }
+                  values: ['val6'],
+                },
               ],
-            }
-          }
+            },
+          },
         ],
         requiredDuringSchedulingIgnoredDuringExecution: {
           nodeSelectorTerms: [
             {
               matchFields: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
+                  key: 'key3',
                   operator: 'Exists',
                 },
                 {
-                  key:      'key4',
+                  key: 'key4',
                   operator: 'DoesNotExist',
                 },
                 {
-                  key:      'key5',
+                  key: 'key5',
                   operator: 'Lt',
-                  values:   [
-                    'val5'
-                  ]
+                  values: ['val5'],
                 },
                 {
-                  key:      'key6',
+                  key: 'key6',
                   operator: 'Gt',
-                  values:   [
-                    'val6'
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+                  values: ['val6'],
+                },
+              ],
+            },
+          ],
+        },
       },
       podAffinity: {
         requiredDuringSchedulingIgnoredDuringExecution: [
           {
             namespaceSelector: {},
-            labelSelector:     {
+            labelSelector: {
               matchExpressions: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
-                  operator: 'Exists'
+                  key: 'key3',
+                  operator: 'Exists',
                 },
                 {
-                  key:      'key4',
-                  operator: 'DoesNotExist'
-                }
-              ]
+                  key: 'key4',
+                  operator: 'DoesNotExist',
+                },
+              ],
             },
-            topologyKey: 'some-topology2'
+            topologyKey: 'some-topology2',
           },
           {
-            namespaces: [
-              'system',
-              'fleet-default'
-            ],
-            topologyKey: 'some-topology3'
-          }
+            namespaces: ['system', 'fleet-default'],
+            topologyKey: 'some-topology3',
+          },
         ],
         preferredDuringSchedulingIgnoredDuringExecution: [
           {
             podAffinityTerm: {
-              namespaces:    null,
-              weight:        10,
+              namespaces: null,
+              weight: 10,
               labelSelector: {
                 matchExpressions: [
                   {
-                    key:      'key1',
+                    key: 'key1',
                     operator: 'In',
-                    values:   [
-                      'val1'
-                    ]
+                    values: ['val1'],
                   },
                   {
-                    key:      'key2',
+                    key: 'key2',
                     operator: 'NotIn',
-                    values:   [
-                      'val2'
-                    ]
+                    values: ['val2'],
                   },
                   {
-                    key:      'key3',
-                    operator: 'Exists'
+                    key: 'key3',
+                    operator: 'Exists',
                   },
                   {
-                    key:      'key4',
-                    operator: 'DoesNotExist'
-                  }
-                ]
+                    key: 'key4',
+                    operator: 'DoesNotExist',
+                  },
+                ],
               },
-              topologyKey: 'some-topology1'
+              topologyKey: 'some-topology1',
             },
-            weight: 10
-          }
-        ]
+            weight: 10,
+          },
+        ],
       },
       podAntiAffinity: {
         requiredDuringSchedulingIgnoredDuringExecution: [
           {
             namespaceSelector: {},
-            labelSelector:     {
+            labelSelector: {
               matchExpressions: [
                 {
-                  key:      'key1',
+                  key: 'key1',
                   operator: 'In',
-                  values:   [
-                    'val1'
-                  ]
+                  values: ['val1'],
                 },
                 {
-                  key:      'key2',
+                  key: 'key2',
                   operator: 'NotIn',
-                  values:   [
-                    'val2'
-                  ]
+                  values: ['val2'],
                 },
                 {
-                  key:      'key3',
-                  operator: 'Exists'
+                  key: 'key3',
+                  operator: 'Exists',
                 },
                 {
-                  key:      'key4',
-                  operator: 'DoesNotExist'
-                }
-              ]
+                  key: 'key4',
+                  operator: 'DoesNotExist',
+                },
+              ],
             },
-            topologyKey: 'some-topology2'
+            topologyKey: 'some-topology2',
           },
           {
-            namespaces: [
-              'system',
-              'fleet-default'
-            ],
-            topologyKey: 'some-topology3'
-          }
+            namespaces: ['system', 'fleet-default'],
+            topologyKey: 'some-topology3',
+          },
         ],
         preferredDuringSchedulingIgnoredDuringExecution: [
           {
             podAffinityTerm: {
-              namespaces:    null,
+              namespaces: null,
               labelSelector: {
                 matchExpressions: [
                   {
-                    key:      'key1',
+                    key: 'key1',
                     operator: 'In',
-                    values:   [
-                      'val1'
-                    ]
+                    values: ['val1'],
                   },
                   {
-                    key:      'key2',
+                    key: 'key2',
                     operator: 'NotIn',
-                    values:   [
-                      'val2'
-                    ]
+                    values: ['val2'],
                   },
                   {
-                    key:      'key3',
-                    operator: 'Exists'
+                    key: 'key3',
+                    operator: 'Exists',
                   },
                   {
-                    key:      'key4',
-                    operator: 'DoesNotExist'
-                  }
-                ]
+                    key: 'key4',
+                    operator: 'DoesNotExist',
+                  },
+                ],
               },
-              topologyKey: 'some-topology1'
+              topologyKey: 'some-topology1',
             },
-            weight: 10
-          }
-        ]
-      }
+            weight: 10,
+          },
+        ],
+      },
     },
     appendTolerations: [
       {
-        key:      'key1',
+        key: 'key1',
         operator: 'Exists',
       },
       {
-        key:      'key2',
+        key: 'key2',
         operator: 'Equal',
-        value:    'val2',
+        value: 'val2',
       },
       {
-        key:      'key3',
+        key: 'key3',
         operator: 'Equal',
-        value:    'val3',
-        effect:   'NoSchedule'
+        value: 'val3',
+        effect: 'NoSchedule',
       },
       {
-        key:      'key4',
+        key: 'key4',
         operator: 'Equal',
-        value:    'val4',
-        effect:   'PreferNoSchedule'
+        value: 'val4',
+        effect: 'PreferNoSchedule',
       },
       {
-        key:               'key5',
-        operator:          'Equal',
-        value:             'val5',
-        effect:            'NoExecute',
-        tolerationSeconds: 45
-      }
+        key: 'key5',
+        operator: 'Equal',
+        value: 'val5',
+        effect: 'NoExecute',
+        tolerationSeconds: 45,
+      },
     ],
     overrideResourceRequirements: {
       requests: {
-        cpu:    '1m',
-        memory: '1Mi'
+        cpu: '1m',
+        memory: '1Mi',
       },
       limits: {
-        cpu:    '2m',
-        memory: '2Mi'
-      }
-    }
-  }
+        cpu: '2m',
+        memory: '2Mi',
+      },
+    },
+  },
 };

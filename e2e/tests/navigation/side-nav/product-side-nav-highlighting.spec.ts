@@ -12,7 +12,7 @@ const BLANK_CLUSTER = '_';
 test.describe('Side navigation: Highlighting', { tag: ['@navigation', '@adminUser'] }, () => {
   const CHART = {
     name: 'Alerting Drivers',
-    id:   'rancher-alerting-drivers',
+    id: 'rancher-alerting-drivers',
     repo: 'rancher-charts',
   };
 
