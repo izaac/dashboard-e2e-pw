@@ -22,6 +22,15 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
     repoName = rancherApi.createE2EResourceName('dash-repo');
     // Idempotent: remove leftover from previous failed runs
     await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
+    // Wait for deletion to fully complete (fleet gitrepos are async)
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'fleet.cattle.io.gitrepo',
+      `${localWorkspace}/${repoName}`,
+      (resp) => resp.status === 404,
+      15,
+      2000,
+    );
   });
 
   test('Has the correct title', async ({ page, rancherApi }) => {

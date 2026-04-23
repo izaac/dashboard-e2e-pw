@@ -212,14 +212,19 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         },
       });
 
-      // Wait for controller to reconcile (avoids 409 Conflict on redeploy PUT)
+      // Wait for controller to fully reconcile (avoids 409 Conflict on redeploy PUT)
       await rancherApi.waitForRancherResource(
         'v1',
         'apps.daemonsets',
         `${namespace}/${daemonsetName}`,
-        (resp) => resp.body?.status?.observedGeneration >= 1,
-        10,
-        1000,
+        (resp) => {
+          const gen = resp.body?.status?.observedGeneration;
+          const scheduled = resp.body?.status?.currentNumberScheduled;
+
+          return gen >= 1 && scheduled !== undefined;
+        },
+        15,
+        2000,
       );
 
       try {
