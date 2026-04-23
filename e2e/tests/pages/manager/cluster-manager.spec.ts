@@ -237,12 +237,15 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(page).toHaveURL(/\/c\/local\/|\/local\//);
+      await expect(page).toHaveURL(/\/local[#/]/);
 
-      await clusterDetail.conditionsTab().click();
+      const conditionsBtn = clusterDetail.conditionsTab();
+
+      await expect(conditionsBtn).toBeVisible();
+      await conditionsBtn.click();
       await expect(page).toHaveURL(/conditions/);
 
-      await expect(clusterDetail.tableRowCell('Created', 0)).toContainText('True');
+      await expect(clusterDetail.tableRowCell('Created', 1)).toContainText('True');
     });
 
     test('can navigate to Cluster Related Page', async ({ page, login }) => {
@@ -258,7 +261,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterDetail.relatedTab().click();
       await expect(page).toHaveURL(/related/);
 
-      await expect(clusterDetail.tableRowCell('Mgmt', 1)).toContainText('local');
+      await expect(clusterDetail.tableRowCell('Mgmt', 2)).toContainText('local');
     });
 
     test('can navigate to Cluster Provisioning Log Page', async ({ page, login }) => {

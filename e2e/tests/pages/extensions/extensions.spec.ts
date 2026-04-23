@@ -272,38 +272,55 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
   });
 
   test('using "Add Rancher Repositories" should add a new repository (Partners repo)', async ({ page, rancherApi }) => {
-    // Cleanup: remove partners repo if it exists (so we can test adding it)
+    // Ensure preconditions: repo must not exist and banner setting must allow the menu item
     await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
+    const bannerResp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
 
-    const extensionsPo = new ExtensionsPagePo(page);
+    if (bannerResp.status !== 404 && bannerResp.body?.value !== 'true') {
+      await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
+        ...bannerResp.body,
+        value: 'true',
+      });
+    }
 
-    await extensionsPo.goTo();
+    try {
+      const extensionsPo = new ExtensionsPagePo(page);
 
-    // Check if burger menu nav is highlighted correctly for extensions
-    const burgerMenu = new BurgerMenuPo(page);
+      await extensionsPo.goTo();
 
-    await burgerMenu.checkIfMenuItemLinkIsHighlighted('Extensions');
-    await burgerMenu.checkIfClusterMenuLinkIsHighlighted(cluster, false);
+      // Check if burger menu nav is highlighted correctly for extensions
+      const burgerMenu = new BurgerMenuPo(page);
 
-    // Go to "add rancher repositories"
-    await extensionsPo.extensionMenuToggle();
-    await extensionsPo.addRepositoriesClick();
+      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Extensions');
+      await burgerMenu.checkIfClusterMenuLinkIsHighlighted(cluster, false);
 
-    // Add the partners repo
-    await extensionsPo.addReposModalAddClick();
-    await expect(extensionsPo.addReposModal()).not.toBeAttached();
+      // Go to "add rancher repositories"
+      await extensionsPo.extensionMenuToggle();
+      await extensionsPo.addRepositoriesClick();
 
-    // Go to repos list page
-    const appRepoList = new ChartRepositoriesPagePo(page, cluster, 'apps');
+      // Add the partners repo — wait for the API to confirm creation
+      const repoCreated = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('catalog.cattle.io.clusterrepos') &&
+          resp.request().method() === 'POST' &&
+          resp.status() < 300,
+      );
 
-    await appRepoList.goTo();
-    await appRepoList.waitForPage();
-    await expect(
-      appRepoList.list().resourceTable().sortableTable().rowElementWithPartialName(UI_PLUGINS_PARTNERS_REPO_NAME),
-    ).toBeAttached();
+      await extensionsPo.addReposModalAddClick();
+      await repoCreated;
+      await expect(extensionsPo.addReposModal()).not.toBeAttached();
 
-    // Cleanup: remove the partners repo we just added
-    await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
+      // Go to repos list page
+      const appRepoList = new ChartRepositoriesPagePo(page, cluster, 'apps');
+
+      await appRepoList.goTo();
+      await appRepoList.waitForPage();
+      await expect(
+        appRepoList.list().resourceTable().sortableTable().rowElementWithPartialName(UI_PLUGINS_PARTNERS_REPO_NAME),
+      ).toBeAttached();
+    } finally {
+      await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
+    }
   });
 
   test('add repository', async ({ page, rancherApi }) => {
