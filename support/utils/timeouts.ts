@@ -20,3 +20,6 @@ export const EXTRA_LONG_TIMEOUT_OPT = { timeout: 90_000 };
 
 /** 120s — Rancher restarts, bootstrap, major state transitions */
 export const RESTART_TIMEOUT_OPT = { timeout: 120_000 };
+
+/** 2s — Per-iteration ceiling for polling loops (e.g. virtual-scroll render) */
+export const POLL_ITERATION_TIMEOUT = { timeout: 2_000 };

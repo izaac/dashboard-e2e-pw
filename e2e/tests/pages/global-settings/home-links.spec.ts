@@ -121,9 +121,7 @@ test.describe('Home Links', () => {
     await homeLinksPage.displayTextInput().set(customLinkName);
     await homeLinksPage.urlInput().set(customLinkUrl);
 
-    // KeyValue component uses debounce(update, 500ms) — wait for it to propagate
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(600);
+    await homeLinksPage.waitForKeyValueDebounce();
 
     // Save and wait for API response
     const saveResponsePromise = page.waitForResponse(
@@ -151,9 +149,7 @@ test.describe('Home Links', () => {
     await homeLinksPage.removeItemButton().click();
     await expect(homeLinksPage.displayTextInput().self()).not.toBeAttached();
 
-    // KeyValue debounce(500ms) — wait for removal to propagate
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(600);
+    await homeLinksPage.waitForKeyValueDebounce();
 
     const removeResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('ui-custom-links') && resp.request().method() === 'PUT',
@@ -183,9 +179,7 @@ test.describe('Home Links', () => {
     await homeLinksPage.displayTextInput().set(customLinkName);
     await homeLinksPage.urlInput().set(customLinkUrl);
 
-    // KeyValue component uses debounce(update, 500ms) — wait for it to propagate
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(600);
+    await homeLinksPage.waitForKeyValueDebounce();
 
     // Save and wait for API response
     const saveResponsePromise = page.waitForResponse(
@@ -215,9 +209,7 @@ test.describe('Home Links', () => {
     await homeLinksPage.removeItemButton().click();
     await expect(homeLinksPage.displayTextInput().self()).not.toBeAttached();
 
-    // KeyValue debounce(500ms) — wait for removal to propagate
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(600);
+    await homeLinksPage.waitForKeyValueDebounce();
 
     const removeResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes('ui-custom-links') && resp.request().method() === 'PUT',

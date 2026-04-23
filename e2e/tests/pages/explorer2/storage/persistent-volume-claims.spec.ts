@@ -17,7 +17,8 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
 
       // Remember current group mode, switch to flat list to show Namespace column
       const groupBtn1 = sortableTable.groupByButtons(1);
-      const wasGrouped = await groupBtn1.evaluate((el) => el.classList.contains('bg-primary'));
+      const classAttr = (await groupBtn1.getAttribute('class')) ?? '';
+      const wasGrouped = classAttr.includes('bg-primary');
 
       await sortableTable.groupByButtons(0).click();
 

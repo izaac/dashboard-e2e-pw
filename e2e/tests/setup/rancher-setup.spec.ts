@@ -27,7 +27,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     await expect(page).not.toHaveURL(/\/home/, { timeout: 10000 });
 
     // Username field only appears on the real login page, not the bootstrap page
-    const usernameField = page.locator('[data-testid="local-login-username"]');
+    const usernameField = page.getByTestId('local-login-username');
 
     if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
       test.skip(true, 'Rancher already bootstrapped');
@@ -46,7 +46,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     await rancherSetupLoginPage.goTo();
     await page.waitForLoadState('domcontentloaded');
 
-    const usernameField = page.locator('[data-testid="local-login-username"]');
+    const usernameField = page.getByTestId('local-login-username');
 
     if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
       test.skip(true, 'Rancher already bootstrapped');
@@ -79,8 +79,8 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     await rancherSetupConfigurePage.waitForPage();
 
-    // Ensure no additional requests are made
-    await page.waitForTimeout(1000);
+    // Grace period to catch any unexpected extra settings requests
+    await page.waitForTimeout(1000); // eslint-disable-line playwright/no-wait-for-timeout
     expect(settingsResponses).toHaveLength(2);
   });
 
@@ -91,8 +91,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     await rancherSetupLoginPage.goTo();
     await page.waitForLoadState('domcontentloaded');
 
-    // Username field only exists on real login page, not bootstrap page
-    const usernameField = page.locator('[data-testid="local-login-username"]');
+    const usernameField = page.getByTestId('local-login-username');
 
     if (await usernameField.isVisible({ timeout: 5000 }).catch(() => false)) {
       test.skip(true, 'Rancher already bootstrapped');

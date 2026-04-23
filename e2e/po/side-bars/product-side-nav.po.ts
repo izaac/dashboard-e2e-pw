@@ -17,6 +17,11 @@ export default class ProductNavPo extends ComponentPo {
     return this.self().locator('.accordion.has-children');
   }
 
+  /** Get a nav group by its visible name */
+  groupByName(name: string): Locator {
+    return this.groups().filter({ hasText: name });
+  }
+
   /** Get all non-expanded (closed) accordion groups */
   closedGroups(): Locator {
     return this.self().locator('.accordion.has-children:not(.expanded)');
@@ -50,7 +55,7 @@ export default class ProductNavPo extends ComponentPo {
   /** Get all visible child links */
   visibleNavTypes(): Locator {
     return this.self().locator(
-      '.accordion.expanded li.nav-type>a, .accordion:not(.has-children):not(.expanded) li.nav-type>a'
+      '.accordion.expanded li.nav-type>a, .accordion:not(.has-children):not(.expanded) li.nav-type>a',
     );
   }
 

@@ -369,10 +369,10 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     // Inactive drivers show API-generated name, not "Example" — find row by URL
     const table = driversPage.list().resourceTable().sortableTable();
-    const driverRow = table.rowElementWithPartialName('kontainer-engine-driver-example');
+    const row = table.rowWithPartialName('kontainer-engine-driver-example');
 
-    await driverRow.locator('[data-testid*="action-button"]').click();
-    const actionMenu = driversPage.list().resourceTable().sortableTable().rowActionMenu();
+    await row.actionBtn().click();
+    const actionMenu = table.rowActionMenu();
 
     await actionMenu.getMenuItem('Activate').click();
     const resp = await activateResp;
