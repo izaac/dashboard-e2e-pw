@@ -16,7 +16,7 @@ const cloudCredentialsResponse = {
       digitaloceancredentialConfig: {},
       id: 'cattle-global-data:cc-zzz2l',
       labels: { 'cattle.io/creator': 'norman' },
-      name: 'cypress-do',
+      name: 'pw-do',
       type: 'cloudCredential',
       uuid: 'abc6bb3f-0876-4e0f-8057-04d2cc8bdd17',
     },
