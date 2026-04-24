@@ -349,6 +349,14 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
+      await rancherApi.waitForRancherResource(
+        'v3',
+        'kontainerdrivers',
+        found.id,
+        (r: any) => r.status === 404,
+        20,
+        2000,
+      );
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {

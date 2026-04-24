@@ -19,9 +19,7 @@ test.describe('Cluster Explorer', { tag: ['@explorer', '@adminUser'] }, () => {
       const count = 3;
 
       await sortableTable.checkLoadingIndicatorNotVisible();
-      const rowCount = await sortableTable.rowCount();
-
-      expect(rowCount).toBeGreaterThanOrEqual(count);
+      await expect.poll(() => sortableTable.rowCount(), { timeout: 15_000 }).toBeGreaterThanOrEqual(count);
 
       for (let i = 0; i < count; i++) {
         await page.keyboard.down('Shift');

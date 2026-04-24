@@ -146,7 +146,7 @@ test.describe('Branding', () => {
       await settingsPage.waitForPageWithClusterId();
 
       // check if burger menu nav is highlighted correctly for Global Settings
-      await expect(burgerMenu.menuItemWrapper('Global Settings')).toHaveClass(/nuxt-link-active/);
+      await expect(burgerMenu.menuItemWrapper('Global Settings')).toHaveClass(/active-menu-link/);
 
       // catching regression https://github.com/rancher/dashboard/issues/10576
       await expect(burgerMenu.clusterOptionWrapper('local')).not.toHaveClass(/active/);
@@ -221,8 +221,8 @@ test.describe('Branding', () => {
     await brandingPage.customLogoCheckbox().set();
 
     // Regression check: checkbox dimensions — https://github.com/rancher/dashboard/issues/10000
-    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
-    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
+    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toHaveCSS('width', '14px');
+    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toHaveCSS('height', '14px');
 
     // Upload Light Logo
     await brandingPage
@@ -299,8 +299,8 @@ test.describe('Branding', () => {
 
     await navToBranding(page);
     await brandingPage.customBannerCheckbox().set();
-    await expect(brandingPage.customBannerCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
-    await expect(brandingPage.customBannerCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
+    await expect(brandingPage.customBannerCheckbox().checkboxCustom()).toHaveCSS('width', '14px');
+    await expect(brandingPage.customBannerCheckbox().checkboxCustom()).toHaveCSS('height', '14px');
 
     // Upload Light Banner
     await brandingPage
@@ -362,8 +362,8 @@ test.describe('Branding', () => {
     await navToBranding(page);
 
     await brandingPage.customLoginBackgroundCheckbox().set();
-    await expect(brandingPage.customLoginBackgroundCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
-    await expect(brandingPage.customLoginBackgroundCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
+    await expect(brandingPage.customLoginBackgroundCheckbox().checkboxCustom()).toHaveCSS('width', '14px');
+    await expect(brandingPage.customLoginBackgroundCheckbox().checkboxCustom()).toHaveCSS('height', '14px');
 
     await brandingPage
       .uploadButton('Upload Light Background')

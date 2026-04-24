@@ -19,17 +19,8 @@ export class RancherSetupLoginPagePo extends PagePo {
   }
 
   async bootstrapLogin(bootstrapPassword: string): Promise<void> {
-    await this.page.waitForFunction(() => {
-      const btn = document.querySelector('[data-testid="login-submit"] button');
-
-      return btn && !btn.hasAttribute('disabled');
-    });
     await this.password().set(bootstrapPassword);
-    await this.page.waitForFunction(() => {
-      const btn = document.querySelector('[data-testid="login-submit"] button');
-
-      return btn && !btn.hasAttribute('disabled');
-    });
+    // click() auto-waits for the button to be visible and enabled
     await this.submit();
   }
 

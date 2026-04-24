@@ -292,7 +292,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
       // Check if burger menu nav is highlighted correctly for extensions
       const burgerMenu = new BurgerMenuPo(page);
 
-      await expect(burgerMenu.menuItemWrapper('Extensions')).toHaveClass(/nuxt-link-active/);
+      await expect(burgerMenu.menuItemWrapper('Extensions')).toHaveClass(/active-menu-link/);
       await expect(burgerMenu.clusterOptionWrapper(cluster)).not.toHaveClass(/active/);
 
       // Go to "add rancher repositories"

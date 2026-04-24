@@ -83,7 +83,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
       const burgerMenu = new BurgerMenuPo(page);
 
-      await expect(burgerMenu.menuItemWrapper('Users & Authentication')).toHaveClass(/nuxt-link-active/);
+      await expect(burgerMenu.menuItemWrapper('Users & Authentication')).toHaveClass(/active-menu-link/);
       await expect(burgerMenu.clusterOptionWrapper('local')).not.toHaveClass(/active/);
 
       await roles.listCreate('Create Global Role');

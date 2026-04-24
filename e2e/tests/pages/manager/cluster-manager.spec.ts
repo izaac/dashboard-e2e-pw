@@ -153,12 +153,13 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterList.goTo();
         await clusterList.waitForPage();
         await clusterList.createCluster();
-        await createRKE2ClusterPage.waitForPage();
+        // v2.15 doesn't add ?type=custom#basic until after selection
+        await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);
 
         await createRKE2ClusterPage.selectCustom(0);
         await createRKE2ClusterPage.nameNsDescription().name().set('abc');
 
-        await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('#rke2-calico');
+        await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('li#rke2-calico');
 
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
 

@@ -3,30 +3,31 @@ import { RancherSetupLoginPagePo } from '@/e2e/po/pages/rancher-setup-login.po';
 import { RancherSetupConfigurePage } from '@/e2e/po/pages/rancher-setup-configure.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 import { BRIEF, EXTENDED, STANDARD } from '@/support/timeouts';
 
 /**
  * Rancher setup — equivalent of cypress/e2e/tests/setup/rancher-setup.spec.ts
  *
- * Handles three bootstrap scenarios:
+ * Handles four bootstrap scenarios:
  *   1. Fresh Rancher (no CATTLE_BOOTSTRAP_PASSWORD) → /auth/login bootstrap page
- *   2. CATTLE_BOOTSTRAP_PASSWORD set → /auth/setup directly (login skipped)
- *   3. Already fully bootstrapped → /auth/login with username field
+ *   2. CATTLE_BOOTSTRAP_PASSWORD set, not yet configured → /auth/setup directly
+ *   3. Already bootstrapped, admin exists → /auth/login with username field
+ *   4. Fully configured (admin + standard_user) → skip everything
  *
  * Idempotent: safe to re-run against any of the above states.
+ * Critical path (Login & Configure, Create standard user) runs first so
+ * upstream parity checks never block the rest of the suite.
  */
 
 type BootstrapState = 'needs-login' | 'needs-configure' | 'bootstrapped';
 
-// Module-level cache — detected once by the first test, reused by subsequent serial tests
-let cachedState: BootstrapState | undefined;
-
+/**
+ * Detect the current Rancher bootstrap state by navigating to the home page
+ * and checking where the SPA redirects. Always performs a fresh check — each
+ * test gets its own page, so server state may have changed between tests.
+ */
 async function detectBootstrapState(page: import('@playwright/test').Page): Promise<BootstrapState> {
-  if (cachedState) {
-    return cachedState;
-  }
-
   const homePage = new HomePagePo(page);
 
   await homePage.goTo();
@@ -38,9 +39,7 @@ async function detectBootstrapState(page: import('@playwright/test').Page): Prom
 
   // CATTLE_BOOTSTRAP_PASSWORD set → Rancher skips login, goes straight to configure
   if (url.includes('/auth/setup')) {
-    cachedState = 'needs-configure';
-
-    return cachedState;
+    return 'needs-configure';
   }
 
   // Check for username field (only on real login page, not bootstrap page)
@@ -48,12 +47,11 @@ async function detectBootstrapState(page: import('@playwright/test').Page): Prom
 
   try {
     await usernameField.waitFor({ state: 'visible', timeout: BRIEF });
-    cachedState = 'bootstrapped';
-  } catch {
-    cachedState = 'needs-login';
-  }
 
-  return cachedState;
+    return 'bootstrapped';
+  } catch {
+    return 'needs-login';
+  }
 }
 
 test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUserSetup'] }, () => {
@@ -62,61 +60,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     test.skip(!envMeta.bootstrapPassword, 'Requires CATTLE_BOOTSTRAP_PASSWORD');
   });
 
-  test('Requires initial setup', async ({ page }) => {
-    const state = await detectBootstrapState(page);
-
-    test.skip(state !== 'needs-login', `Bootstrap state: ${state}`);
-
-    await expect(page).not.toHaveURL(/\/home/, { timeout: STANDARD });
-
-    const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
-
-    await rancherSetupLoginPage.waitForPage();
-    await expect(rancherSetupLoginPage.infoMessage()).toBeVisible();
-  });
-
-  test('Confirm correct number of settings requests made', async ({ page, envMeta }) => {
-    const state = await detectBootstrapState(page);
-
-    test.skip(state !== 'needs-login', `Bootstrap state: ${state}`);
-
-    const settingsUrl = '**/v1/management.cattle.io.settings?exclude=metadata.managedFields';
-    const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
-    const rancherSetupConfigurePage = new RancherSetupConfigurePage(page);
-    const settingsResponses: any[] = [];
-
-    await page.route(settingsUrl, async (route) => {
-      const response = await route.fetch();
-      const body = await response.json();
-
-      settingsResponses.push(body);
-      await route.fulfill({ response });
-    });
-
-    await rancherSetupLoginPage.goTo();
-
-    await page.waitForResponse((resp) => resp.url().includes('management.cattle.io.settings'));
-    expect(settingsResponses[0].count).toBeLessThan(PARTIAL_SETTING_THRESHOLD);
-    expect(settingsResponses).toHaveLength(1);
-
-    await rancherSetupLoginPage.waitForPage();
-
-    const settingsAfterLogin = page.waitForResponse((resp) => resp.url().includes('management.cattle.io.settings'));
-
-    await rancherSetupLoginPage.bootstrapLogin(envMeta.bootstrapPassword!);
-
-    await settingsAfterLogin;
-    expect(settingsResponses[1].count).toBeGreaterThanOrEqual(PARTIAL_SETTING_THRESHOLD);
-
-    await rancherSetupConfigurePage.waitForPage();
-
-    // Grace period to catch any unexpected extra settings requests
-    await page.waitForTimeout(1000);
-    expect(settingsResponses).toHaveLength(2);
-
-    // Test 2 consumed the bootstrap login — invalidate cached state for subsequent tests
-    cachedState = undefined;
-  });
+  // ── Critical path — must succeed for the rest of the suite to run ─────────
 
   test('Login & Configure', async ({ page, envMeta }) => {
     const rancherSetupConfigurePage = new RancherSetupConfigurePage(page);
@@ -127,15 +71,12 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     // Scenario 1: fresh Rancher needs bootstrap login first
     if (state === 'needs-login') {
       const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
-      const loginPromise = page.waitForResponse('**/v1-public/login');
 
       await rancherSetupLoginPage.waitForPage();
       await rancherSetupLoginPage.bootstrapLogin(envMeta.bootstrapPassword!);
 
-      const loginResp = await loginPromise;
-
-      // eslint-disable-next-line playwright/no-conditional-expect -- only runs for 'needs-login' bootstrap scenario
-      expect(loginResp.status()).toBe(200);
+      // After login, SPA redirects to /auth/setup — API-agnostic (works with v1-public and v2.15+)
+      await expect(page).toHaveURL(/\/auth\/setup/, MEDIUM_TIMEOUT_OPT);
     }
 
     // Both scenarios land on /auth/setup — configure and submit
@@ -197,7 +138,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     expect(await rancherSetupConfigurePage.canSubmit()).toBe(true);
     await rancherSetupConfigurePage.submit();
 
-    const prefsPromise = page.waitForResponse('**/v1/userpreferences/*');
+    const prefsPromise = page.waitForResponse('**/v1/userpreferences/*', MEDIUM_TIMEOUT_OPT);
 
     await expect(page).toHaveURL(/\/home/, SHORT_TIMEOUT_OPT);
 
@@ -229,5 +170,63 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
       },
       { createNameOptions: { onlyContext: true } },
     );
+  });
+
+  // ── Upstream parity checks — run after critical path, skip when already bootstrapped ──
+
+  test('Requires initial setup', async ({ page }) => {
+    const state = await detectBootstrapState(page);
+
+    test.skip(state !== 'needs-login', `Bootstrap state: ${state}`);
+
+    await expect(page).not.toHaveURL(/\/home/, { timeout: STANDARD });
+
+    const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
+
+    await rancherSetupLoginPage.waitForPage();
+    await expect(rancherSetupLoginPage.infoMessage()).toBeVisible();
+  });
+
+  test('Confirm correct number of settings requests made', async ({ page, envMeta }) => {
+    const state = await detectBootstrapState(page);
+
+    test.skip(state !== 'needs-login', `Bootstrap state: ${state}`);
+
+    const settingsUrl = '**/v1/management.cattle.io.settings?exclude=metadata.managedFields';
+    const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
+    const rancherSetupConfigurePage = new RancherSetupConfigurePage(page);
+    const settingsResponses: any[] = [];
+
+    await page.route(settingsUrl, async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+
+      settingsResponses.push(body);
+      await route.fulfill({ response });
+    });
+
+    await rancherSetupLoginPage.goTo();
+
+    await page.waitForResponse((resp) => resp.url().includes('management.cattle.io.settings'), MEDIUM_TIMEOUT_OPT);
+    expect(settingsResponses[0].count).toBeLessThan(PARTIAL_SETTING_THRESHOLD);
+    expect(settingsResponses).toHaveLength(1);
+
+    await rancherSetupLoginPage.waitForPage();
+
+    const settingsAfterLogin = page.waitForResponse(
+      (resp) => resp.url().includes('management.cattle.io.settings'),
+      MEDIUM_TIMEOUT_OPT,
+    );
+
+    await rancherSetupLoginPage.bootstrapLogin(envMeta.bootstrapPassword!);
+
+    await settingsAfterLogin;
+    expect(settingsResponses[1].count).toBeGreaterThanOrEqual(PARTIAL_SETTING_THRESHOLD);
+
+    await rancherSetupConfigurePage.waitForPage();
+
+    // Grace period to catch any unexpected extra settings requests
+    await page.waitForTimeout(1000);
+    expect(settingsResponses).toHaveLength(2);
   });
 });

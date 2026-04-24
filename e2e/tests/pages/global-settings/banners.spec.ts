@@ -123,8 +123,8 @@ test.describe('Banners', () => {
 
       // Show banner
       await bannersPage.headerBannerCheckbox().set();
-      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
-      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
+      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('width', '14px');
+      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('height', '14px');
       await bannersPage.headerTextArea().fill(settings.bannerLabelMultiline);
       await bannersPage.textAlignmentRadioGroup('bannerHeader').set(2);
       await bannersPage.textDecorationCheckbox('bannerHeader', 'Bold').set();
@@ -390,8 +390,8 @@ test.describe('Banners', () => {
 
         // Show banner
         await bannersPage.headerBannerCheckbox().set();
-        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
-        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
+        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('width', '14px');
+        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('height', '14px');
         await bannersPage.contentTypeToggle('bannerHeader').set('HTML');
         await bannersPage.htmlTextArea('bannerHeader').fill(bannerHtml);
         await bannersPage.textColorPicker(0).set(settings.bannerTextColor.new);

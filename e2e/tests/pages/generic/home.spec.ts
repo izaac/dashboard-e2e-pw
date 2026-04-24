@@ -333,9 +333,11 @@ test.describe('Home Page', () => {
       await expect(item2.title()).toContainText('Welcome to Rancher v');
       await expect(item2.primaryActionButton()).toBeAttached();
 
-      await expect(item2.readIcon()).toBeAttached();
-      await item2.toggleRead();
+      // Notification is read (was marked read above) — unread icon should not be present
       await expect(item2.readIcon()).not.toBeAttached();
+      await item2.toggleRead();
+      // After toggling back to unread — unread icon should appear
+      await expect(item2.readIcon()).toBeAttached();
       await expect(nc.unreadIndicator()).toBeAttached();
     });
 

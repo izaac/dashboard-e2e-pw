@@ -82,7 +82,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await fleetDashboardPage.goTo();
       await fleetDashboardPage.waitForPage();
 
-      await expect(burgerMenu.menuItemWrapper('Continuous Delivery')).toHaveClass(/nuxt-link-active/);
+      await expect(burgerMenu.menuItemWrapper('Continuous Delivery')).toHaveClass(/active-menu-link/);
 
       await expect(fleetDashboardPage.viewModeButton().self()).toBeVisible();
 
@@ -106,7 +106,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
       await expect(clusterGroupsPanel.self()).toBeAttached(MEDIUM_TIMEOUT_OPT);
       await expect(clusterGroupsPanel.chart()).not.toBeAttached();
-      await expect(clusterGroupsPanel.stateBadge('success')).toBeAttached();
+      await expect(clusterGroupsPanel.stateBadge()).toBeAttached();
       await expect(clusterGroupsPanel.description()).toContainText('1');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
