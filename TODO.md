@@ -6,7 +6,7 @@
 
 - [x] `user-retention.spec.ts` — 4x `expect(await ...value()).toBe()` → `toHaveValue()`
 - [x] `home.spec.ts` — 6x `await .innerText()` + manual expect → `toContainText()`
-- [x] `settings-p2.spec.ts` — ✅ `await .innerText()` → `textContent()` + `toBeVisible()` guard
+- [x] `settings-p2.spec.ts` — `await .innerText()` → `textContent()` + `toBeVisible()` guard
 - [x] `cloud-credentials.spec.ts` — `getAttributeValue('placeholder')` → `toHaveAttribute()`
 - [x] `cluster-list.spec.ts` — `await .innerText()` → `toContainText()`
 - [x] `feature-flags.spec.ts` — `await rowElements().count()` → `toHaveCount()`
@@ -38,31 +38,31 @@
 
 ### Entire tests missing or empty stubs
 
-- [x] `events.spec.ts` — ✅ 3 tests (pagination mock, filter real, sort real)
-- [x] `roles.spec.ts` (users-and-auth) — ✅ 3 tests (pagination mock GLOBAL tab, filter, sort); 2 remaining (pagination x2 other tabs, std user)
-- [x] `configmap.spec.ts` — ✅ 3 tests (pagination mock, sort real, filter real with test namespace)
-- [x] `workspaces.spec.ts` — ✅ 3 tests (pagination mock, filter real, sort real)
-- [x] `websockets/connection.spec.ts` — ✅ atomic WS exec test (mkdir/ls/rm via pod-exec helper)
-- [ ] `edit-fake-cluster.spec.ts` — 2 empty stubs (needs blueprint port)
+- [x] `events.spec.ts` — 3 tests (pagination mock, filter real, sort real)
+- [x] `roles.spec.ts` (users-and-auth) — 3 tests (pagination mock GLOBAL tab, filter, sort); 2 remaining (pagination x2 other tabs, std user)
+- [x] `configmap.spec.ts` — 3 tests (pagination mock, sort real, filter real with test namespace)
+- [x] `workspaces.spec.ts` — 3 tests (pagination mock, filter real, sort real)
+- [x] `websockets/connection.spec.ts` — atomic WS exec test (mkdir/ls/rm via pod-exec helper)
+- [x] `edit-fake-cluster.spec.ts` — 2 tests (registry auth clearing, documentation link popup)
 - [ ] `repositories.spec.ts` (apps) — Refresh describe block not ported
-- [x] `settings.spec.ts` — ✅ inactivity modal test (route intercept, fixed expiresAt, Resume Session)
+- [x] `settings.spec.ts` — inactivity modal test (route intercept, fixed expiresAt, Resume Session)
 - [ ] `cilium-cni.spec.ts` — IPv6 test missing
-- [x] `preferences.spec.ts` — ✅ language selection test (en-us/zh-hans cycle, DOM lang, translated nav)
+- [x] `preferences.spec.ts` — language selection test (en-us/zh-hans cycle, DOM lang, translated nav)
 - [ ] `prime.spec.ts` — auth page link test (needs AuthProviderPo)
-- [x] `network-policy.spec.ts` — ✅ port validation unskipped (debounce wait + objectContaining fix)
+- [x] `network-policy.spec.ts` — port validation unskipped (debounce wait + objectContaining fix)
 
 ### Large assertion gaps in existing tests
 
 - [ ] `aks-cluster-provisioning.spec.ts` — ~46 missing default value assertions
-- [ ] `namespace-picker.spec.ts` — checkIcon mutual-exclusivity, selection cycles
-- [ ] `services.spec.ts` — create: tabs/IP/labels; delete: row count (~15 assertions)
-- [ ] `ingress.spec.ts` — create/edit: tabs, IP array, response iteration (~12 assertions)
-- [ ] `deployments.spec.ts` — deep.eq body checks, pod scaling, EnvVars (~10 assertions)
-- [ ] `persistent-volume-claims.spec.ts` — per-header checks in empty/flat/grouped tables
-- [ ] `repositories.spec.ts` (apps) — checkbox state assertions, row count guards
-- [ ] `settings-p2.spec.ts` — server-url errors, ui-offline-preferred, ui-brand, hide-local
-- [ ] `settings.spec.ts` — kubeconfig YAML parse, auth-token-max-ttl options
-- [ ] `feature-flags.spec.ts` — standard user: only 5 of 11 flags checked, lock icon
+- [x] `namespace-picker.spec.ts` — checkIcon counts, multi-select display, dropdown state
+- [x] `services.spec.ts` — tabs assertions, ExternalName IP, labels
+- [x] `ingress.spec.ts` — create/edit: deep body checks for backend.service + tls
+- [x] `deployments.spec.ts` — request body checks, envvar empty defaults + shift assertion
+- [x] `persistent-volume-claims.spec.ts` — per-header checks in empty/flat/grouped tables
+- [x] `repositories.spec.ts` (apps) — OCI checkboxes, auth dropdown, row count guards
+- [x] `settings-p2.spec.ts` — server-url errors, ui-offline-preferred, ui-brand, hide-local
+- [x] `settings.spec.ts` — kubeconfig YAML parse, auth-token-max-ttl options
+- [x] `feature-flags.spec.ts` — standard user: 11 flags checked, lock icon assertions
 
 ### Systemic patterns (recurring across many specs)
 
@@ -95,7 +95,7 @@
 - [ ] `fleet-clusters.spec.ts` — 11 tests need AWS downstream clusters
 - [ ] `gitrepo.spec.ts` — Create GitRepo needs downstream clusters
 
-### Standard user account — ✅ all pass (111 passed, 10 skipped, Docker sharded run)
+### Standard user account — all pass (111 passed, 10 skipped, Docker sharded run)
 
 - [x] `branding.spec.ts` — 1 test (standard user visibility)
 - [x] `settings.spec.ts` — 1 test (standard user restrictions)
@@ -111,8 +111,8 @@
 
 ### WebSocket / shell access
 
-- [x] `pods.spec.ts` — ✅ pod shell exec implemented (ShellPo + API pod creation)
-- [x] `connection.spec.ts` — ✅ atomic WS exec test (mkdir/ls/rm via `support/utils/pod-exec.ts`)
+- [x] `pods.spec.ts` — pod shell exec implemented (ShellPo + API pod creation)
+- [x] `connection.spec.ts` — atomic WS exec test (mkdir/ls/rm via `support/utils/pod-exec.ts`)
 
 ## Safety Guards
 
