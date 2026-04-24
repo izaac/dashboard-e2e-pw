@@ -130,7 +130,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterManagerEditGenericPagePo | cluster-edit-generic.po.ts | PagePo | — | super, clickTab, registryAuthenticationItems, registryAuthenticationField, resourceDetail, nameNsDescription, basicsTab, cloudCredentialSelect (+1) |
+| ClusterManagerEditGenericPagePo | cluster-edit-generic.po.ts | PagePo | — | super, clickRegistryTab, documentationLink, registryAuthenticationItems, registryAuthenticationField, resourceDetail, nameNsDescription, basicsTab (+2) |
 
 ## edit/provisioning.cattle.io.cluster/tabs/
 

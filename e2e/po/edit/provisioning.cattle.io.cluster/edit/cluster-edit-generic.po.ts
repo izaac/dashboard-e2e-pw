@@ -1,6 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
-import TabbedPo from '@/e2e/po/components/tabbed.po';
 import ArrayListPo from '@/e2e/po/components/array-list.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
@@ -16,10 +15,12 @@ export default class ClusterManagerEditGenericPagePo extends PagePo {
     super(page, ClusterManagerEditGenericPagePo.createPath(clusterId, clusterName));
   }
 
-  async clickTab(selector: string): Promise<void> {
-    const tabs = new TabbedPo(this.page);
+  async clickRegistryTab(): Promise<void> {
+    await this.page.locator('li#registry').click();
+  }
 
-    await tabs.clickTabWithSelector(selector);
+  documentationLink(): Locator {
+    return this.page.getByTestId('edit-cluster-reprovisioning-documentation').locator('a');
   }
 
   registryAuthenticationItems(): ArrayListPo {
