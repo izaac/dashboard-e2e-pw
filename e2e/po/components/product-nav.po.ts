@@ -24,6 +24,20 @@ export default class ProductNavPo extends ComponentPo {
 
   async navToSideMenuEntryByLabel(label: string): Promise<void> {
     await this.sideMenuEntryByLabel(label).waitFor({ state: 'visible', timeout: VERY_LONG });
-    await this.sideMenuEntryByLabel(label).click({ force: true });
+
+    const link = this.self()
+      .locator('.child.nav-type a')
+      .filter({ has: this.page.locator('.label', { hasText: new RegExp(`^${label}$`) }) });
+
+    // On slow servers, first click can miss during accordion animation — retry if URL unchanged
+    const urlBefore = this.page.url();
+
+    await link.click();
+
+    try {
+      await this.page.waitForURL((url) => url.href !== urlBefore, { timeout: 3000 });
+    } catch {
+      await link.click();
+    }
   }
 }

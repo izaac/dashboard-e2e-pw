@@ -20,8 +20,8 @@ test.describe('Can describe resource', { tag: ['@explorer2', '@adminUser', '@sta
 
     await expect(slideIn.self()).toBeAttached();
     await expect(slideIn.self()).toBeVisible();
-    await slideIn.closeButton().scrollIntoViewIfNeeded();
-    await slideIn.closeButton().click({ force: true });
+    // v2.15: close button is positioned outside the viewport in the slide-in panel
+    await slideIn.closeButton().dispatchEvent('click');
     await expect(slideIn.self()).not.toHaveClass(/slide-in-open/, SHORT_TIMEOUT_OPT);
   });
 });

@@ -481,12 +481,8 @@ test.describe('Branding', () => {
 
     expect(previewColor).toBe(settings.primaryColor.newRGB);
 
-    const applyBg = await brandingPage.applyButton().computedBackground();
-
-    expect(
-      applyBg.startsWith(settings.primaryColor.validNewRGBs[0]) ||
-        applyBg.startsWith(settings.primaryColor.validNewRGBs[1]),
-    ).toBe(true);
+    // v2.15: CSS variable propagation is async after save — use auto-retry assertion
+    await expect(brandingPage.applyButton().self()).toHaveCSS('background-color', /rgb\(24[89],/);
 
     // Check over reload
     await page.reload();
@@ -499,20 +495,10 @@ test.describe('Branding', () => {
 
     // Check login page has new styles — https://github.com/rancher/dashboard/issues/10788
     await loginPage.goTo();
-    const loginBtnBg = await loginPage.submitButton().computedBackground();
-
-    expect(
-      loginBtnBg.startsWith(settings.primaryColor.validNewRGBs[0]) ||
-        loginBtnBg.startsWith(settings.primaryColor.validNewRGBs[1]),
-    ).toBe(true);
+    await expect(loginPage.submitButton().self()).toHaveCSS('background-color', /rgb\(24[89],/);
 
     await page.reload();
-    const loginBtnBgReload = await loginPage.submitButton().computedBackground();
-
-    expect(
-      loginBtnBgReload.startsWith(settings.primaryColor.validNewRGBs[0]) ||
-        loginBtnBgReload.startsWith(settings.primaryColor.validNewRGBs[1]),
-    ).toBe(true);
+    await expect(loginPage.submitButton().self()).toHaveCSS('background-color', /rgb\(24[89],/);
 
     // Re-login and reset
     await login();
@@ -595,10 +581,10 @@ test.describe('Branding - Standard User', { tag: ['@globalSettings', '@standardU
     await sideNav.navToSideMenuEntryByLabel('Branding');
 
     await expect(brandingPage.privateLabel().self()).toBeDisabled();
-    await expect(brandingPage.customLogoCheckbox().self()).toBeDisabled();
-    await expect(brandingPage.customFaviconCheckbox().self()).toBeDisabled();
-    await expect(brandingPage.primaryColorCheckbox().self()).toBeDisabled();
-    await expect(brandingPage.linkColorCheckbox().self()).toBeDisabled();
+    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toBeDisabled();
+    await expect(brandingPage.customFaviconCheckbox().checkboxCustom()).toBeDisabled();
+    await expect(brandingPage.primaryColorCheckbox().checkboxCustom()).toBeDisabled();
+    await expect(brandingPage.linkColorCheckbox().checkboxCustom()).toBeDisabled();
     await expect(brandingPage.applyButton().self()).not.toBeAttached();
   });
 });
