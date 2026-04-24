@@ -376,8 +376,10 @@ test.describe('Home Page', () => {
       const [url, target] = openCalls[0];
 
       if (version.RancherPrime === 'true') {
+        // eslint-disable-next-line playwright/no-conditional-expect -- URL differs by Rancher edition
         expect(url).toContain('documentation.suse.com/cloudnative/rancher-manager');
       } else {
+        // eslint-disable-next-line playwright/no-conditional-expect -- URL differs by Rancher edition
         expect(url).toContain('github.com/rancher/rancher/releases');
       }
       expect(target).toBe('_blank');

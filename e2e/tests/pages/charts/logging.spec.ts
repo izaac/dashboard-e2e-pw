@@ -82,6 +82,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
       const installResp = await chartInstallPromise;
 
+      // eslint-disable-next-line playwright/no-conditional-expect -- only runs when chart needs install
       expect(installResp.status()).toBe(201);
 
       await terminal.waitForTerminalStatus('Disconnected');
@@ -115,7 +116,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
       }
 
       // Wait before retrying - allows page to fully render/recover
-      // eslint-disable-next-line playwright/no-wait-for-timeout
+
       await page.waitForTimeout(3000);
     }
 

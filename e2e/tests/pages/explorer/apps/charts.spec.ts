@@ -226,19 +226,23 @@ test.describe('Chart Details Page', { tag: ['@explorer', '@adminUser'] }, () => 
     const showMoreBtn = chartPage.showMoreVersions();
     const versionLinks = chartPage.versionLinks();
 
-    if (await showMoreBtn.isVisible()) {
-      const initialCount = await versionLinks.count();
+    // Verify at least some versions are shown regardless of truncation
+    await expect(versionLinks).not.toHaveCount(0);
 
-      await showMoreBtn.click();
-      await expect(showMoreBtn).toContainText('Show Less');
+    const showMoreVisible = await showMoreBtn.isVisible();
 
-      // After expanding, more versions should be visible
-      const expandedCount = await versionLinks.count();
-
-      expect(expandedCount).toBeGreaterThan(initialCount);
-    } else {
-      // Few versions — all shown without truncation
-      await expect(versionLinks).not.toHaveCount(0);
+    if (!showMoreVisible) {
+      return;
     }
+
+    const initialCount = await versionLinks.count();
+
+    await showMoreBtn.click();
+    await expect(showMoreBtn).toContainText('Show Less');
+
+    // After expanding, more versions should be visible
+    const expandedCount = await versionLinks.count();
+
+    expect(expandedCount).toBeGreaterThan(initialCount);
   });
 });

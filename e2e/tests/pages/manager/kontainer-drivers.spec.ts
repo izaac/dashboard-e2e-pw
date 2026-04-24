@@ -114,20 +114,19 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-    // Only attempt if driver is active
     const stateText = await driversPage.list().details(openTelekomDriver, 1).innerText();
 
-    if (stateText.includes('Active')) {
-      const actionMenu = await driversPage.list().actionMenu(openTelekomDriver);
+    test.skip(!stateText.includes('Active'), 'Driver is not Active — cannot test deactivation error');
 
-      await actionMenu.getMenuItem('Deactivate').click();
+    const actionMenu = await driversPage.list().actionMenu(openTelekomDriver);
 
-      const deactivateDialog = new DeactivateDriverDialogPo(page);
+    await actionMenu.getMenuItem('Deactivate').click();
 
-      await deactivateDialog.deactivate();
-      await expect(deactivateDialog.errorBannerContent('Could not deactivate driver')).toBeVisible();
-      await deactivateDialog.cancel();
-    }
+    const deactivateDialog = new DeactivateDriverDialogPo(page);
+
+    await deactivateDialog.deactivate();
+    await expect(deactivateDialog.errorBannerContent('Could not deactivate driver')).toBeVisible();
+    await deactivateDialog.cancel();
   });
 
   test('will show error if could not activate driver', async ({ page, login }) => {
@@ -145,12 +144,12 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     const stateText = await driversPage.list().details(linodeDriver, 1).innerText();
 
-    if (stateText.includes('Inactive')) {
-      const actionMenu = await driversPage.list().actionMenu(linodeDriver);
+    test.skip(!stateText.includes('Inactive'), 'Driver is not Inactive — cannot test activation error');
 
-      await actionMenu.getMenuItem('Activate').click();
-      await expect(driversPage.growlText()).toContainText('Could not activate driver');
-    }
+    const actionMenu = await driversPage.list().actionMenu(linodeDriver);
+
+    await actionMenu.getMenuItem('Activate').click();
+    await expect(driversPage.growlText()).toContainText('Could not activate driver');
   });
 
   test('can activate drivers in bulk', async ({ page, login, rancherApi }) => {

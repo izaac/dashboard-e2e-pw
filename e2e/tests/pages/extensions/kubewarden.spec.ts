@@ -71,14 +71,16 @@ test.describe('Kubewarden Extension', { tag: ['@extensions', '@adminUser'] }, ()
 
     const kubewardenCardPresent = await extensionsPo.checkForExtensionCardWithName(extensionName);
 
-    if (kubewardenCardPresent) {
-      await extensionsPo.extensionCardClick(extensionName);
-      await expect(extensionsPo.extensionDetailsTitle()).toContainText(extensionName);
-      await extensionsPo.extensionDetailsCloseClick();
-    } else {
+    if (!kubewardenCardPresent) {
       await extensionsPo.installExtensionFromCatalog(extensionName);
       await verifyKubewardenInstalledDetails(extensionsPo);
+
+      return;
     }
+
+    await extensionsPo.extensionCardClick(extensionName);
+    await expect(extensionsPo.extensionDetailsTitle()).toContainText(extensionName);
+    await extensionsPo.extensionDetailsCloseClick();
   });
 
   test('Check Apps/Charts and Apps/Repo pages for route collisions', async ({ page }) => {

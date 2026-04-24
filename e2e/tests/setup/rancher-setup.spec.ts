@@ -111,7 +111,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     await rancherSetupConfigurePage.waitForPage();
 
     // Grace period to catch any unexpected extra settings requests
-    await page.waitForTimeout(1000); // eslint-disable-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(1000);
     expect(settingsResponses).toHaveLength(2);
 
     // Test 2 consumed the bootstrap login — invalidate cached state for subsequent tests
@@ -134,6 +134,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
       const loginResp = await loginPromise;
 
+      // eslint-disable-next-line playwright/no-conditional-expect -- only runs for 'needs-login' bootstrap scenario
       expect(loginResp.status()).toBe(200);
     }
 

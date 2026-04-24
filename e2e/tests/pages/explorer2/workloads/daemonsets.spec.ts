@@ -32,6 +32,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
       if (route.request().method() === 'PUT') {
         const body = JSON.parse(route.request().postData() || '{}');
 
+        // eslint-disable-next-line playwright/no-conditional-expect -- route handler: only PUT requests carry the body
         expect(body.spec.updateStrategy.type).toBe('OnDelete');
         await route.fulfill({ status: 200, body: JSON.stringify({}) });
       } else {
@@ -267,6 +268,7 @@ test.describe('DaemonSets', { tag: ['@explorer2', '@adminUser'] }, () => {
         if (response.status() === 409) {
           await listPage.goTo();
           await listPage.waitForPage();
+          // eslint-disable-next-line playwright/no-conditional-expect -- retry path after 409 stale resourceVersion
           await expect(sortableTable.rowElementWithName(daemonsetName)).toBeVisible();
           response = await triggerRedeploy();
         }

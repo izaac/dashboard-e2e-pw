@@ -101,8 +101,29 @@ export default [
     ...playwrightPlugin.configs['flat/recommended'],
     rules: {
       ...playwrightPlugin.configs['flat/recommended'].rules,
-      'playwright/no-wait-for-timeout': 'warn',
-      'playwright/no-conditional-in-test': 'warn',
+
+      // --- Intentionally relaxed rules ---
+      // test.skip(!envMeta.x, 'reason') is our standard pattern for
+      // environment-dependent tests (missing infra, credentials, etc.)
+      'playwright/no-skipped-test': 'off',
+      'playwright/no-conditional-in-test': 'off',
+
+      // Documented debounce/transition waits — acceptable when annotated
+      'playwright/no-wait-for-timeout': 'off',
+
+      // Rancher menus require force clicks due to overlapping elements
+      'playwright/no-force-option': 'off',
+
+      // --- Rules that MUST stay on ---
+      'playwright/no-conditional-expect': 'warn',
+      'playwright/expect-expect': 'warn',
+    },
+  },
+  // Scripts — allow console.log (they are CLI tools)
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ];

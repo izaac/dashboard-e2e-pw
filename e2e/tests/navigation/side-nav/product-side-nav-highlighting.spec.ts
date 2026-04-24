@@ -64,6 +64,7 @@ test.describe('Side navigation: Highlighting', { tag: ['@navigation', '@adminUse
     await firstLink.click();
 
     if (href) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- href may be null for JS-driven nav links
       await expect(page).toHaveURL(new RegExp(href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
 

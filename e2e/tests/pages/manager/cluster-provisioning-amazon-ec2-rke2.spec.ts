@@ -122,6 +122,7 @@ test.describe(
         expect(clusterBody).toHaveProperty('kind', 'Cluster');
         expect(clusterBody.metadata).toHaveProperty('name', clusterName);
         if (olderK8sVersion) {
+          // eslint-disable-next-line playwright/no-conditional-expect -- optional param: only asserts when version provided
           expect(clusterBody.spec.kubernetesVersion).toContain(olderK8sVersion);
         }
         clusterId = clusterBody.id;

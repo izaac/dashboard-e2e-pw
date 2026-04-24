@@ -79,6 +79,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     await firstLink.click();
 
     if (href) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- href may be null for JS-driven nav links
       await expect(page).toHaveURL(new RegExp(href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
   });
@@ -228,6 +229,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
         await link.click({ force: true });
 
         if (href) {
+          // eslint-disable-next-line playwright/no-conditional-expect -- href may be null for JS-driven nav links
           await expect(page).toHaveURL(new RegExp(href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
         }
       }

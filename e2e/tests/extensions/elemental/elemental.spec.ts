@@ -59,6 +59,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
       if (alreadyInstalled) {
         // Already installed — verify it shows in the installed tab
         await extensionsPo.extensionCardClick(EXTENSION_NAME);
+        // eslint-disable-next-line playwright/no-conditional-expect -- early return when extension already installed
         await expect(extensionsPo.extensionDetailsTitle()).toContainText(EXTENSION_NAME);
         await extensionsPo.extensionDetailsCloseClick();
 
@@ -126,6 +127,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     if (!operatorNeedsInstall) {
       // Operator already installed — just verify the dashboard title
+      // eslint-disable-next-line playwright/no-conditional-expect -- early return when operator already installed
       await expect(elementalPo.dashboard().mainTitle()).toContainText('OS Management Dashboard');
 
       return;
@@ -183,6 +185,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     );
 
     if (existing.status === 200) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- setup guard: skip creation if resource exists
       expect(existing.body.metadata).toHaveProperty('name', REG_ENDPOINT_NAME);
 
       return;
@@ -244,6 +247,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     );
 
     if (existing.status === 200) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- setup guard: skip creation if resource exists
       expect(existing.body.metadata).toHaveProperty('name', MACHINE_INV_NAME);
 
       return;
@@ -309,6 +313,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     );
 
     if (existing.status === 200) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- setup guard: skip creation if resource exists
       expect(existing.body.metadata).toHaveProperty('name', ELEMENTAL_CLUSTER_NAME);
 
       return;
@@ -363,6 +368,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     );
 
     if (existing.status === 200) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- setup guard: skip creation if resource exists
       expect(existing.body.metadata).toHaveProperty('name', UPDATE_GROUP_NAME);
 
       return;
