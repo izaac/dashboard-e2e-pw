@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class LabeledInputPo extends ComponentPo {
@@ -23,7 +22,7 @@ export default class LabeledInputPo extends ComponentPo {
     const input = this.input();
 
     await input.scrollIntoViewIfNeeded();
-    await expect(input).toBeVisible();
+    await input.waitFor({ state: 'visible' });
     await input.focus();
     await input.clear();
     await input.fill(String(value));
@@ -39,14 +38,6 @@ export default class LabeledInputPo extends ComponentPo {
 
   async value(): Promise<string> {
     return this.input().inputValue();
-  }
-
-  async expectToBeDisabled(): Promise<void> {
-    await expect(this.self()).toBeDisabled();
-  }
-
-  async expectToBeEnabled(): Promise<void> {
-    await expect(this.self()).toBeEnabled();
   }
 
   input(): Locator {

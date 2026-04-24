@@ -62,7 +62,7 @@ test.describe('RKE2 Cilium CNI', () => {
 
       await expect(cniSelect.self()).toBeAttached();
       await cniSelect.self().scrollIntoViewIfNeeded();
-      await cniSelect.checkOptionSelected('calico');
+      await expect(cniSelect.selectedOption()).toHaveText('calico', { useInnerText: true });
 
       const bandwidthManager = createPage.ciliumBandwidthManagerCheckbox();
 
@@ -70,15 +70,15 @@ test.describe('RKE2 Cilium CNI', () => {
 
       await cniSelect.toggle();
       await cniSelect.clickLabel('cilium');
-      await cniSelect.checkOptionSelected('cilium');
+      await expect(cniSelect.selectedOption()).toHaveText('cilium', { useInnerText: true });
       await cniSelect.isClosed();
 
       await expect(bandwidthManager.self()).toBeAttached();
       await bandwidthManager.self().scrollIntoViewIfNeeded();
-      await bandwidthManager.isUnchecked();
+      await expect(bandwidthManager.checkboxCustom()).toHaveAttribute('aria-checked', 'false');
 
       await bandwidthManager.set();
-      await bandwidthManager.isChecked();
+      await expect(bandwidthManager.checkboxCustom()).toHaveAttribute('aria-checked', 'true');
 
       const clusterSavePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',

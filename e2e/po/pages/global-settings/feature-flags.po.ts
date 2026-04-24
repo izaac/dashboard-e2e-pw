@@ -41,7 +41,7 @@ export class FeatureFlagsPagePo extends RootClusterPage {
 
     await burgerMenu.toggle();
     await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
-    await expect(this.page.locator('.side-nav')).toContainText('Feature Flags');
+    await this.page.locator('.side-nav').filter({ hasText: 'Feature Flags' }).waitFor();
     await sideNav.navToSideMenuEntryByLabel('Feature Flags');
   }
 
@@ -100,7 +100,7 @@ export class FeatureFlagsPagePo extends RootClusterPage {
     if (config.waitForModal) {
       const card = new CardPo(this.page);
 
-      await expect(card.self()).not.toBeAttached({ timeout: RESTART_TIMEOUT });
+      await card.self().waitFor({ state: 'detached', timeout: RESTART_TIMEOUT });
     }
   }
 

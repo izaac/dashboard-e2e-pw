@@ -83,9 +83,9 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
       const cruResource = projectsNamespacesPage.createEditView();
 
-      await cruResource.formSave().expectToBeDisabled();
+      await expect(cruResource.formSave().self()).toBeDisabled();
       await cruResource.nameNsDescription().name().set('test-1234');
-      await cruResource.formSave().expectToBeEnabled();
+      await expect(cruResource.formSave().self()).toBeEnabled();
     });
 
     test('displays an error message when submitting a form with errors', async ({ page }) => {

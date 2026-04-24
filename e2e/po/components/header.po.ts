@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import { ImportYamlPo } from '@/e2e/po/components/import-yaml.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
@@ -19,7 +18,7 @@ export class HeaderPo extends ComponentPo {
 
     await filter.toggle();
     await filter.clickOptionByLabel(singleOption);
-    await filter.isChecked(singleOption);
+    await filter.optionCheckmark(singleOption).waitFor({ state: 'attached' });
     await filter.toggle();
   }
 
@@ -30,10 +29,9 @@ export class HeaderPo extends ComponentPo {
     await this.page.locator(`.vs__dropdown-menu .vs__dropdown-option`).filter({ hasText: name }).click();
   }
 
-  async checkCurrentWorkspace(name: string): Promise<void> {
-    const wsFilter = this.page.locator('[data-testid="workspace-switcher"]');
-
-    await expect(wsFilter).toContainText(name);
+  /** Locator for the workspace switcher */
+  workspaceSwitcher(): Locator {
+    return this.page.locator('[data-testid="workspace-switcher"]');
   }
 
   importYamlHeaderAction(): Locator {

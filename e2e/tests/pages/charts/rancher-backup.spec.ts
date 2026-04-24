@@ -77,7 +77,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await expect(select.self()).toBeAttached();
         await select.toggle();
         await select.clickOptionWithLabel('test-default-storage-class');
-        await select.checkOptionSelected('test-default-storage-class');
+        await expect(select.selectedOption()).toHaveText('test-default-storage-class', { useInnerText: true });
 
         // Verify that changing tabs doesn't reset the last selected storage class option
         await installPage.editYaml();
@@ -86,7 +86,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installPage.editOptions(tabbedOptions, '[data-testid="button-group-child-0"]');
 
         await expect(select.self()).toBeAttached();
-        await select.checkOptionSelected('test-default-storage-class');
+        await expect(select.selectedOption()).toHaveText('test-default-storage-class', { useInnerText: true });
       });
     });
   });

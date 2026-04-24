@@ -90,16 +90,22 @@ test.describe('Apps', () => {
         await appRepoCreate.ociMaxRetriesInput().fill('2');
 
         // Checkboxes need toggle verification (set() is a click)
-        await appRepoCreate.ociSkipTlsCheckbox().isChecked();
-        await appRepoCreate.ociInsecurePlainHttpCheckbox().isChecked();
+        await expect(appRepoCreate.ociSkipTlsCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+        await expect(appRepoCreate.ociInsecurePlainHttpCheckbox().checkboxCustom()).toHaveAttribute(
+          'aria-checked',
+          'true',
+        );
 
         await appRepoCreate.selectHelmUrlCard();
         await appRepoCreate.selectOciUrlCard();
 
         await expect(appRepoCreate.ociUrlInput()).toHaveValue('');
         await expect(appRepoCreate.ociCaBundleInput()).toHaveValue('');
-        await appRepoCreate.ociSkipTlsCheckbox().isUnchecked();
-        await appRepoCreate.ociInsecurePlainHttpCheckbox().isUnchecked();
+        await expect(appRepoCreate.ociSkipTlsCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
+        await expect(appRepoCreate.ociInsecurePlainHttpCheckbox().checkboxCustom()).toHaveAttribute(
+          'aria-checked',
+          'false',
+        );
         await expect(appRepoCreate.ociMinWaitField()).toHaveValue('');
         await expect(appRepoCreate.ociMaxWaitField()).toHaveValue('');
         await expect(appRepoCreate.ociMaxRetriesInput()).toHaveValue('');

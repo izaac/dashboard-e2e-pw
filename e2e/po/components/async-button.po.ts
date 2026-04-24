@@ -1,5 +1,4 @@
 import type { Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class AsyncButtonPo extends ComponentPo {
@@ -7,26 +6,14 @@ export default class AsyncButtonPo extends ComponentPo {
     await this.self().click({ force });
   }
 
-  async expectToBeDisabled(): Promise<void> {
-    await expect(this.self()).toBeDisabled();
-  }
-
-  async expectToBeEnabled(): Promise<void> {
-    await expect(this.self()).toBeEnabled();
-  }
-
-  async waitForDisabledAppearanceToDisappear(): Promise<void> {
-    await expect(this.self()).toHaveClass(/ready-for-action/);
-  }
-
   label(name: string): Locator {
     return this.self().getByText(name);
   }
 
   async action(label: string, labelDone: string): Promise<void> {
-    await expect(this.self()).toContainText(label);
+    await this.self().filter({ hasText: label }).waitFor({ state: 'visible' });
     await this.self().click();
-    await expect(this.self()).toContainText(labelDone);
+    await this.self().filter({ hasText: labelDone }).waitFor({ state: 'visible' });
   }
 
   async apply(): Promise<void> {

@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class LabeledSelectPo extends ComponentPo {
@@ -33,16 +32,9 @@ export default class LabeledSelectPo extends ComponentPo {
     await this.getOptions().filter({ hasText: labelRegex }).click();
   }
 
-  async checkOptionSelected(label: string): Promise<void> {
-    const selected = this.self().locator('.vs__selected-options > span.vs__selected');
-
-    await expect(selected).toHaveText(label, { useInnerText: true });
-  }
-
-  async checkContainsOptionSelected(label: string): Promise<void> {
-    const selected = this.self().locator('.vs__selected-options > span.vs__selected');
-
-    await expect(selected).toContainText(label);
+  /** Locator for the currently selected option */
+  selectedOption(): Locator {
+    return this.self().locator('.vs__selected-options > span.vs__selected');
   }
 
   getOptions(): Locator {
@@ -64,12 +56,12 @@ export default class LabeledSelectPo extends ComponentPo {
 
   /** Check dropdown is open */
   async isOpened(): Promise<void> {
-    await expect(this.getOptions().first()).toBeAttached();
+    await this.getOptions().first().waitFor({ state: 'attached' });
   }
 
   /** Check dropdown is closed */
   async isClosed(): Promise<void> {
-    await expect(this.getOptions().first()).not.toBeAttached();
+    await this.getOptions().first().waitFor({ state: 'detached' });
   }
 
   /** Filter list by typing name */

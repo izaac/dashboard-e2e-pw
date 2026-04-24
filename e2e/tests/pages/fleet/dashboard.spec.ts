@@ -82,7 +82,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await fleetDashboardPage.goTo();
       await fleetDashboardPage.waitForPage();
 
-      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Continuous Delivery');
+      await expect(burgerMenu.menuItemWrapper('Continuous Delivery')).toHaveClass(/nuxt-link-active/);
 
       await expect(fleetDashboardPage.viewModeButton().self()).toBeVisible();
 
@@ -137,10 +137,10 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
       await expect(cardsPanel.self()).toBeVisible();
 
       await expect(expandedPanel.gitReposFilter().self()).toBeVisible();
-      await expandedPanel.gitReposFilter().isChecked();
+      await expect(expandedPanel.gitReposFilter().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
 
       await expect(expandedPanel.helmOpsFilter().self()).toBeVisible();
-      await expandedPanel.helmOpsFilter().isChecked();
+      await expect(expandedPanel.helmOpsFilter().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
 
       const activeStatePanel = cardsPanel.statePanel('Active');
 

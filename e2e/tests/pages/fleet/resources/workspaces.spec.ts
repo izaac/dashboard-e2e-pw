@@ -226,7 +226,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.waitForPage();
         await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
         await headerPo.selectWorkspace(wsName);
-        await headerPo.checkCurrentWorkspace(wsName);
+        await expect(headerPo.workspaceSwitcher()).toContainText(wsName);
       } finally {
         await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', wsName, false);
       }

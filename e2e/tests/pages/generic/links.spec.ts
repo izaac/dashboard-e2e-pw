@@ -40,8 +40,8 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
         // If the link count is 5, the mock didn't take effect (non-prime environment)
         test.skip(linkCount < 6, 'SUSE Application Collection link not present — requires Rancher Prime');
 
-        await homeLinksPage.checkDefaultLinkName(5, APP_CO_LABEL);
-        await homeLinksPage.checkDefaultLinkTargets(5, APP_CO_LINK);
+        await expect(homeLinksPage.defaultLinkName(5)).toContainText(APP_CO_LABEL);
+        await expect(homeLinksPage.defaultLinkTarget(5)).toContainText(APP_CO_LINK);
 
         const checkbox = homeLinksPage.defaultLinkCheckbox(5);
 
@@ -104,8 +104,8 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         test.skip(linkCount < 6, 'SUSE Application Collection link not present — requires Rancher Prime');
 
-        await homeLinksPage.checkDefaultLinkName(5, APP_CO_LABEL);
-        await homeLinksPage.checkDefaultLinkTargets(5, APP_CO_LINK);
+        await expect(homeLinksPage.defaultLinkName(5)).toContainText(APP_CO_LABEL);
+        await expect(homeLinksPage.defaultLinkTarget(5)).toContainText(APP_CO_LINK);
 
         const checkbox = homeLinksPage.defaultLinkCheckbox(5);
 
@@ -157,7 +157,7 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
       test.skip(linkCount < 6, 'SUSE Application Collection link not present — requires Rancher Prime');
 
-      await homePage.checkSupportLinkText(5, APP_CO_LABEL);
+      await expect(homePage.supportLinks().nth(5)).toContainText(APP_CO_LABEL);
     });
   });
 });

@@ -1,5 +1,4 @@
 import type { Page } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class KubectlPo extends ComponentPo {
@@ -9,7 +8,10 @@ export default class KubectlPo extends ComponentPo {
 
   async openTerminal(timeout = 30000): Promise<void> {
     await this.page.locator('#btn-kubectl').click({ timeout });
-    await expect(this.self().locator('.window.show-grid .text-success')).toContainText('Connected', { timeout });
+    await this.self()
+      .locator('.window.show-grid .text-success')
+      .filter({ hasText: 'Connected' })
+      .waitFor({ state: 'visible', timeout });
   }
 
   async closeTerminal(): Promise<void> {
@@ -24,14 +26,14 @@ export default class KubectlPo extends ComponentPo {
     if (tabName) {
       const tab = this.self().locator(`[id*="${tabName}"]`);
 
-      await expect(tab.locator('.status')).toContainText(status, { timeout });
+      await tab.locator('.status').filter({ hasText: status }).waitFor({ state: 'visible', timeout });
     } else {
-      await expect(this.self().locator('.status').first()).toContainText(status, { timeout });
+      await this.self().locator('.status').first().filter({ hasText: status }).waitFor({ state: 'visible', timeout });
     }
   }
 
   async waitForTerminalToBeVisible(): Promise<void> {
-    await expect(this.self().getByTestId('wm-tab-close-button')).toBeVisible();
+    await this.self().getByTestId('wm-tab-close-button').waitFor({ state: 'visible' });
   }
 
   async executeCommand(command: string, wait = 3000): Promise<KubectlPo> {

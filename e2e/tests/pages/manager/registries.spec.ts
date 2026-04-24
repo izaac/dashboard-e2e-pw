@@ -36,11 +36,17 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
       await createPage.registries().enableRegistryCheckbox().set();
     }
 
-    await createPage.registries().enableRegistryCheckbox().isChecked();
+    await expect(createPage.registries().enableRegistryCheckbox().checkboxCustom()).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
     await expect(createPage.registries().showAdvanced()).toBeVisible();
 
     await createPage.registries().enableRegistryCheckbox().set();
-    await createPage.registries().enableRegistryCheckbox().isNotChecked();
+    await expect(createPage.registries().enableRegistryCheckbox().checkboxCustom()).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
     await expect(createPage.registries().showAdvanced()).toBeVisible();
   });
 
@@ -78,7 +84,10 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
       await createPage.registries().enableRegistryCheckbox().set();
     }
 
-    await createPage.registries().enableRegistryCheckbox().isChecked();
+    await expect(createPage.registries().enableRegistryCheckbox().checkboxCustom()).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
     await createPage.registries().addRegistryHost(registryHost);
     await createPage.registries().clickShowAdvanced();
 
@@ -161,7 +170,10 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
       await createPage.registries().enableRegistryCheckbox().set();
     }
 
-    await createPage.registries().enableRegistryCheckbox().isChecked();
+    await expect(createPage.registries().enableRegistryCheckbox().checkboxCustom()).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
     await createPage.registries().addRegistryHost(registryHost);
     await createPage.registries().advancedToggle().scrollIntoViewIfNeeded();
     await createPage.registries().registryAuthSelector().createRKEAuth('testuser', 'testpassword');

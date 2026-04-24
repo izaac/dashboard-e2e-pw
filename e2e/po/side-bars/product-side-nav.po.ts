@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import VersionNumberPo from '@/e2e/po/components/version-number.po';
 import { LONG } from '@/support/timeouts';
@@ -62,7 +61,7 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Navigate to a side menu group by label */
   async navToSideMenuGroupByLabel(label: string): Promise<void> {
-    await expect(this.self()).toBeAttached({ timeout: LONG });
+    await this.self().waitFor({ state: 'attached', timeout: LONG });
     await this.self().locator('.accordion.has-children').getByText(label).click();
   }
 
@@ -75,7 +74,7 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Find a side menu entry by exact label text */
   async sideMenuEntryByLabel(label: string): Promise<Locator> {
-    await expect(this.self()).toBeAttached({ timeout: LONG });
+    await this.self().waitFor({ state: 'attached', timeout: LONG });
 
     const labels = this.self().locator('.child.nav-type a .label');
     const count = await labels.count();
@@ -99,26 +98,14 @@ export default class ProductNavPo extends ComponentPo {
     await entry.click({ force: true });
   }
 
-  /** Check existence of menu side entry */
-  async checkSideMenuEntryByLabel(label: string, shouldExist: boolean): Promise<void> {
-    const entry = this.self().locator('.child.nav-type a .label').getByText(label);
-
-    if (shouldExist) {
-      await expect(entry).toBeAttached();
-    } else {
-      await expect(entry).not.toBeAttached();
-    }
+  /** Get side menu entry locator by label text */
+  sideMenuEntryLocator(label: string): Locator {
+    return this.self().locator('.child.nav-type a .label').getByText(label);
   }
 
-  /** Check existence of menu group by label */
-  async navToSideMenuGroupByLabelExistence(label: string, shouldExist: boolean): Promise<void> {
-    const group = this.self().locator('.accordion.has-children').getByText(label);
-
-    if (shouldExist) {
-      await expect(group).toBeAttached();
-    } else {
-      await expect(group).not.toBeAttached();
-    }
+  /** Get side menu group locator by label text */
+  sideMenuGroupLocator(label: string): Locator {
+    return this.self().locator('.accordion.has-children').getByText(label);
   }
 
   /** Get tab headers */
@@ -131,11 +118,16 @@ export default class ProductNavPo extends ComponentPo {
     return new VersionNumberPo(this.page, '.side-menu .version');
   }
 
+  /** Get the active navigation item locator */
+  activeNavItemLocator(): Locator {
+    return this.accordionItems().locator('.router-link-active');
+  }
+
   /** Get the active navigation item text */
   async activeNavItem(): Promise<string> {
-    const active = this.accordionItems().locator('.router-link-active');
+    const active = this.activeNavItemLocator();
 
-    await expect(active).toBeAttached();
+    await active.waitFor({ state: 'attached' });
 
     return (await active.innerText()).trim();
   }

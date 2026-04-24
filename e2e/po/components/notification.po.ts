@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export class NotificationPo extends ComponentPo {
@@ -11,12 +10,9 @@ export class NotificationPo extends ComponentPo {
     await this.self().locator('.read-indicator').click({ force: true });
   }
 
-  async checkRead(): Promise<void> {
-    await expect(this.self().locator('div.read-icon.unread')).not.toBeAttached();
-  }
-
-  async checkUnread(): Promise<void> {
-    await expect(this.self().locator('div.read-icon.unread')).toBeAttached();
+  /** Locator for the unread indicator icon */
+  readIcon(): Locator {
+    return this.self().locator('div.read-icon.unread');
   }
 
   title(): Locator {

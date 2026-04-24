@@ -273,7 +273,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
     await expect(promptRemove.checkbox().self()).toContainText('Delete the CRD associated with this app');
     await promptRemove.checkbox().set();
-    await promptRemove.checkbox().isChecked();
+    await expect(promptRemove.checkbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
     await promptRemove.remove();
 
     const card = new CardPo(page);

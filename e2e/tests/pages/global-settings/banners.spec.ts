@@ -123,8 +123,8 @@ test.describe('Banners', () => {
 
       // Show banner
       await bannersPage.headerBannerCheckbox().set();
-      await bannersPage.headerBannerCheckbox().hasAppropriateWidth();
-      await bannersPage.headerBannerCheckbox().hasAppropriateHeight();
+      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
+      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
       await bannersPage.headerTextArea().fill(settings.bannerLabelMultiline);
       await bannersPage.textAlignmentRadioGroup('bannerHeader').set(2);
       await bannersPage.textDecorationCheckbox('bannerHeader', 'Bold').set();
@@ -158,8 +158,11 @@ test.describe('Banners', () => {
       await expect(innerDiv).toHaveCSS('font-style', settings.fontStyle);
       await expect(innerDiv).toHaveCSS('font-size', settings.fontSize.new);
 
-      await bannersPage.headerBannerCheckbox().isChecked();
-      await bannersPage.textAlignmentRadioGroup('bannerHeader').isChecked(2);
+      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+      await expect(bannersPage.textAlignmentRadioGroup('bannerHeader').radioSpan(2)).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
       expect(await bannersPage.textColorPicker(0).previewColor()).toBe(settings.bannerTextColor.newRGB);
       expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
 
@@ -176,8 +179,11 @@ test.describe('Banners', () => {
       await expect(innerDivReload).toHaveCSS('font-style', settings.fontStyle);
       await expect(innerDivReload).toHaveCSS('font-size', settings.fontSize.new);
 
-      await bannersPage.headerBannerCheckbox().isChecked();
-      await bannersPage.textAlignmentRadioGroup('bannerHeader').isChecked(2);
+      await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+      await expect(bannersPage.textAlignmentRadioGroup('bannerHeader').radioSpan(2)).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
       expect(await bannersPage.textColorPicker(0).previewColor()).toBe(settings.bannerTextColor.newRGB);
       expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
 
@@ -226,8 +232,11 @@ test.describe('Banners', () => {
       await expect(innerDiv).toHaveCSS('font-style', settings.fontStyle);
       await expect(innerDiv).toHaveCSS('font-size', settings.fontSize.new);
 
-      await bannersPage.footerBannerCheckbox().isChecked();
-      await bannersPage.textAlignmentRadioGroup('bannerFooter').isChecked(2);
+      await expect(bannersPage.footerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+      await expect(bannersPage.textAlignmentRadioGroup('bannerFooter').radioSpan(2)).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
       expect(await bannersPage.textColorPicker(2).previewColor()).toBe(settings.bannerTextColor.newRGB);
       expect(await bannersPage.textColorPicker(3).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
 
@@ -244,8 +253,11 @@ test.describe('Banners', () => {
       await expect(innerDivReload).toHaveCSS('font-style', settings.fontStyle);
       await expect(innerDivReload).toHaveCSS('font-size', settings.fontSize.new);
 
-      await bannersPage.footerBannerCheckbox().isChecked();
-      await bannersPage.textAlignmentRadioGroup('bannerFooter').isChecked(2);
+      await expect(bannersPage.footerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+      await expect(bannersPage.textAlignmentRadioGroup('bannerFooter').radioSpan(2)).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
       expect(await bannersPage.textColorPicker(2).previewColor()).toBe(settings.bannerTextColor.newRGB);
       expect(await bannersPage.textColorPicker(3).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
 
@@ -310,8 +322,11 @@ test.describe('Banners', () => {
         await login();
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
-        await bannersPage.loginScreenBannerCheckbox().isChecked();
-        await bannersPage.textAlignmentRadioGroup('bannerConsent').isChecked(2);
+        await expect(bannersPage.loginScreenBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+        await expect(bannersPage.textAlignmentRadioGroup('bannerConsent').radioSpan(2)).toHaveAttribute(
+          'aria-checked',
+          'true',
+        );
         expect(await bannersPage.textColorPicker(4).previewColor()).toBe(settings.bannerTextColor.newRGB);
         expect(await bannersPage.textColorPicker(5).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
 
@@ -375,8 +390,8 @@ test.describe('Banners', () => {
 
         // Show banner
         await bannersPage.headerBannerCheckbox().set();
-        await bannersPage.headerBannerCheckbox().hasAppropriateWidth();
-        await bannersPage.headerBannerCheckbox().hasAppropriateHeight();
+        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
+        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
         await bannersPage.contentTypeToggle('bannerHeader').set('HTML');
         await bannersPage.htmlTextArea('bannerHeader').fill(bannerHtml);
         await bannersPage.textColorPicker(0).set(settings.bannerTextColor.new);
@@ -395,7 +410,7 @@ test.describe('Banners', () => {
 
         expect(imgHtml).not.toContain('onload');
 
-        await bannersPage.headerBannerCheckbox().isChecked();
+        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
         expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
         await expect(bannersPage.contentTypeToggle('bannerHeader').self()).toContainText('HTML');
         await expect(bannersPage.htmlTextArea('bannerHeader')).toHaveValue(bannerHtml);
@@ -405,7 +420,7 @@ test.describe('Banners', () => {
         await expect(banner).toBeVisible();
         await expect(banner).toHaveCSS('background-color', settings.bannerBackgroundColor.newRGB);
 
-        await bannersPage.headerBannerCheckbox().isChecked();
+        await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
         expect(await bannersPage.textColorPicker(0).previewColor()).toBe(settings.bannerTextColor.newRGB);
         expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
 
@@ -463,10 +478,13 @@ test.describe('Banners', () => {
         // Verify settings persisted
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
-        await bannersPage.loginScreenBannerCheckbox().isChecked();
+        await expect(bannersPage.loginScreenBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
         expect(await bannersPage.textColorPicker(4).previewColor()).toBe(settings.bannerTextColor.newRGB);
         expect(await bannersPage.textColorPicker(5).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
-        await bannersPage.consentBannerShowAsDialogCheckbox().isChecked();
+        await expect(bannersPage.consentBannerShowAsDialogCheckbox().checkboxCustom()).toHaveAttribute(
+          'aria-checked',
+          'true',
+        );
         await expect(bannersPage.contentTypeToggle('bannerConsent').self()).toContainText('HTML');
         await expect(bannersPage.htmlTextArea('bannerConsent')).toHaveValue(bannerHtml);
         await expect(bannersPage.acceptButtonInput('bannerConsent')).toHaveValue(acceptButtonText);

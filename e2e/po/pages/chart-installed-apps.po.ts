@@ -37,7 +37,7 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {
-      await expect(this.appsList().resourceTableDetails(item, 1)).toContainText('Deployed', { timeout: LONG });
+      await this.appsList().resourceTableDetails(item, 1).filter({ hasText: 'Deployed' }).waitFor({ timeout: LONG });
     }
 
     // Additional wait for everything to be set up

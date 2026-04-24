@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 /**
@@ -23,25 +22,24 @@ export default class BurgerMenuPo extends ComponentPo {
 
   /** Navigate to a top-level side menu entry by label (non-cluster) */
   async burgerMenuNavToMenuByLabel(label: string): Promise<void> {
-    await expect(this.sideMenu()).toBeAttached();
+    await this.sideMenu().waitFor({ state: 'attached' });
     await this.sideMenu().locator('.option').getByText(label).click({ force: true });
   }
 
   /** Navigate to a cluster on a top-level side menu entry by label */
   async burgerMenuNavToClusterByLabel(label: string): Promise<void> {
-    await expect(this.sideMenu()).toBeAttached();
+    await this.sideMenu().waitFor({ state: 'attached' });
     await this.sideMenu().locator('.option .cluster-name').getByText(label).click();
   }
 
-  /** Check key combo icon for a cluster by its displayed label */
-  async burgerMenuNavClusterKeyComboIconCheckByLabel(label: string): Promise<void> {
+  /** Get the key combo icon locator for a cluster by label */
+  clusterKeyComboIcon(label: string): Locator {
     const clusterName = this.burgerMenuGetNavClusterByLabel(label);
-    const selectorEl = clusterName
-      .locator('xpath=ancestor::*[contains(@class,"cluster") and contains(@class,"selector")]')
-      .first();
-    const icon = selectorEl.locator('.cluster-icon-menu i');
 
-    await expect(icon).toHaveClass(/icon-keyboard_tab/);
+    return clusterName
+      .locator('xpath=ancestor::*[contains(@class,"cluster") and contains(@class,"selector")]')
+      .first()
+      .locator('.cluster-icon-menu i');
   }
 
   /** Get menu navigation item by label */
@@ -54,47 +52,24 @@ export default class BurgerMenuPo extends ComponentPo {
     return this.sideMenu().locator('.option .cluster-name').getByText(label);
   }
 
-  /** Check if Cluster Top Level Menu link is highlighted */
-  async checkIfClusterMenuLinkIsHighlighted(name: string, isHighlighted = true): Promise<void> {
-    const clusterEl = this.burgerMenuGetNavClusterByLabel(name)
-      .locator('xpath=ancestor::*[contains(@class,"option")]')
-      .first();
-
-    if (isHighlighted) {
-      await expect(clusterEl).toHaveClass(/active-menu-link/);
-    } else {
-      await expect(clusterEl).not.toHaveClass(/active-menu-link/);
-    }
+  /** Get the cluster option wrapper for highlight state checks */
+  clusterOptionWrapper(name: string): Locator {
+    return this.burgerMenuGetNavClusterByLabel(name).locator('xpath=ancestor::*[contains(@class,"option")]').first();
   }
 
-  /** Check if non-cluster Top Level Menu link is highlighted */
-  async checkIfMenuItemLinkIsHighlighted(name: string): Promise<void> {
-    const menuItem = this.burgerMenuGetNavMenuByLabel(name).locator('..');
-
-    await expect(menuItem).toHaveClass(/active-menu-link/);
+  /** Get the menu item wrapper for highlight state checks */
+  menuItemWrapper(name: string): Locator {
+    return this.burgerMenuGetNavMenuByLabel(name).locator('..');
   }
 
-  /** Check if menu is open */
-  async checkOpen(): Promise<void> {
-    await expect(this.sideMenu()).toHaveClass(/menu-open/);
+  /** Get the tooltip inner element */
+  tooltip(): Locator {
+    return this.page.locator('.v-popper__popper .v-popper__inner');
   }
 
-  /** Check if menu is closed */
-  async checkClosed(): Promise<void> {
-    await expect(this.sideMenu()).toHaveClass(/menu-close/);
-  }
-
-  /** Check icon tooltip is visible with expected content */
-  async checkIconTooltipOn(content: string): Promise<void> {
-    const tooltip = this.page.locator('.v-popper__popper .v-popper__inner');
-
-    await expect(tooltip).toBeVisible();
-    await expect(tooltip).toContainText(content);
-  }
-
-  /** Check icon tooltip is not visible */
-  async checkIconTooltipOff(): Promise<void> {
-    await expect(this.page.locator('.v-popper__popper')).not.toBeAttached();
+  /** Get the tooltip container (for detached checks) */
+  tooltipContainer(): Locator {
+    return this.page.locator('.v-popper__popper');
   }
 
   /** Get the side navigation root element */
@@ -148,7 +123,7 @@ export default class BurgerMenuPo extends ComponentPo {
 
     const clusterName = this.self().locator('.cluster-name').getByText(clusterId);
 
-    await expect(clusterName).toBeAttached();
+    await clusterName.waitFor({ state: 'attached' });
     await clusterName.click({ force: true });
   }
 

@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class ButtonGroupPo extends ComponentPo {
@@ -12,10 +12,8 @@ export default class ButtonGroupPo extends ComponentPo {
     await this.self().locator(`[data-testid="button-group-child-${index}"]`).click();
   }
 
-  /** Assert that a button with the given label is highlighted (selected) */
-  async isSelected(label: string): Promise<void> {
-    const btn = this.self().locator('.btn').filter({ hasText: label });
-
-    await expect(btn).toHaveClass(/bg-primary/);
+  /** Locator for a specific button by label */
+  button(label: string): Locator {
+    return this.self().locator('.btn').filter({ hasText: label });
   }
 }

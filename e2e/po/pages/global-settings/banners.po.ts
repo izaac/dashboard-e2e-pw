@@ -37,11 +37,12 @@ export class BannerCheckboxPo {
       await this.set();
     }
 
-    await this.isChecked();
+    await this.checkboxCustom().waitFor({ state: 'visible' });
   }
 
-  async isChecked(): Promise<void> {
-    await expect(this.container.locator('span.checkbox-custom')).toHaveAttribute('aria-checked', 'true');
+  /** Get the checkbox custom span locator (for assertion checks) */
+  checkboxCustom(): Locator {
+    return this.container.locator('span.checkbox-custom');
   }
 
   async checkVisible(): Promise<void> {
@@ -49,20 +50,18 @@ export class BannerCheckboxPo {
     await this.container.waitFor({ state: 'visible' });
   }
 
-  async isDisabled(): Promise<void> {
-    await expect(this.container.locator('span.checkbox-custom')).toHaveAttribute('aria-disabled', 'true');
+  async isDisabled(): Promise<boolean> {
+    const val = await this.container.locator('span.checkbox-custom').getAttribute('aria-disabled');
+
+    return val === 'true';
   }
 
-  async hasAppropriateWidth(): Promise<void> {
-    const width = await this.container.locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).width);
-
-    expect(width).toMatch(/14.*px/);
+  async hasAppropriateWidth(): Promise<string> {
+    return await this.container.locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).width);
   }
 
-  async hasAppropriateHeight(): Promise<void> {
-    const height = await this.container.locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).height);
-
-    expect(height).toMatch(/14.*px/);
+  async hasAppropriateHeight(): Promise<string> {
+    return await this.container.locator('span.checkbox-custom').evaluate((el) => getComputedStyle(el).height);
   }
 }
 

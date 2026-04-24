@@ -34,14 +34,14 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
       await opaGatekeeper.waitForPage();
 
       await opaGatekeeper.selectConstraintSubtype('k8sallowedrepos').click();
-      await opaGatekeeper.saveCreateForm().expectToBeEnabled();
+      await expect(opaGatekeeper.saveCreateForm().self()).toBeEnabled();
 
       await opaGatekeeper.navToSideMenuEntryByLabel('Constraints');
       await opaGatekeeper.create().click();
       await opaGatekeeper.waitForPage();
 
       await opaGatekeeper.selectConstraintSubtype('k8srequiredlabels').click();
-      await opaGatekeeper.saveCreateForm().expectToBeEnabled();
+      await expect(opaGatekeeper.saveCreateForm().self()).toBeEnabled();
     });
   });
 

@@ -59,11 +59,8 @@ export default class PreferencesPagePo extends PagePo {
     return new CheckboxInputPo(this.page, '[data-testid="prefs__hideDescriptions"]');
   }
 
-  async verifyHideDescriptionsCheckboxLabel(): Promise<void> {
-    const label = await this.hideDescriptionsCheckbox().getCheckboxLabel();
-    const { expect } = await import('@playwright/test');
-
-    expect(label).toBe('Hide Type Description banners above resource lists ');
+  async verifyHideDescriptionsCheckboxLabel(): Promise<string> {
+    return await this.hideDescriptionsCheckbox().getCheckboxLabel();
   }
 
   landingPageRadioBtn(): RadioGroupInputPo {
@@ -129,23 +126,14 @@ export default class PreferencesPagePo extends PagePo {
     return this.page.locator('.custom-page-options');
   }
 
-  async expectThemeOptionSelected(theme = 'auto'): Promise<void> {
-    const { expect } = await import('@playwright/test');
-    const btn = this.themeButtons().self().locator(`button:has-text("${theme}")`);
-
-    await expect(btn).toHaveClass(/selected|active/);
+  /** Get the theme button locator for assertion checking */
+  themeOptionButton(theme = 'auto'): Locator {
+    return this.themeButtons().self().locator(`button:has-text("${theme}")`);
   }
 
-  async expectClusterOptionExists(clusterName = 'local'): Promise<void> {
-    const { expect } = await import('@playwright/test');
-
-    await expect(this.customPageOptionsDropdown().self()).toContainText(clusterName);
-  }
-
-  async checkLangDomElement(langCode: string): Promise<void> {
-    const { expect } = await import('@playwright/test');
-
-    await expect(this.page.locator(`[lang="${langCode}"]`)).toBeAttached();
+  /** Get the lang dom element locator */
+  langDomElement(langCode: string): Locator {
+    return this.page.locator(`[lang="${langCode}"]`);
   }
 
   /** Dropdown menu options list (visible when a select is open) */

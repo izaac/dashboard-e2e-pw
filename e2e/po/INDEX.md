@@ -10,35 +10,35 @@
 | ActionMenuPo | action-menu.po.ts | ComponentPo | `[dropdown-menu-collection]` | super, clickMenuItem, getMenuItem |
 | AddonConfigPo | addon-config.po.ts | ComponentPo | `.dashboard-root` | super, yamlEditor |
 | ArrayListPo | array-list.po.ts | ComponentPo | — | super, arrayListItem, if, closeArrayListItem, clickAdd, clearListItem, setValueAtIndex |
-| AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, expectToBeDisabled, expectToBeEnabled, waitForDisabledAppearanceToDisappear, label, action, apply, computedBackground |
+| AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, label, action, apply, computedBackground |
 | BannersPo | banners.po.ts | ComponentPo | — | super, banner, bannerElement, closeButton, headerBanners |
 | ButtonDropdownPo | button-dropdown.po.ts | LabeledSelectPo | — | super, toggle |
-| ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, isSelected |
+| ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, button |
 | CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
-| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, isChecked, isNotChecked, uncheck, if, hasAppropriateWidth, expect (+6) |
+| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, byLabel |
 | CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
-| CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard, exists |
+| CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard |
 | CreateEditViewPo | create-edit-view.po.ts | ComponentPo | — | nameNsDescription, errorBanner, formSave, createButton, create, save, cancel, saveAndWait (+12) |
 | CruResourcePo | cru-resource.po.ts | ComponentPo | — | super, saveOrCreate, cancel, findSubTypeByName, selectSubType, selectSubTypeByIndex, saveAndWaitForRequests |
 | DialogPo | dialog.po.ts | ComponentPo | — | super, getActionButton |
-| HeaderPo | header.po.ts | ComponentPo | `[data-testid=` | super, projectNamespaceFilter, selectNamespaceFilterOption, selectWorkspace, checkCurrentWorkspace, importYamlHeaderAction, importYaml, kubectlShell (+10) |
-| ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, importYamlSuccessTitleCheck, importYamlImportClick, importYamlCloseClick, importYamlCancelClick, importYamlSortableTable |
+| HeaderPo | header.po.ts | ComponentPo | `[data-testid=` | super, projectNamespaceFilter, selectNamespaceFilterOption, selectWorkspace, workspaceSwitcher, importYamlHeaderAction, importYaml, kubectlShell (+10) |
+| ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, successIndicator, importYamlImportClick, importYamlCloseClick, importYamlCancelClick, importYamlSortableTable |
 | KeyValuePo | key-value.po.ts | ComponentPo | — | addButton, setKeyValueAtIndex |
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
-| LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, input, byLabel (+1) |
-| LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
+| LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, input, byLabel, bySelector |
+| LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, selectedOption, getOptions (+7) |
 | ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
-| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+13) |
-| NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, checkAllRead, checkHasUnread, checkOpen, checkClosed, getNotificationByName (+6) |
-| NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, checkRead, checkUnread, title, primaryActionButton, secondaryActionButton |
+| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+12) |
+| NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, statusIndicator, unreadIndicator, expandedState, collapsedState, getNotificationByName (+4) |
+| NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, readIcon, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
 | ProductNavPo | product-nav.po.ts | ComponentPo | `.side-nav` | super, groups, navToSideMenuGroupByLabel, sideMenuEntryByLabel, navToSideMenuEntryByLabel |
-| RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, isChecked, getAllOptions, getOptionByIndex |
+| RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, radioSpan, getAllOptions, getOptionByIndex |
 | RegistriesTabPo | registries-tab.po.ts | ComponentPo | — | super, enableRegistryCheckbox, showAdvanced, clickShowAdvanced, advancedToggle, registryHostInput, addRegistryHost, registryConfigs (+1) |
 | RegistryConfigsPo | registry-configs.po.ts | ComponentPo | — | registryAuthHost, addRegistryAuthHost, registryAuthSelectOrCreate |
 | ResourceListMastheadPo | resource-list-masthead.po.ts | ComponentPo | — | super, actions, title, createButton, createYaml, create |
@@ -48,10 +48,10 @@
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, createBasicAuth, createRKEAuth, waitForNotLoading |
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
 | SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+52) |
-| TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, assertTabIsActiveByTestId, getTab (+2) |
-| ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
+| TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, getTab, tabNames, for |
+| ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
-| VersionNumberPo | version-number.po.ts | ComponentPo | — | checkVersion, checkNormalText, checkSmallText |
+| VersionNumberPo | version-number.po.ts | ComponentPo | — | — |
 
 ## components/fleet/
 
@@ -145,13 +145,13 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | BaseResourceList | base-resource-list.po.ts | ComponentPo | — | super, masthead, resourceTable, createEditView, actionMenu, rowWithName, state, actionMenuClose (+5) |
-| ClusterRecentEventsListPo | cluster-recent-events-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty |
+| ClusterRecentEventsListPo | cluster-recent-events-list.po.ts | BaseResourceList | — | super, details, emptyStateRow |
 | ClusterSnapshotsListPo | cluster-snapshots-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty, clickOnSnapshotNow, checkSnapshotExist |
 | MachinePoolsListPo | machine-pools-list.po.ts | BaseResourceList | — | super, details, machinePoolReadyofDesiredCount, machineProgressBar, machineProgressBarError, scaleDownButton, scaleUpButton, machineUnavailableCount (+2) |
 | MgmtFeatureFlagListPo | management.cattle.io.feature.po.ts | BaseResourceList | `:scope` | super, elements, elementWithName, details, lockIcon, clickRowActionMenuItem, getRowActionMenuItem, getRowNoActionMenu |
 | OidcClientsListPo | management.cattle.io.oidcclient-list.po.ts | BaseResourceList | `[data-testid=` | super, details, title, issuerURL, discoveryDocument, jwksURI |
 | ProvClusterListPo | provisioning.cattle.io.cluster.po.ts | BaseResourceList | — | explore, state, name |
-| RoleListPo | role-list.po.ts | BaseResourceList | — | super, downloadYaml, rowCloneYamlClick, delete, elements, elementWithName, details, detailLink (+3) |
+| RoleListPo | role-list.po.ts | BaseResourceList | — | super, downloadYaml, rowCloneYamlClick, delete, elements, elementWithName, details, detailLink (+2) |
 
 ## other-products/
 
@@ -166,7 +166,7 @@
 |-------|------|---------|----------|---------|
 | AboutPagePo | about.po.ts | PagePo | — | super, diagnosticsBtn, links, linksContaining, getLinkDestination, return, versionLink, getCliDownloadLinkByLabel (+4) |
 | CreateKeyPagePo | account-api-keys-create_key.po.ts | PagePo | — | super, title, description, expiryOptions, createButton, cancelButton, doneButton, apiAccessKey (+3) |
-| AccountPagePo | account-api-keys.po.ts | PagePo | — | super, waitForRequests, title, createApiKeyButton, changePasswordButton, create, changePassword, changePasswordModal (+8) |
+| AccountPagePo | account-api-keys.po.ts | PagePo | — | super, waitForRequests, titleLocator, createApiKeyButton, changePasswordButton, create, changePassword, changePasswordModal (+8) |
 | ChartInstalledAppsListPagePo | chart-installed-apps.po.ts | PagePo | `/c/${clusterId}/${product}/catalog.cattle.io.app` | super, filter, appsList, waitForInstallCloseTerminal, expect, for |
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
@@ -177,9 +177,9 @@
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+17) |
-| PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+25) |
+| PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+23) |
 | RancherSetupConfigurePage | rancher-setup-configure.po.ts | PagePo | — | super, goTo, bootstrapPasswordInput, choosePassword, password, confirmPassword, termsAgreement, serverUrl (+6) |
-| RancherSetupLoginPagePo | rancher-setup-login.po.ts | PagePo | — | super, goTo, form, bootstrapLogin, expect, hasInfoMessage, password, canSubmit (+1) |
+| RancherSetupLoginPagePo | rancher-setup-login.po.ts | PagePo | — | super, goTo, form, bootstrapLogin, infoMessage, password, canSubmit, submit |
 | RootClusterPage | root-cluster-page.po.ts | PagePo | — | super, getClusterIdFromUrl, if, updatePathWithCurrentCluster, waitForPageWithClusterId |
 
 ## pages/cluster-manager/
@@ -201,7 +201,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | APIServicesPagePo | api-services.po.ts | PagePo | — | super, resourcesList, sortableTable, title |
-| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, expiredBanner, expiringBanner, clickCertificatesTab (+20) |
+| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, expiredBanner, expiringBanner, clickCertificatesTab (+19) |
 | ClusterProjectMembersPo | cluster-project-members.po.ts | PagePo | — | super, triggerAddClusterOrProjectMemberAction, triggerAddProjectMemberAction, selectClusterOrProjectMember, selectProjectCustomPermission, checkTheseProjectCustomPermissions, for, submitProjectCreateButton (+7) |
 | ClusterRoleBindingsPagePo | cluster-role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterRolesPagePo | cluster-roles.po.ts | PagePo | — | super, list, clickCreate |
@@ -237,7 +237,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | ChartPage | chart.po.ts | PagePo | — | super, navTo, waitForChartPage, chartHeader, waitForChartHeader, goToInstall, deprecationAndExperimentalWarning, selectVersion (+8) |
-| ChartsPage | charts.po.ts | PagePo | — | super, chartsSearchFilterInput, getChartByName, clickChart, chartCards, headerTitle, emptyState, emptyStateTitle (+10) |
+| ChartsPage | charts.po.ts | PagePo | — | super, chartsSearchFilterInput, getChartByName, clickChart, chartCards, headerTitle, emptyState, emptyStateTitle (+8) |
 | InstallChartPage | install-charts.po.ts | PagePo | `/c/${clusterId}/apps/charts/install` | super, waitForChartPage, nextPage, installChart, editYaml, editOptions, selectTab, chartName (+6) |
 
 ## pages/explorer/charts/tabs/
@@ -284,7 +284,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, isChecked, checkVisible, isDisabled, hasAppropriateWidth (+35) |
+| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, checkboxCustom, checkVisible, isDisabled, hasAppropriateWidth (+35) |
 | BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+13) |
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+11) |
@@ -321,7 +321,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, burgerMenuNavClusterKeyComboIconCheckByLabel, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, checkIfClusterMenuLinkIsHighlighted (+31) |
-| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+14) |
+| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, clusterOptionWrapper (+29) |
+| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+15) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |

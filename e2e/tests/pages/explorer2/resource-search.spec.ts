@@ -56,7 +56,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
 
     await namespacePicker.toggle();
     await namespacePicker.clickOptionByLabel('Only User Namespaces');
-    await namespacePicker.isChecked('Only User Namespaces');
+    await expect(namespacePicker.optionCheckmark('Only User Namespaces')).toBeAttached();
 
     const dialog = new ResourceSearchDialog(page);
 

@@ -72,7 +72,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     const rancherSetupLoginPage = new RancherSetupLoginPagePo(page);
 
     await rancherSetupLoginPage.waitForPage();
-    await rancherSetupLoginPage.hasInfoMessage();
+    await expect(rancherSetupLoginPage.infoMessage()).toBeVisible();
   });
 
   test('Confirm correct number of settings requests made', async ({ page, envMeta }) => {

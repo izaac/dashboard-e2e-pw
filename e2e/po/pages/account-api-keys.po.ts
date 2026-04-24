@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import PasswordPo from '@/e2e/po/components/password.po';
@@ -24,8 +23,8 @@ export default class AccountPagePo extends PagePo {
     await responsePromise;
   }
 
-  async title(): Promise<void> {
-    await expect(this.page.locator('h1')).toHaveText('Account and API Keys');
+  titleLocator(): Locator {
+    return this.page.locator('h1');
   }
 
   createApiKeyButton(): Locator {

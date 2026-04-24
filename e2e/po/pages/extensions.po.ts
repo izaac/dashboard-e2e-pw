@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
@@ -85,7 +84,7 @@ export default class ExtensionsPagePo extends PagePo {
   }
 
   async waitForTitle(): Promise<void> {
-    await expect(this.title()).toContainText('Extensions');
+    await this.title().filter({ hasText: 'Extensions' }).waitFor();
   }
 
   // --- extension card helpers ---
@@ -105,20 +104,14 @@ export default class ExtensionsPagePo extends PagePo {
   }
 
   /**
-   * Hover over a status icon and wait for its tooltip to contain the expected text.
+   * Hover over a status icon and return the tooltip locator.
    */
-  async extensionCardHeaderStatusTooltipText(
-    extensionTitle: string,
-    index: number,
-    expectedText: string,
-  ): Promise<void> {
+  async extensionCardHeaderStatusTooltipText(extensionTitle: string, index: number): Promise<Locator> {
     const icon = this.extensionCardHeaderStatusIcon(extensionTitle, index);
 
     await icon.hover();
-    const tooltip = this.page.locator('.v-popper__popper .v-popper__inner');
 
-    await expect(tooltip).toBeVisible();
-    await expect(tooltip).toContainText(expectedText);
+    return this.page.locator('.v-popper__popper .v-popper__inner');
   }
 
   private async clickAction(extensionTitle: string, actionLabel: string): Promise<void> {
@@ -292,7 +285,12 @@ export default class ExtensionsPagePo extends PagePo {
 
   async addReposModalAddClick(): Promise<void> {
     // Wait for modal fetch() to complete — checkboxes are disabled while pending
-    await expect(this.addReposModalPartnersCheckbox()).toBeEnabled();
+    await this.addReposModalPartnersCheckbox().waitFor({ state: 'visible' });
+    await this.page.waitForFunction((sel) => {
+      const el = document.querySelector(sel);
+
+      return el && !el.closest('[disabled]') && !el.hasAttribute('disabled');
+    }, `[data-testid="add-extensions-repos-modal-add-partners-repo"] input`);
     await this.addReposModal().locator('.dialog-buttons button:last-child').click();
   }
 
@@ -322,7 +320,7 @@ export default class ExtensionsPagePo extends PagePo {
     await this.extensionCardInstallClick(extensionName);
     await this.installModal().self().waitFor({ state: 'visible' });
     await this.installModal().installButton().click();
-    await expect(this.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
+    await this.extensionReloadBanner().waitFor({ state: 'visible', timeout: VERY_LONG });
     await this.extensionReloadClick();
   }
 
@@ -346,13 +344,13 @@ export default class ExtensionsPagePo extends PagePo {
 
     // Navigate to cluster repo create page
     await this.page.goto('./c/local/apps/catalog.cattle.io.clusterrepo/create', { waitUntil: 'domcontentloaded' });
-    await expect(this.page).toHaveURL(/create/);
+    await this.page.waitForURL(/create/);
 
     // Fill the name
     const nameInput = this.page.locator('[data-testid="name-ns-description-name"] input');
 
     await nameInput.scrollIntoViewIfNeeded();
-    await expect(nameInput).toBeVisible();
+    await nameInput.waitFor({ state: 'visible' });
     await nameInput.fill(name);
 
     // Select git repo card
@@ -361,7 +359,7 @@ export default class ExtensionsPagePo extends PagePo {
     // Fill git repo URL and branch (wait for git form to render after card selection)
     const gitRepoInput = this.page.getByTestId('clusterrepo-git-repo-input');
 
-    await expect(gitRepoInput).toBeVisible();
+    await gitRepoInput.waitFor({ state: 'visible' });
     await gitRepoInput.fill(repo);
     await this.page.getByTestId('clusterrepo-git-branch-input').fill(branch);
 
@@ -369,10 +367,13 @@ export default class ExtensionsPagePo extends PagePo {
     await this.page.locator('[data-testid="action-button-async-button"]').click();
 
     if (waitForActiveState) {
-      await expect(this.page).toHaveURL(/catalog\.cattle\.io\.clusterrepo/, { timeout: LONG });
-      await expect(
-        this.page.locator('tbody tr').filter({ hasText: name }).locator('td.col-badge-state-formatter'),
-      ).toContainText('Active', { timeout: VERY_LONG });
+      await this.page.waitForURL(/catalog\.cattle\.io\.clusterrepo/, { timeout: LONG });
+      await this.page
+        .locator('tbody tr')
+        .filter({ hasText: name })
+        .locator('td.col-badge-state-formatter')
+        .filter({ hasText: 'Active' })
+        .waitFor({ timeout: VERY_LONG });
     }
   }
 }

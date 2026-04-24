@@ -56,7 +56,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
       const tabNames = await tabs.tabNames();
 
       expect(tabNames).toEqual(['External Name', 'IP Addresses', 'Labels & Annotations']);
-      await tabs.assertTabIsActiveByTestId('define-external-name');
+      await expect(tabs.self().getByTestId('define-external-name')).toHaveClass(/active/);
 
       await servicesPage.nameInput().fill(serviceExternalName);
       await servicesPage.descriptionInput().fill(`${serviceExternalName}-desc`);

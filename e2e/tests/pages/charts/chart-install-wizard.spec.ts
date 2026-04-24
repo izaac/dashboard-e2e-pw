@@ -173,7 +173,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       await installChartPage.chartVersionSelector().clickOption(2);
 
       // Verify custom registry is still there
-      await installChartPage.customRegistryCheckbox().isChecked();
+      await expect(installChartPage.customRegistryCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
       await expect(installChartPage.customRegistryInput().self()).toHaveValue(customRegistry);
     });
   });

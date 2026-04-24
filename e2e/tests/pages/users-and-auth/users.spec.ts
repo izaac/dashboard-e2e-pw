@@ -41,7 +41,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       const burgerMenu = new BurgerMenuPo(page);
 
-      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Users & Authentication');
+      await expect(burgerMenu.menuItemWrapper('Users & Authentication')).toHaveClass(/nuxt-link-active/);
 
       await usersPo.list().create();
 
@@ -106,7 +106,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await userCreate.confirmNewPass().set(standardPassword);
 
     // verify standard user checkbox selected by default
-    await userCreate.selectCheckbox('Standard User').isChecked();
+    await expect(userCreate.selectCheckbox('Standard User').checkboxCustom()).toHaveAttribute('aria-checked', 'true');
 
     const response = await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
     const body = await response.json();

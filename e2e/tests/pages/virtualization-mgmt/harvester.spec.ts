@@ -378,7 +378,9 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);
 
     // hover checkmark - tooltip should have older version
-    await extensionsPo.extensionCardHeaderStatusTooltipText(harvesterTitle, 1, `Installed (${versions[1]})`);
+    await expect(await extensionsPo.extensionCardHeaderStatusTooltipText(harvesterTitle, 1)).toContainText(
+      `Installed (${versions[1]})`,
+    );
 
     {
       const updateOnNavPromise = page.waitForResponse(
@@ -432,6 +434,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(extensionsPo.extensionCardVersion(harvesterTitle)).toContainText(versions[0]);
 
     // hover checkmark - tooltip should have latest version
-    await extensionsPo.extensionCardHeaderStatusTooltipText(harvesterTitle, 0, `Installed (${versions[0]})`);
+    await expect(await extensionsPo.extensionCardHeaderStatusTooltipText(harvesterTitle, 0)).toContainText(
+      `Installed (${versions[0]})`,
+    );
   });
 });

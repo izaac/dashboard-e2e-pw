@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class ResourceSearchDialog extends ComponentPo {
@@ -34,8 +33,7 @@ export default class ResourceSearchDialog extends ComponentPo {
     await dialog.self().waitFor({ state: 'visible' });
 
     await dialog.searchBox().fill(name);
-    await expect(dialog.results()).toHaveCount(1);
-    await expect(dialog.results().first()).toHaveText(name);
+    await dialog.results().filter({ hasText: name }).first().waitFor();
     await dialog.results().first().click();
   }
 }

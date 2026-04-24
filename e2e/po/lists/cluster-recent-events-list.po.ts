@@ -1,6 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
-import { expect } from '@playwright/test';
 
 export default class ClusterRecentEventsListPo extends BaseResourceList {
   constructor(page: Page, selector: string, parent?: Locator) {
@@ -11,9 +10,8 @@ export default class ClusterRecentEventsListPo extends BaseResourceList {
     return this.resourceTable().sortableTable().rowWithPartialName(name).column(index);
   }
 
-  async checkTableIsEmpty(): Promise<void> {
-    await expect(
-      this.resourceTable().sortableTable().rowWithPartialName('There are no rows to show.').self(),
-    ).toBeVisible();
+  /** Get the empty state row locator */
+  emptyStateRow(): Locator {
+    return this.resourceTable().sortableTable().rowWithPartialName('There are no rows to show.').self();
   }
 }

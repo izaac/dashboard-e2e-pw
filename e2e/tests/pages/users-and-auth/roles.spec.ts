@@ -83,8 +83,8 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
       const burgerMenu = new BurgerMenuPo(page);
 
-      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Users & Authentication');
-      await burgerMenu.checkIfClusterMenuLinkIsHighlighted('local', false);
+      await expect(burgerMenu.menuItemWrapper('Users & Authentication')).toHaveClass(/nuxt-link-active/);
+      await expect(burgerMenu.clusterOptionWrapper('local')).not.toHaveClass(/active/);
 
       await roles.listCreate('Create Global Role');
 
@@ -107,7 +107,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
 
         // Confirm created role is not built-in
-        await roles.list('GLOBAL').checkBuiltIn(globalRoleName, false);
+        await expect(roles.list('GLOBAL').builtInIndicator(globalRoleName)).not.toBeAttached();
 
         await roles.list('GLOBAL').detailLink(globalRoleName, 2).click();
 
@@ -120,7 +120,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
 
         // Confirm role is marked as default
-        await roles.list('GLOBAL').checkDefault(globalRoleName, true);
+        await expect(roles.list('GLOBAL').defaultIndicator(globalRoleName)).toBeAttached();
 
         const usersPo = new UsersPo(page);
 
@@ -193,7 +193,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.list('CLUSTER').resourceTable().sortableTable().filter(clusterRoleName);
         await roles.waitForPage(undefined, fragment);
         await expect(roles.list('CLUSTER').resourceTable().sortableTable().rowElements()).toHaveCount(1);
-        await roles.list('CLUSTER').checkDefault(clusterRoleName, true);
+        await expect(roles.list('CLUSTER').defaultIndicator(clusterRoleName)).toBeAttached();
         await roles.list('CLUSTER').detailLink(clusterRoleName, 2).click();
 
         const clusterRoleDetails = roles.detailRole(roleId!);
@@ -243,7 +243,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.list('NAMESPACE').resourceTable().sortableTable().filter(projectRoleName);
         await roles.waitForPage(undefined, fragment);
         await expect(roles.list('NAMESPACE').resourceTable().sortableTable().rowElements()).toHaveCount(1);
-        await roles.list('NAMESPACE').checkDefault(projectRoleName, true);
+        await expect(roles.list('NAMESPACE').defaultIndicator(projectRoleName)).toBeAttached();
         await roles.list('NAMESPACE').detailLink(projectRoleName, 2).click();
 
         const projectRoleDetails = roles.detailRole(roleId!);
@@ -362,7 +362,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
       await header.importYamlHeaderAction().click();
       await header.importYaml().importYamlEditor().set(globalRoleYaml);
       await header.importYaml().importYamlImportClick();
-      await header.importYaml().importYamlSuccessTitleCheck();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
       await header.importYaml().importYamlCloseClick();
 
       try {
@@ -483,7 +483,7 @@ rules:
       await header.importYamlHeaderAction().click();
       await header.importYaml().importYamlEditor().set(importYaml);
       await header.importYaml().importYamlImportClick();
-      await header.importYaml().importYamlSuccessTitleCheck();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
       await header.importYaml().importYamlCloseClick();
 
       try {
@@ -527,7 +527,7 @@ rules:
       await header.importYamlHeaderAction().click();
       await header.importYaml().importYamlEditor().set(importYaml);
       await header.importYaml().importYamlImportClick();
-      await header.importYaml().importYamlSuccessTitleCheck();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
       await header.importYaml().importYamlCloseClick();
 
       try {

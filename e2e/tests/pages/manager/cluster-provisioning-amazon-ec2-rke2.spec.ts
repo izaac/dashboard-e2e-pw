@@ -58,13 +58,13 @@ test.describe(
 
         const cloudCredForm = createRKE2ClusterPage.cloudCredentialsForm();
 
-        await cloudCredForm.saveButton().expectToBeDisabled();
+        await expect(cloudCredForm.saveButton().self()).toBeDisabled();
         await cloudCredForm.nameNsDescription().name().set(credentialName);
         await cloudCredForm.accessKey().set(envMeta.awsAccessKey!);
         await cloudCredForm.secretKey().set(envMeta.awsSecretKey!);
         await cloudCredForm.defaultRegion().toggle();
         await cloudCredForm.defaultRegion().clickOptionWithLabel('us-west-1');
-        await cloudCredForm.saveButton().expectToBeEnabled();
+        await expect(cloudCredForm.saveButton().self()).toBeEnabled();
 
         const credCreatePromise = page.waitForResponse(
           (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
@@ -185,7 +185,7 @@ test.describe(
 
       await clusterDetails.selectTab(tabbedPo, '[data-testid="btn-events"]');
       await clusterDetails.waitForPage(undefined, 'events');
-      await clusterDetails.recentEventsList().checkTableIsEmpty();
+      await expect(clusterDetails.recentEventsList().emptyStateRow()).toBeVisible();
     });
 
     test('can scale up a machine pool', async ({ login, page, rancherApi, envMeta }) => {
@@ -578,7 +578,10 @@ test.describe(
       await createRKE2ClusterPage.machinePoolTab().networks().clickOptionWithLabel('ipv6only');
 
       // Ipv6 checkbox should be auto-set
-      await createRKE2ClusterPage.machinePoolTab().enableIpv6().isChecked();
+      await expect(createRKE2ClusterPage.machinePoolTab().enableIpv6().checkboxCustom()).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
 
       await createRKE2ClusterPage.create();
       await expect(createRKE2ClusterPage.ipv6ConfirmationDialog()).toBeVisible();

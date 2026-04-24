@@ -18,7 +18,7 @@ test.describe('Account and API Keys', { tag: ['@userMenu', '@adminUser', '@stand
     await userMenu.clickMenuItem('Account & API Keys');
     await accountPage.waitForPage();
     await accountPage.waitForPage();
-    await accountPage.title();
+    await expect(accountPage.titleLocator()).toBeVisible();
   });
 
   test('Can create API keys', async ({ page, login, rancherApi }) => {

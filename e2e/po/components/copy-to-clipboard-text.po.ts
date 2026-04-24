@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class CopyToClipboardTextPo extends ComponentPo {
@@ -13,9 +12,5 @@ export default class CopyToClipboardTextPo extends ComponentPo {
 
   async copyToClipboard(): Promise<void> {
     await this.self().click();
-  }
-
-  async exists(): Promise<void> {
-    await expect(this.self()).toBeAttached();
   }
 }

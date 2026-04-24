@@ -83,7 +83,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installChart.waitForChartPage(CHART.repo, CHART.id);
 
         await expect(grafana.storageOptions().getAllOptions()).toHaveCount(4);
-        await grafana.storageOptions().isChecked(0); // Disabled by default
+        await expect(grafana.storageOptions().radioSpan(0)).toHaveAttribute('aria-checked', 'true'); // Disabled by default
 
         const options = [
           'Disabled',
@@ -101,13 +101,13 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await expect(grafana.storageClass().self()).toBeAttached();
         await grafana.storageClass().toggle();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
-        await grafana.storageClass().checkOptionSelected(storageClass);
+        await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
         await grafana.storageOptions().set(3);
         await expect(grafana.storageClass().self()).toBeAttached();
         await grafana.storageClass().toggle();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
-        await grafana.storageClass().checkOptionSelected(storageClass);
+        await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
         // Check Prometheus has storage class input: https://github.com/rancher/dashboard/issues/11539
         await installChart.selectTab(tabbedOptions, prometheus.tabID());
@@ -121,7 +121,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await expect(prometheus.storageClass().self()).toBeAttached();
         await prometheus.storageClass().toggle();
         await prometheus.storageClass().clickOptionWithLabel(storageClass);
-        await prometheus.storageClass().checkOptionSelected(storageClass);
+        await expect(prometheus.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
       });
     });
   });

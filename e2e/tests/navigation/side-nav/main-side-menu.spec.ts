@@ -55,8 +55,8 @@ test.describe('Side Menu: main', () => {
         await page.keyboard.down('Alt');
 
         // Assert that icons are displayed for the key combo
-        await burgerMenu.burgerMenuNavClusterKeyComboIconCheckByLabel('local');
-        await burgerMenu.burgerMenuNavClusterKeyComboIconCheckByLabel(fakeProvClusterId);
+        await expect(burgerMenu.clusterKeyComboIcon('local')).toBeVisible();
+        await expect(burgerMenu.clusterKeyComboIcon(fakeProvClusterId)).toBeVisible();
 
         // Keep Alt held — routeCombo stays true so cluster switch preserves current page
         // Nav to local while Alt is still pressed
@@ -116,9 +116,9 @@ test.describe('Side Menu: main', () => {
       async ({ page }) => {
         const burgerMenu = new BurgerMenuPo(page);
 
-        await burgerMenu.checkOpen();
+        await expect(burgerMenu.sideMenu()).toHaveClass(/menu-open/);
         await burgerMenu.toggle();
-        await burgerMenu.checkClosed();
+        await expect(burgerMenu.sideMenu()).not.toHaveClass(/menu-open/);
       },
     );
 
@@ -172,18 +172,18 @@ test.describe('Side Menu: main', () => {
 
         // Collapse the menu
         await burgerMenu.toggle();
-        await burgerMenu.checkClosed();
+        await expect(burgerMenu.sideMenu()).not.toHaveClass(/menu-open/);
 
         // Hover over the first cluster icon and check that the tooltip is shown
         await burgerMenu.firstClusterIcon().hover();
-        await burgerMenu.checkIconTooltipOn('local');
+        await expect(burgerMenu.tooltip()).toBeVisible();
 
         // Open the menu
         await burgerMenu.toggle();
-        await burgerMenu.checkOpen();
+        await expect(burgerMenu.sideMenu()).toHaveClass(/menu-open/);
 
         await burgerMenu.firstClusterIcon().hover();
-        await burgerMenu.checkIconTooltipOff();
+        await expect(burgerMenu.tooltipContainer()).not.toBeAttached();
       },
     );
 

@@ -1,5 +1,4 @@
 import type { Page } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import { LONG } from '@/support/timeouts';
@@ -21,7 +20,10 @@ export default class ShellPo extends ComponentPo {
     const actionMenu = await table.rowActionMenuOpen(resourceName);
 
     await actionMenu.getMenuItem('Execute Shell').click();
-    await expect(this.self().locator('.window.show-grid .text-success')).toContainText('Connected', { timeout: LONG });
+    await this.self()
+      .locator('.window.show-grid .text-success')
+      .filter({ hasText: 'Connected' })
+      .waitFor({ state: 'visible', timeout: LONG });
   }
 
   async closeTerminal(): Promise<void> {
@@ -29,6 +31,6 @@ export default class ShellPo extends ComponentPo {
   }
 
   async terminalStatus(label: string): Promise<void> {
-    await expect(this.self().locator('.status')).toContainText(label);
+    await this.self().locator('.status').filter({ hasText: label }).waitFor({ state: 'visible' });
   }
 }

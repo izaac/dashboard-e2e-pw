@@ -43,12 +43,12 @@ test.describe('Amazon Cognito', { tag: ['@adminUser', '@usersAndAuths'] }, () =>
       route.fulfill({ status: 200, body: JSON.stringify({}) });
     });
 
-    await cognitoPo.saveButton().expectToBeDisabled();
+    await expect(cognitoPo.saveButton().self()).toBeDisabled();
     await cognitoPo.enterClientId(clientId);
     await cognitoPo.enterClientSecret(clientSecret);
     await cognitoPo.enterIssuerUrl(issuerUrl);
 
-    await cognitoPo.saveButton().expectToBeEnabled();
+    await expect(cognitoPo.saveButton().self()).toBeEnabled();
     await cognitoPo.save();
 
     const request = await requestPromise;

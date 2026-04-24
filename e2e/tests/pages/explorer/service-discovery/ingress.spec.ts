@@ -92,7 +92,10 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
         await ingressForm.createEditView().nameNsDescription().namespace().toggle();
         await ingressForm.createEditView().nameNsDescription().namespace().clickOptionWithLabel(namespace);
-        await ingressForm.createEditView().nameNsDescription().namespace().checkOptionSelected(namespace);
+        await expect(ingressForm.createEditView().nameNsDescription().namespace().selectedOption()).toHaveText(
+          namespace,
+          { useInnerText: true },
+        );
         await ingressForm.createEditView().nameNsDescription().description().set(`${ingressName} description`);
 
         // Wait for services/secrets to load (mirrors upstream cy.wait('@getsServices')/@getsSecrets)
@@ -327,7 +330,10 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await ingressForm.createEditView().nameNsDescription().namespace().toggle();
       await ingressForm.createEditView().nameNsDescription().namespace().clickOptionWithLabel(namespace);
-      await ingressForm.createEditView().nameNsDescription().namespace().checkOptionSelected(namespace);
+      await expect(ingressForm.createEditView().nameNsDescription().namespace().selectedOption()).toHaveText(
+        namespace,
+        { useInnerText: true },
+      );
 
       // Wait for services to load (mirrors upstream cy.wait('@getsServices'))
       await servicesLoaded;

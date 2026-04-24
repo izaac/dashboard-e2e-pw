@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export class NamespaceFilterPo extends ComponentPo {
@@ -15,7 +14,7 @@ export class NamespaceFilterPo extends ComponentPo {
     await this.namespaceDropdown().locator(chevronClass).click();
 
     if (!isOpen) {
-      await expect(this.getOptions()).toBeVisible();
+      await this.getOptions().first().waitFor({ state: 'visible' });
     }
   }
 
@@ -66,21 +65,16 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.getOptions().locator(`#${id}`);
   }
 
-  /** Check if an option is checked by label */
-  async isChecked(label: string): Promise<void> {
+  /** Locator for the checkmark on a selected filter option */
+  optionCheckmark(label: string): Locator {
     const option = this.getOptions().getByText(new RegExp(` ${label} `));
 
-    await expect(option.locator('i.icon-checkmark')).toBeAttached();
+    return option.locator('i.icon-checkmark');
   }
 
-  /** Get checkmark icon */
-  checkIcon(): Locator {
-    return this.self().locator('.icon-checkmark');
-  }
-
-  /** Verify "All" is selected (no specific namespace filter) */
-  async allSelected(): Promise<void> {
-    await expect(this.self().getByTestId('namespaces-values-none')).toBeAttached();
+  /** Locator for the "all namespaces" no-filter indicator */
+  noFilterIndicator(): Locator {
+    return this.self().getByTestId('namespaces-values-none');
   }
 
   /** Get the "more" badge when multiple namespaces are selected */

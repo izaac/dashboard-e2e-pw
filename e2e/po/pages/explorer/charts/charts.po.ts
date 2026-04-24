@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 
 /**
@@ -61,30 +60,9 @@ export class ChartsPage extends PagePo {
     return parseInt(text.match(/\d+/)?.[0] || '0', 10);
   }
 
-  async checkChartGenericIcon(name: string, isGeneric = true): Promise<void> {
-    await this.chartsSearchFilterInput().fill(name);
-    await expect(this.page).toHaveURL((url) => {
-      const params = new URL(url).searchParams;
-
-      return params.get('q') === name;
-    });
-    await expect(this.chartCards().first()).toBeAttached();
-
-    const card = this.getChartByName(name);
-    const src = await card.locator('img').getAttribute('src');
-
-    if (isGeneric) {
-      expect(src).toContain('generic-catalog');
-    } else {
-      expect(src).not.toContain('generic-catalog');
-    }
-
-    await this.chartsSearchFilterInput().clear();
-    await expect(this.page).toHaveURL((url) => {
-      const params = new URL(url).searchParams;
-
-      return params.get('q') === null;
-    });
+  /** Get the chart card image locator for a given chart name */
+  chartCardImage(name: string): Locator {
+    return this.getChartByName(name).locator('img');
   }
 
   async resetAllFilters(): Promise<void> {

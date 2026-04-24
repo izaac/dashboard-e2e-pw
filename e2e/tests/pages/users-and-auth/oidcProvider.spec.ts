@@ -139,8 +139,8 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     expect(body.spec.tokenExpirationSeconds).toBe(OIDC_CREATE_DATA.TOKEN_EXP);
 
     await oidcClientDetailPage.waitForUrlPathWithoutContext();
-    await oidcClientDetailPage.clientID().exists();
-    await oidcClientDetailPage.clientFullSecretCopy(0).exists();
+    await expect(oidcClientDetailPage.clientID().self()).toBeVisible();
+    await expect(oidcClientDetailPage.clientFullSecretCopy(0).self()).toBeVisible();
     await oidcClientDetailPage.clientID().copyToClipboard();
     await oidcClientDetailPage.clientFullSecretCopy(0).copyToClipboard();
 
@@ -238,7 +238,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
 
     await oidcClientDetailPage.waitForUrlPathWithoutContext();
     await expect(oidcClientDetailPage.clientFullSecretCopy(1).self()).toBeVisible();
-    await oidcClientDetailPage.clientFullSecretCopy(1).exists();
+    await expect(oidcClientDetailPage.clientFullSecretCopy(1).self()).toBeVisible();
     await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
 
     // Cleanup
@@ -303,7 +303,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     expect(resp.status()).toBe(200);
     expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-regenerate']).toBe('client-secret-2');
 
-    await oidcClientDetailPage.clientFullSecretCopy(1).exists();
+    await expect(oidcClientDetailPage.clientFullSecretCopy(1).self()).toBeVisible();
     await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
 
     // Cleanup

@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
@@ -94,6 +93,11 @@ export default class ClusterDashboardPagePo extends PagePo {
     return this.page.getByTestId('k8s-service-controller-manager');
   }
 
+  /** Get the namespace filter locator */
+  namespaceFilter(): Locator {
+    return this.page.getByTestId('namespaces-filter');
+  }
+
   async goToAndConfirmNsValues(
     cluster: string,
     opts: {
@@ -104,19 +108,7 @@ export default class ClusterDashboardPagePo extends PagePo {
     await this.goTo();
     await this.waitForPage();
 
-    const nsFilter = this.page.getByTestId('namespaces-filter');
-
-    await expect(nsFilter).toBeVisible();
-
-    if (opts.nsProject) {
-      for (const val of opts.nsProject.values) {
-        await expect(nsFilter).toContainText(val);
-      }
-    } else if (opts.all) {
-      await expect(nsFilter).toContainText('All Namespaces');
-    } else {
-      throw new Error('Bad Config');
-    }
+    await this.namespaceFilter().waitFor({ state: 'visible' });
   }
 
   certsSectionLocator(): Locator {

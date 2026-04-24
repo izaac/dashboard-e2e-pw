@@ -296,10 +296,10 @@ test.describe('Home Page', () => {
 
       // Open the notification centre
       await nc.toggle();
-      await nc.checkOpen();
+      await expect(nc.expandedState()).toBeAttached();
       await expect(nc.self()).toBeAttached();
       await expect(nc.self()).toBeVisible();
-      await nc.checkHasUnread();
+      await expect(nc.unreadIndicator()).toBeAttached();
 
       // Get the release notes notification
       const item = nc.getNotificationByName('release-notes');
@@ -314,18 +314,18 @@ test.describe('Home Page', () => {
       await nc.markAllRead();
       await markReadPromise;
 
-      await nc.checkAllRead();
+      await expect(nc.unreadIndicator()).not.toBeAttached();
 
       // Close
       await nc.toggle();
-      await nc.checkClosed();
+      await expect(nc.collapsedState()).toBeAttached();
 
       // Open again
       await nc.toggle();
-      await nc.checkOpen();
+      await expect(nc.expandedState()).toBeAttached();
       await expect(nc.self()).toBeAttached();
       await expect(nc.self()).toBeVisible();
-      await nc.checkAllRead();
+      await expect(nc.unreadIndicator()).not.toBeAttached();
 
       // Verify notification title and toggle read state
       const item2 = nc.getNotificationByName('release-notes');
@@ -333,10 +333,10 @@ test.describe('Home Page', () => {
       await expect(item2.title()).toContainText('Welcome to Rancher v');
       await expect(item2.primaryActionButton()).toBeAttached();
 
-      await item2.checkRead();
+      await expect(item2.readIcon()).toBeAttached();
       await item2.toggleRead();
-      await item2.checkUnread();
-      await nc.checkHasUnread();
+      await expect(item2.readIcon()).not.toBeAttached();
+      await expect(nc.unreadIndicator()).toBeAttached();
     });
 
     test('Can navigate to release notes page for latest Rancher version', async ({ page, login, rancherApi }) => {
@@ -353,7 +353,7 @@ test.describe('Home Page', () => {
       const nc = homePage.notificationsCenter();
 
       await nc.toggle();
-      await nc.checkOpen();
+      await expect(nc.expandedState()).toBeAttached();
       await expect(nc.self()).toBeAttached();
       await expect(nc.self()).toBeVisible();
 

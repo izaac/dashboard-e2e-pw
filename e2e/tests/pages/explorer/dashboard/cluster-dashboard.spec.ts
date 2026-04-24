@@ -70,7 +70,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await header.importYaml().importYamlImportClick();
 
     try {
-      await header.importYaml().importYamlSuccessTitleCheck();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
 
       await expect(
         header.importYaml().importYamlSortableTable().tableHeaderRowElementWithPartialName('State'),

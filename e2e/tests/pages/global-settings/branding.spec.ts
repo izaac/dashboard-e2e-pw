@@ -146,10 +146,10 @@ test.describe('Branding', () => {
       await settingsPage.waitForPageWithClusterId();
 
       // check if burger menu nav is highlighted correctly for Global Settings
-      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Global Settings');
+      await expect(burgerMenu.menuItemWrapper('Global Settings')).toHaveClass(/nuxt-link-active/);
 
       // catching regression https://github.com/rancher/dashboard/issues/10576
-      await burgerMenu.checkIfClusterMenuLinkIsHighlighted('local', false);
+      await expect(burgerMenu.clusterOptionWrapper('local')).not.toHaveClass(/active/);
 
       const brandingNavItem = await sideNav.sideMenuEntryByLabel('Branding');
 
@@ -221,8 +221,8 @@ test.describe('Branding', () => {
     await brandingPage.customLogoCheckbox().set();
 
     // Regression check: checkbox dimensions — https://github.com/rancher/dashboard/issues/10000
-    await brandingPage.customLogoCheckbox().hasAppropriateWidth();
-    await brandingPage.customLogoCheckbox().hasAppropriateHeight();
+    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
+    await expect(brandingPage.customLogoCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
 
     // Upload Light Logo
     await brandingPage
@@ -299,8 +299,8 @@ test.describe('Branding', () => {
 
     await navToBranding(page);
     await brandingPage.customBannerCheckbox().set();
-    await brandingPage.customBannerCheckbox().hasAppropriateWidth();
-    await brandingPage.customBannerCheckbox().hasAppropriateHeight();
+    await expect(brandingPage.customBannerCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
+    await expect(brandingPage.customBannerCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
 
     // Upload Light Banner
     await brandingPage
@@ -362,8 +362,8 @@ test.describe('Branding', () => {
     await navToBranding(page);
 
     await brandingPage.customLoginBackgroundCheckbox().set();
-    await brandingPage.customLoginBackgroundCheckbox().hasAppropriateWidth();
-    await brandingPage.customLoginBackgroundCheckbox().hasAppropriateHeight();
+    await expect(brandingPage.customLoginBackgroundCheckbox().checkboxCustom()).toHaveCSS('width', '20px');
+    await expect(brandingPage.customLoginBackgroundCheckbox().checkboxCustom()).toHaveCSS('height', '20px');
 
     await brandingPage
       .uploadButton('Upload Light Background')
@@ -471,7 +471,7 @@ test.describe('Branding', () => {
 
     await brandingPage.primaryColorPicker().set(settings.primaryColor.new);
     await brandingPage.applyAndWait('ui-primary-color', 200);
-    await brandingPage.applyButton().waitForDisabledAppearanceToDisappear();
+    await expect(brandingPage.applyButton().self()).toBeEnabled();
 
     // Check in session
     const setValue = await brandingPage.primaryColorPicker().value();
@@ -595,10 +595,10 @@ test.describe('Branding - Standard User', { tag: ['@globalSettings', '@standardU
     await sideNav.navToSideMenuEntryByLabel('Branding');
 
     await expect(brandingPage.privateLabel().self()).toBeDisabled();
-    await brandingPage.customLogoCheckbox().checkDisabled();
-    await brandingPage.customFaviconCheckbox().checkDisabled();
-    await brandingPage.primaryColorCheckbox().checkDisabled();
-    await brandingPage.linkColorCheckbox().checkDisabled();
+    await expect(brandingPage.customLogoCheckbox().self()).toBeDisabled();
+    await expect(brandingPage.customFaviconCheckbox().self()).toBeDisabled();
+    await expect(brandingPage.primaryColorCheckbox().self()).toBeDisabled();
+    await expect(brandingPage.linkColorCheckbox().self()).toBeDisabled();
     await expect(brandingPage.applyButton().self()).not.toBeAttached();
   });
 });

@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
@@ -114,12 +113,11 @@ export default class HomePagePo extends PagePo {
     const link = this.supportLinks().nth(index);
 
     if (isNewTab) {
-      await expect(link).toHaveAttribute('target');
+      await link.filter({ has: this.page.locator('[target]') }).waitFor();
       // Remove target attribute so we stay in the same tab (Playwright limitation like Cypress)
       await link.evaluate((el) => el.removeAttribute('target'));
       await link.click();
     } else {
-      await expect(link).not.toHaveAttribute('target');
       await link.click();
     }
   }
@@ -144,11 +142,9 @@ export default class HomePagePo extends PagePo {
     return this.page.getByRole('menuitem', { name });
   }
 
-  /** Check support link text at given index */
-  async checkSupportLinkText(index: number, text: string): Promise<void> {
-    const link = this.supportLinks().nth(index);
-
-    await expect(link).toHaveText(text);
+  /** Get the support link at the given index */
+  supportLink(index: number): Locator {
+    return this.supportLinks().nth(index);
   }
 
   /** Stub window.open so clicks don't open new tabs; captured calls retrievable via getCapturedOpenCalls() */

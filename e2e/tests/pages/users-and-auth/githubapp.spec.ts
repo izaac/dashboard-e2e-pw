@@ -44,13 +44,13 @@ test.describe('GitHub App', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
       route.fulfill({ status: 200, body: JSON.stringify({}) });
     });
 
-    await githubAppPo.saveButton().expectToBeDisabled();
+    await expect(githubAppPo.saveButton().self()).toBeDisabled();
     await githubAppPo.enterClientId(clientId);
     await githubAppPo.enterClientSecret(clientSecret);
     await githubAppPo.enterGitHubAppId(appId);
     await githubAppPo.enterPrivateKey(privateKey);
 
-    await githubAppPo.saveButton().expectToBeEnabled();
+    await expect(githubAppPo.saveButton().self()).toBeEnabled();
     await githubAppPo.save();
 
     const request = await requestPromise;

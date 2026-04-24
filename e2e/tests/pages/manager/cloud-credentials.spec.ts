@@ -25,7 +25,9 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
       .set(`${cloudCredentialName}-description`);
     await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
     await cloudCredentialsPage.createEditCloudCreds().secretKey().set(`${envMeta.awsSecretKey}abc`);
-    await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
+    await expect(cloudCredentialsPage.createEditCloudCreds().defaultRegion().selectedOption()).toHaveText('us-west-2', {
+      useInnerText: true,
+    });
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
     await expect(cloudCredentialsPage.createEditCloudCreds().errorBanner().banner()).toContainText(
@@ -56,7 +58,10 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
         .set(`${cloudCredentialName}-description`);
       await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
       await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
-      await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
+      await expect(cloudCredentialsPage.createEditCloudCreds().defaultRegion().selectedOption()).toHaveText(
+        'us-west-2',
+        { useInnerText: true },
+      );
 
       // Name is mandatory — verify placeholder has no "optional"
       await expect(cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().self()).not.toHaveAttribute(
@@ -64,19 +69,13 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
         /optional/i,
       );
 
-      await cloudCredentialsPage
-        .createEditCloudCreds()
-        .saveCreateForm()
-        .cruResource()
-        .saveOrCreate()
-        .expectToBeDisabled();
+      await expect(
+        cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().self(),
+      ).toBeDisabled();
       await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(cloudCredentialName);
-      await cloudCredentialsPage
-        .createEditCloudCreds()
-        .saveCreateForm()
-        .cruResource()
-        .saveOrCreate()
-        .expectToBeEnabled();
+      await expect(
+        cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().self(),
+      ).toBeEnabled();
 
       const responsePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',

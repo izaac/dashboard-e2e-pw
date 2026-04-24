@@ -58,7 +58,7 @@ export class IngressCreateEditPo extends PagePo {
     const select = new LabeledSelectPo(this.page, '.col.span-3 .unlabeled-select', path);
 
     await this.selectWithRetry(select, value);
-    await select.checkOptionSelected(value);
+    await select.selectedOption().filter({ hasText: value }).waitFor();
   }
 
   async setPortValue(ruleIndex: number, value: string, pathIndex = 0): Promise<void> {

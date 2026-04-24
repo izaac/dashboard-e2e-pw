@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import PasswordPo from '@/e2e/po/components/password.po';
@@ -20,14 +19,23 @@ export class RancherSetupLoginPagePo extends PagePo {
   }
 
   async bootstrapLogin(bootstrapPassword: string): Promise<void> {
-    expect(await this.canSubmit()).toBe(true);
+    await this.page.waitForFunction(() => {
+      const btn = document.querySelector('[data-testid="login-submit"] button');
+
+      return btn && !btn.hasAttribute('disabled');
+    });
     await this.password().set(bootstrapPassword);
-    expect(await this.canSubmit()).toBe(true);
+    await this.page.waitForFunction(() => {
+      const btn = document.querySelector('[data-testid="login-submit"] button');
+
+      return btn && !btn.hasAttribute('disabled');
+    });
     await this.submit();
   }
 
-  async hasInfoMessage(): Promise<void> {
-    await expect(this.page.getByTestId('first-login-message')).toBeVisible();
+  /** Get the info message locator */
+  infoMessage(): Locator {
+    return this.page.getByTestId('first-login-message');
   }
 
   password(): PasswordPo {

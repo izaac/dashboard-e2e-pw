@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import BannersPo from '@/e2e/po/components/banners.po';
@@ -35,9 +34,9 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     const el = this.self().locator('.grid .name').filter({ hasText: name });
 
     if (assertion === 'toBeVisible') {
-      await expect(el).toBeVisible({ timeout: STANDARD });
+      await el.waitFor({ state: 'visible', timeout: STANDARD });
     } else {
-      await expect(el).not.toBeVisible({ timeout: STANDARD });
+      await el.waitFor({ state: 'hidden', timeout: STANDARD });
     }
   }
 

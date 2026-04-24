@@ -64,11 +64,11 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       // Create cloud credential
       const cloudCredForm = createEKSClusterPage.cloudCredentialsForm();
 
-      await cloudCredForm.saveButton().expectToBeDisabled();
+      await expect(cloudCredForm.saveButton().self()).toBeDisabled();
       await cloudCredForm.nameNsDescription().name().set(credName);
       await cloudCredForm.accessKey().set(envMeta.awsAccessKey!);
       await cloudCredForm.secretKey().set(envMeta.awsSecretKey!);
-      await cloudCredForm.saveButton().expectToBeEnabled();
+      await expect(cloudCredForm.saveButton().self()).toBeEnabled();
 
       const credCreatePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
@@ -174,26 +174,34 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await createEKSClusterPage.dropdownOption(credName).click();
 
       // Verify defaults
-      await createEKSClusterPage.getRegion().checkOptionSelected(eksSettings.eksRegion);
+      await expect(createEKSClusterPage.getRegion().selectedOption()).toHaveText(eksSettings.eksRegion, {
+        useInnerText: true,
+      });
 
       const latestEKSversion = await createEKSClusterPage.getLatestEKSversion();
 
-      await createEKSClusterPage.getVersion().checkOptionSelected(latestEKSversion);
+      await expect(createEKSClusterPage.getVersion().selectedOption()).toHaveText(latestEKSversion, {
+        useInnerText: true,
+      });
       await expect(createEKSClusterPage.getNodeGroup().self()).toHaveValue(eksSettings.nodegroupName);
-      await createEKSClusterPage.getNodeRole().checkOptionSelected(eksSettings.nodeRole);
+      await expect(createEKSClusterPage.getNodeRole().selectedOption()).toHaveText(eksSettings.nodeRole, {
+        useInnerText: true,
+      });
       await expect(createEKSClusterPage.getDesiredASGSize().self()).toHaveValue(eksSettings.desiredSize);
       await expect(createEKSClusterPage.getMinASGSize().self()).toHaveValue(eksSettings.minSize);
       await expect(createEKSClusterPage.getMaxASGSize().self()).toHaveValue(eksSettings.maxSize);
-      await createEKSClusterPage.getLaunchTemplate().checkOptionSelected(eksSettings.launchTemplate);
-      await createEKSClusterPage.getInstanceType().checkContainsOptionSelected(eksSettings.instanceType);
+      await expect(createEKSClusterPage.getLaunchTemplate().selectedOption()).toHaveText(eksSettings.launchTemplate, {
+        useInnerText: true,
+      });
+      await expect(createEKSClusterPage.getInstanceType().selectedOption()).toContainText(eksSettings.instanceType);
       await expect(createEKSClusterPage.getDiskSize().self()).toHaveValue(eksSettings.diskSize);
 
-      await createEKSClusterPage.serviceRoleRadioGroup().isChecked(0);
+      await expect(createEKSClusterPage.serviceRoleRadioGroup().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
 
-      await createEKSClusterPage.getPublicAccess().isChecked();
-      await createEKSClusterPage.getPrivateAccess().isNotChecked();
+      await expect(createEKSClusterPage.getPublicAccess().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+      await expect(createEKSClusterPage.getPrivateAccess().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
 
-      await createEKSClusterPage.vpcRadioGroup().isChecked(0);
+      await expect(createEKSClusterPage.vpcRadioGroup().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
 
       // Set cluster name and create
       await createEKSClusterPage.getClusterName().set(clusterName);

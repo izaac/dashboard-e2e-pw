@@ -1,4 +1,10 @@
 npx lint-staged
+
+# Match CI checks exactly
+npx eslint .
+npx prettier --check '**/*.ts'
+npx markdownlint-cli2
 npx tsc --noEmit
+
 npx tsx scripts/generate-po-index.ts
 git add e2e/po/INDEX.md

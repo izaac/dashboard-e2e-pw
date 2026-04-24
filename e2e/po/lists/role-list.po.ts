@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 
 export default class RoleListPo extends BaseResourceList {
@@ -38,23 +37,13 @@ export default class RoleListPo extends BaseResourceList {
     return this.details(name, columnIndex).locator('a');
   }
 
-  async checkBuiltIn(name: string, isBuiltIn = true): Promise<void> {
-    const element = this.details(name, 4).locator('span i.icon-checkmark');
-
-    if (isBuiltIn) {
-      await expect(element).toBeAttached();
-    } else {
-      await expect(element).not.toBeAttached();
-    }
+  /** Get the built-in indicator for a role */
+  builtInIndicator(name: string): Locator {
+    return this.details(name, 4).locator('span i.icon-checkmark');
   }
 
-  async checkDefault(name: string, isDefault = true): Promise<void> {
-    const element = this.details(name, 5).locator('span i.icon-checkmark');
-
-    if (isDefault) {
-      await expect(element).toBeAttached();
-    } else {
-      await expect(element).not.toBeAttached();
-    }
+  /** Get the default indicator for a role */
+  defaultIndicator(name: string): Locator {
+    return this.details(name, 5).locator('span i.icon-checkmark');
   }
 }

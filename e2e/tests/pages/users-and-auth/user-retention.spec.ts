@@ -41,7 +41,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       await userRetentionPo.disableAfterPeriodCheckbox().set();
       await userRetentionPo.disableAfterPeriodInput().set('30d');
 
-      await userRetentionPo.saveButton().expectToBeDisabled();
+      await expect(userRetentionPo.saveButton().self()).toBeDisabled();
     } finally {
       await resetRetentionSettings(rancherApi);
     }
@@ -59,7 +59,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       await userRetentionPo.disableAfterPeriodInput().set('300h');
       await userRetentionPo.userRetentionCron().set('0 0 1 1 *');
 
-      await userRetentionPo.saveButton().expectToBeEnabled();
+      await expect(userRetentionPo.saveButton().self()).toBeEnabled();
     } finally {
       await resetRetentionSettings(rancherApi);
     }
@@ -81,18 +81,18 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       await userRetentionPo.disableAfterPeriodCheckbox().uncheck();
       await userRetentionPo.deleteAfterPeriodCheckbox().uncheck();
 
-      await userRetentionPo.disableAfterPeriodInput().expectToBeDisabled();
+      await expect(userRetentionPo.disableAfterPeriodInput().self()).toBeDisabled();
       await userRetentionPo.disableAfterPeriodCheckbox().set();
-      await userRetentionPo.disableAfterPeriodInput().expectToBeEnabled();
+      await expect(userRetentionPo.disableAfterPeriodInput().self()).toBeEnabled();
       await userRetentionPo.disableAfterPeriodInput().set('300h');
-      await userRetentionPo.deleteAfterPeriodInput().expectToBeDisabled();
+      await expect(userRetentionPo.deleteAfterPeriodInput().self()).toBeDisabled();
       await userRetentionPo.deleteAfterPeriodCheckbox().set();
-      await userRetentionPo.deleteAfterPeriodInput().expectToBeEnabled();
+      await expect(userRetentionPo.deleteAfterPeriodInput().self()).toBeEnabled();
       await userRetentionPo.deleteAfterPeriodInput().set('600h');
       await userRetentionPo.userRetentionCron().set('0 0 1 1 *');
       await userRetentionPo.userLastLoginDefault().set('1718744536000');
 
-      await userRetentionPo.saveButton().expectToBeEnabled();
+      await expect(userRetentionPo.saveButton().self()).toBeEnabled();
 
       // The save fires multiple PUTs — collect them all before asserting
       let resolveAll: () => void;
@@ -136,9 +136,15 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       await usersPo.userRetentionLink().click();
 
       await expect(userRetentionPo.disableAfterPeriodCheckbox().self()).toBeAttached();
-      await userRetentionPo.disableAfterPeriodCheckbox().isChecked();
+      await expect(userRetentionPo.disableAfterPeriodCheckbox().checkboxCustom()).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
       await expect(userRetentionPo.disableAfterPeriodInput().self()).toHaveValue('300h');
-      await userRetentionPo.deleteAfterPeriodCheckbox().isChecked();
+      await expect(userRetentionPo.deleteAfterPeriodCheckbox().checkboxCustom()).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
       await expect(userRetentionPo.deleteAfterPeriodInput().self()).toHaveValue('600h');
       await expect(userRetentionPo.userRetentionCron().self()).toHaveValue('0 0 1 1 *');
       await expect(userRetentionPo.userLastLoginDefault().self()).toHaveValue('1718744536000');

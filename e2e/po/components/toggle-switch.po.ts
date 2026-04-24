@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class ToggleSwitchPo extends ComponentPo {
@@ -24,7 +23,9 @@ export default class ToggleSwitchPo extends ComponentPo {
 
     const newValue = await this.value();
 
-    expect(newValue).toEqual(label);
+    if (newValue !== label) {
+      throw new Error(`Toggle set failed: expected "${label}" but got "${newValue}"`);
+    }
   }
 
   get(selector: string): Locator {

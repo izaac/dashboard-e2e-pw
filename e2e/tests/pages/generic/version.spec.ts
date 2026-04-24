@@ -44,8 +44,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await expect(nav.version().self()).toBeAttached();
     await expect(nav.version().self()).toBeVisible();
-    await nav.version().checkVersion('v2.9');
-    await nav.version().checkNormalText();
+    await expect(nav.version().self()).toContainText('v2.9');
+    await expect(nav.version().self()).toHaveCSS('font-size', '14px');
   });
 
   test('app bar shows full version number', async ({ page, login }) => {
@@ -59,8 +59,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await expect(nav.version().self()).toBeAttached();
     await expect(nav.version().self()).toBeVisible();
-    await nav.version().checkVersion('v2.9.1');
-    await nav.version().checkNormalText();
+    await expect(nav.version().self()).toContainText('v2.9.1');
+    await expect(nav.version().self()).toHaveCSS('font-size', '14px');
   });
 
   test('app bar shows "About" for dev version', async ({ page, login }) => {
@@ -74,8 +74,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await expect(nav.version().self()).toBeAttached();
     await expect(nav.version().self()).toBeVisible();
-    await nav.version().checkVersion('About');
-    await nav.version().checkNormalText();
+    await expect(nav.version().self()).toContainText('About');
+    await expect(nav.version().self()).toHaveCSS('font-size', '14px');
   });
 
   test('app bar uses smaller text for longer version', async ({ page, login }) => {
@@ -89,7 +89,7 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await expect(nav.version().self()).toBeAttached();
     await expect(nav.version().self()).toBeVisible();
-    await nav.version().checkVersion('v2.10.11');
-    await nav.version().checkSmallText();
+    await expect(nav.version().self()).toContainText('v2.10.11');
+    await expect(nav.version().self()).toHaveCSS('font-size', '12px');
   });
 });

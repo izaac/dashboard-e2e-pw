@@ -64,22 +64,18 @@ export class HomeLinksPagePo extends RootClusterPage {
     return this.self().locator('.ui-links-setting .kv-item.key > span');
   }
 
-  async checkDefaultLinkName(index: number, text: string): Promise<void> {
-    const { expect } = await import('@playwright/test');
-    const el = this.defaultLinkNames().nth(index);
-
-    await expect(el).toHaveText(text);
+  /** Get a default link name by index */
+  defaultLinkName(index: number): Locator {
+    return this.defaultLinkNames().nth(index);
   }
 
   defaultLinkTargets(): Locator {
     return this.self().locator('.ui-links-setting .kv-item.value > span');
   }
 
-  async checkDefaultLinkTargets(index: number, text: string): Promise<void> {
-    const { expect } = await import('@playwright/test');
-    const el = this.defaultLinkTargets().nth(index);
-
-    await expect(el).toHaveText(text);
+  /** Get a default link target by index */
+  defaultLinkTarget(index: number): Locator {
+    return this.defaultLinkTargets().nth(index);
   }
 
   defaultLinkCheckbox(index: number): CheckboxInputPo {

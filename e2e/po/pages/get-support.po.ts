@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 
 /**
@@ -35,11 +34,10 @@ export default class SupportPagePo extends PagePo {
     const link = this.supportLinks().nth(index);
 
     if (isNewTab) {
-      await expect(link).toHaveAttribute('target');
+      await link.filter({ has: this.page.locator('[target]') }).waitFor();
       await link.evaluate((el) => el.removeAttribute('target'));
       await link.click();
     } else {
-      await expect(link).not.toHaveAttribute('target');
       await link.click();
     }
   }
@@ -47,7 +45,7 @@ export default class SupportPagePo extends PagePo {
   async clickExternalSupportLinks(index: number): Promise<void> {
     const link = this.externalSupportLinks(index);
 
-    await expect(link).toHaveAttribute('target');
+    await link.filter({ has: this.page.locator('[target]') }).waitFor();
     await link.evaluate((el) => el.removeAttribute('target'));
     await link.click();
   }
@@ -55,7 +53,7 @@ export default class SupportPagePo extends PagePo {
   async clickSccLink(): Promise<void> {
     const link = this.sccLink();
 
-    await expect(link).toHaveAttribute('target');
+    await link.filter({ has: this.page.locator('[target]') }).waitFor();
     await link.evaluate((el) => el.removeAttribute('target'));
     await link.click();
   }

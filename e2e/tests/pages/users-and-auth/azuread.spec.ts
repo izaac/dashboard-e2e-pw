@@ -46,7 +46,7 @@ test.describe('AzureAD', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
       route.fulfill({ status: 200, body: JSON.stringify({}) });
     });
 
-    await azureadPo.saveButton().expectToBeDisabled();
+    await expect(azureadPo.saveButton().self()).toBeDisabled();
     await azureadPo.enterTenantId(tenantId);
     await azureadPo.enterApplicationId(applicationId);
     await azureadPo.enterApplicationSecret(appSecret);
@@ -61,7 +61,7 @@ test.describe('AzureAD', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
     await azureadPo.enterGraphEndpoint(graphEndpoint);
     await azureadPo.enterAuthEndpoint(authEndpoint);
 
-    await azureadPo.saveButton().expectToBeEnabled();
+    await expect(azureadPo.saveButton().self()).toBeEnabled();
     await azureadPo.save();
 
     const request = await requestPromise;

@@ -54,9 +54,8 @@ export default class AboutPagePo extends PagePo {
 
   async clickVersionLink(value: string): Promise<void> {
     const link = this.links(value);
-    const { expect } = await import('@playwright/test');
 
-    await expect(link).toHaveAttribute('target');
+    await link.filter({ has: this.page.locator('[target]') }).waitFor();
     await link.evaluate((el) => el.removeAttribute('target'));
     await link.click();
   }

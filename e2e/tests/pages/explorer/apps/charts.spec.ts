@@ -17,9 +17,9 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
     await chartsPage.goTo();
     await chartsPage.waitForPage();
     await chartsPage.resetAllFilters();
-    await chartsPage.checkChartGenericIcon('Alerting Driver', false);
-    await chartsPage.checkChartGenericIcon('Rancher Compliance', false);
-    await chartsPage.checkChartGenericIcon('Logging', false);
+    await expect(chartsPage.chartCardImage('Alerting Driver')).toBeVisible();
+    await expect(chartsPage.chartCardImage('Rancher Compliance')).toBeVisible();
+    await expect(chartsPage.chartCardImage('Logging')).toBeVisible();
   });
 
   test('should call fetch when route query changes with valid parameters', async ({ page, login, chartGuard }) => {

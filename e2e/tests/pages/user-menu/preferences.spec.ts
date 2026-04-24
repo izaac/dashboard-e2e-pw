@@ -76,7 +76,7 @@ test.describe('User can update their preferences', () => {
       await expect(langDropdown.getOptions()).toHaveCount(2);
       await langDropdown.clickOption(index);
       await langDropdown.isClosed();
-      await prefPage.checkLangDomElement(langCode);
+      await expect(prefPage.langDomElement(langCode)).toBeAttached();
     }
 
     // Regression test: https://github.com/rancher/dashboard/issues/10153
@@ -115,7 +115,7 @@ test.describe('User can update their preferences', () => {
     await langDropdown.toggle();
     await langDropdown.clickOption(1);
     await prefSavePromise;
-    await prefPage.checkLangDomElement('en-us');
+    await expect(prefPage.langDomElement('en-us')).toBeAttached();
   });
 
   test('Can select a theme', { tag: ['@userMenu', '@adminUser', '@standardUser'] }, async ({ page, login }) => {
@@ -692,7 +692,7 @@ test.describe('User can update their preferences', () => {
     expect(respBody.data).toHaveProperty('after-login-route', '"home"');
 
     // Verify radio is checked
-    await radioGroup.isChecked(0);
+    await expect(radioGroup.radioSpan(0)).toHaveAttribute('aria-checked', 'true');
 
     // Logout and verify landing page
     await userMenu.clickMenuItem('Log Out');
@@ -736,7 +736,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '"last-visited"');
 
       // Verify radio is checked
-      await radioGroup.isChecked(1);
+      await expect(radioGroup.radioSpan(1)).toHaveAttribute('aria-checked', 'true');
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');
@@ -787,7 +787,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '{"name":"c-cluster","params":{"cluster":"local"}}');
 
       // Verify radio is checked
-      await radioGroup.isChecked(2);
+      await expect(radioGroup.radioSpan(2)).toHaveAttribute('aria-checked', 'true');
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');

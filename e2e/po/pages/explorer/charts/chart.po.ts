@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
@@ -31,19 +30,19 @@ export class ChartPage extends PagePo {
     await chartsPage.goTo();
 
     // Wait for charts to finish loading before searching
-    await expect(chartsPage.chartCards().first()).toBeVisible({ timeout: LONG });
+    await chartsPage.chartCards().first().waitFor({ state: 'visible', timeout: LONG });
 
     await chartsPage.chartsSearchFilterInput().fill(chartName);
 
     // Wait for URL to contain the q parameter with the correct value
-    await expect(this.page).toHaveURL((url) => {
+    await this.page.waitForURL((url) => {
       const params = new URL(url).searchParams;
 
       return params.get('q') === chartName;
     });
 
     // Wait for filtered chart card to appear
-    await expect(chartsPage.getChartByName(chartName)).toBeVisible(SHORT_TIMEOUT_OPT);
+    await chartsPage.getChartByName(chartName).waitFor({ state: 'visible', ...SHORT_TIMEOUT_OPT });
     await chartsPage.clickChart(chartName);
   }
 
@@ -56,13 +55,13 @@ export class ChartPage extends PagePo {
   }
 
   async waitForChartHeader(title: string, timeout = 30000): Promise<void> {
-    await expect(this.chartHeader()).toContainText(title, { timeout });
+    await this.chartHeader().filter({ hasText: title }).waitFor({ timeout });
   }
 
   async goToInstall(): Promise<void> {
     const btn = this.self().locator('.chart-header .btn.role-primary');
 
-    await expect(btn).toBeVisible(SHORT_TIMEOUT_OPT);
+    await btn.waitFor({ state: 'visible', ...SHORT_TIMEOUT_OPT });
     await btn.click();
   }
 

@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@/support/fixtures';
 import {
   WorkloadsListPageBasePo,
   WorkloadsCreatePageBasePo,
@@ -92,8 +91,8 @@ export class WorkloadsDeploymentsDetailsPagePo extends WorkloadDetailsPageBasePo
 
   /** Wait for scale buttons to be enabled and no pending indicators visible */
   async waitForScaleComplete(): Promise<void> {
-    await expect(this.scaleUpButton()).toBeEnabled({ timeout: LONG });
-    await expect(this.scaleDownButton()).toBeEnabled({ timeout: LONG });
-    await expect(this.page.locator('.plus-minus').filter({ hasText: 'Pending' })).not.toBeVisible();
+    await this.scaleUpButton().waitFor({ state: 'visible', timeout: LONG });
+    await this.scaleDownButton().waitFor({ state: 'visible', timeout: LONG });
+    await this.page.locator('.plus-minus').filter({ hasText: 'Pending' }).waitFor({ state: 'hidden' });
   }
 }

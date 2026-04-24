@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ExtensionsCompatibilityUtils from '@/e2e/po/extensions/extensions-compatibility.utils';
 import BannersPo from '@/e2e/po/components/banners.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
@@ -17,7 +16,7 @@ class DashboardPagePo extends PagePo {
   }
 
   async waitForTitle(): Promise<void> {
-    await expect(this.mainTitle()).toContainText('OS Management');
+    await this.mainTitle().filter({ hasText: 'OS Management' }).waitFor();
   }
 
   /** The install operator button locator */

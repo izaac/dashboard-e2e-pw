@@ -28,9 +28,10 @@ test.describe('Cluster Edit (Fake DO cluster)', { tag: ['@manager', '@adminUser'
 
     await editCluster.clickRegistryTab();
     await editCluster.registryAuthenticationItems().closeArrayListItem(0);
-    await editCluster
-      .registryAuthenticationField()
-      .checkOptionSelected('registryconfig-auth-reg2 (HTTP Basic Auth: aaa)');
+    await expect(editCluster.registryAuthenticationField().selectedOption()).toHaveText(
+      'registryconfig-auth-reg2 (HTTP Basic Auth: aaa)',
+      { useInnerText: true },
+    );
   });
 
   test('documentation link in editing a cluster should open in a new tab', async ({ page }) => {
