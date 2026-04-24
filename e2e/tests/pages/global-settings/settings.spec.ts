@@ -661,6 +661,21 @@ test.describe('Settings', () => {
           .body.default;
 
         await expect(settingsPage.advancedSettingRow(settingName)).toContainText(freshDefault);
+
+        // Validate kubeconfig YAML structure (upstream parity)
+        const kcResp = await rancherApi.createRancherResource('v1', 'ext.cattle.io.kubeconfigs', {
+          metadata: {},
+          spec: { clusterName: 'local' },
+        });
+
+        expect(kcResp.status).toBe(201);
+        const jsyaml = await import('js-yaml');
+        const kubeconfig = jsyaml.load(kcResp.body.status.value) as Record<string, unknown>;
+
+        expect(kubeconfig).toHaveProperty('apiVersion', 'v1');
+        expect(kubeconfig).toHaveProperty('kind', 'Config');
+        expect((kubeconfig.clusters as Array<{ name: string }>).length).toBeGreaterThanOrEqual(1);
+        expect((kubeconfig.users as Array<{ user: { token: string } }>)[0].user.token.length).toBeGreaterThan(0);
       } finally {
         await restore();
       }
