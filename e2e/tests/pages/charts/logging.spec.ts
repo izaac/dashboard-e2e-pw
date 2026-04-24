@@ -238,7 +238,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
     expect(getChartsResp.status()).toBe(200);
 
-    await installedAppsPage.appsList().checkVisible();
+    await expect(installedAppsPage.appsList().self()).toBeVisible();
     await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
 
     // Verify both charts exist
@@ -271,14 +271,14 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
         resp.request().method() === 'POST',
     );
 
-    await promptRemove.checkbox().shouldContainText('Delete the CRD associated with this app');
+    await expect(promptRemove.checkbox().self()).toContainText('Delete the CRD associated with this app');
     await promptRemove.checkbox().set();
     await promptRemove.checkbox().isChecked();
     await promptRemove.remove();
 
     const card = new CardPo(page);
 
-    await card.checkNotExists();
+    await expect(card.self()).not.toBeAttached();
 
     const chartUninstallResp = await chartUninstallPromise;
     const crdUninstallResp = await crdUninstallPromise;
@@ -297,7 +297,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
     await page.waitForResponse((resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok());
 
-    await installedAppsPage.appsList().checkVisible();
+    await expect(installedAppsPage.appsList().self()).toBeVisible();
     await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
 
     // Verify chart rows are gone

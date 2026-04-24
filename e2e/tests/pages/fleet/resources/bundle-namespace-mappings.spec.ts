@@ -44,7 +44,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(customMappingName).checkVisible();
+        await expect(listPage.list().rowWithName(customMappingName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',
@@ -97,7 +97,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(cloneName).checkVisible();
+        await expect(listPage.list().rowWithName(cloneName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',

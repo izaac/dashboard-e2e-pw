@@ -24,7 +24,7 @@ class InstallExtensionDialog {
   }
 
   async checkVisible(): Promise<void> {
-    await expect(this.self()).toBeVisible();
+    await this.self().waitFor({ state: 'visible' });
   }
 
   versionLabelSelect(): LabeledSelectPo {
@@ -216,7 +216,7 @@ export default class ExtensionsPagePo extends PagePo {
   // --- extension tabs ---
 
   async waitForTabs(): Promise<void> {
-    await this.extensionTabs.checkVisible();
+    await this.extensionTabs.self().waitFor({ state: 'visible' });
   }
 
   extensionTabBuiltin(): Locator {
@@ -320,7 +320,7 @@ export default class ExtensionsPagePo extends PagePo {
     await this.extensionTabAvailableClick();
     await this.waitForPage(undefined, 'available');
     await this.extensionCardInstallClick(extensionName);
-    await this.installModal().checkVisible();
+    await this.installModal().self().waitFor({ state: 'visible' });
     await this.installModal().installButton().click();
     await expect(this.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
     await this.extensionReloadClick();

@@ -389,7 +389,7 @@ test.describe('Feature Flags', () => {
         await expect(headers.nth(i)).toHaveText(expectedHeaders[i]);
       }
 
-      await featureFlagsPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(featureFlagsPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await featureFlagsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await expect(featureFlagsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 

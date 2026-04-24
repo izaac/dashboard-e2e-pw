@@ -79,7 +79,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // click on install button on card
     await extensionsPo.extensionCardInstallClick(EXTENSION_NAME);
-    await extensionsPo.installModal().checkVisible();
+    await expect(extensionsPo.installModal().self()).toBeVisible();
 
     // select version and click install
     await extensionsPo.installModal().selectVersionLabel(EXTENSION_VERSION);

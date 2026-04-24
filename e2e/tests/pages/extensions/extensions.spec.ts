@@ -233,7 +233,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
       await expect(page).toHaveTitle(expectedTitle);
 
-      await extensionsPo.repoBanner().checkVisible();
+      await expect(extensionsPo.repoBanner().self()).toBeVisible();
     },
   );
 
@@ -269,7 +269,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
     await extensionsPo.waitForPage();
     await extensionsPo.waitForTitle();
-    await extensionsPo.extensionTabs.checkVisible();
+    await expect(extensionsPo.extensionTabs.self()).toBeVisible();
   });
 
   test('using "Add Rancher Repositories" should add a new repository (Partners repo)', async ({ page, rancherApi }) => {
@@ -410,16 +410,16 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     await extensionsPo.waitForPage();
     await expect(extensionsPo.loading()).not.toBeAttached();
 
-    await extensionsPo.repoBanner().checkVisible();
+    await expect(extensionsPo.repoBanner().self()).toBeVisible();
     await extensionsPo.repoBannerActionButton().click();
-    await extensionsPo.repoBanner().checkNotExists();
+    await expect(extensionsPo.repoBanner().self()).not.toBeAttached();
 
     // Refresh the page to make sure it doesn't appear again
     await extensionsPo.goTo();
     await extensionsPo.waitForPage();
     await extensionsPo.waitForTitle();
     await expect(extensionsPo.loading()).not.toBeAttached();
-    await extensionsPo.repoBanner().checkNotExists();
+    await expect(extensionsPo.repoBanner().self()).not.toBeAttached();
   });
 });
 
@@ -502,7 +502,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Click on install button on card
     await extensionsPo.extensionCardInstallClick(EXTENSION_NAME);
-    await extensionsPo.installModal().checkVisible();
+    await expect(extensionsPo.installModal().self()).toBeVisible();
 
     // Select version and click install
     await extensionsPo.installModal().selectVersionClick(2);
@@ -637,7 +637,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Click on install button on card
     await extensionsPo.extensionCardInstallClick(DISABLED_CACHE_EXTENSION_NAME);
-    await extensionsPo.installModal().checkVisible();
+    await expect(extensionsPo.installModal().self()).toBeVisible();
 
     // Click install
     await extensionsPo.installModal().installButton().click();
@@ -690,7 +690,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Install unauthenticated extension
     await extensionsPo.extensionCardInstallClick(UNAUTHENTICATED_EXTENSION_NAME);
-    await extensionsPo.installModal().checkVisible();
+    await expect(extensionsPo.installModal().self()).toBeVisible();
     await extensionsPo.installModal().installButton().click();
 
     // Check the extension reload banner and reload the page

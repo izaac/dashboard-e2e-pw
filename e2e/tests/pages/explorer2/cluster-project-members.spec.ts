@@ -26,7 +26,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       const actualUsername = userResp.body.username;
       const sortableTable = usersPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await expect(sortableTable.rowElementWithName(actualUsername)).toBeVisible(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
@@ -78,7 +78,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
       // Member list shows "{username} {clusterDisplayName}" — use partial match
       const sortableTable = clusterMembership.sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await expect(sortableTable.rowElementWithPartialName(actualUsername)).toBeVisible(SHORT_TIMEOUT_OPT);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);

@@ -18,7 +18,7 @@ test.describe('Roles', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = rolesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
 
@@ -43,7 +43,7 @@ test.describe('Roles', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = rolesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
@@ -76,7 +76,7 @@ test.describe('Roles', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = rolesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(1).click();
 
       const expectedHeaders = ['State', 'Name', 'Created At'];

@@ -74,7 +74,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
         await ingressListPage.goTo();
         await ingressListPage.waitForPage();
-        await ingressListPage.list().resourceTable().sortableTable().checkVisible();
+        await expect(ingressListPage.list().resourceTable().sortableTable().self()).toBeVisible();
         await ingressListPage.list().masthead().create();
 
         const ingressForm = new IngressCreateEditPo(page);
@@ -389,7 +389,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
       const expectedHeaders = ['State', 'Name', 'Namespace', 'Target', 'Default', 'Ingress Class', 'Age'];
       const sortableTable = ingressListPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();
@@ -417,7 +417,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
       const expectedHeaders = ['State', 'Name', 'Namespace', 'Target', 'Default', 'Ingress Class', 'Age'];
       const sortableTable = ingressListPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
@@ -450,7 +450,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const expectedHeaders = ['State', 'Name', 'Target', 'Default', 'Ingress Class', 'Age'];
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();

@@ -65,7 +65,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         // Select 'Use an existing storage class' option
         const storageOptions = new RadioGroupInputPo(page, '[chart="[chart: cluster/rancher-charts/rancher-backup]"]');
 
-        await storageOptions.checkExists();
+        await expect(storageOptions.self()).toBeAttached();
         await storageOptions.set(2);
 
         // Scroll to bottom again after selection
@@ -74,7 +74,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         // Verify the drop-down exists and select default storage class
         const select = new LabeledSelectPo(page, '[data-testid="backup-chart-select-existing-storage-class"]');
 
-        await select.checkExists();
+        await expect(select.self()).toBeAttached();
         await select.toggle();
         await select.clickOptionWithLabel('test-default-storage-class');
         await select.checkOptionSelected('test-default-storage-class');
@@ -85,7 +85,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         await installPage.editOptions(tabbedOptions, '[data-testid="button-group-child-0"]');
 
-        await select.checkExists();
+        await expect(select.self()).toBeAttached();
         await select.checkOptionSelected('test-default-storage-class');
       });
     });

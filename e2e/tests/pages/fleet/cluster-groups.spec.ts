@@ -234,7 +234,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
     const createPage = new FleetClusterGroupsCreateEditPo(page);
 
     await createPage.resourceDetail().createEditView().editAsYaml();
-    await createPage.resourceDetail().resourceYaml().codeMirror().checkExists();
+    await expect(createPage.resourceDetail().resourceYaml().codeMirror().self()).toBeAttached();
   });
 
   test(
@@ -248,7 +248,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await listPage.goTo();
       await listPage.waitForPage();
       await headerPo.selectWorkspace(localWorkspace);
-      await listPage.list().rowWithName(groupName).checkVisible();
+      await expect(listPage.list().rowWithName(groupName).self()).toBeVisible();
 
       const expectedHeaders = ['State', 'Name', 'Clusters Ready', 'Resources', 'Age'];
       const actualHeaders = await listPage.list().resourceTable().sortableTable().headerNames();

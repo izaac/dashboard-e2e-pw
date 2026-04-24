@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 
 /**
  * Base component page object for Playwright.
@@ -8,6 +7,9 @@ import { expect } from '@playwright/test';
  * All page objects hold a reference to the Playwright Page and
  * expose a `self()` method returning a Locator — the Playwright
  * equivalent of Cypress Chainable.
+ *
+ * Per Playwright POM best practice, POs expose Locators for specs
+ * to assert with expect(). POs do NOT contain expect() calls.
  */
 export default class ComponentPo {
   protected page: Page;
@@ -36,30 +38,5 @@ export default class ComponentPo {
 
   async isDisabled(): Promise<boolean> {
     return this.self().isDisabled();
-  }
-
-  async checkVisible(): Promise<void> {
-    await this.self().scrollIntoViewIfNeeded();
-    await expect(this.self()).toBeVisible();
-  }
-
-  async checkNotVisible(): Promise<void> {
-    await expect(this.self()).not.toBeVisible();
-  }
-
-  async checkExists(): Promise<void> {
-    await expect(this.self()).toBeAttached();
-  }
-
-  async checkNotExists(): Promise<void> {
-    await expect(this.self()).not.toBeAttached();
-  }
-
-  async shouldHaveValue(value: string): Promise<void> {
-    await expect(this.self()).toHaveValue(value);
-  }
-
-  async shouldContainText(text: string): Promise<void> {
-    await expect(this.self()).toContainText(text);
   }
 }

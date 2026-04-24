@@ -13,7 +13,7 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
 
       const sortableTable = pvcPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
 
       // Remember current group mode, switch to flat list to show Namespace column
       const groupBtn1 = sortableTable.groupByButtons(1);
@@ -54,7 +54,7 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
 
       const sortableTable = pvcPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
     });
 
     test('group by namespace shows namespace groups', async ({ page, login }) => {
@@ -97,7 +97,7 @@ test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, (
 
       const sortableTable = pvcPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(1).click();
 
       // Grouped headers should NOT include Namespace (upstream parity)

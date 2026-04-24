@@ -1,5 +1,4 @@
 import type { Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 
 /**
  * Represents a single row in a sortable table.
@@ -30,17 +29,5 @@ export default class ListRowPo {
 
   nameLink(): Locator {
     return this.rowLocator.locator('td.col-link-detail a');
-  }
-
-  async checkExists(): Promise<void> {
-    await expect(this.rowLocator).toBeAttached();
-  }
-
-  async checkVisible(): Promise<void> {
-    await expect(this.rowLocator).toBeVisible();
-  }
-
-  async checkNotVisible(): Promise<void> {
-    await expect(this.rowLocator).not.toBeVisible();
   }
 }

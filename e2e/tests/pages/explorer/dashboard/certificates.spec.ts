@@ -77,7 +77,7 @@ test.describe('Certificates', { tag: ['@explorer', '@adminUser', '@standardUser'
     const certRow = clusterDashboard.certificatesList().sortableTable().rowWithName(expiredCertName);
 
     await certRow.self().scrollIntoViewIfNeeded();
-    await certRow.checkVisible();
+    await expect(certRow.self()).toBeVisible();
     await expect(certRow.column(1)).toContainText('Expired');
   });
 

@@ -137,6 +137,6 @@ export default class ClusterDashboardPagePo extends PagePo {
 
   async goToAndWait(): Promise<void> {
     await this.goTo();
-    await this.clusterActionsHeader().checkVisible();
+    await this.clusterActionsHeader().self().waitFor({ state: 'visible' });
   }
 }

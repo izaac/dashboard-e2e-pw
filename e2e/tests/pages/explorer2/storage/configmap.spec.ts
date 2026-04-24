@@ -110,7 +110,7 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const table = configMapListPage.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         await expect(table.pagination()).toBeVisible();
@@ -155,7 +155,7 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         const table = configMapListPage.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Click Namespace (col 2) first to clear any existing Name sort state
@@ -196,7 +196,7 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
 
           const table = configMapListPage.list().resourceTable().sortableTable();
 
-          await table.checkVisible();
+          await expect(table.self()).toBeVisible();
           await table.checkLoadingIndicatorNotVisible();
 
           // Filter by specific name

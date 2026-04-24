@@ -1,4 +1,4 @@
-import { test } from '@/support/fixtures';
+import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 
@@ -29,8 +29,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await homePage.goTo();
 
-    await nav.version().checkExists();
-    await nav.version().checkVisible();
+    await expect(nav.version().self()).toBeAttached();
+    await expect(nav.version().self()).toBeVisible();
   });
 
   test('app bar shows short version number', async ({ page, login }) => {
@@ -42,8 +42,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await homePage.goTo();
 
-    await nav.version().checkExists();
-    await nav.version().checkVisible();
+    await expect(nav.version().self()).toBeAttached();
+    await expect(nav.version().self()).toBeVisible();
     await nav.version().checkVersion('v2.9');
     await nav.version().checkNormalText();
   });
@@ -57,8 +57,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await homePage.goTo();
 
-    await nav.version().checkExists();
-    await nav.version().checkVisible();
+    await expect(nav.version().self()).toBeAttached();
+    await expect(nav.version().self()).toBeVisible();
     await nav.version().checkVersion('v2.9.1');
     await nav.version().checkNormalText();
   });
@@ -72,8 +72,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await homePage.goTo();
 
-    await nav.version().checkExists();
-    await nav.version().checkVisible();
+    await expect(nav.version().self()).toBeAttached();
+    await expect(nav.version().self()).toBeVisible();
     await nav.version().checkVersion('About');
     await nav.version().checkNormalText();
   });
@@ -87,8 +87,8 @@ test.describe('App Bar Version Number', { tag: ['@generic', '@adminUser', '@stan
 
     await homePage.goTo();
 
-    await nav.version().checkExists();
-    await nav.version().checkVisible();
+    await expect(nav.version().self()).toBeAttached();
+    await expect(nav.version().self()).toBeVisible();
     await nav.version().checkVersion('v2.10.11');
     await nav.version().checkSmallText();
   });

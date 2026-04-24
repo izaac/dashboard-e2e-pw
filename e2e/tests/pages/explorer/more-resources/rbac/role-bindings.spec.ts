@@ -25,7 +25,7 @@ test.describe('RoleBindings', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = roleBindingsPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
 
@@ -54,7 +54,7 @@ test.describe('RoleBindings', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = roleBindingsPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
@@ -85,7 +85,7 @@ test.describe('RoleBindings', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const sortableTable = roleBindingsPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(1).click();
 
       const expectedHeaders = ['State', 'Name', 'Role', 'Users', 'Groups', 'Service Accounts', 'Age'];

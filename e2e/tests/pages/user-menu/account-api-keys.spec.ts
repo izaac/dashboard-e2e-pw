@@ -57,7 +57,7 @@ test.describe('Account and API Keys', { tag: ['@userMenu', '@adminUser', '@stand
       await createKeyPage.done();
 
       // Filter table to find our key (table may be paginated)
-      await apiKeysList.checkVisible();
+      await expect(apiKeysList.self()).toBeVisible();
       const sortableTable = apiKeysList.resourceTable().sortableTable();
 
       await sortableTable.filter(keyDesc);

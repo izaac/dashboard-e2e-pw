@@ -22,7 +22,7 @@ test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
       await contentsPage.goTo();
       await contentsPage.waitForPage();
 
-      await contentsPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(contentsPage.list().resourceTable().sortableTable().self()).toBeVisible();
 
       const headers = await contentsPage.list().resourceTable().sortableTable().headerNames();
 
@@ -47,7 +47,7 @@ test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
       await contentsPage.goTo();
       await contentsPage.waitForPage();
 
-      await contentsPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(contentsPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await contentsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
       const headerCells = contentsPage.list().resourceTable().sortableTable().headerContentCells();

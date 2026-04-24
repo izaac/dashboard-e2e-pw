@@ -17,7 +17,7 @@ test.describe('Node detail', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     const sortableTable = nodesPage.list().resourceTable().sortableTable();
 
-    await sortableTable.checkVisible();
+    await expect(sortableTable.self()).toBeVisible();
 
     const firstNodeLink = sortableTable.rowElementLink(0, 2);
 

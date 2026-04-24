@@ -60,20 +60,20 @@ test.describe('RKE2 Cilium CNI', () => {
 
       const cniSelect = createPage.cniSelect();
 
-      await cniSelect.checkExists();
+      await expect(cniSelect.self()).toBeAttached();
       await cniSelect.self().scrollIntoViewIfNeeded();
       await cniSelect.checkOptionSelected('calico');
 
       const bandwidthManager = createPage.ciliumBandwidthManagerCheckbox();
 
-      await bandwidthManager.checkNotExists();
+      await expect(bandwidthManager.self()).not.toBeAttached();
 
       await cniSelect.toggle();
       await cniSelect.clickLabel('cilium');
       await cniSelect.checkOptionSelected('cilium');
       await cniSelect.isClosed();
 
-      await bandwidthManager.checkExists();
+      await expect(bandwidthManager.self()).toBeAttached();
       await bandwidthManager.self().scrollIntoViewIfNeeded();
       await bandwidthManager.isUnchecked();
 

@@ -48,7 +48,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
       await events.goTo();
       await events.waitForPage();
 
-      await events.list().resourceTable().sortableTable().checkVisible();
+      await expect(events.list().resourceTable().sortableTable().self()).toBeVisible();
       await events.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
       const rowCount = await events.list().resourceTable().sortableTable().rowCount();
@@ -75,7 +75,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
       await events.goTo();
       await events.waitForPage();
 
-      await events.list().resourceTable().sortableTable().checkVisible();
+      await expect(events.list().resourceTable().sortableTable().self()).toBeVisible();
       await events.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await events.list().resourceTable().sortableTable().checkRowCount(false, 3);
       await expect(events.list().resourceTable().sortableTable().pagination()).not.toBeAttached();
@@ -104,7 +104,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
 
         const table = events.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Pagination visible with correct text
@@ -160,7 +160,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
 
         const table = events.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         const totalBefore = await table.rowCount();
@@ -205,7 +205,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
 
         const table = events.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Sort by Name (col 11) — matches upstream sort(11).click()

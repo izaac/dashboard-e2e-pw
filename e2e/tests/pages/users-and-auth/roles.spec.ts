@@ -705,7 +705,7 @@ rules:
 
         const table = roles.list('GLOBAL').resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Roles page has 3 tabs with separate pagination — scope to GLOBAL tab
@@ -752,7 +752,7 @@ rules:
 
         const table = roles.list('GLOBAL').resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Filter by a known built-in role display name
@@ -781,7 +781,7 @@ rules:
 
         const table = roles.list('GLOBAL').resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Upstream sorts by Display Name (col 2) — click State (col 1) first to clear

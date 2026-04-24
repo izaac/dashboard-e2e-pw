@@ -19,7 +19,7 @@
 | CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, isChecked, isNotChecked, uncheck, if, hasAppropriateWidth, expect (+6) |
 | CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
-| ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled, checkVisible, checkNotVisible, checkExists, checkNotExists (+2) |
+| ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
 | CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard, exists |
 | CreateEditViewPo | create-edit-view.po.ts | ComponentPo | — | nameNsDescription, errorBanner, formSave, createButton, create, save, cancel, saveAndWait (+12) |
 | CruResourcePo | cru-resource.po.ts | ComponentPo | — | super, saveOrCreate, cancel, findSubTypeByName, selectSubType, selectSubTypeByIndex, saveAndWaitForRequests |
@@ -30,7 +30,7 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, input, byLabel (+1) |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkExists, checkVisible, checkNotVisible |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+13) |
@@ -47,7 +47,7 @@
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, createBasicAuth, createRKEAuth, waitForNotLoading |
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+55) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+54) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, assertTabIsActiveByTestId, getTab (+2) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |

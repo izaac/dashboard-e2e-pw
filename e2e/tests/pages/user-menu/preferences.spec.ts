@@ -598,7 +598,7 @@ test.describe('User can update their preferences', () => {
 
       const hideCheckbox = prefPage.hideDescriptionsCheckbox();
 
-      await hideCheckbox.checkVisible();
+      await expect(hideCheckbox.self()).toBeVisible();
 
       // Enable hide descriptions
       const prefUpdatePromise1 = page.waitForResponse(
@@ -619,7 +619,7 @@ test.describe('User can update their preferences', () => {
       // Disable hide descriptions
       await prefPage.goTo();
       await prefPage.waitForPage();
-      await hideCheckbox.checkVisible();
+      await expect(hideCheckbox.self()).toBeVisible();
 
       const prefUpdatePromise2 = page.waitForResponse(
         (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
@@ -672,7 +672,7 @@ test.describe('User can update their preferences', () => {
 
     const radioGroup = prefPage.landingPageRadioBtn();
 
-    await radioGroup.checkVisible();
+    await expect(radioGroup.self()).toBeVisible();
 
     const prefUpdatePromise = page.waitForResponse(
       (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
@@ -716,7 +716,7 @@ test.describe('User can update their preferences', () => {
 
       const radioGroup = prefPage.landingPageRadioBtn();
 
-      await radioGroup.checkVisible();
+      await expect(radioGroup.self()).toBeVisible();
 
       const prefUpdatePromise = page.waitForResponse(
         (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
@@ -764,7 +764,7 @@ test.describe('User can update their preferences', () => {
 
       const radioGroup = prefPage.landingPageRadioBtn();
 
-      await radioGroup.checkVisible();
+      await expect(radioGroup.self()).toBeVisible();
 
       // Ensure the cluster dropdown contains 'local' before selecting the radio
       await expect(prefPage.customPageOptions()).toContainText('local');

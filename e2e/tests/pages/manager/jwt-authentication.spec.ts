@@ -110,7 +110,7 @@ async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAut
     await jwtAuthPage.waitForPage();
 
     try {
-      await jwtAuthPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(jwtAuthPage.list().resourceTable().sortableTable().self()).toBeVisible();
       break;
     } catch {
       if (attempt === 2) {
@@ -172,7 +172,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
       await goToJWTAuthenticationPageAndSettle(page, jwtAuthPage);
 
       await expect(jwtAuthPage.list().masthead().title()).toContainText('JWT Authentication');
-      await jwtAuthPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(jwtAuthPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await jwtAuthPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await expect(jwtAuthPage.list().resourceTable().resourceTableDetails(cluster0.name, 1)).toContainText('Disabled');
       await expect(jwtAuthPage.list().resourceTable().resourceTableDetails(cluster1.name, 1)).toContainText('Disabled');
@@ -316,7 +316,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
     await jwtAuthPage.goTo('_');
     await jwtAuthPage.waitForPage();
 
-    await jwtAuthPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(jwtAuthPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await jwtAuthPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
   });
 
@@ -344,7 +344,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
       await jwtAuthPage.goTo('_');
       await jwtAuthPage.waitForPage();
 
-      await jwtAuthPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(jwtAuthPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await jwtAuthPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
       const rows = jwtAuthPage.list().resourceTable().sortableTable().rowElements();

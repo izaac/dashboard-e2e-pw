@@ -143,7 +143,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
     await fleetClusterListPage.waitForPage();
     await header.selectWorkspace(workspace);
 
-    await fleetClusterListPage.sortableTable().checkVisible();
+    await expect(fleetClusterListPage.sortableTable().self()).toBeVisible();
     await fleetClusterListPage.sortableTable().checkLoadingIndicatorNotVisible();
 
     const actionMenu = await fleetClusterListPage.list().actionMenu('local');
@@ -220,7 +220,7 @@ test.describe('Fleet Cluster List - resources', { tag: ['@fleet', '@adminUser'] 
         ];
         const detailsTable = fleetClusterDetailsPage.appBundlesList();
 
-        await detailsTable.checkVisible();
+        await expect(detailsTable.self()).toBeVisible();
         await detailsTable.checkLoadingIndicatorNotVisible();
         await detailsTable.groupByButtons(0).click();
 

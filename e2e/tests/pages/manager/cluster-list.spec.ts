@@ -30,12 +30,12 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       await createPage.selectCustom(0);
 
       await expect(createPage.title()).toContainText('Cluster: Create Custom');
-      await createPage.nameNsDescription().name().checkVisible();
+      await expect(createPage.nameNsDescription().name().self()).toBeVisible();
 
       await createPage.resourceDetail().createEditView().editClusterAsYaml();
       const modal = promptModal(page);
 
-      await modal.checkVisible();
+      await expect(modal.self()).toBeVisible();
       await modal.clickActionButton('Save and Continue');
       await expect(page).toHaveURL(/type=custom/);
 

@@ -256,10 +256,6 @@ export default class SortableTablePo extends ComponentPo {
     await expect(this.page.locator('tbody .no-rows')).not.toBeAttached({ timeout: STANDARD });
   }
 
-  async checkVisible(): Promise<void> {
-    await expect(this.self()).toBeVisible();
-  }
-
   groupElementsWithName(name: string): Locator {
     return this.self().locator('tr.group-row').filter({ hasText: name });
   }

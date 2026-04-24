@@ -9,11 +9,11 @@ test.describe('User can logout of Rancher', { tag: ['@userMenu', '@adminUser', '
     const userMenu = new UserMenuPo(page);
     const loginPage = new LoginPagePo(page);
 
-    await userMenu.checkVisible();
+    await expect(userMenu.self()).toBeVisible();
     await userMenu.clickMenuItem('Log Out');
 
     await loginPage.waitForPage();
-    await loginPage.username().checkVisible();
+    await expect(loginPage.username().self()).toBeVisible();
     await expect(loginPage.loginPageMessage()).toContainText('You have been logged out.');
 
     // Verify unauthenticated navigation redirects back to login
@@ -59,12 +59,12 @@ test.describe('User can logout of Rancher', { tag: ['@userMenu', '@adminUser', '
 
     // Reload to pick up the principals mock
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await userMenu.checkVisible();
+    await expect(userMenu.self()).toBeVisible();
 
     await userMenu.clickMenuItem('Log Out');
 
     await loginPage.waitForPage();
-    await loginPage.username().checkVisible();
+    await expect(loginPage.username().self()).toBeVisible();
     await expect(loginPage.loginPageMessage()).toContainText(
       "You've been logged out of Rancher, however you may still be logged in to your single sign-on identity provider.",
     );

@@ -8,7 +8,7 @@ export default class ResourceSearchDialog extends ComponentPo {
   }
 
   async waitForNoDialog(): Promise<void> {
-    await expect(this.self()).not.toBeAttached();
+    await this.self().waitFor({ state: 'detached' });
   }
 
   async open(): Promise<void> {
@@ -31,8 +31,7 @@ export default class ResourceSearchDialog extends ComponentPo {
     const dialog = new ResourceSearchDialog(page);
 
     await dialog.open();
-    await dialog.checkExists();
-    await dialog.checkVisible();
+    await dialog.self().waitFor({ state: 'visible' });
 
     await dialog.searchBox().fill(name);
     await expect(dialog.results()).toHaveCount(1);

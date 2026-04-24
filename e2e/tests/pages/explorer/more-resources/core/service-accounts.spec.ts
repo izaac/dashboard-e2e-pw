@@ -22,7 +22,7 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
       await serviceAccountsPage.goTo();
       await serviceAccountsPage.waitForPage();
 
-      await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().self()).toBeVisible();
 
       const headerCells = serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells();
 
@@ -51,7 +51,7 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
       await serviceAccountsPage.goTo();
       await serviceAccountsPage.waitForPage();
 
-      await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().self()).toBeVisible();
 
       const headerCells = serviceAccountsPage.list().resourceTable().sortableTable().headerContentCells();
 
@@ -90,7 +90,7 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
       expect(headers).toContain('Name');
       expect(headers).toContain('Age');
 
-      await serviceAccountsPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await serviceAccountsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await serviceAccountsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
 

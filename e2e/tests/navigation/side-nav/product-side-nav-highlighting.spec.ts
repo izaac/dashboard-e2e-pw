@@ -127,14 +127,14 @@ test.describe('Side navigation: Highlighting', { tag: ['@navigation', '@adminUse
 
     await roles.goTo(undefined, GLOBAL);
     await roles.waitForPage(undefined, GLOBAL);
-    await roles.list(GLOBAL).rowWithName('Administrator').checkExists();
+    await expect(roles.list(GLOBAL).rowWithName('Administrator').self()).toBeAttached();
 
     const activeOnGlobal = await productNavPo.activeNavItem();
 
     expect(activeOnGlobal).toBe('Role Templates');
 
     await roles.tabs().clickTabWithName(CLUSTER);
-    await roles.list(CLUSTER).rowWithName('Cluster Owner').checkExists();
+    await expect(roles.list(CLUSTER).rowWithName('Cluster Owner').self()).toBeAttached();
 
     const activeOnCluster = await productNavPo.activeNavItem();
 

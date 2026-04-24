@@ -46,7 +46,7 @@ export class BannerCheckboxPo {
 
   async checkVisible(): Promise<void> {
     await this.container.scrollIntoViewIfNeeded();
-    await expect(this.container).toBeVisible();
+    await this.container.waitFor({ state: 'visible' });
   }
 
   async isDisabled(): Promise<void> {

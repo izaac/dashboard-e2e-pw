@@ -98,14 +98,14 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         // Advanced step - wait for secrets/configmaps to load
         await page.waitForResponse((resp) => resp.url().includes('/v1/secrets') && resp.status() === 200);
 
-        await helmOpCreatePage.secretsSelector().checkExists();
+        await expect(helmOpCreatePage.secretsSelector().self()).toBeAttached();
         await helmOpCreatePage.secretsSelector().toggle();
         await helmOpCreatePage.secretsSelector().clickLabel(secret1Name);
         await helmOpCreatePage.secretsSelector().isClosed();
         await helmOpCreatePage.secretsSelector().toggle();
         await helmOpCreatePage.secretsSelector().clickLabel(secret2Name);
 
-        await helmOpCreatePage.configMapsSelector().checkExists();
+        await expect(helmOpCreatePage.configMapsSelector().self()).toBeAttached();
         await helmOpCreatePage.configMapsSelector().toggle();
         await helmOpCreatePage.configMapsSelector().clickLabel(configMap1Name);
         await helmOpCreatePage.configMapsSelector().isClosed();
@@ -236,7 +236,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await page.waitForResponse((resp) => resp.url().includes('/v1/secrets') && resp.status() === 200);
 
         // Remove old secrets
-        await helmOpEditPage.secretsSelector().checkExists();
+        await expect(helmOpEditPage.secretsSelector().self()).toBeAttached();
         await helmOpEditPage.secretsSelector().clickDeselectButton(oldSecret1);
         await helmOpEditPage.secretsSelector().clickDeselectButton(oldSecret2);
 
@@ -245,7 +245,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await helmOpEditPage.secretsSelector().clickLabel(newSecret);
 
         // Remove old configmaps
-        await helmOpEditPage.configMapsSelector().checkExists();
+        await expect(helmOpEditPage.configMapsSelector().self()).toBeAttached();
         await helmOpEditPage.configMapsSelector().clickDeselectButton(oldCm1);
         await helmOpEditPage.configMapsSelector().clickDeselectButton(oldCm2);
 

@@ -48,7 +48,7 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(customTokenName).checkVisible();
+        await expect(listPage.list().rowWithName(customTokenName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',
@@ -102,7 +102,7 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(cloneName).checkVisible();
+        await expect(listPage.list().rowWithName(cloneName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',

@@ -26,7 +26,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await driversPage.goTo();
     await driversPage.waitForPage();
     await expect(driversPage.title()).toBeVisible();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
   });
 
@@ -111,7 +111,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     // Only attempt if driver is active
@@ -140,7 +140,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     const stateText = await driversPage.list().details(linodeDriver, 1).innerText();
@@ -181,7 +181,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Inactive', { timeout: LONG });
@@ -241,7 +241,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     await expect(driversPage.list().details(openTelekomDriver, 1)).toContainText('Active', { timeout: VERY_LONG });
@@ -311,7 +311,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     const deactivateResp = page.waitForResponse(
@@ -361,7 +361,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     const activateResp = page.waitForResponse(
@@ -427,7 +427,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     const actionMenu = await driversPage.list().actionMenu(exampleDriver);
@@ -479,7 +479,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
-    await driversPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(driversPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     await driversPage.list().resourceTable().sortableTable().rowSelectCtlWithName(exampleDriver).set();

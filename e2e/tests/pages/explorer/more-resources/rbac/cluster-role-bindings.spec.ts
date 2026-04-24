@@ -27,7 +27,7 @@ test.describe('ClusterRoleBindings', { tag: ['@explorer', '@adminUser'] }, () =>
 
       const sortableTable = clusterRoleBindingsPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();
 
@@ -53,7 +53,7 @@ test.describe('ClusterRoleBindings', { tag: ['@explorer', '@adminUser'] }, () =>
 
       const sortableTable = clusterRoleBindingsPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();

@@ -44,7 +44,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(customRestrictionName).checkVisible();
+        await expect(listPage.list().rowWithName(customRestrictionName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',
@@ -97,7 +97,7 @@ test.describe('GitRepo Restrictions', { tag: ['@fleet', '@adminUser'] }, () => {
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(cloneName).checkVisible();
+        await expect(listPage.list().rowWithName(cloneName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',

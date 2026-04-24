@@ -264,7 +264,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
       const expectedHeaders = ['State', 'Name', 'Namespace', 'Target', 'Selector', 'Type', 'Age'];
       const sortableTable = servicesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();
@@ -292,7 +292,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
       const expectedHeaders = ['State', 'Name', 'Namespace', 'Target', 'Selector', 'Type', 'Age'];
       const sortableTable = servicesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
@@ -325,7 +325,7 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const expectedHeaders = ['State', 'Name', 'Target', 'Selector', 'Type', 'Age'];
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();

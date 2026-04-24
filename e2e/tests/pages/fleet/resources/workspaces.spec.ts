@@ -18,7 +18,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await listPage.goTo();
       await listPage.waitForPage();
-      await listPage.list().resourceTable().sortableTable().rowWithName('fleet-default').checkVisible();
+      await expect(listPage.list().resourceTable().sortableTable().rowWithName('fleet-default').self()).toBeVisible();
       await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
 
       const expectedHeaders = ['State', 'Name', 'Git Repos', 'Helm Ops', 'Clusters', 'Cluster Groups', 'Age'];
@@ -51,7 +51,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         const table = listPage.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         await expect(table.pagination()).toBeVisible();
@@ -102,7 +102,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         const table = listPage.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Filter by created workspace name
@@ -131,7 +131,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         const table = listPage.list().resourceTable().sortableTable();
 
-        await table.checkVisible();
+        await expect(table.self()).toBeVisible();
         await table.checkLoadingIndicatorNotVisible();
 
         // Click State (col 1) to clear any existing Name sort state
@@ -163,7 +163,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       const table = listPage.list().resourceTable().sortableTable();
 
-      await table.checkVisible();
+      await expect(table.self()).toBeVisible();
       await table.checkLoadingIndicatorNotVisible();
       await table.checkRowCount(false, 2);
       await expect(table.pagination()).toBeHidden();
@@ -203,7 +203,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().resourceTable().sortableTable().rowWithName(customWorkspace).checkVisible();
+        await expect(listPage.list().resourceTable().sortableTable().rowWithName(customWorkspace).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v3', 'fleetWorkspaces', customWorkspace, false);
       }

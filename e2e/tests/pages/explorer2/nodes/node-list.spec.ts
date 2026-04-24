@@ -26,7 +26,7 @@ test.describe('Nodes list', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const sortableTable = nodesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await expect(sortableTable.rowElements()).toHaveCount(nodeCount);
       await expect(sortableTable.self()).toContainText(nodeName);
 

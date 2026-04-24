@@ -66,7 +66,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
     await providersPage.goTo();
     await providersPage.waitForPage();
     await expect(providersPage.title()).toBeVisible();
-    await providersPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(providersPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
   });
 
@@ -88,7 +88,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
 
       await providersPage.goTo();
       await providersPage.waitForPage();
-      await providersPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(providersPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await expect(providersPage.list().details(AKS, 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
 
@@ -130,7 +130,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
 
       await providersPage.goTo();
       await providersPage.waitForPage();
-      await providersPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(providersPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
       const activateResp = page.waitForResponse(
@@ -171,7 +171,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
 
       await providersPage.goTo();
       await providersPage.waitForPage();
-      await providersPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(providersPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await expect(providersPage.list().details(EKS, 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
       await expect(providersPage.list().details(GKE, 1)).toContainText('Active', SHORT_TIMEOUT_OPT);
@@ -223,7 +223,7 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
 
       await providersPage.goTo();
       await providersPage.waitForPage();
-      await providersPage.list().resourceTable().sortableTable().checkVisible();
+      await expect(providersPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await providersPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
       await expect(providersPage.list().details(EKS, 1)).toContainText('Inactive', SHORT_TIMEOUT_OPT);
       await expect(providersPage.list().details(GKE, 1)).toContainText('Inactive', SHORT_TIMEOUT_OPT);

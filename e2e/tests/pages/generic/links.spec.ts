@@ -45,8 +45,8 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         const checkbox = homeLinksPage.defaultLinkCheckbox(5);
 
-        await checkbox.checkExists();
-        await checkbox.checkVisible();
+        await expect(checkbox.self()).toBeAttached();
+        await expect(checkbox.self()).toBeVisible();
         await checkbox.set();
 
         await homeLinksPage.applyButton().click();
@@ -109,8 +109,8 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
 
         const checkbox = homeLinksPage.defaultLinkCheckbox(5);
 
-        await checkbox.checkExists();
-        await checkbox.checkVisible();
+        await expect(checkbox.self()).toBeAttached();
+        await expect(checkbox.self()).toBeVisible();
         await checkbox.set();
 
         await homeLinksPage.applyButton().click();

@@ -135,7 +135,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
       await expect(usersPo.userRetentionLink()).toBeVisible();
       await usersPo.userRetentionLink().click();
 
-      await userRetentionPo.disableAfterPeriodCheckbox().checkExists();
+      await expect(userRetentionPo.disableAfterPeriodCheckbox().self()).toBeAttached();
       await userRetentionPo.disableAfterPeriodCheckbox().isChecked();
       await expect(userRetentionPo.disableAfterPeriodInput().self()).toHaveValue('300h');
       await userRetentionPo.deleteAfterPeriodCheckbox().isChecked();

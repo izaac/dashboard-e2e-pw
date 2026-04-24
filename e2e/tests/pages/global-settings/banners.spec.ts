@@ -263,7 +263,7 @@ test.describe('Banners', () => {
         await bannersPage.waitForPageWithClusterId();
 
         // Show banner
-        await bannersPage.loginScreenBannerCheckbox().checkVisible();
+        await expect(bannersPage.loginScreenBannerCheckbox().self()).toBeVisible();
         await bannersPage.loginScreenBannerCheckbox().set();
         await bannersPage.loginScreenTextArea().fill(settings.bannerLabel);
         await bannersPage.textAlignmentRadioGroup('bannerConsent').set(2);
@@ -335,7 +335,7 @@ test.describe('Banners', () => {
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
 
-        await bannersPage.loginErrorCheckbox().checkVisible();
+        await expect(bannersPage.loginErrorCheckbox().self()).toBeVisible();
         await bannersPage.loginErrorCheckbox().set();
         await bannersPage.loginErrorInput().set(settings.bannerLabel);
         await bannersPage.applyAndWait('ui-banners', 200);
@@ -356,7 +356,7 @@ test.describe('Banners', () => {
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
 
-        await bannersPage.loginErrorCheckbox().checkVisible();
+        await expect(bannersPage.loginErrorCheckbox().self()).toBeVisible();
         await bannersPage.loginErrorCheckbox().set();
         await bannersPage.applyAndWait('ui-banners', 200);
 
@@ -397,7 +397,7 @@ test.describe('Banners', () => {
 
         await bannersPage.headerBannerCheckbox().isChecked();
         expect(await bannersPage.textColorPicker(1).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
-        await bannersPage.contentTypeToggle('bannerHeader').shouldContainText('HTML');
+        await expect(bannersPage.contentTypeToggle('bannerHeader').self()).toContainText('HTML');
         await expect(bannersPage.htmlTextArea('bannerHeader')).toHaveValue(bannerHtml);
 
         // Check over reload
@@ -420,9 +420,9 @@ test.describe('Banners', () => {
         await bannersPage.waitForPageWithClusterId();
 
         // Enable consent banner as dialog with HTML content
-        await bannersPage.loginScreenBannerCheckbox().checkVisible();
+        await expect(bannersPage.loginScreenBannerCheckbox().self()).toBeVisible();
         await bannersPage.loginScreenBannerCheckbox().set();
-        await bannersPage.consentBannerShowAsDialogCheckbox().checkVisible();
+        await expect(bannersPage.consentBannerShowAsDialogCheckbox().self()).toBeVisible();
         await bannersPage.consentBannerShowAsDialogCheckbox().ensureChecked();
         await bannersPage.contentTypeToggle('bannerConsent').set('HTML');
         await bannersPage.htmlTextArea('bannerConsent').fill(bannerHtml);
@@ -467,7 +467,7 @@ test.describe('Banners', () => {
         expect(await bannersPage.textColorPicker(4).previewColor()).toBe(settings.bannerTextColor.newRGB);
         expect(await bannersPage.textColorPicker(5).previewColor()).toBe(settings.bannerBackgroundColor.newRGB);
         await bannersPage.consentBannerShowAsDialogCheckbox().isChecked();
-        await bannersPage.contentTypeToggle('bannerConsent').shouldContainText('HTML');
+        await expect(bannersPage.contentTypeToggle('bannerConsent').self()).toContainText('HTML');
         await expect(bannersPage.htmlTextArea('bannerConsent')).toHaveValue(bannerHtml);
         await expect(bannersPage.acceptButtonInput('bannerConsent')).toHaveValue(acceptButtonText);
 

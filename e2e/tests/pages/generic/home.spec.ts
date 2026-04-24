@@ -297,14 +297,14 @@ test.describe('Home Page', () => {
       // Open the notification centre
       await nc.toggle();
       await nc.checkOpen();
-      await nc.checkExists();
-      await nc.checkVisible();
+      await expect(nc.self()).toBeAttached();
+      await expect(nc.self()).toBeVisible();
       await nc.checkHasUnread();
 
       // Get the release notes notification
       const item = nc.getNotificationByName('release-notes');
 
-      await item.checkExists();
+      await expect(item.self()).toBeAttached();
 
       // Mark all as read
       const markReadPromise = page.waitForResponse(
@@ -323,8 +323,8 @@ test.describe('Home Page', () => {
       // Open again
       await nc.toggle();
       await nc.checkOpen();
-      await nc.checkExists();
-      await nc.checkVisible();
+      await expect(nc.self()).toBeAttached();
+      await expect(nc.self()).toBeVisible();
       await nc.checkAllRead();
 
       // Verify notification title and toggle read state
@@ -354,12 +354,12 @@ test.describe('Home Page', () => {
 
       await nc.toggle();
       await nc.checkOpen();
-      await nc.checkExists();
-      await nc.checkVisible();
+      await expect(nc.self()).toBeAttached();
+      await expect(nc.self()).toBeVisible();
 
       const item = nc.getNotificationByName('release-notes');
 
-      await item.checkExists();
+      await expect(item.self()).toBeAttached();
 
       const version = await rancherApi.getRancherVersion();
 

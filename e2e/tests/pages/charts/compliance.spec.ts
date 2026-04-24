@@ -105,7 +105,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         // Wait for the apps list to be visible
         await expect(installedAppsPage.appsList().self()).toBeVisible({ timeout: LONG });
 
-        await installedAppsPage.appsList().checkVisible();
+        await expect(installedAppsPage.appsList().self()).toBeVisible();
         await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
 
         // Verify compliance components are present
@@ -158,7 +158,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         const complianceResourceTable = new ResourceTablePo(page, '.dashboard-root');
 
-        await complianceResourceTable.checkVisible();
+        await expect(complianceResourceTable.self()).toBeVisible();
         await complianceResourceTable.sortableTable().checkRowCount(false, 2);
       });
     });

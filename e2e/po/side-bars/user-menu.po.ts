@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class UserMenuPo extends ComponentPo {
@@ -16,11 +15,11 @@ export default class UserMenuPo extends ComponentPo {
   }
 
   async isOpen(): Promise<void> {
-    await expect(this.userMenuContainer()).toBeVisible();
+    await this.userMenuContainer().waitFor({ state: 'visible' });
   }
 
   async ensureOpen(): Promise<void> {
-    await this.checkVisible();
+    await this.self().waitFor({ state: 'visible' });
 
     const alreadyOpen = await this.userMenuContainer().isVisible();
 
@@ -32,7 +31,7 @@ export default class UserMenuPo extends ComponentPo {
   }
 
   async isClosed(): Promise<void> {
-    await expect(this.userMenuContainer()).not.toBeAttached();
+    await this.userMenuContainer().waitFor({ state: 'detached' });
   }
 
   getMenuItems(): Locator {

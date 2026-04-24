@@ -20,8 +20,8 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
 
     const dialog = new ResourceSearchDialog(page);
 
-    await dialog.checkExists();
-    await dialog.checkVisible();
+    await expect(dialog.self()).toBeAttached();
+    await expect(dialog.self()).toBeVisible();
 
     await dialog.searchBox().fill('ConfigMap');
 
@@ -39,8 +39,8 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
 
     const dialog = new ResourceSearchDialog(page);
 
-    await dialog.checkExists();
-    await dialog.checkVisible();
+    await expect(dialog.self()).toBeAttached();
+    await expect(dialog.self()).toBeVisible();
 
     await dialog.searchBox().fill('provisioning.cattle');
 
@@ -61,8 +61,8 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
     const dialog = new ResourceSearchDialog(page);
 
     await dialog.open();
-    await dialog.checkExists();
-    await dialog.checkVisible();
+    await expect(dialog.self()).toBeAttached();
+    await expect(dialog.self()).toBeVisible();
 
     await dialog.searchBox().fill('ConfigMap');
 
@@ -72,6 +72,6 @@ test.describe('Cluster Dashboard', { tag: ['@explorer2', '@adminUser', '@standar
     await dialog.results().first().click();
 
     await expect(page).toHaveURL(/\/c\/local\/explorer\/configmap/);
-    await dialog.checkNotExists();
+    await expect(dialog.self()).not.toBeAttached();
   });
 });

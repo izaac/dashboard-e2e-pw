@@ -84,7 +84,7 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
       await burgerMenu.checkIfMenuItemLinkIsHighlighted('Continuous Delivery');
 
-      await fleetDashboardPage.viewModeButton().checkVisible();
+      await expect(fleetDashboardPage.viewModeButton().self()).toBeVisible();
 
       const workspaceCard = fleetDashboardPage.workspaceCard(localWorkspace);
 
@@ -136,10 +136,10 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
       await expect(cardsPanel.self()).toBeVisible();
 
-      await expandedPanel.gitReposFilter().checkVisible();
+      await expect(expandedPanel.gitReposFilter().self()).toBeVisible();
       await expandedPanel.gitReposFilter().isChecked();
 
-      await expandedPanel.helmOpsFilter().checkVisible();
+      await expect(expandedPanel.helmOpsFilter().self()).toBeVisible();
       await expandedPanel.helmOpsFilter().isChecked();
 
       const activeStatePanel = cardsPanel.statePanel('Active');
@@ -207,11 +207,11 @@ test.describe('Fleet Dashboard', { tag: ['@fleet', '@adminUser', '@jenkins'] }, 
 
       await fleetDashboardPage.viewModeButton().selectByIndex(0);
 
-      await cardsPanel.checkNotExists();
+      await expect(cardsPanel.self()).not.toBeAttached();
 
       const tablePanel = workspaceCard.expandedPanel().tablePanel();
 
-      await tablePanel.checkVisible();
+      await expect(tablePanel.self()).toBeVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepo', `${localWorkspace}/${repoName}`, false);
     }

@@ -58,7 +58,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       await crdsPage.goTo();
       await crdsPage.waitForPage();
 
-      await crdsPage.sortableTable().checkVisible();
+      await expect(crdsPage.sortableTable().self()).toBeVisible();
       await crdsPage.sortableTable().checkLoadingIndicatorNotVisible();
 
       const filterTerm = 'catalog.cattle.io';
@@ -78,7 +78,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       await crdsPage.goTo();
       await crdsPage.waitForPage();
 
-      await crdsPage.sortableTable().checkVisible();
+      await expect(crdsPage.sortableTable().self()).toBeVisible();
       await crdsPage.sortableTable().checkLoadingIndicatorNotVisible();
 
       const filter = 'catalog.cattle.io';
@@ -112,7 +112,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
       await crdsPage.goTo();
       await crdsPage.waitForPage();
 
-      await crdsPage.sortableTable().checkVisible();
+      await expect(crdsPage.sortableTable().self()).toBeVisible();
       await crdsPage.sortableTable().checkLoadingIndicatorNotVisible();
       await crdsPage.sortableTable().checkRowCount(false, 2);
       await expect(crdsPage.sortableTable().pagination()).not.toBeAttached();

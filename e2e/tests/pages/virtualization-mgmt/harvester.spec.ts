@@ -49,7 +49,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     // verify install button and message displays
     await harvesterPo.goTo();
     await harvesterPo.waitForPage();
-    await harvesterPo.updateOrInstallButton().checkVisible();
+    await expect(harvesterPo.updateOrInstallButton().self()).toBeVisible();
     await expect(harvesterPo.extensionWarning()).toHaveText('The Harvester UI Extension is not installed');
 
     // Set up response listeners BEFORE clicking install
@@ -235,7 +235,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     // click on install button on card
     await extensionsPo.extensionCardInstallClick(harvesterTitle);
-    await extensionsPo.installModal().checkVisible();
+    await expect(extensionsPo.installModal().self()).toBeVisible();
 
     // select latest version and click install
     const installPromise = page.waitForResponse(
@@ -305,7 +305,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     // verify install button and message displays — use goTo() since page was just reloaded
     await harvesterPo.goTo();
     await harvesterPo.waitForPage();
-    await harvesterPo.updateOrInstallButton().checkVisible();
+    await expect(harvesterPo.updateOrInstallButton().self()).toBeVisible();
     await expect(harvesterPo.extensionWarning()).toHaveText('The Harvester UI Extension is not installed');
   });
 
@@ -341,7 +341,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     // click on install button on card
     await extensionsPo.extensionCardInstallClick(harvesterTitle);
-    await extensionsPo.installModal().checkVisible();
+    await expect(extensionsPo.installModal().self()).toBeVisible();
 
     // Open version dropdown and get available versions
     await extensionsPo.installModal().versionLabelSelect().toggle();
@@ -423,7 +423,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     // verify update button and message not displayed
     await expect(harvesterPo.extensionWarning()).not.toBeAttached();
-    await harvesterPo.updateOrInstallButton().checkNotExists();
+    await expect(harvesterPo.updateOrInstallButton().self()).not.toBeAttached();
 
     await extensionsPo.goTo();
     await expect(page).toHaveURL(/uiplugins#installed/, { timeout: LONG });

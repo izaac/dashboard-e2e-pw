@@ -20,7 +20,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
     await psaPage.waitForPage();
     await psaPage.create();
     await psaPage.createPodSecurityAdmissionForm().editAsYaml().click();
-    await psaPage.createPodSecurityAdmissionForm().yamlEditor().checkExists();
+    await expect(psaPage.createPodSecurityAdmissionForm().yamlEditor().self()).toBeAttached();
   });
 
   test('can create a pod security admission', async ({ page, login, rancherApi }) => {

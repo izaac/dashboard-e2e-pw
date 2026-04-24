@@ -39,7 +39,7 @@ export default class ClusterProjectMembersPo extends PagePo {
   async selectProjectCustomPermission(): Promise<void> {
     const permissionOptions = new RadioGroupInputPo(this.page, '[data-testid="permission-options"]');
 
-    await permissionOptions.checkExists();
+    await permissionOptions.self().waitFor({ state: 'attached' });
     await permissionOptions.set(3);
   }
 
@@ -47,7 +47,7 @@ export default class ClusterProjectMembersPo extends PagePo {
     for (const permissionIndex of permissionIndices) {
       const checkbox = new CheckboxInputPo(this.page, `[data-testid="custom-permission-${permissionIndex}"]`);
 
-      await checkbox.checkExists();
+      await checkbox.self().waitFor({ state: 'attached' });
       await checkbox.set();
     }
   }

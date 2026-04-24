@@ -55,7 +55,7 @@ async function setTheme(page: any, theme: 'Dark' | 'Light') {
   const prefPage = new PreferencesPagePo(page);
 
   await navToPreferences(page);
-  await prefPage.themeButtons().checkVisible();
+  await expect(prefPage.themeButtons().self()).toBeVisible();
 
   const prefResponsePromise = page.waitForResponse(
     (resp: any) => resp.url().includes('v1/userpreferences') && resp.request().method() === 'PUT',
@@ -599,6 +599,6 @@ test.describe('Branding - Standard User', { tag: ['@globalSettings', '@standardU
     await brandingPage.customFaviconCheckbox().checkDisabled();
     await brandingPage.primaryColorCheckbox().checkDisabled();
     await brandingPage.linkColorCheckbox().checkDisabled();
-    await brandingPage.applyButton().checkNotExists();
+    await expect(brandingPage.applyButton().self()).not.toBeAttached();
   });
 });

@@ -104,7 +104,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     await oidcClientsPage.waitForUrlPathWithoutContext();
 
     await expect(oidcClientsPage.list().title()).toContainText('OIDC Apps');
-    await oidcClientsPage.list().resourceTable().sortableTable().checkVisible();
+    await expect(oidcClientsPage.list().resourceTable().sortableTable().self()).toBeVisible();
     await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     await oidcClientsPage.list().issuerURL().copyToClipboard();
@@ -237,7 +237,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     expect(reqBody.metadata.annotations['cattle.io/oidc-client-secret-create']).toBe('true');
 
     await oidcClientDetailPage.waitForUrlPathWithoutContext();
-    await oidcClientDetailPage.clientFullSecretCopy(1).checkVisible();
+    await expect(oidcClientDetailPage.clientFullSecretCopy(1).self()).toBeVisible();
     await oidcClientDetailPage.clientFullSecretCopy(1).exists();
     await oidcClientDetailPage.clientFullSecretCopy(1).copyToClipboard();
 

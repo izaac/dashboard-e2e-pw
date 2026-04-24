@@ -49,7 +49,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await detailsPage.waitForPage();
 
-      await detailsPage.resourcesList().sortableTable().checkVisible();
+      await expect(detailsPage.resourcesList().sortableTable().self()).toBeVisible();
       const expectedResourceHeaders = ['State', 'Name', 'Kind', 'Cluster', 'Namespace', 'API Version'];
       const resourceHeaderNames = await detailsPage.resourcesList().sortableTable().headerNames();
 
@@ -102,7 +102,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(customBundleName).checkVisible();
+        await expect(listPage.list().rowWithName(customBundleName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',
@@ -153,7 +153,7 @@ test.describe('Bundles', { tag: ['@fleet', '@adminUser'] }, () => {
 
         expect(resp.status()).toBe(201);
         await listPage.waitForPage();
-        await listPage.list().rowWithName(cloneName).checkVisible();
+        await expect(listPage.list().rowWithName(cloneName).self()).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource(
           'v1',

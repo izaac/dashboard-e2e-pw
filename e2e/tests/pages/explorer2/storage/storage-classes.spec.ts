@@ -12,7 +12,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const sortableTable = storageClassesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
 
       const expectedHeaders = ['State', 'Name', 'Provisioner', 'Default', 'Age'];
       const headerNames = await sortableTable.headerNames();
@@ -29,7 +29,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const sortableTable = storageClassesPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
     });
 
     test('can open Edit as YAML from create page', async ({ page, login }) => {

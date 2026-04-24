@@ -98,13 +98,13 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         // Check Grafana has storage class input: https://github.com/rancher/dashboard/issues/11539
         await grafana.storageOptions().set(2);
-        await grafana.storageClass().checkExists();
+        await expect(grafana.storageClass().self()).toBeAttached();
         await grafana.storageClass().toggle();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
         await grafana.storageClass().checkOptionSelected(storageClass);
 
         await grafana.storageOptions().set(3);
-        await grafana.storageClass().checkExists();
+        await expect(grafana.storageClass().self()).toBeAttached();
         await grafana.storageClass().toggle();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
         await grafana.storageClass().checkOptionSelected(storageClass);
@@ -115,10 +115,10 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         await prometheus.scrollToTabBottom();
 
-        await prometheus.persistentStorage().checkVisible();
+        await expect(prometheus.persistentStorage().self()).toBeVisible();
         await prometheus.persistentStorage().set();
 
-        await prometheus.storageClass().checkExists();
+        await expect(prometheus.storageClass().self()).toBeAttached();
         await prometheus.storageClass().toggle();
         await prometheus.storageClass().clickOptionWithLabel(storageClass);
         await prometheus.storageClass().checkOptionSelected(storageClass);

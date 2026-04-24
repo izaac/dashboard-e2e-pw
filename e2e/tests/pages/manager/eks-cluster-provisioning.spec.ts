@@ -179,14 +179,14 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       const latestEKSversion = await createEKSClusterPage.getLatestEKSversion();
 
       await createEKSClusterPage.getVersion().checkOptionSelected(latestEKSversion);
-      await createEKSClusterPage.getNodeGroup().shouldHaveValue(eksSettings.nodegroupName);
+      await expect(createEKSClusterPage.getNodeGroup().self()).toHaveValue(eksSettings.nodegroupName);
       await createEKSClusterPage.getNodeRole().checkOptionSelected(eksSettings.nodeRole);
-      await createEKSClusterPage.getDesiredASGSize().shouldHaveValue(eksSettings.desiredSize);
-      await createEKSClusterPage.getMinASGSize().shouldHaveValue(eksSettings.minSize);
-      await createEKSClusterPage.getMaxASGSize().shouldHaveValue(eksSettings.maxSize);
+      await expect(createEKSClusterPage.getDesiredASGSize().self()).toHaveValue(eksSettings.desiredSize);
+      await expect(createEKSClusterPage.getMinASGSize().self()).toHaveValue(eksSettings.minSize);
+      await expect(createEKSClusterPage.getMaxASGSize().self()).toHaveValue(eksSettings.maxSize);
       await createEKSClusterPage.getLaunchTemplate().checkOptionSelected(eksSettings.launchTemplate);
       await createEKSClusterPage.getInstanceType().checkContainsOptionSelected(eksSettings.instanceType);
-      await createEKSClusterPage.getDiskSize().shouldHaveValue(eksSettings.diskSize);
+      await expect(createEKSClusterPage.getDiskSize().self()).toHaveValue(eksSettings.diskSize);
 
       await createEKSClusterPage.serviceRoleRadioGroup().isChecked(0);
 

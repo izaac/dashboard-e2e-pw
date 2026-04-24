@@ -35,7 +35,7 @@ test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, 
       ];
       const sortableTable = hpaPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();
@@ -72,7 +72,7 @@ test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, 
       ];
       const sortableTable = hpaPage.list().resourceTable().sortableTable();
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await sortableTable.groupByButtons(0).click();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
@@ -113,7 +113,7 @@ test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, 
         'Age',
       ];
 
-      await sortableTable.checkVisible();
+      await expect(sortableTable.self()).toBeVisible();
       await sortableTable.checkLoadingIndicatorNotVisible();
       await expect(sortableTable.tableHeaderRow()).toBeVisible();
       const headers = await sortableTable.headerNames();
