@@ -30,7 +30,8 @@ test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
       expect(headers).toContain('Name');
       expect(headers).toContain('Age');
 
-      await contentsPage.list().resourceTable().sortableTable().checkRowCount(true, 1);
+      await expect(contentsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(1);
+      await expect(contentsPage.list().resourceTable().sortableTable().noRowsText()).toBeVisible();
     });
 
     test('validate fleet contents table', async ({ page, login, rancherApi }) => {
@@ -60,8 +61,8 @@ test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
       expect(headers).toContain('Name');
       expect(headers).toContain('Age');
 
-      await contentsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
-      await contentsPage.list().resourceTable().sortableTable().checkRowCount(false, 2);
+      await expect(contentsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
+      await expect(contentsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(2);
     });
   });
 });

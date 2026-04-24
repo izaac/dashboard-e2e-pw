@@ -33,7 +33,8 @@ test.describe('RoleBindings', { tag: ['@explorer', '@adminUser'] }, () => {
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.checkRowCount(true, 1);
+      await expect(sortableTable.rowElements()).toHaveCount(1);
+      await expect(sortableTable.noRowsText()).toBeVisible();
     });
 
     test('flat list: validate role bindings table', async ({ page, login }) => {
@@ -63,8 +64,8 @@ test.describe('RoleBindings', { tag: ['@explorer', '@adminUser'] }, () => {
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.noRowsShouldNotExist();
-      await sortableTable.checkRowCount(false, 3);
+      await expect(sortableTable.noRowsText()).not.toBeAttached();
+      await expect(sortableTable.rowElements()).toHaveCount(3);
     });
 
     test('group by namespace: validate role bindings table', async ({ page, login }) => {
@@ -95,13 +96,13 @@ test.describe('RoleBindings', { tag: ['@explorer', '@adminUser'] }, () => {
 
       expect(headers).toEqual(expectedHeaders);
       await sortableTable.checkLoadingIndicatorNotVisible();
-      await sortableTable.noRowsShouldNotExist();
+      await expect(sortableTable.noRowsText()).not.toBeAttached();
 
       const groupRow = sortableTable.groupElementWithName('Namespace: kube-system');
 
       await groupRow.scrollIntoViewIfNeeded();
       await expect(groupRow).toBeVisible();
-      await sortableTable.checkRowCount(false, 3);
+      await expect(sortableTable.rowElements()).toHaveCount(3);
     });
   });
 });

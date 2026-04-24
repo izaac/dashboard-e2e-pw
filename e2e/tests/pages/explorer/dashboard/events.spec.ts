@@ -77,7 +77,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await expect(events.list().resourceTable().sortableTable().self()).toBeVisible();
       await events.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await events.list().resourceTable().sortableTable().checkRowCount(false, 3);
+      await expect(events.list().resourceTable().sortableTable().rowElements()).toHaveCount(3);
       await expect(events.list().resourceTable().sortableTable().pagination()).not.toBeAttached();
     });
 
@@ -210,11 +210,11 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
 
         // Sort by Name (col 11) — matches upstream sort(11).click()
         await table.sort(11).click();
-        await table.checkSortOrder(11, 'down');
+        await expect(table.sortIcon(11, 'down')).toBeVisible();
 
         // Toggle to DESC
         await table.sort(11).click();
-        await table.checkSortOrder(11, 'up');
+        await expect(table.sortIcon(11, 'up')).toBeVisible();
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
       }

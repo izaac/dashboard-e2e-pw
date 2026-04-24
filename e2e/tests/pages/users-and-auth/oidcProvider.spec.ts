@@ -217,7 +217,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     await oidcClientsPage.navToSideMenuEntryByLabel('OIDC Apps');
     await oidcClientsPage.waitForUrlPathWithoutContext();
     await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-    await oidcClientsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+    await expect(oidcClientsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
     await oidcClientsPage.list().resourceTable().goToDetailsPage(OIDC_CREATE_DATA.APP_NAME);
     await oidcClientDetailPage.waitForUrlPathWithoutContext();
 
@@ -278,7 +278,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
     await oidcClientsPage.navToSideMenuEntryByLabel('OIDC Apps');
     await oidcClientsPage.waitForUrlPathWithoutContext();
     await oidcClientsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-    await oidcClientsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+    await expect(oidcClientsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
     await oidcClientsPage.list().resourceTable().goToDetailsPage(OIDC_CREATE_DATA.APP_NAME);
     await oidcClientDetailPage.waitForUrlPathWithoutContext();
 

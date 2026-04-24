@@ -180,7 +180,7 @@ test.describe('Bundle Namespace Mappings', { tag: ['@fleet', '@adminUser'] }, ()
         await listPage.goTo();
         await listPage.waitForPage();
         await headerPo.selectWorkspace(defaultWorkspace);
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
         const actionMenu = await listPage.list().actionMenu(mappingName);
 

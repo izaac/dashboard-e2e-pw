@@ -192,7 +192,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
         await roles.list('CLUSTER').resourceTable().sortableTable().filter(clusterRoleName);
         await roles.waitForPage(undefined, fragment);
-        await roles.list('CLUSTER').resourceTable().sortableTable().checkRowCount(false, 1);
+        await expect(roles.list('CLUSTER').resourceTable().sortableTable().rowElements()).toHaveCount(1);
         await roles.list('CLUSTER').checkDefault(clusterRoleName, true);
         await roles.list('CLUSTER').detailLink(clusterRoleName, 2).click();
 
@@ -242,7 +242,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         await roles.waitForPage(undefined, fragment);
         await roles.list('NAMESPACE').resourceTable().sortableTable().filter(projectRoleName);
         await roles.waitForPage(undefined, fragment);
-        await roles.list('NAMESPACE').resourceTable().sortableTable().checkRowCount(false, 1);
+        await expect(roles.list('NAMESPACE').resourceTable().sortableTable().rowElements()).toHaveCount(1);
         await roles.list('NAMESPACE').checkDefault(projectRoleName, true);
         await roles.list('NAMESPACE').detailLink(projectRoleName, 2).click();
 
@@ -609,7 +609,7 @@ rules:
 
         await roles.waitForPage(undefined, fragment);
         await roles.list('CLUSTER').resourceTable().sortableTable().filter(clusterRoleName);
-        await roles.list('CLUSTER').resourceTable().sortableTable().checkRowCount(false, 1);
+        await expect(roles.list('CLUSTER').resourceTable().sortableTable().rowElements()).toHaveCount(1);
       } finally {
         if (roleId) {
           await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleId, false);
@@ -757,12 +757,12 @@ rules:
 
         // Filter by a known built-in role display name
         await table.filter('Administrator');
-        await table.checkRowCount(false, 1);
+        await expect(table.rowElements()).toHaveCount(1);
         await expect(table.rowElementWithName('Administrator')).toBeVisible();
 
         // Filter by a different known role
         await table.filter('Manage Settings');
-        await table.checkRowCount(false, 1);
+        await expect(table.rowElements()).toHaveCount(1);
         await expect(table.rowElementWithName('Manage Settings')).toBeVisible();
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
@@ -786,15 +786,15 @@ rules:
 
         // Upstream sorts by Display Name (col 2) — click State (col 1) first to clear
         await table.sort(1).click();
-        await table.checkSortOrder(1, 'down');
+        await expect(table.sortIcon(1, 'down')).toBeVisible();
 
         // Click Display Name (col 2) — ASC
         await table.sort(2).click();
-        await table.checkSortOrder(2, 'down');
+        await expect(table.sortIcon(2, 'down')).toBeVisible();
 
         // Toggle to DESC
         await table.sort(2).click();
-        await table.checkSortOrder(2, 'up');
+        await expect(table.sortIcon(2, 'up')).toBeVisible();
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
       }

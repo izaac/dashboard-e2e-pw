@@ -11,7 +11,7 @@ export default class ClusterSnapshotsListPo extends BaseResourceList {
   }
 
   async checkTableIsEmpty(): Promise<void> {
-    await this.resourceTable().sortableTable().checkRowCount(true, 1);
+    await this.resourceTable().sortableTable().noRowsText().waitFor({ state: 'visible' });
   }
 
   async clickOnSnapshotNow(): Promise<void> {

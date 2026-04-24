@@ -114,7 +114,7 @@ test.describe('CustomResourceDefinitions', { tag: ['@explorer', '@adminUser'] },
 
       await expect(crdsPage.sortableTable().self()).toBeVisible();
       await crdsPage.sortableTable().checkLoadingIndicatorNotVisible();
-      await crdsPage.sortableTable().checkRowCount(false, 2);
+      await expect(crdsPage.sortableTable().rowElements()).toHaveCount(2);
       await expect(crdsPage.sortableTable().pagination()).not.toBeAttached();
     });
 

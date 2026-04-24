@@ -167,16 +167,16 @@ export async function assertPaginationFilter(
   ns2Name: string,
 ): Promise<void> {
   await table.checkLoadingIndicatorNotVisible();
-  await table.checkRowCount(false, 10);
+  await expect(table.rowElements()).toHaveCount(10);
 
   // Filter by specific name from ns1
   await table.filter(specificName);
-  await table.checkRowCount(false, 1);
+  await expect(table.rowElements()).toHaveCount(1);
   await expect(table.rowElementWithName(specificName)).toBeVisible();
 
   // Filter by ns2 namespace → shows unique resource only
   await table.filter(ns2Name);
-  await table.checkRowCount(false, 1);
+  await expect(table.rowElements()).toHaveCount(1);
   await expect(table.rowElementWithName(uniqueName)).toBeVisible();
 }
 
@@ -186,7 +186,7 @@ export async function assertPaginationFilter(
 export async function assertPaginationHidden(table: SortableTablePo): Promise<void> {
   await expect(table.self()).toBeVisible();
   await table.checkLoadingIndicatorNotVisible();
-  await table.checkRowCount(false, 3);
+  await expect(table.rowElements()).toHaveCount(3);
   await expect(table.pagination()).not.toBeVisible();
 }
 

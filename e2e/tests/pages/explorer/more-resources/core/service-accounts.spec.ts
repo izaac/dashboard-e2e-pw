@@ -34,7 +34,8 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
       expect(headers).toContain('Name');
       expect(headers).toContain('Age');
 
-      await serviceAccountsPage.list().resourceTable().sortableTable().checkRowCount(true, 1);
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(1);
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().noRowsText()).toBeVisible();
     });
 
     test('flat list: validate services table', async ({ page, login, rancherApi }) => {
@@ -64,8 +65,8 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
       expect(headers).toContain('Age');
 
       await serviceAccountsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await serviceAccountsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
-      await serviceAccountsPage.list().resourceTable().sortableTable().checkRowCount(false, 3);
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(3);
     });
 
     test('group by namespace: validate services table', async ({ page, login, rancherApi }) => {
@@ -92,7 +93,7 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await expect(serviceAccountsPage.list().resourceTable().sortableTable().self()).toBeVisible();
       await serviceAccountsPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
-      await serviceAccountsPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
       const groupRow = serviceAccountsPage
         .list()
@@ -103,7 +104,7 @@ test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
       await groupRow.scrollIntoViewIfNeeded();
       await expect(groupRow).toBeVisible();
 
-      await serviceAccountsPage.list().resourceTable().sortableTable().checkRowCount(false, 3);
+      await expect(serviceAccountsPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(3);
     });
   });
 });

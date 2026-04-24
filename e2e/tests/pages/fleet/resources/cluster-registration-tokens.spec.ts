@@ -185,7 +185,7 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
         await listPage.goTo();
         await listPage.waitForPage();
         await headerPo.selectWorkspace(defaultWorkspace);
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
         const actionMenu = await listPage.list().actionMenu(tokenName);
 
@@ -231,7 +231,8 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
       const expectedHeaders = ['State', 'Name', 'Namespace', 'Secret-Name'];
 
       expect(await table.headerNames()).toEqual(expectedHeaders);
-      await table.checkRowCount(true, 1);
+      await expect(table.rowElements()).toHaveCount(1);
+      await expect(table.noRowsText()).toBeVisible();
     });
 
     test('validate cluster registration tokens table', async ({ page, login }) => {
@@ -251,7 +252,7 @@ test.describe('Cluster Registration Tokens', { tag: ['@fleet', '@adminUser'] }, 
       const expectedHeaders = ['State', 'Name', 'Namespace', 'Secret-Name'];
 
       expect(await table.headerNames()).toEqual(expectedHeaders);
-      await table.checkRowCount(false, 1);
+      await expect(table.rowElements()).toHaveCount(1);
     });
 
     test('validate cluster registration tokens table headers', async ({ page, login }) => {

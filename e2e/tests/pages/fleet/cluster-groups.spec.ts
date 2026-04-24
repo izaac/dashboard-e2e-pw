@@ -204,11 +204,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await deletePromise;
 
       await listPage.waitForPage();
-      await listPage
-        .list()
-        .resourceTable()
-        .sortableTable()
-        .checkRowCount(false, rowCountBefore - 1);
+      await expect(listPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
 
       await expect(
         listPage.list().resourceTable().sortableTable().rowElementWithName(clusterGroupName),

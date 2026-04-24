@@ -19,7 +19,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       await listPage.goTo();
       await listPage.waitForPage();
       await expect(listPage.list().resourceTable().sortableTable().rowWithName('fleet-default').self()).toBeVisible();
-      await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+      await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
       const expectedHeaders = ['State', 'Name', 'Git Repos', 'Helm Ops', 'Clusters', 'Cluster Groups', 'Age'];
       const actualHeaders = await listPage.list().resourceTable().sortableTable().headerNames();
@@ -107,7 +107,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         // Filter by created workspace name
         await table.filter(wsName);
-        await table.checkRowCount(false, 1);
+        await expect(table.rowElements()).toHaveCount(1);
         await expect(table.rowElementWithName(wsName)).toBeVisible();
 
         // Reset filter — verify the default workspaces reappear
@@ -136,15 +136,15 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         // Click State (col 1) to clear any existing Name sort state
         await table.sort(1).click();
-        await table.checkSortOrder(1, 'down');
+        await expect(table.sortIcon(1, 'down')).toBeVisible();
 
         // Click Name (col 2) — first click sets ASC
         await table.sort(2).click();
-        await table.checkSortOrder(2, 'down');
+        await expect(table.sortIcon(2, 'down')).toBeVisible();
 
         // Toggle to DESC
         await table.sort(2).click();
-        await table.checkSortOrder(2, 'up');
+        await expect(table.sortIcon(2, 'up')).toBeVisible();
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
       }
@@ -165,7 +165,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       await expect(table.self()).toBeVisible();
       await table.checkLoadingIndicatorNotVisible();
-      await table.checkRowCount(false, 2);
+      await expect(table.rowElements()).toHaveCount(2);
       await expect(table.pagination()).toBeHidden();
     });
   });
@@ -181,7 +181,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
         await listPage.goTo();
         await listPage.waitForPage();
         await expect(listPage.baseResourceList().masthead().title()).toContainText('Workspaces');
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
         await listPage.baseResourceList().masthead().create();
         await createPage.waitForPage(undefined, 'allowedtargetnamespaces');
         await expect(createPage.mastheadTitle()).toContainText('Workspace: Create');
@@ -224,7 +224,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await listPage.goTo();
         await listPage.waitForPage();
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
         await headerPo.selectWorkspace(wsName);
         await headerPo.checkCurrentWorkspace(wsName);
       } finally {
@@ -264,7 +264,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await listPage.goTo();
         await listPage.waitForPage();
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
         const actionMenu = await listPage.list().actionMenu(customWorkspace);
 
@@ -315,7 +315,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await listPage.goTo();
         await listPage.waitForPage();
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
 
         const actionMenu = await listPage.list().actionMenu(customWorkspace);
 
@@ -351,7 +351,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
       try {
         await listPage.goTo();
         await listPage.waitForPage();
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await expect(listPage.list().resourceTable().sortableTable().noRowsText()).not.toBeAttached();
         await expect(listPage.list().resourceTable().sortableTable().rowElementWithName(deleteName)).toBeVisible();
 
         const actionMenu = await listPage.list().actionMenu(deleteName);

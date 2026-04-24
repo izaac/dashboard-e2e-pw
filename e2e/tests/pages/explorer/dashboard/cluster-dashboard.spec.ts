@@ -180,7 +180,8 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     await clusterDashboard.goTo();
     await clusterDashboard.waitForPage(undefined, 'cluster-events');
 
-    await clusterDashboard.eventsList().sortableTable().checkRowCount(true, 1);
+    await expect(clusterDashboard.eventsList().sortableTable().rowElements()).toHaveCount(1);
+    await expect(clusterDashboard.eventsList().sortableTable().noRowsText()).toBeVisible();
   });
 
   test('can view events and change events list count in cluster dashboard', async ({ page, login, rancherApi }) => {

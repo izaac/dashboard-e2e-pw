@@ -159,7 +159,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         const complianceResourceTable = new ResourceTablePo(page, '.dashboard-root');
 
         await expect(complianceResourceTable.self()).toBeVisible();
-        await complianceResourceTable.sortableTable().checkRowCount(false, 2);
+        await expect(complianceResourceTable.sortableTable().rowElements()).toHaveCount(2);
       });
     });
   });

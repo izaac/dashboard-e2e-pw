@@ -98,7 +98,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
 
       await sortableTable.filter(networkPolicyName);
       await sortableTable.checkLoadingIndicatorNotVisible();
-      await sortableTable.checkRowCount(false, 1);
+      await expect(sortableTable.rowElements()).toHaveCount(1);
     } finally {
       await rancherApi.deleteRancherResource(
         'v1',

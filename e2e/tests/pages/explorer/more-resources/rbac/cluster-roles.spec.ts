@@ -32,7 +32,8 @@ test.describe('ClusterRoles', { tag: ['@explorer', '@adminUser'] }, () => {
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.checkRowCount(true, 1);
+      await expect(sortableTable.rowElements()).toHaveCount(1);
+      await expect(sortableTable.noRowsText()).toBeVisible();
     });
 
     test('validate cluster roles table', async ({ page, login }) => {
@@ -59,8 +60,8 @@ test.describe('ClusterRoles', { tag: ['@explorer', '@adminUser'] }, () => {
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.noRowsShouldNotExist();
-      await sortableTable.checkRowCount(false, 2);
+      await expect(sortableTable.noRowsText()).not.toBeAttached();
+      await expect(sortableTable.rowElements()).toHaveCount(2);
     });
   });
 });

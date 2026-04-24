@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
@@ -154,36 +153,17 @@ export default class SortableTablePo extends ComponentPo {
     return new ActionMenuPo(this.page);
   }
 
-  async noRowsShouldNotExist(): Promise<void> {
-    await expect(this.noRowsText()).not.toBeAttached();
-  }
-
   noRowsText(): Locator {
     return this.self().locator('tbody .no-rows');
+  }
+
+  loadingIndicator(): Locator {
+    return this.page.locator('tbody .data-loading');
   }
 
   /** Get the row element count on sortable table */
   async rowCount(): Promise<number> {
     return await this.rowElements().count();
-  }
-
-  /** Check row element count on sortable table */
-  async checkRowCount(isEmpty: boolean, expected: number): Promise<void> {
-    const rows = this.rowElements();
-
-    await expect(rows).toHaveCount(expected);
-
-    if (isEmpty) {
-      if (expected === 1) {
-        const row = rows.first();
-        const text = await row.innerText();
-
-        expect(
-          text.includes('There are no rows to show.') ||
-            text.includes('There are no rows which match your search query.'),
-        ).toBe(true);
-      }
-    }
   }
 
   /** For a row with the given name open its action menu and return the drop down */
@@ -196,14 +176,13 @@ export default class SortableTablePo extends ComponentPo {
     // Wait for the menu to appear at page scope; fall back to row-scoped if not found.
     const pageMenu = new ActionMenuPo(this.page);
 
-    await expect(pageMenu.self().or(new ActionMenuPo(this.page, row.self()).self())).toBeAttached();
+    await pageMenu.self().or(new ActionMenuPo(this.page, row.self()).self()).waitFor({ state: 'attached' });
 
     const menuInRow = (await new ActionMenuPo(this.page, row.self()).self().count()) > 0;
     const actionMenu = menuInRow ? new ActionMenuPo(this.page, row.self()) : pageMenu;
 
     if (!skipNoActionAvailableCheck) {
-      await expect(actionMenu.self()).not.toContainText('No actions available');
-      await expect(actionMenu.self().locator('[dropdown-menu-item]:not([disabled])').first()).toBeAttached();
+      await actionMenu.self().locator('[dropdown-menu-item]:not([disabled])').first().waitFor({ state: 'attached' });
     }
 
     return actionMenu;
@@ -216,13 +195,13 @@ export default class SortableTablePo extends ComponentPo {
 
     if (isPageMenuOpen) {
       await row.actionBtn().click();
-      await expect(pageMenu.self()).not.toBeAttached();
+      await pageMenu.self().waitFor({ state: 'detached' });
     } else {
       const rowMenu = new ActionMenuPo(this.page, row.self());
 
       if ((await rowMenu.self().count()) > 0) {
         await row.actionBtn().click();
-        await expect(rowMenu.self()).not.toBeAttached();
+        await rowMenu.self().waitFor({ state: 'detached' });
       }
     }
   }
@@ -249,11 +228,11 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   async checkLoadingIndicatorNotVisible(): Promise<void> {
-    await expect(this.page.locator('tbody .data-loading')).not.toBeAttached({ timeout: STANDARD });
+    await this.loadingIndicator().waitFor({ state: 'detached', timeout: STANDARD });
   }
 
   async checkNoRowsNotVisible(): Promise<void> {
-    await expect(this.page.locator('tbody .no-rows')).not.toBeAttached({ timeout: STANDARD });
+    await this.noRowsText().waitFor({ state: 'detached', timeout: STANDARD });
   }
 
   groupElementsWithName(name: string): Locator {
@@ -294,24 +273,16 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator(`thead tr th:has(.table-header-container .content:text("${columnName}")) .sort`);
   }
 
-  /** Verify the sort icon direction on a column identified by header text */
-  async checkSortOrderByName(columnName: string, direction: 'up' | 'down'): Promise<void> {
-    const th = this.self().locator(`thead tr th:has(.table-header-container .content:text("${columnName}"))`);
-
-    // Active sort column has 2 icons: faded base icon + direction icon (last)
-    const dirIcon = th.locator(`.sort .icon-stack > i.icon-sort-${direction}`);
-
-    await expect(dirIcon).toBeVisible();
+  /** Locator for the sort direction icon on a column by header text */
+  sortIconByName(columnName: string, direction: 'up' | 'down'): Locator {
+    return this.self()
+      .locator(`thead tr th:has(.table-header-container .content:text("${columnName}"))`)
+      .locator(`.sort .icon-stack > i.icon-sort-${direction}`);
   }
 
-  /** Verify the sort icon direction on a given column header (mirrors upstream HeaderRowPo.checkSortOrder) */
-  async checkSortOrder(colIndex: number, direction: 'up' | 'down'): Promise<void> {
-    const dirIcon = this.self()
-      .locator('thead tr th')
-      .nth(colIndex)
-      .locator(`.sort .icon-stack > i.icon-sort-${direction}`);
-
-    await expect(dirIcon).toBeVisible();
+  /** Locator for the sort direction icon on a column by index */
+  sortIcon(colIndex: number, direction: 'up' | 'down'): Locator {
+    return this.self().locator('thead tr th').nth(colIndex).locator(`.sort .icon-stack > i.icon-sort-${direction}`);
   }
 
   async deleteItemWithUI(name: string): Promise<void> {
@@ -357,7 +328,10 @@ export default class SortableTablePo extends ComponentPo {
     const rows = await this.rowNames(rowNameSelector);
 
     if (rows.includes(name)) {
-      await expect(this.self().locator(rowNameSelector).filter({ hasText: name })).not.toBeAttached({ timeout: LONG });
+      await this.self()
+        .locator(rowNameSelector)
+        .filter({ hasText: name })
+        .waitFor({ state: 'detached', timeout: LONG });
     }
   }
 }

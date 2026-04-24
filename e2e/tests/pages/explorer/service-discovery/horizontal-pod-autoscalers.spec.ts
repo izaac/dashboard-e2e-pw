@@ -41,7 +41,8 @@ test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, 
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.checkRowCount(true, 1);
+      await expect(sortableTable.rowElements()).toHaveCount(1);
+      await expect(sortableTable.noRowsText()).toBeVisible();
     });
 
     test('flat list: validate HorizontalPodAutoscalers table', async ({ page, login }) => {
@@ -79,8 +80,8 @@ test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, 
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.noRowsShouldNotExist();
-      await sortableTable.checkRowCount(false, 1);
+      await expect(sortableTable.noRowsText()).not.toBeAttached();
+      await expect(sortableTable.rowElements()).toHaveCount(1);
     });
 
     test('group by namespace: validate HorizontalPodAutoscalers table', async ({ page, login }) => {
@@ -119,12 +120,12 @@ test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, 
       const headers = await sortableTable.headerNames();
 
       expect(headers).toEqual(expectedHeaders);
-      await sortableTable.noRowsShouldNotExist();
+      await expect(sortableTable.noRowsText()).not.toBeAttached();
 
       const groupRow = sortableTable.groupElementWithName('Namespace: cattle-system');
 
       await expect(groupRow).toBeVisible();
-      await sortableTable.checkRowCount(false, 1);
+      await expect(sortableTable.rowElements()).toHaveCount(1);
     });
   });
 });

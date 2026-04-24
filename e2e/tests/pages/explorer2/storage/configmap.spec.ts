@@ -160,15 +160,15 @@ test.describe('ConfigMap', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         // Click Namespace (col 2) first to clear any existing Name sort state
         await table.sort(2).click();
-        await table.checkSortOrder(2, 'down');
+        await expect(table.sortIcon(2, 'down')).toBeVisible();
 
         // Now click Name (col 1) — first click always sets ASC
         await table.sort(1).click();
-        await table.checkSortOrder(1, 'down');
+        await expect(table.sortIcon(1, 'down')).toBeVisible();
 
         // Click again to toggle to DESC
         await table.sort(1).click();
-        await table.checkSortOrder(1, 'up');
+        await expect(table.sortIcon(1, 'up')).toBeVisible();
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
       }
