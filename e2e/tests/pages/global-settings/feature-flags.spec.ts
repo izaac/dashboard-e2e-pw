@@ -5,24 +5,25 @@ import CardPo from '@/e2e/po/components/card.po';
 
 /**
  * Helper: get the current spec.value of a feature flag via API.
- * Returns the boolean value (true = active, false = disabled).
+ * Returns the raw tri-state: true, false, or null (inherits default).
  */
-async function getFeatureFlagValue(rancherApi: any, flagName: string): Promise<boolean> {
+async function getFeatureFlagValue(rancherApi: any, flagName: string): Promise<boolean | null> {
   const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
-  const spec = resp.body.spec || {};
+  const raw = resp.body.spec?.value;
 
-  // If spec.value is explicitly set, use it; otherwise fall back to status.default
-  if (spec.value !== undefined && spec.value !== null) {
-    return spec.value;
+  // Preserve null/undefined as null (inherit default)
+  if (raw === undefined || raw === null) {
+    return null;
   }
 
-  return resp.body.status?.default ?? false;
+  return raw;
 }
 
 /**
  * Helper: set a feature flag to a specific value via API.
+ * Pass null to clear the explicit override and inherit default.
  */
-async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boolean): Promise<void> {
+async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boolean | null): Promise<void> {
   const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
   const body = resp.body;
 

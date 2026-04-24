@@ -46,6 +46,10 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.namespaceDropdown().getByTestId('namespaces-values');
   }
 
+  selectedValueChips(): Locator {
+    return this.selectedValues().locator('.ns-value');
+  }
+
   clearIcon(): Locator {
     return this.selectedValues().locator('[data-testid^="namespaces-values-close"]').first();
   }

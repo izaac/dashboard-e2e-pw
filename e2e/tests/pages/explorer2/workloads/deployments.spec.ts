@@ -376,25 +376,29 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         },
       });
 
-      const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
+      try {
+        const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
 
-      await listPage.goTo();
-      await listPage.waitForPage();
+        await listPage.goTo();
+        await listPage.waitForPage();
 
-      await expect(listPage.listElementWithName(deploymentName)).toBeVisible();
+        await expect(listPage.listElementWithName(deploymentName)).toBeVisible();
 
-      const responsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
-          resp.request().method() === 'DELETE',
-      );
+        const responsePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes(`/v1/apps.deployments/${namespace}/${deploymentName}`) &&
+            resp.request().method() === 'DELETE',
+        );
 
-      await listPage.deleteItemWithUI(deploymentName);
+        await listPage.deleteItemWithUI(deploymentName);
 
-      const response = await responsePromise;
+        const response = await responsePromise;
 
-      expect([200, 204]).toContain(response.status());
-      await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
+        expect([200, 204]).toContain(response.status());
+        await expect(listPage.listElementWithName(deploymentName)).not.toBeAttached(SHORT_TIMEOUT_OPT);
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'apps.deployments', `${namespace}/${deploymentName}`, false);
+      }
     });
   });
 

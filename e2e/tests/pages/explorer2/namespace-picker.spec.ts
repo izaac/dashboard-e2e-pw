@@ -73,10 +73,8 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await expect(namespacePicker.checkIcon()).toHaveCount(4);
 
     // Dropdown controller: 4 selected values, first visible, "+3" badge
-    await expect(namespacePicker.selectedValues().locator('.ns-value')).toHaveCount(4);
-    await expect(
-      namespacePicker.selectedValues().locator('.ns-value').filter({ hasText: 'Project: Default' }),
-    ).toBeVisible();
+    await expect(namespacePicker.selectedValueChips()).toHaveCount(4);
+    await expect(namespacePicker.selectedValueChips().filter({ hasText: 'Project: Default' })).toBeVisible();
     await expect(namespacePicker.moreOptionsSelected()).toContainText('+3');
   });
 
