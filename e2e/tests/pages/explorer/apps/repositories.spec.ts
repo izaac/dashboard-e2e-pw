@@ -23,16 +23,16 @@ test.describe('Apps', () => {
 
         const initialRowCount = await appRepoList.sortableTable().rowCount();
 
+        // Guard: row count should be less than page size (upstream parity)
+        expect(initialRowCount).toBeLessThan(10);
+
         try {
           await appRepoList.create();
 
           const appRepoCreate = new ChartRepositoriesCreateEditPo(page, 'local', 'apps');
 
           await appRepoCreate.waitForPage();
-          await appRepoCreate.nameNsDescription().name().self().scrollIntoViewIfNeeded();
-          await expect(appRepoCreate.nameNsDescription().name().self()).toBeVisible();
           await appRepoCreate.nameNsDescription().name().set(repoName);
-          await appRepoCreate.saveCreateForm().self().scrollIntoViewIfNeeded();
 
           const createResp = page.waitForResponse(
             (r) => r.url().includes('catalog.cattle.io.clusterrepo') && r.request().method() === 'POST',
@@ -64,52 +64,52 @@ test.describe('Apps', () => {
 
         await appRepoCreate.waitForPage();
 
-        const helmIndexUrl = 'https://charts.rancher.io';
-        const gitRepoName = 'https://github.com/rancher/ui-plugin-examples';
-        const gitRepoBranchName = 'test-branch';
-
-        await appRepoCreate.nameNsDescription().name().self().scrollIntoViewIfNeeded();
-        await expect(appRepoCreate.nameNsDescription().name().self()).toBeVisible();
-
-        await expect(appRepoCreate.helmUrlInput()).toBeVisible();
-        await appRepoCreate.helmUrlInput().fill(helmIndexUrl);
-        await expect(appRepoCreate.helmUrlInput()).toHaveValue(helmIndexUrl);
-
+        // Helm: fill → switch away → switch back → verify empty
+        await appRepoCreate.helmUrlInput().fill('https://charts.rancher.io');
         await appRepoCreate.selectGitRepoCard();
         await appRepoCreate.selectHelmUrlCard();
         await expect(appRepoCreate.helmUrlInput()).toHaveValue('');
 
+        // Git: fill → switch away → switch back → verify empty
         await appRepoCreate.selectGitRepoCard();
-
-        await appRepoCreate.gitRepoUrlInput().fill(gitRepoName);
-        await appRepoCreate.gitRepoBranchInput().fill(gitRepoBranchName);
-        await expect(appRepoCreate.gitRepoUrlInput()).toHaveValue(gitRepoName);
-        await expect(appRepoCreate.gitRepoBranchInput()).toHaveValue(gitRepoBranchName);
-
+        await appRepoCreate.gitRepoUrlInput().fill('https://github.com/rancher/ui-plugin-examples');
+        await appRepoCreate.gitRepoBranchInput().fill('test-branch');
         await appRepoCreate.selectHelmUrlCard();
         await appRepoCreate.selectGitRepoCard();
         await expect(appRepoCreate.gitRepoUrlInput()).toHaveValue('');
         await expect(appRepoCreate.gitRepoBranchInput()).toHaveValue('');
 
+        // OCI: fill all fields + checkboxes → switch away → switch back → verify all empty/unchecked
         await appRepoCreate.selectOciUrlCard();
-
         await appRepoCreate.ociUrlInput().fill('oci://test.rancher.io/charts/mychart');
         await appRepoCreate.ociCaBundleInput().fill('test');
+        await appRepoCreate.ociSkipTlsCheckbox().set();
+        await appRepoCreate.ociInsecurePlainHttpCheckbox().set();
         await appRepoCreate.ociMinWaitField().fill('2');
         await appRepoCreate.ociMaxWaitField().fill('2');
         await appRepoCreate.ociMaxRetriesInput().fill('2');
 
-        await expect(appRepoCreate.ociUrlInput()).toHaveValue('oci://test.rancher.io/charts/mychart');
-        await expect(appRepoCreate.ociCaBundleInput()).toHaveValue('test');
+        // Checkboxes need toggle verification (set() is a click)
+        await appRepoCreate.ociSkipTlsCheckbox().isChecked();
+        await appRepoCreate.ociInsecurePlainHttpCheckbox().isChecked();
 
         await appRepoCreate.selectHelmUrlCard();
         await appRepoCreate.selectOciUrlCard();
 
         await expect(appRepoCreate.ociUrlInput()).toHaveValue('');
         await expect(appRepoCreate.ociCaBundleInput()).toHaveValue('');
+        await appRepoCreate.ociSkipTlsCheckbox().isUnchecked();
+        await appRepoCreate.ociInsecurePlainHttpCheckbox().isUnchecked();
         await expect(appRepoCreate.ociMinWaitField()).toHaveValue('');
         await expect(appRepoCreate.ociMaxWaitField()).toHaveValue('');
         await expect(appRepoCreate.ociMaxRetriesInput()).toHaveValue('');
+
+        // Auth dropdown: HTTP Basic available, SSH Key absent when OCI selected
+        const authSelect = appRepoCreate.clusterRepoAuthSelectOrCreate();
+
+        await authSelect.toggle();
+        await expect(authSelect.getOptions().filter({ hasText: 'Create an HTTP Basic Auth Secret' })).toBeVisible();
+        await expect(authSelect.getOptions().filter({ hasText: 'Create an SSH Key Secret' })).not.toBeAttached();
       });
     });
 

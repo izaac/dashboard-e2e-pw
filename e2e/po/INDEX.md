@@ -100,7 +100,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, helmUrlInput, ociUrlInput, ociCaBundleInput (+27) |
+| ChartRepositoriesCreateEditPo | chart-repositories.po.ts | PagePo | — | super, nameNsDescription, gitRepoUrl, gitBranch, ociUrl, helmUrlInput, ociUrlInput, ociCaBundleInput (+29) |
 | CloudCredentialsCreateEditPo | cloud-credentials-amazon.po.ts | PagePo | — | super, cloudServiceOptions, nameNsDescription, accessKey, secretKey, kvValueByIndex, defaultRegion, saveCreateForm (+2) |
 | DigitalOceanCloudCredentialsCreateEditPo | cloud-credentials-digitalocean.po.ts | PagePo | `/c/${clusterId}/manager/cloudCredential/create` | super, credentialName, accessToken, saveCreateForm |
 | KontainerDriverCreateEditPo | kontainer-driver.po.ts | PagePo | — | super, downloadUrl, customUiUrl, checksum, saveCreateForm |

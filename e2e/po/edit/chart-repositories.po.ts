@@ -5,6 +5,7 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import { STANDARD } from '@/support/timeouts';
 
 export default class ChartRepositoriesCreateEditPo extends PagePo {
@@ -64,6 +65,14 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
 
   ociMaxRetriesInput(): Locator {
     return this.page.getByTestId('clusterrepo-oci-max-retries-input');
+  }
+
+  ociSkipTlsCheckbox(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="clusterrepo-oci-skip-tls-checkbox"]');
+  }
+
+  ociInsecurePlainHttpCheckbox(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="clusterrepo-oci-insecure-plain-http"]');
   }
 
   gitRepoBranchInput(): Locator {
