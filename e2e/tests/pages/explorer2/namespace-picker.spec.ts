@@ -21,6 +21,11 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await namespacePicker.closeDropdown();
   });
 
+  test.afterAll(async ({ rancherApi }) => {
+    // Restore namespace filter preference to default after all tests
+    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+  });
+
   test(
     'can select only one of the top 5 resource filters at a time',
     { tag: ['@adminUser', '@standardUser'] },

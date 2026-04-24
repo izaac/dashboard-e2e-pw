@@ -22,6 +22,8 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
     });
 
     test.afterEach(async ({ rancherApi }) => {
+      // Restore namespace filter to default to avoid poisoning later tests
+      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
       await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
     });
 
