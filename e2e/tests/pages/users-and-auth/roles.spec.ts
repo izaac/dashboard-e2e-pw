@@ -199,7 +199,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         const clusterRoleDetails = roles.detailRole(roleId!);
 
         await clusterRoleDetails.waitForPage();
-        await clusterRoleDetails.waitForMastheadTitle(`Cluster - ${clusterRoleName}`);
+        await expect(clusterRoleDetails.mastheadTitle()).toContainText(`Cluster - ${clusterRoleName}`);
       } finally {
         if (roleId) {
           await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleId, false);
@@ -249,7 +249,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
         const projectRoleDetails = roles.detailRole(roleId!);
 
         await projectRoleDetails.waitForPage();
-        await projectRoleDetails.waitForMastheadTitle(`Project/Namespaces - ${projectRoleName}`);
+        await expect(projectRoleDetails.mastheadTitle()).toContainText(`Project/Namespaces - ${projectRoleName}`);
       } finally {
         if (roleId) {
           await rancherApi.deleteRancherResource('v3', 'roleTemplates', roleId, false);

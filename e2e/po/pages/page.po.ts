@@ -65,18 +65,8 @@ export default class PagePo extends ComponentPo {
     return currentUrl.includes(this.path);
   }
 
-  async checkIsCurrentPage(exact = true): Promise<void> {
-    const isCurrent = await this.isCurrentPage(exact);
-
-    expect(isCurrent).toBe(true);
-  }
-
   mastheadTitle(): Locator {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
-  }
-
-  async waitForMastheadTitle(title: string): Promise<void> {
-    await expect(this.mastheadTitle()).toContainText(title);
   }
 
   /** Wait for URL to contain a specific path and optional params */

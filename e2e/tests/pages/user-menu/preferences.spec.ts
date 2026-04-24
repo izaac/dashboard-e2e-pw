@@ -47,7 +47,7 @@ test.describe('User can update their preferences', () => {
       await userMenu.isClosed();
 
       await prefPage.waitForPage();
-      await prefPage.checkIsCurrentPage();
+      await prefPage.waitForPage();
       await expect(prefPage.title()).toHaveText('Preferences');
     },
   );

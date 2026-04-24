@@ -51,7 +51,7 @@ test.describe('RKE2 Cilium CNI', () => {
       const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
 
       await clusterList.goTo();
-      await clusterList.checkIsCurrentPage();
+      await clusterList.waitForPage();
       await clusterList.createCluster();
 
       await createPage.goToDigitalOceanCreation('_');

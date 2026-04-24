@@ -92,7 +92,7 @@ test.describe('Kubewarden Extension', { tag: ['@extensions', '@adminUser'] }, ()
 
     await appRepoList.goTo();
     await appRepoList.waitForPage();
-    await appRepoList.waitForMastheadTitle('Repositories');
+    await expect(appRepoList.mastheadTitle()).toContainText('Repositories');
   });
 
   test('Side-nav should contain Kubewarden menu item', async ({ page }) => {

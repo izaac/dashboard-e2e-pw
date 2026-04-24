@@ -22,7 +22,7 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
     const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
 
     await clusterList.goTo();
-    await clusterList.checkIsCurrentPage();
+    await clusterList.waitForPage();
     await clusterList.createCluster();
 
     await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);
@@ -53,7 +53,7 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
     const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
 
     await clusterList.goTo();
-    await clusterList.checkIsCurrentPage();
+    await clusterList.waitForPage();
     await clusterList.createCluster();
 
     await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);
@@ -136,7 +136,7 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
     const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
 
     await clusterList.goTo();
-    await clusterList.checkIsCurrentPage();
+    await clusterList.waitForPage();
     await clusterList.createCluster();
 
     await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);

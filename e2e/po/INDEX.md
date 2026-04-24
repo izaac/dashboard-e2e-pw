@@ -176,7 +176,7 @@
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
-| PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, checkIsCurrentPage (+20) |
+| PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+17) |
 | PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+25) |
 | RancherSetupConfigurePage | rancher-setup-configure.po.ts | PagePo | — | super, goTo, bootstrapPasswordInput, choosePassword, password, confirmPassword, termsAgreement, serverUrl (+6) |
 | RancherSetupLoginPagePo | rancher-setup-login.po.ts | PagePo | — | super, goTo, form, bootstrapLogin, expect, hasInfoMessage, password, canSubmit (+1) |

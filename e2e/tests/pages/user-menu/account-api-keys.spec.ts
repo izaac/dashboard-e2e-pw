@@ -17,7 +17,7 @@ test.describe('Account and API Keys', { tag: ['@userMenu', '@adminUser', '@stand
 
     await userMenu.clickMenuItem('Account & API Keys');
     await accountPage.waitForPage();
-    await accountPage.checkIsCurrentPage();
+    await accountPage.waitForPage();
     await accountPage.title();
   });
 
@@ -36,7 +36,7 @@ test.describe('Account and API Keys', { tag: ['@userMenu', '@adminUser', '@stand
 
       await accountPage.create();
       await createKeyPage.waitForPage();
-      await createKeyPage.checkIsCurrentPage();
+      await createKeyPage.waitForPage();
       await createKeyPage.description().set(keyDesc);
 
       const createResponse = page.waitForResponse(
