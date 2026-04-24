@@ -31,12 +31,23 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
       await namespacePicker.clickOptionByLabel('All Namespaces');
       await namespacePicker.isChecked('All Namespaces');
+      await expect(namespacePicker.checkIcon()).toHaveCount(1);
 
       await namespacePicker.clickOptionByLabel('Only User Namespaces');
       await namespacePicker.isChecked('Only User Namespaces');
+      await expect(namespacePicker.checkIcon()).toHaveCount(1);
 
       await namespacePicker.clickOptionByLabel('Only System Namespaces');
       await namespacePicker.isChecked('Only System Namespaces');
+      await expect(namespacePicker.checkIcon()).toHaveCount(1);
+
+      await namespacePicker.clickOptionByLabel('Only Namespaced Resources');
+      await namespacePicker.isChecked('Only Namespaced Resources');
+      await expect(namespacePicker.checkIcon()).toHaveCount(1);
+
+      await namespacePicker.clickOptionByLabel('Only Cluster Resources');
+      await namespacePicker.isChecked('Only Cluster Resources');
+      await expect(namespacePicker.checkIcon()).toHaveCount(1);
     },
   );
 
@@ -47,12 +58,26 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.clickOptionByLabel('Project: Default');
     await namespacePicker.isChecked('Project: Default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
 
     await namespacePicker.clickOptionByLabel('default');
     await namespacePicker.isChecked('default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(2);
 
     await namespacePicker.clickOptionByLabel('Project: System');
     await namespacePicker.isChecked('Project: System');
+    await expect(namespacePicker.checkIcon()).toHaveCount(3);
+
+    await namespacePicker.clickOptionByLabel('cattle-fleet-clusters-system');
+    await namespacePicker.isChecked('cattle-fleet-clusters-system');
+    await expect(namespacePicker.checkIcon()).toHaveCount(4);
+
+    // Dropdown controller: 4 selected values, first visible, "+3" badge
+    await expect(namespacePicker.selectedValues().locator('.ns-value')).toHaveCount(4);
+    await expect(
+      namespacePicker.selectedValues().locator('.ns-value').filter({ hasText: 'Project: Default' }),
+    ).toBeVisible();
+    await expect(namespacePicker.moreOptionsSelected()).toContainText('+3');
   });
 
   test('can deselect options', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
@@ -62,12 +87,21 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.clickOptionByLabel('default');
     await namespacePicker.isChecked('default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
 
-    const clearBtn = namespacePicker.clearIcon();
-
-    await clearBtn.click();
-
+    // Deselect via dropdown controller close icon
+    await namespacePicker.clearIcon().click();
     await namespacePicker.isChecked('Only User Namespaces');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
+
+    // Select 'Project: Default' then deselect via dropdown menu clear button
+    await namespacePicker.clickOptionByLabel('Project: Default');
+    await namespacePicker.isChecked('Project: Default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
+
+    await namespacePicker.clearSelectionButton();
+    await namespacePicker.isChecked('Only User Namespaces');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
   });
 
   test('can filter after making a selection', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
@@ -77,11 +111,15 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.clickOptionByLabel('Project: Default');
     await namespacePicker.isChecked('Project: Default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
 
     await namespacePicker.searchByName('default');
     const options = namespacePicker.namespaceOptions();
 
-    await expect(options).not.toHaveCount(0);
+    // Upstream expects >= 2 options matching 'default'
+    const count = await options.count();
+
+    expect(count).toBeGreaterThanOrEqual(2);
   });
 
   test('can filter options by name', { tag: ['@adminUser', '@standardUser'] }, async ({ page }) => {
@@ -91,14 +129,22 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.searchByName('default');
     const options = namespacePicker.namespaceOptions();
+    const count = await options.count();
 
-    await expect(options).not.toHaveCount(0);
+    expect(count).toBeGreaterThanOrEqual(2);
 
     await namespacePicker.clickOptionByLabel('Project: Default');
     await namespacePicker.isChecked('Project: Default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
 
     await namespacePicker.clearSearchFilter();
     await namespacePicker.isChecked('Project: Default');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
+
+    // Reset: clear selection from dropdown menu
+    await namespacePicker.clearSelectionButton();
+    await namespacePicker.isChecked('Only User Namespaces');
+    await expect(namespacePicker.checkIcon()).toHaveCount(1);
   });
 
   test(
@@ -199,21 +245,31 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
         const namespacePicker = new NamespaceFilterPo(page);
 
+        await expect(namespacePicker.namespaceDropdown()).toBeVisible();
+
         await namespacePicker.toggle();
+        await expect(namespacePicker.getOptions()).toBeVisible();
         await expect(namespacePicker.optionById('ns_cattle-fleet-system')).toBeVisible();
         await namespacePicker.clickOptionByLabel('cattle-fleet-system');
         await namespacePicker.isChecked('cattle-fleet-system');
         await namespacePicker.closeDropdown();
 
+        // Verify dropdown closed
+        await expect(namespacePicker.getOptions()).not.toBeAttached();
+
         await expect(sortableTable.groupTab('cattle-fleet-system')).toHaveCount(1);
 
         await namespacePicker.toggle();
+        await expect(namespacePicker.getOptions()).toBeVisible();
         await namespacePicker.clearIcon().click();
         await namespacePicker.isChecked('Only User Namespaces');
 
         await namespacePicker.clickOptionByLabel('Project: System');
         await namespacePicker.isChecked('Project: System');
         await namespacePicker.closeDropdown();
+
+        // Verify dropdown closed
+        await expect(namespacePicker.getOptions()).not.toBeAttached();
 
         await expect(sortableTable.groupTab('kube-system')).toBeVisible();
         await expect(sortableTable.groupTab('cattle-fleet-system')).toBeVisible();
