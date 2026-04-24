@@ -42,6 +42,15 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         const response = await responsePromise;
 
         expect(response.status()).toBe(201);
+
+        // Validate request body sent correct pod spec (upstream parity)
+        const requestBody = response.request().postDataJSON();
+
+        expect(requestBody.spec.template.spec.containers[0]).toMatchObject({
+          name: 'container-0',
+          image: 'nginx',
+        });
+
         const body = await response.json();
 
         expect(body.metadata.name).toBe(deploymentName);
@@ -212,6 +221,15 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
         const response = await saveResponse;
 
         expect(response.status()).toBe(200);
+
+        // Validate request body volumes (upstream parity)
+        const reqBody = response.request().postDataJSON();
+
+        expect(reqBody.spec.template.spec.volumes[0]).toMatchObject({
+          name: 'test-vol-changed',
+          projected: { defaultMode: 420 },
+        });
+
         const body = await response.json();
 
         expect(body.spec.template.spec.volumes[0]).toMatchObject({
@@ -307,6 +325,10 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await deploymentsCreatePage.addEnvironmentVariable();
       await deploymentsCreatePage.addEnvironmentVariable();
 
+      // Verify empty defaults (upstream parity)
+      await expect(deploymentsCreatePage.environmentVariableKeyInput(0)).toHaveValue('');
+      await expect(deploymentsCreatePage.environmentVariableValueInput(0)).toHaveValue('');
+
       await deploymentsCreatePage.environmentVariableKeyInput(0).fill('a');
       await deploymentsCreatePage.environmentVariableValueInput(0).fill('a');
       await deploymentsCreatePage.environmentVariableKeyInput(1).fill('b');
@@ -316,7 +338,9 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       await deploymentsCreatePage.removeEnvironmentVariable(1);
 
+      // After removing index 1 (b=b), index 1 should shift up to c=c
       await expect(deploymentsCreatePage.environmentVariableKeyInput(1)).toHaveValue('c');
+      await expect(deploymentsCreatePage.environmentVariableValueInput(1)).toHaveValue('c');
     });
 
     test('should be able to select Pod CSI storage option', async ({ page, login }) => {
