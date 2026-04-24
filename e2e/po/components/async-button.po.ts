@@ -19,9 +19,4 @@ export default class AsyncButtonPo extends ComponentPo {
   async apply(): Promise<void> {
     await this.action('Apply', 'Applied');
   }
-
-  /** Return the computed `background-color` CSS property of the button */
-  async computedBackground(): Promise<string> {
-    return this.self().evaluate((el) => getComputedStyle(el).backgroundColor);
-  }
 }

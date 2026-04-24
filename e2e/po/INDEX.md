@@ -10,7 +10,7 @@
 | ActionMenuPo | action-menu.po.ts | ComponentPo | `[dropdown-menu-collection]` | super, clickMenuItem, getMenuItem |
 | AddonConfigPo | addon-config.po.ts | ComponentPo | `.dashboard-root` | super, yamlEditor |
 | ArrayListPo | array-list.po.ts | ComponentPo | — | super, arrayListItem, if, closeArrayListItem, clickAdd, clearListItem, setValueAtIndex |
-| AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, label, action, apply, computedBackground |
+| AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, label, action, apply |
 | BannersPo | banners.po.ts | ComponentPo | — | super, banner, bannerElement, closeButton, headerBanners |
 | ButtonDropdownPo | button-dropdown.po.ts | LabeledSelectPo | — | super, toggle |
 | ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, button |

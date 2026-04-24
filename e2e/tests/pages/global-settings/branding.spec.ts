@@ -19,7 +19,6 @@ const settings = {
     original: '#3d98d3',
     new: '#f80dd8',
     newRGB: 'rgb(248, 13, 216)',
-    validNewRGBs: ['rgb(248, 13, 216)', 'rgb(249, 63, 224)'],
   },
   linkColor: {
     original: '#3d98d3',
