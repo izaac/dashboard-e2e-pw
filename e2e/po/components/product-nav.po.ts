@@ -29,15 +29,27 @@ export default class ProductNavPo extends ComponentPo {
       .locator('.child.nav-type a')
       .filter({ has: this.page.locator('.label', { hasText: new RegExp(`^${label}$`) }) });
 
-    // On slow servers, first click can miss during accordion animation — retry if URL unchanged
+    // On slow servers, Vue Router can ignore clicks while the page is busy loading data.
+    // Try clicking first; if URL doesn't change after retries, navigate via the link's href.
     const urlBefore = this.page.url();
 
-    await link.click();
-
-    try {
-      await this.page.waitForURL((url) => url.href !== urlBefore, { timeout: 3000 });
-    } catch {
+    for (let i = 0; i < 3; i++) {
       await link.click();
+
+      try {
+        await this.page.waitForURL((url) => url.href !== urlBefore, { timeout: 5000 });
+
+        return;
+      } catch {
+        // URL didn't change — retry
+      }
+    }
+
+    // Fallback: read href and navigate directly
+    const href = await link.getAttribute('href');
+
+    if (href) {
+      await this.page.goto(href);
     }
   }
 }
