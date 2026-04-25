@@ -264,6 +264,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
         const sortableTable = projectsNamespacesPage.list().resourceTable().sortableTable();
 
+        await sortableTable.checkLoadingIndicatorNotVisible();
         await sortableTable.groupByButtons(0).click();
         await sortableTable.filter(nsNames[0].slice(0, 6));
 
