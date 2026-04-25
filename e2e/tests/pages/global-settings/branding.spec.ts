@@ -413,7 +413,7 @@ test.describe('Branding', () => {
     await brandingPage.applyAndWait('ui-login-background-light', 200);
   });
 
-  test('Favicon', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
+  test('Favicon', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, isPrime }) => {
     const brandingPage = new BrandingPagePo(page);
 
     await navToBranding(page);
@@ -451,10 +451,17 @@ test.describe('Branding', () => {
     // Favicon in header
     await expect(brandingPage.faviconLink()).toHaveAttribute('href', `data:image/svg+xml;base64,${expectedBase64}`);
 
-    // Reset
+    // Reset — prime builds restore to SUSE brand favicon (base64), community to /favicon.png
     await brandingPage.customFaviconCheckbox().set();
     await brandingPage.applyAndWait('ui-favicon', 200);
-    await expect(brandingPage.faviconLink()).toHaveAttribute('href', /\/favicon\.png/);
+
+    if (isPrime) {
+      const primeFaviconBase64 = fixtureBase64('global/favicons/prime-favicon.png');
+
+      await expect(brandingPage.faviconLink()).toHaveAttribute('href', `data:image/png;base64,${primeFaviconBase64}`);
+    } else {
+      await expect(brandingPage.faviconLink()).toHaveAttribute('href', /\/favicon\.png/);
+    }
   });
 
   test('Primary Color', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {

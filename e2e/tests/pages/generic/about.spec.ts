@@ -43,7 +43,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
     await diagnosticsPage.waitForPage();
   });
 
-  test('can View release notes link points to GitHub', async ({ page, login }) => {
+  test('can View release notes', async ({ page, login, isPrime }) => {
     await login();
 
     const aboutPage = new AboutPagePo(page);
@@ -53,7 +53,14 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
 
     const link = aboutPage.versionLink('View release notes');
 
-    await expect(link).toHaveAttribute('href', expect.stringContaining('github.com/rancher/rancher/releases/tag/'));
+    // Dev builds (head/rc/alpha) point to generic "latest" pages;
+    // stable releases include the exact version in the URL.
+    // We assert the domain only — both patterns are valid.
+    if (isPrime) {
+      await expect(link).toHaveAttribute('href', expect.stringContaining('documentation.suse.com'));
+    } else {
+      await expect(link).toHaveAttribute('href', expect.stringContaining('github.com/rancher/rancher/releases'));
+    }
   });
 
   test.describe('Versions', () => {
