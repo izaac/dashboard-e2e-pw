@@ -269,9 +269,21 @@ export class RancherApi {
     return { status: resp.status(), body: json };
   }
 
-  async createRancherResource(prefix: string, resourceType: string, body: any, failOnStatusCode = true) {
+  async createRancherResource(
+    prefix: string,
+    resourceType: string,
+    body: any,
+    failOnStatusCode = true,
+    timeout?: number,
+  ) {
+    const extra: Record<string, any> = { data: body };
+
+    if (timeout) {
+      extra.timeout = timeout;
+    }
+
     const resp = await this.fetchWithReauth(() =>
-      this.request.post(`${this.apiUrl}/${prefix}/${resourceType}`, { ...this.opts({ data: body }) }),
+      this.request.post(`${this.apiUrl}/${prefix}/${resourceType}`, { ...this.opts(extra) }),
     );
 
     if (failOnStatusCode) {
@@ -833,14 +845,14 @@ export class RancherApi {
     const appResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${name}`, 0);
 
     if (appResp.status === 200) {
-      await this.createRancherResource('v1', `${base}/${name}?action=uninstall`, {}, false);
+      await this.createRancherResource('v1', `${base}/${name}?action=uninstall`, {}, false, 30000);
     }
 
     if (crdName) {
       const crdResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${crdName}`, 0);
 
       if (crdResp.status === 200) {
-        await this.createRancherResource('v1', `${base}/${crdName}?action=uninstall`, {}, false);
+        await this.createRancherResource('v1', `${base}/${crdName}?action=uninstall`, {}, false, 30000);
       }
     }
   }

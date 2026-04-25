@@ -15,6 +15,7 @@ type RancherTestFixtures = {
 
 type RancherWorkerFixtures = {
   rancherApi: RancherApi;
+  isPrime: boolean;
 };
 
 /**
@@ -173,6 +174,15 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
     { scope: 'worker' },
   ],
 
+  isPrime: [
+    async ({ rancherApi }, use) => {
+      const version = await rancherApi.getRancherVersion();
+
+      await use(version.RancherPrime === 'true');
+    },
+    { scope: 'worker' },
+  ],
+
   envMeta: async ({}, use, testInfo) => {
     await use(testInfo.project.metadata as TestEnvMetadata);
   },
@@ -193,16 +203,38 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
         // Race: either we land on home (storageState valid) or get redirected to login (invalid).
         // The SPA needs time to check auth and redirect, so we wait for EITHER outcome.
-        const isLoginPage = await Promise.race([
-          page
-            .getByTestId('nav_header_showUserMenu')
-            .waitFor({ state: 'visible', timeout: 15000 })
-            .then(() => false),
-          page
-            .locator('[data-testid="login-submit"]')
-            .waitFor({ state: 'visible', timeout: 15000 })
-            .then(() => true),
-        ]);
+        // Catch timeout — if neither element appears (slow server, loading spinner), fall through to fresh login.
+        let isLoginPage: boolean;
+
+        try {
+          isLoginPage = await Promise.race([
+            page
+              .getByTestId('nav_header_showUserMenu')
+              .waitFor({ state: 'visible', timeout: 30000 })
+              .then(() => false),
+            page
+              .locator('[data-testid="login-submit"]')
+              .waitFor({ state: 'visible', timeout: 30000 })
+              .then(() => true),
+          ]);
+        } catch {
+          // Timeout — neither element appeared. Clear state and do a fresh login.
+          await page.context().clearCookies();
+          await page.evaluate(() => {
+            try {
+              localStorage.clear();
+            } catch {
+              /* noop */
+            }
+            try {
+              sessionStorage.clear();
+            } catch {
+              /* noop */
+            }
+          });
+          await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+          isLoginPage = true;
+        }
 
         if (!isLoginPage) {
           // DOM says we're logged in, but the SPA can render from cached Vuex state

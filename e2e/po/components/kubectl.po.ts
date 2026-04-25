@@ -28,7 +28,8 @@ export default class KubectlPo extends ComponentPo {
 
       await tab.locator('.status').filter({ hasText: status }).waitFor({ state: 'visible', timeout });
     } else {
-      await this.self().locator('.status').first().filter({ hasText: status }).waitFor({ state: 'visible', timeout });
+      // Multiple tabs may exist; find any .status with matching text (may be hidden behind inactive tab)
+      await this.self().locator('.status').filter({ hasText: status }).first().waitFor({ state: 'attached', timeout });
     }
   }
 
