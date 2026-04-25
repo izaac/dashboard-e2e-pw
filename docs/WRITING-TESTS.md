@@ -9,7 +9,7 @@ you need — this guide covers the rest.
 
 1. [How a Test File Looks](#1-how-a-test-file-looks)
 2. [Page Objects (POs)](#2-page-objects-pos)
-3. [Fixtures (login, rancherApi, envMeta)](#3-fixtures-login-rancherapi-envmeta)
+3. [Fixtures (login, rancherApi, envMeta, isPrime, chartGuard)](#3-fixtures-login-rancherapi-envmeta-isprime-chartguard)
 4. [The Golden Rules](#4-the-golden-rules)
 5. [Writing a Test Step by Step](#5-writing-a-test-step-by-step)
 6. [Blueprints (Mock Data)](#6-blueprints-mock-data)
@@ -192,9 +192,9 @@ cat e2e/po/UPSTREAM-DIFF.md
 
 ---
 
-## 3. Fixtures (login, rancherApi, envMeta)
+## 3. Fixtures (login, rancherApi, envMeta, isPrime, chartGuard)
 
-Fixtures are values that Playwright passes into your test functions automatically. We have three
+Fixtures are values that Playwright passes into your test functions automatically. We have
 custom ones that you'll use in nearly every test.
 
 ### `login()` — Authenticate before your test
@@ -249,6 +249,57 @@ test('provision AKS cluster', async ({ envMeta }) => {
 Available properties include: `username`, `password`, `baseUrl`, `awsAccessKey`, `awsSecretKey`,
 `azureClientId`, `azureClientSecret`, `gkeServiceAccount`, `customNodeIp`, and more
 (see `globals.d.ts` for the full list).
+
+### `isPrime` — Detect Rancher Prime vs Community
+
+A worker-scoped boolean that queries `/rancherversion` once per worker and caches the result.
+Use it to branch assertions or skip tests based on the Rancher edition:
+
+```typescript
+// Branch: same test, different expected value
+test('favicon resets to default', async ({ page, isPrime }) => {
+  const favicon = page.locator('head link[rel="shortcut icon"]');
+  const expected = isPrime ? /data:image\/png;base64/ : /\/favicon\.png/;
+
+  await expect(favicon).toHaveAttribute('href', expected);
+});
+
+// Skip: test only applies to one edition
+test('shows prime support panel', async ({ isPrime }) => {
+  test.skip(!isPrime, 'Prime only');
+  // ...
+});
+```
+
+This replaces upstream's `cy.getRancherVersion().then(...)` pattern — no async call in every
+test, no callback nesting. Tags (`@prime` / `@noPrime`) control which tests **run** at CI level;
+`isPrime` controls what to **expect** inside tests that run on both editions.
+
+### `chartGuard` — Skip tests when charts are filtered
+
+A test-scoped fixture that checks whether a Helm chart is available in the catalog. Call it
+at the start of any chart test:
+
+```typescript
+test('install monitoring', async ({ chartGuard, page }) => {
+  await chartGuard('rancher-charts', 'rancher-monitoring');
+  // ... test body — only runs if the chart is in the catalog ...
+});
+```
+
+Behavior:
+
+- **Chart available** → test proceeds normally
+- **Chart filtered** (hidden by Rancher's version compatibility rules) → `test.skip()`
+- **Catalog broken** (empty index, repo not synced) → hard failure
+
+Results are cached per worker, so multiple tests checking the same repo only fetch the catalog
+index once. The fixture also enables the `show-pre-release` preference during the test and
+restores it on teardown.
+
+This replaces upstream's `runTestWhenChartAvailable()` + `CYPRESS_ALLOW_FILTERED_CATALOG_SKIP`
+env var — no environment variable needed, no callback wrapping, no Mocha context threading.
+See `docs/UPSTREAM-DIVERGENCES.md` for details.
 
 ---
 

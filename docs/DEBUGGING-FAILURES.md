@@ -256,6 +256,58 @@ values are visible in the DOM but missing from the submitted request body.
 See the [Rancher Vue Debounce Traps](./WRITING-TESTS.md) section in the
 writing guide.
 
+### Checkbox visible and enabled but v-model value is wrong
+
+A Vue dialog opens, its `fetch()` correctly determines a checkbox should be
+checked (`v-model:value` set to `true`), but Playwright reads `isChecked()` as
+`false`. The DOM input is unchecked even though the data is correct. This is a
+Vue reactivity race — the `fetch()` result hasn't propagated to the DOM when
+Playwright reads it, especially when a Vuex store resync or cluster reload
+triggers a re-render mid-flight.
+
+**Symptoms:** The checkbox is visible and enabled (not disabled), but unchecked.
+Clicking the submit button produces no API request because the bound value was
+never `true` from the DOM's perspective.
+
+**Fix:** After waiting for the checkbox to be visible and enabled, explicitly
+verify it is checked. If not, click it and assert:
+
+```ts
+const input = checkbox.locator('input[type="checkbox"]');
+if (!(await input.isChecked())) {
+  await checkbox.click();
+  await expect(input).toBeChecked();
+}
+```
+
+**Real example:** `AddExtensionReposDialog` — the Partners checkbox starts
+unchecked due to a store resync race, even though no partner repo exists.
+See `extensions.spec.ts` Partners repo test.
+
+### Extensions page: `updateAddReposSetting` TypeError crash
+
+The extensions page `uiplugins/index.vue` initialises
+`addExtensionReposBannerSetting` as `undefined` in `data()` and only sets it
+inside `fetch()`. After the initial load completes (`.data-loading` disappears),
+a Vuex store resync (`resourceversion too old` on `catalog.cattle.io.clusterrepo`)
+can **recreate the component**, resetting `data()` while `fetch()` hasn't re-run.
+
+If you open the ⋮ menu and click "Add Rancher Repositories" at this moment,
+`showAddExtensionReposDialog()` calls `updateAddReposSetting()` which does
+`this.addExtensionReposBannerSetting.value = 'false'` — and crashes with
+`TypeError: Cannot set properties of undefined (setting 'value')`.
+The `promptModal` dispatch never fires, so no dialog appears.
+
+**Symptoms:** Console shows `TypeError: Cannot set properties of undefined
+(setting 'value')` at `updateAddReposSetting`. The ⋮ menu closes but no modal
+opens. DOM snapshot shows `<div id="modals"><!----></div>` (empty).
+
+**Fix:** Instead of using the ⋮ menu, click the **banner's** "Add repositories"
+button (`extensionsPo.repoBannerActionButton()`). The banner only renders when
+`!loading && showAddReposBanner` — which requires `addExtensionReposBannerSetting`
+to be loaded. If the banner is visible, the setting is guaranteed to exist and
+`updateAddReposSetting()` won't crash.
+
 ### Redirected back to login
 
 The session cookie expired between test steps. This happens when a test takes

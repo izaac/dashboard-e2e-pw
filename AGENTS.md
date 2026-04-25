@@ -129,6 +129,7 @@ Use this to:
 - [Base Page PO](e2e/po/pages/page.po.ts)
 - [Rancher API Helper](support/fixtures/rancher-api.ts)
 - [Assertion Gap Map](docs/ASSERTION-GAP-MAP.md) — auto-generated test count comparison (`yarn gap-map`)
+- [Upstream Divergences](docs/UPSTREAM-DIVERGENCES.md) — intentional differences from upstream Cypress
 - [Type Definitions](globals.d.ts)
 
 ---
