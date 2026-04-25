@@ -169,6 +169,26 @@
 - harvester (1) — 500 chart install, skip guard added
 - v2prov-capi (1) — already skipped
 
+## v2.15 Docker Mac Triage
+
+### Fixed (standardUser: 102 pass, 0 fail)
+
+- [x] `describe-resource.spec.ts` — `dispatchEvent('click')` for close button outside viewport
+- [x] `branding.spec.ts` — `checkboxCustom()` for disabled assertions; `toHaveCSS` auto-retry for primary color
+- [x] `deployments.spec.ts` — `test.setTimeout(120_000)` for slow create/edit cycles
+- [x] `product-nav.po.ts` — click retry + href fallback for sidebar nav on busy pages
+- [x] `async-button.po.ts` — dead `computedBackground()` removed
+
+### adminUser failures (pre-existing / infra — not our regressions)
+
+- [ ] `not-found-page.spec.ts` — sidebar nav click ignored by Vue Router on Charts page (href fallback added, needs validation)
+- [ ] Charts logging / Cluster Tools (×2) — kubectl shell never shows "Disconnected" in Docker
+- [ ] Fleet workspace — `workspace-switcher` testid missing in v2.15
+- [ ] Kontainer driver — driver stuck "Activating" (can't reach external URL in Docker)
+- [ ] Cluster Manager edit config — v2.15 UI: slide-in has no "Save" button
+- [ ] OIDC feature flag — server restart >60s timeout in Docker Mac
+- [ ] `rancher-setup.spec.ts` (sharded) — "Requires initial setup" fails after bootstrap (page at `/home`)
+
 ## Cleanup
 
 - [ ] Replace scattered `{ timeout: 15000 }` / `{ timeout: 60000 }` with global config or named constants
