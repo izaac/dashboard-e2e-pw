@@ -107,9 +107,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     await Promise.race([
       page.getByTestId('elemental-main-title').waitFor({ state: 'visible', ...SHORT_TIMEOUT_OPT }),
       elementalPo.dashboard().waitForFailWhale(SHORT_TIMEOUT_OPT.timeout),
-    ]).catch(() => {
-      // Race between elemental title and fail-whale — either outcome is handled below
-    });
+    ]);
 
     // If the elemental extension is not installed, the route will hit fail-whale (404)
     const isFailWhale = await elementalPo.dashboard().isFailWhaleVisible();
