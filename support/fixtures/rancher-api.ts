@@ -896,6 +896,8 @@ export class RancherApi {
       await new Promise((r) => setTimeout(r, intervalMs));
     }
 
-    throw new Error(`Rancher did not recover after ${(maxAttempts * intervalMs) / 1000}s — aborting to prevent cascade`);
+    throw new Error(
+      `Rancher did not recover after ${(maxAttempts * intervalMs) / 1000}s — aborting to prevent cascade`,
+    );
   }
 }
