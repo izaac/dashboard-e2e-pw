@@ -311,13 +311,13 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
-      await expect(clusterDetail.drawerSaveButton()).toBeVisible();
+      await expect(clusterDetail.drawerEditConfigButton()).toBeVisible();
 
       await expect(clusterDetail.drawerConfigTab()).toBeVisible();
       await expect(clusterDetail.drawerYamlTab()).toBeVisible();
 
       await clusterDetail.drawerYamlTab().click();
-      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
+      await expect(clusterDetail.drawerEditConfigButton()).not.toBeAttached();
     });
 
     test('can navigate to namespace from cluster detail view', async ({ page, login }) => {
@@ -558,13 +558,13 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
       const drawer = clusterDetail.configurationDrawer();
 
       await expect(drawer).toBeVisible();
-      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
+      await expect(clusterDetail.drawerEditConfigButton()).not.toBeAttached();
 
       await expect(clusterDetail.drawerConfigTab()).toBeVisible();
       await expect(clusterDetail.drawerYamlTab()).toBeVisible();
 
       await clusterDetail.drawerYamlTab().click();
-      await expect(clusterDetail.drawerSaveButton()).not.toBeAttached();
+      await expect(clusterDetail.drawerEditConfigButton()).not.toBeAttached();
     });
 
     test('Shows the explore button and navigates to the cluster explorer when clicked', async ({

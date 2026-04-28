@@ -59,7 +59,7 @@ export class ChartPage extends PagePo {
   }
 
   async goToInstall(): Promise<void> {
-    const btn = this.self().locator('.chart-header .btn.role-primary');
+    const btn = this.self().getByTestId('btn-chart-install');
 
     await btn.waitFor({ state: 'visible', ...SHORT_TIMEOUT_OPT });
     await btn.click();

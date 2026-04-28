@@ -81,8 +81,8 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
     return this.page.locator('aside.slide-in');
   }
 
-  drawerSaveButton(): Locator {
-    return this.configurationDrawer().locator('button:has-text("Save")');
+  drawerEditConfigButton(): Locator {
+    return this.configurationDrawer().locator('button:has-text("Edit Config")');
   }
 
   drawerConfigTab(): Locator {

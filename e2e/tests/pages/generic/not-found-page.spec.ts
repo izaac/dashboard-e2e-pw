@@ -97,7 +97,7 @@ test.describe('Not found page display', { tag: ['@generic', '@adminUser', '@stan
     await expect(notFoundPage.errorTitle()).not.toBeAttached();
 
     await pagePo.navToSideMenuEntryByLabel('Repositories');
-    await reposPage.waitForPage();
+    await expect(page).toHaveURL(/\/c\/local\/apps\//);
     await expect(notFoundPage.errorTitle()).not.toBeAttached();
 
     await pagePo.navToMenuEntry('Cluster Management');
