@@ -333,8 +333,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       const nsLink = clusterDetail.clusterNamespaceLink();
 
       await expect(nsLink).toContainText('fleet-local');
-      await expect(nsLink).toHaveAttribute('href', /fleet-local/);
-      await nsLink.click();
+      await nsLink.getByRole('link', { name: 'fleet-local' }).click();
 
       // Upstream expects navigation to a namespace page with Resources tab
       await page.waitForURL(/fleet-local/, { timeout: 15000 });
