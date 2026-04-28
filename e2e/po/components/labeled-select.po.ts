@@ -7,9 +7,10 @@ export default class LabeledSelectPo extends ComponentPo {
   }
 
   async toggle(): Promise<void> {
-    // Click the combobox role directly — vue-select binds toggleDropdown
-    // to mousedown on .vs__dropdown-toggle[role="combobox"]
-    await this.self().getByRole('combobox').click();
+    // Vue-select renders two nested combobox roles: the Rancher wrapper (unlabeled-select/labeled-select)
+    // and the inner vs__dropdown-toggle. Use .first() to target the outer one, which propagates
+    // mousedown to vue-select's toggleDropdown handler.
+    await this.self().getByRole('combobox').first().click();
   }
 
   async setOptionAndClick(label: string): Promise<void> {
