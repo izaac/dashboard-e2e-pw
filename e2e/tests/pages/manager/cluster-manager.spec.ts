@@ -330,10 +330,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local');
 
-      await expect(clusterDetail.clusterNamespaceLink()).toContainText('fleet-local');
-      await clusterDetail.clusterNamespaceLink().click();
+      const nsLink = clusterDetail.clusterNamespaceLink();
 
-      await expect(page).toHaveURL(/Resources/);
+      await expect(nsLink).toContainText('fleet-local');
+      await expect(nsLink).toHaveAttribute('href', /fleet-local/);
+      await nsLink.click();
+
+      // Upstream expects navigation to a namespace page with Resources tab
+      await page.waitForURL(/fleet-local/, { timeout: 15000 });
     });
   });
 
