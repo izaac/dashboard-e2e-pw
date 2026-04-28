@@ -24,18 +24,19 @@ export class ChartsPage extends PagePo {
    */
   getChartByName(name: string): Locator {
     return this.self()
-      .locator('[data-testid="item-card-header-title"]')
+      .getByTestId('item-card-header-title')
       .filter({ hasText: name })
       .locator('xpath=ancestor::*[contains(@data-testid, "item-card-cluster/")]')
       .first();
   }
 
   async clickChart(name: string): Promise<void> {
-    await this.getChartByName(name).click();
+    // The Vue click handler is on the inner [role="link"] div, not the outer card
+    await this.getChartByName(name).getByRole('link').click();
   }
 
   chartCards(): Locator {
-    return this.self().locator('[data-testid="app-chart-cards-container"] > [data-testid*="item-card-"]');
+    return this.self().getByTestId('app-chart-cards-container').locator('> [data-testid*="item-card-"]');
   }
 
   headerTitle(): Locator {
@@ -43,19 +44,19 @@ export class ChartsPage extends PagePo {
   }
 
   emptyState(): Locator {
-    return this.self().locator('[data-testid="charts-empty-state"]');
+    return this.self().getByTestId('charts-empty-state');
   }
 
   emptyStateTitle(): Locator {
-    return this.self().locator('[data-testid="charts-empty-state-title"]');
+    return this.self().getByTestId('charts-empty-state-title');
   }
 
   emptyStateResetFilters(): Locator {
-    return this.self().locator('[data-testid="charts-empty-state-reset-filters"]');
+    return this.self().getByTestId('charts-empty-state-reset-filters');
   }
 
   async totalChartsCount(): Promise<number> {
-    const text = await this.self().locator('[data-testid="charts-total-message"]').innerText();
+    const text = await this.self().getByTestId('charts-total-message').innerText();
 
     return parseInt(text.match(/\d+/)?.[0] || '0', 10);
   }
@@ -85,6 +86,6 @@ export class ChartsPage extends PagePo {
   }
 
   sentinel(): Locator {
-    return this.self().locator('[data-testid="charts-lazy-load-sentinel"]');
+    return this.self().getByTestId('charts-lazy-load-sentinel');
   }
 }
