@@ -22,7 +22,7 @@ type RancherWorkerFixtures = {
  * Fill credentials and submit the login form.
  * Extracted so both the initial login and re-auth paths share the same logic.
  */
-async function performLogin(page: Page, username: string, password: string): Promise<void> {
+async function performLogin(page: Page, username: string, password: string, _retryCount = 0): Promise<void> {
   const useLocal = page.locator('[data-testid="login-useLocal"]');
 
   if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -59,8 +59,32 @@ async function performLogin(page: Page, username: string, password: string): Pro
   await page.locator('[data-testid="login-submit"]').click();
   await loginResponse;
 
-  // Wait for the SPA to navigate away from the login page
-  await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
+  // Rancher may redirect to ?timed-out if the session was invalidated between
+  // form submission and redirect. Detect this and retry once with clean state.
+  try {
+    await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
+  } catch {
+    if (page.url().includes('timed-out') && _retryCount < 1) {
+      await page.context().clearCookies();
+      await page.evaluate(() => {
+        try {
+          localStorage.clear();
+        } catch {
+          /* noop */
+        }
+        try {
+          sessionStorage.clear();
+        } catch {
+          /* noop */
+        }
+      });
+      await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+      await page.locator('[data-testid="login-submit"]').waitFor({ state: 'visible', timeout: 10000 });
+
+      return performLogin(page, username, password, _retryCount + 1);
+    }
+    throw new Error(`Login stuck on ${page.url()}`);
+  }
 }
 
 export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
