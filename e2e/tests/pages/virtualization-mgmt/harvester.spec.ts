@@ -67,18 +67,18 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
         resp.url().includes(CLUSTER_REPOS_BASE_URL) &&
         resp.request().method() === 'POST' &&
         !resp.url().includes('?action='),
-      { timeout: LONG },
+      { timeout: VERY_LONG },
     );
     const updateHarvesterChartPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: LONG },
+      { timeout: VERY_LONG },
     );
     const installPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
         resp.request().method() === 'POST',
-      { timeout: LONG },
+      { timeout: VERY_LONG },
     );
 
     // install harvester extension

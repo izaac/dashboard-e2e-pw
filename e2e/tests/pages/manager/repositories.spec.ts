@@ -37,6 +37,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: EXTRA_LONG });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -76,6 +77,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.body()).toContainText(`${repoName}-desc-edit`);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -113,6 +115,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', cloneName, false);
+      await Promise.all([
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName),
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', cloneName),
+      ]);
     }
   });
 
@@ -142,6 +148,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       expect(download.suggestedFilename()).toBe(`${repoName}.yaml`);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -175,6 +182,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: EXTRA_LONG });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -206,6 +214,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await deleteResp;
     await repositoriesPage.waitForPage();
     await expect(repositoriesPage.body()).not.toContainText(repoName);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
   test.fixme('can delete repositories via bulk actions', async ({ page, login, rancherApi }) => {
@@ -256,6 +265,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       // Cleanup in case bulk delete failed
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', `${repoName}basic`, false);
+      await Promise.all([
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName),
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', `${repoName}basic`),
+      ]);
     }
   });
 
@@ -286,6 +299,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.list().details(repoName, 2)).toBeVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -319,6 +333,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.list().details(repoName, 2)).toBeVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -356,6 +371,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.list().details(repoName, 2)).toBeVisible();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 });
@@ -384,6 +400,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
       await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Disabled');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -409,6 +426,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
       await repositoriesPage.list().actionMenuClose(repoName);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -435,6 +453,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
       await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: VERY_LONG });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 });
