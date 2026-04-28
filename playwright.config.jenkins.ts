@@ -60,7 +60,7 @@ export default defineConfig({
     ...baseConfig.use,
     /* No screenshots/video overhead unless needed */
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'on-first-retry',
     trace: 'on-first-retry',
   },
 });
