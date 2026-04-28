@@ -1,6 +1,6 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
-import { DEBOUNCE, VERY_LONG } from '@/support/timeouts';
+import { DEBOUNCE, VERY_LONG, LONG } from '@/support/timeouts';
 
 // Unique auth file per Rancher instance — matches playwright.config.ts logic
 const authPort = (() => {
@@ -14,6 +14,11 @@ const authPort = (() => {
 })();
 
 export const ADMIN_AUTH_FILE = path.join(__dirname, `../../.auth/admin-${authPort}.json`);
+
+const AUTH_MAX_ATTEMPTS = 3;
+const AUTH_FORM_TIMEOUT = 30_000;
+const AUTH_REDIRECT_TIMEOUT = VERY_LONG; // 60s for initial auth
+const AUTH_BACKOFF_MS = 5_000;
 
 /**
  * Pre-login health gate: verify Rancher API is responsive before attempting browser login.
@@ -110,13 +115,27 @@ async function setUnlimitedSessionTTL(apiUrl: string, password: string, username
   });
 }
 
+/** Dismiss consent banner if visible — branding tests may leave one behind */
+async function dismissBanner(page: import('@playwright/test').Page): Promise<void> {
+  const banner = page.locator('#banner-consent .banner-dialog');
+
+  if (await banner.isVisible({ timeout: 1_000 }).catch(() => false)) {
+    await banner
+      .locator('button')
+      .click()
+      .catch(() => {
+        /* best effort */
+      });
+  }
+}
+
 /**
  * Authenticate as admin and persist session cookies + localStorage.
  * All tests in the 'chromium' project reuse this state via storageState,
  * skipping the login page entirely.
  *
- * standard_user creation is handled by the worker-scoped rancherApi fixture
- * (ensureStandardUser runs on init), so it's not needed here.
+ * Resilient to slow Rancher, consent banners, and transient redirect failures.
+ * Retries up to AUTH_MAX_ATTEMPTS times with backoff.
  */
 setup('authenticate as admin', async ({ page }) => {
   const meta = setup.info().project.metadata as Record<string, string>;
@@ -129,23 +148,72 @@ setup('authenticate as admin', async ({ page }) => {
   // Prevent session expiry mid-suite — set TTL to unlimited before creating the auth token
   await setUnlimitedSessionTTL(meta.api, password, username);
 
-  await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+  for (let attempt = 0; attempt < AUTH_MAX_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, AUTH_BACKOFF_MS * attempt));
+      await page.context().clearCookies();
+      await page.evaluate(() => {
+        try {
+          localStorage.clear();
+        } catch {
+          /* noop */
+        }
+        try {
+          sessionStorage.clear();
+        } catch {
+          /* noop */
+        }
+      });
+    }
 
-  const useLocal = page.locator('[data-testid="login-useLocal"]');
+    await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
 
-  if (await useLocal.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
-    await useLocal.click();
+    // Wait for login form to render
+    const submitButton = page.locator('[data-testid="login-submit"]');
+
+    try {
+      await submitButton.waitFor({ state: 'visible', timeout: AUTH_FORM_TIMEOUT });
+    } catch {
+      // Form didn't appear — Rancher might still be starting
+      if (attempt === AUTH_MAX_ATTEMPTS - 1) {
+        throw new Error(`[auth.setup] Login form did not appear after ${AUTH_MAX_ATTEMPTS} attempts`);
+      }
+      continue;
+    }
+
+    const useLocal = page.locator('[data-testid="login-useLocal"]');
+
+    if (await useLocal.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
+      await useLocal.click();
+      await submitButton.waitFor({ state: 'visible', timeout: AUTH_FORM_TIMEOUT });
+    }
+
+    await dismissBanner(page);
+
+    await page
+      .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+      .last()
+      .fill(username);
+    await page.locator('[data-testid="local-login-password"] input').fill(password);
+
+    await dismissBanner(page);
+
+    await submitButton.click();
+
+    // Wait for home page — confirms auth is fully established
+    try {
+      await expect(page).toHaveURL(/\/home/, { timeout: AUTH_REDIRECT_TIMEOUT });
+      // Success — save storageState and exit
+      await page.context().storageState({ path: ADMIN_AUTH_FILE });
+
+      return;
+    } catch {
+      if (attempt === AUTH_MAX_ATTEMPTS - 1) {
+        throw new Error(
+          `[auth.setup] Login redirect failed after ${AUTH_MAX_ATTEMPTS} attempts. ` +
+            `Last URL: ${page.url()}. Auth storageState could not be saved.`,
+        );
+      }
+    }
   }
-
-  await page
-    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
-    .last()
-    .fill(username);
-  await page.locator('[data-testid="local-login-password"] input').fill(password);
-  await page.locator('[data-testid="login-submit"]').click();
-
-  // Wait for home page — confirms auth is fully established and localStorage is populated
-  await expect(page).toHaveURL(/\/home/, { timeout: VERY_LONG });
-
-  await page.context().storageState({ path: ADMIN_AUTH_FILE });
 });

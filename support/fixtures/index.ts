@@ -18,72 +18,190 @@ type RancherWorkerFixtures = {
   isPrime: boolean;
 };
 
+// ── Login resilience constants ──────────────────────────────────────────────
+const MAX_LOGIN_ATTEMPTS = 3;
+const FORM_READY_TIMEOUT = 30_000; // Rancher can be very slow after heavy tests
+const LOGIN_REDIRECT_TIMEOUT = 30_000; // SPA redirect after successful login POST (slow Docker needs headroom)
+const SESSION_RACE_TIMEOUT = 45_000; // storageState validity race (slow Docker)
+const BACKOFF_BASE_MS = 3_000; // Exponential backoff: 3s, 6s, 12s
+const BANNER_CHECK_MS = 1_000; // Quick check for consent banner
+
+/** Clear all browser state — cookies, localStorage, sessionStorage */
+async function resetBrowserState(page: Page): Promise<void> {
+  await page.context().clearCookies();
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      /* noop */
+    }
+    try {
+      sessionStorage.clear();
+    } catch {
+      /* noop */
+    }
+  });
+}
+
+/** Dismiss consent banner if visible — branding tests may leave one behind */
+async function dismissConsentBanner(page: Page): Promise<void> {
+  const banner = page.locator('#banner-consent .banner-dialog');
+
+  if (await banner.isVisible({ timeout: BANNER_CHECK_MS }).catch(() => false)) {
+    await banner
+      .locator('button')
+      .click()
+      .catch(() => {
+        /* best effort */
+      });
+  }
+}
+
 /**
  * Fill credentials and submit the login form.
- * Extracted so both the initial login and re-auth paths share the same logic.
+ *
+ * Resilient to: slow Rancher (extended timeouts), consent banners,
+ * login POST failures, SPA redirect failures. Retries with exponential
+ * backoff and clean browser state up to MAX_LOGIN_ATTEMPTS times.
+ *
+ * Expects to be on /auth/login with the standard login form (username + password).
+ * Throws a clear error if the page is in an unexpected state (bootstrap, setup).
  */
-async function performLogin(page: Page, username: string, password: string, _retryCount = 0): Promise<void> {
+async function performLogin(page: Page, username: string, password: string, attempt = 0): Promise<void> {
+  if (attempt >= MAX_LOGIN_ATTEMPTS) {
+    throw new Error(
+      `Login failed after ${MAX_LOGIN_ATTEMPTS} attempts. ` +
+        `Last URL: ${page.url()}. ` +
+        `Possible causes: Rancher unresponsive, invalid credentials, or stale session loop.`,
+    );
+  }
+
+  // Backoff between retries — gives Rancher time to stabilize after controller churn
+  if (attempt > 0) {
+    await new Promise((r) => setTimeout(r, BACKOFF_BASE_MS * Math.pow(2, attempt - 1)));
+    await resetBrowserState(page);
+    await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+  }
+
+  // ── 1. Wait for the login form to fully render ────────────────────────────
+  const submitButton = page.locator('[data-testid="login-submit"]');
+
+  try {
+    await submitButton.waitFor({ state: 'visible', timeout: FORM_READY_TIMEOUT });
+  } catch {
+    // Form didn't appear — Rancher might be starting up or stuck in a loading state
+    return performLogin(page, username, password, attempt + 1);
+  }
+
+  // Detect bootstrap page (no username field) — setup spec should have handled this
+  const bootstrapMessage = page.getByTestId('first-login-message');
+
+  if (await bootstrapMessage.isVisible({ timeout: 500 }).catch(() => false)) {
+    throw new Error(
+      'Login page shows bootstrap form (first login). ' +
+        'Rancher has not been configured yet — run the setup project first or set CATTLE_BOOTSTRAP_PASSWORD.',
+    );
+  }
+
+  // Detect if we somehow landed on /auth/setup
+  if (page.url().includes('/auth/setup')) {
+    throw new Error(
+      'Redirected to /auth/setup — admin password has not been set. ' +
+        'Run the setup project first or set CATTLE_BOOTSTRAP_PASSWORD.',
+    );
+  }
+
+  // ── 2. Handle multi-provider login page ───────────────────────────────────
   const useLocal = page.locator('[data-testid="login-useLocal"]');
 
-  if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
+  if (await useLocal.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await useLocal.click();
   }
 
-  // Dismiss consent banner if present (branding tests may leave one behind)
-  const consentBanner = page.locator('#banner-consent .banner-dialog');
+  // ── 3. Wait for the local-login form fields (not just submit button) ──────
+  const usernameField = page
+    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+    .last();
 
-  if (await consentBanner.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await consentBanner.locator('button').click();
+  try {
+    await usernameField.waitFor({ state: 'visible', timeout: FORM_READY_TIMEOUT });
+  } catch {
+    // Username field didn't appear — might be bootstrap page or loading
+    return performLogin(page, username, password, attempt + 1);
   }
 
-  await page
-    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
-    .last()
-    .fill(username);
+  // ── 4. Dismiss consent banner ─────────────────────────────────────────────
+  await dismissConsentBanner(page);
+
+  // ── 5. Fill credentials ───────────────────────────────────────────────────
+  await usernameField.fill(username);
   await page.locator('[data-testid="local-login-password"] input').fill(password);
 
-  // Re-check consent banner — it may appear after page load (lazy rendering)
-  if (await consentBanner.isVisible({ timeout: 500 }).catch(() => false)) {
-    await consentBanner.locator('button').click();
-  }
+  // Re-check banner — can appear after page renders more content
+  await dismissConsentBanner(page);
 
-  // Listen for the login POST response BEFORE clicking submit.
-  // This mirrors Cypress `cy.wait('@loginReq')` — guarantees R_SESS cookie
-  // is set before we proceed (the URL may change before Set-Cookie is processed).
+  // ── 6. Submit and wait for login POST response ────────────────────────────
   const loginResponse = page.waitForResponse(
     (resp) =>
       (resp.url().includes('/v3-public/localProviders/local') || resp.url().includes('/v1-public/login')) &&
       resp.request().method() === 'POST',
+    { timeout: FORM_READY_TIMEOUT },
   );
 
-  await page.locator('[data-testid="login-submit"]').click();
-  await loginResponse;
+  await submitButton.click();
 
-  // Rancher may redirect to ?timed-out if the session was invalidated between
-  // form submission and redirect. Detect this and retry once with clean state.
+  let resp;
+
   try {
-    await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
+    resp = await loginResponse;
   } catch {
-    if (page.url().includes('timed-out') && _retryCount < 1) {
-      await page.context().clearCookies();
-      await page.evaluate(() => {
-        try {
-          localStorage.clear();
-        } catch {
-          /* noop */
-        }
-        try {
-          sessionStorage.clear();
-        } catch {
-          /* noop */
-        }
-      });
-      await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
-      await page.locator('[data-testid="login-submit"]').waitFor({ state: 'visible', timeout: 10000 });
+    // Login POST never came back — network issue or server crash
+    return performLogin(page, username, password, attempt + 1);
+  }
 
-      return performLogin(page, username, password, _retryCount + 1);
+  // 401/403 = deterministic auth failure — retrying won't help
+  if (resp.status() === 401 || resp.status() === 403) {
+    throw new Error(`Login rejected with ${resp.status()} — check credentials for user '${username}'.`);
+  }
+
+  // 5xx = transient server error — retry after backoff
+  if (resp.status() >= 500) {
+    return performLogin(page, username, password, attempt + 1);
+  }
+
+  // ── 6. Wait for SPA to redirect away from /auth/login ────────────────────
+  try {
+    await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: LOGIN_REDIRECT_TIMEOUT });
+  } catch {
+    // Redirect failed — but POST was 2xx so the cookie might be set.
+    // Verify actual auth state before throwing away the session.
+    const isAuthenticated = await page
+      .evaluate(async () => {
+        try {
+          const r = await fetch('./v1/management.cattle.io.settings/server-version', { credentials: 'include' });
+
+          return r.ok;
+        } catch {
+          return false;
+        }
+      })
+      .catch(() => false);
+
+    if (isAuthenticated) {
+      // Session IS valid — the SPA router just didn't redirect. Navigate manually.
+      await page.goto('./home', { waitUntil: 'domcontentloaded' });
+
+      try {
+        await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: FORM_READY_TIMEOUT });
+
+        return; // Successfully recovered
+      } catch {
+        // Manual navigation also failed — fall through to retry
+      }
     }
-    throw new Error(`Login stuck on ${page.url()}`);
+
+    // Session is genuinely invalid or unrecoverable — retry with clean state
+    return performLogin(page, username, password, attempt + 1);
   }
 }
 
@@ -225,80 +343,65 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
       if (hasStorageState && !options) {
         await page.goto('./home', { waitUntil: 'domcontentloaded' });
 
-        // Race: either we land on home (storageState valid) or get redirected to login (invalid).
-        // The SPA needs time to check auth and redirect, so we wait for EITHER outcome.
-        // Catch timeout — if neither element appears (slow server, loading spinner), fall through to fresh login.
-        let isLoginPage: boolean;
+        // Race: home (session valid) | login (expired) | setup (not configured) | timeout (slow/stuck)
+        let pageState: 'home' | 'login' | 'setup' | 'timeout';
 
         try {
-          isLoginPage = await Promise.race([
+          pageState = await Promise.race([
             page
               .getByTestId('nav_header_showUserMenu')
-              .waitFor({ state: 'visible', timeout: 30000 })
-              .then(() => false),
+              .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
+              .then(() => 'home' as const),
             page
               .locator('[data-testid="login-submit"]')
-              .waitFor({ state: 'visible', timeout: 30000 })
-              .then(() => true),
+              .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
+              .then(() => 'login' as const),
+            page
+              .locator('[data-testid="setup-submit"]')
+              .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
+              .then(() => 'setup' as const),
           ]);
         } catch {
-          // Timeout — neither element appeared. Clear state and do a fresh login.
-          await page.context().clearCookies();
-          await page.evaluate(() => {
-            try {
-              localStorage.clear();
-            } catch {
-              /* noop */
-            }
-            try {
-              sessionStorage.clear();
-            } catch {
-              /* noop */
-            }
-          });
-          await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
-          isLoginPage = true;
+          pageState = 'timeout';
         }
 
-        if (!isLoginPage) {
+        if (pageState === 'home') {
           // DOM says we're logged in, but the SPA can render from cached Vuex state
           // even when R_SESS is expired. Verify with a real API call from the browser.
-          const isSessionValid = await page.evaluate(async () => {
-            try {
-              const resp = await fetch('./v1/management.cattle.io.settings/server-version', {
-                credentials: 'include',
-              });
+          // Retry once on transient failures (5xx, network blip) to avoid nuking valid state.
+          for (let probe = 0; probe < 2; probe++) {
+            const probeResult = await page.evaluate(async () => {
+              try {
+                const resp = await fetch('./v1/management.cattle.io.settings/server-version', {
+                  credentials: 'include',
+                });
 
-              return resp.ok;
-            } catch {
-              return false;
+                return resp.status;
+              } catch {
+                return 0; // network error
+              }
+            });
+
+            if (probeResult >= 200 && probeResult < 300) {
+              return; // Session confirmed valid
             }
-          });
 
-          if (isSessionValid) {
-            return;
+            if (probeResult === 401 || probeResult === 403) {
+              break; // Deterministic auth failure — don't retry
+            }
+
+            // Transient error (5xx, network) — wait briefly and retry once
+            if (probe === 0) {
+              await new Promise((r) => setTimeout(r, 2_000));
+            }
           }
-
-          // Session expired — nuke all browser state so the SPA starts clean.
-          // Without this, Rancher's Vuex store keeps stale auth data and the
-          // login page enters a stuck "Logging in..." state after ?timed-out.
-          await page.context().clearCookies();
-          await page.evaluate(() => {
-            try {
-              localStorage.clear();
-            } catch {
-              /* noop */
-            }
-            try {
-              sessionStorage.clear();
-            } catch {
-              /* noop */
-            }
-          });
-          await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
         }
+
+        // Session invalid, on login page, setup page, or timeout — clear state and do fresh login
+        await resetBrowserState(page);
+        await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       } else {
-        // Clear existing auth state when logging in as a different user
+        // Clear existing auth state when logging in as a different user or without storageState
         await page.context().clearCookies();
         await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       }

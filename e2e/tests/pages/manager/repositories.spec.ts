@@ -163,11 +163,12 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
       const refreshResp = page.waitForResponse(
         (r) => r.url().includes(`${CLUSTER_REPOS_BASE_URL}/${repoName}`) && r.request().method() === 'PUT',
+        { timeout: VERY_LONG },
       );
 
       const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-      await actionMenu.getMenuItem('Refresh').click({ force: true });
+      await actionMenu.getMenuItem('Refresh').click();
       const resp = await refreshResp;
 
       expect(resp.status()).toBe(200);
