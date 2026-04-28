@@ -11,6 +11,8 @@ services:
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    volumes:
+      - rancher-1-data:/var/lib/rancher
     healthcheck:
       test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
       interval: 15s
@@ -25,6 +27,8 @@ services:
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    volumes:
+      - rancher-2-data:/var/lib/rancher
     healthcheck:
       test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
       interval: 15s
@@ -94,4 +98,6 @@ services:
       - ./playwright-report:/report
 
 volumes:
+  rancher-1-data:
+  rancher-2-data:
   blob-reports:
