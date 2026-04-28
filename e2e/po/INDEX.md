@@ -144,7 +144,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BaseResourceList | base-resource-list.po.ts | ComponentPo | — | super, masthead, resourceTable, createEditView, actionMenu, rowWithName, state, actionMenuClose (+5) |
+| BaseResourceList | base-resource-list.po.ts | ComponentPo | — | super, masthead, resourceTable, createEditView, actionMenu, rowWithName, state, actionMenuClose (+6) |
 | ClusterRecentEventsListPo | cluster-recent-events-list.po.ts | BaseResourceList | — | super, details, emptyStateRow |
 | ClusterSnapshotsListPo | cluster-snapshots-list.po.ts | BaseResourceList | — | super, details, checkTableIsEmpty, clickOnSnapshotNow, checkSnapshotExist |
 | MachinePoolsListPo | machine-pools-list.po.ts | BaseResourceList | — | super, details, machinePoolReadyofDesiredCount, machineProgressBar, machineProgressBarError, scaleDownButton, scaleUpButton, machineUnavailableCount (+2) |
@@ -171,7 +171,7 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+46) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+47) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |

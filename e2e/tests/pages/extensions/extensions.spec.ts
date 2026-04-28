@@ -325,7 +325,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
       // Ensure partners checkbox is checked — the dialog's fetch() sets it via v-model
       // but a Vue reactivity race can leave it unchecked even when no partner repo exists
-      const partnersInput = extensionsPo.addReposModalPartnersCheckbox().locator('input[type="checkbox"]');
+      const partnersInput = extensionsPo.addReposModalPartnersInput();
 
       if (!(await partnersInput.isChecked())) {
         await extensionsPo.addReposModalPartnersCheckbox().click();

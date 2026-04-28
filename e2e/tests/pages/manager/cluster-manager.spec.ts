@@ -235,7 +235,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(page).toHaveURL(/\/local[#/]/);
 
@@ -256,7 +256,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.relatedTab().click();
       await expect(page).toHaveURL(/related/);
@@ -272,7 +272,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.logTab().click();
       await expect(page).toHaveURL(/log/);
@@ -288,7 +288,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.nodePoolsTab().click();
       await expect(page).toHaveURL(/node-pools/);
@@ -304,7 +304,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await clusterDetail.showConfigurationButton().click();
 
@@ -328,7 +328,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(clusterDetail.clusterNamespaceLink()).toContainText('fleet-local');
       await clusterDetail.clusterNamespaceLink().click();
@@ -549,7 +549,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/fleet-local\/local/);
 
@@ -579,7 +579,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await clusterList.goToDetailsPage('local', '.cluster-link a');
+      await clusterList.goToDetailsPage('local');
 
       await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/fleet-local\/local/);
 

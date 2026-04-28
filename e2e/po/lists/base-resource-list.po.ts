@@ -44,6 +44,10 @@ export default class BaseResourceList extends ComponentPo {
     return this.resourceTable().sortableTable().rowWithName(name).column(index);
   }
 
+  detailLink(name: string, index: number): Locator {
+    return this.details(name, index).locator('a');
+  }
+
   activate(): Locator {
     return this.page.getByTestId('sortable-table-activate');
   }

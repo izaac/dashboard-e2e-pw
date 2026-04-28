@@ -94,7 +94,7 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   clusterNamespaceLink(): Locator {
-    return this.page.getByTestId('cluster-namespace');
+    return this.page.getByTestId('masthead-subheader-namespace');
   }
 
   nameInput(): Locator {

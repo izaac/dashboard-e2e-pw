@@ -72,7 +72,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.waitForPage();
 
       // Verify edit persisted
-      await repositoriesPage.list().details(repoName, 2).locator('a').click();
+      await repositoriesPage.list().detailLink(repoName, 2).click();
       await expect(repositoriesPage.body()).toContainText(`${repoName}-desc-edit`);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
