@@ -244,7 +244,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
         await clusterDashboard.eventsRowCountMenuToggle();
         await clusterDashboard.eventsRowCountMenu().getByText('Show 10 events').click();
       } catch {
-        /* cleanup is best-effort */
+        // Cleanup is best-effort — events count restore may fail if page navigated away
       }
 
       await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);

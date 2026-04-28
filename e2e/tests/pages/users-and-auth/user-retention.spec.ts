@@ -125,7 +125,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
           break;
         } catch {
           await page.waitForLoadState('domcontentloaded').catch(() => {
-            /* page may have already navigated */
+            // Navigation may have already completed before waitForLoadState attached
           });
         }
       }
