@@ -62,6 +62,26 @@ export default class RolesPo extends ClusterPagePo {
     return this.page.locator(`#${tabIdSelector} div.paging`);
   }
 
+  pagingInfo(tabId: 'GLOBAL' | 'CLUSTER' | 'NAMESPACE'): Locator {
+    return this.paginatedTab(tabId).locator('span');
+  }
+
+  pagingFirstButton(tabId: 'GLOBAL' | 'CLUSTER' | 'NAMESPACE'): Locator {
+    return this.paginatedTab(tabId).locator('button').nth(0);
+  }
+
+  pagingPrevButton(tabId: 'GLOBAL' | 'CLUSTER' | 'NAMESPACE'): Locator {
+    return this.paginatedTab(tabId).locator('button').nth(1);
+  }
+
+  pagingNextButton(tabId: 'GLOBAL' | 'CLUSTER' | 'NAMESPACE'): Locator {
+    return this.paginatedTab(tabId).locator('button').nth(2);
+  }
+
+  pagingLastButton(tabId: 'GLOBAL' | 'CLUSTER' | 'NAMESPACE'): Locator {
+    return this.paginatedTab(tabId).locator('button').nth(3);
+  }
+
   async listCreate(label: string): Promise<void> {
     await this.page
       .locator('.actions-container .actions .btn, .resource-list-masthead .actions .btn')

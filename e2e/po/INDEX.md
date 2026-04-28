@@ -33,7 +33,7 @@
 | ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
-| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+12) |
+| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+13) |
 | NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, statusIndicator, unreadIndicator, expandedState, collapsedState, getNotificationByName (+4) |
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, readIcon, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
@@ -176,7 +176,7 @@
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
-| PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+17) |
+| PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+18) |
 | PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+23) |
 | RancherSetupConfigurePage | rancher-setup-configure.po.ts | PagePo | — | super, goTo, bootstrapPasswordInput, choosePassword, password, confirmPassword, termsAgreement, serverUrl (+6) |
 | RancherSetupLoginPagePo | rancher-setup-login.po.ts | PagePo | — | super, goTo, form, bootstrapLogin, infoMessage, password, canSubmit, submit |
@@ -297,7 +297,7 @@
 |-------|------|---------|----------|---------|
 | AuthProviderPo | auth-provider.po.ts | PagePo | — | super, selectionGrid, selectProvider, goToAzureADCreation, goToAmazonCognitoCreation, goToAmazonCongitoCreation |
 | OidcClientsPagePo | oidc-client.po.ts | PagePo | — | super, createOidcClient, list |
-| RolesPo | roles.po.ts | ClusterPagePo | — | super, list, tabs, waitForRequests, createGlobal, detailGlobal, createRole, detailRole (+3) |
+| RolesPo | roles.po.ts | ClusterPagePo | — | super, list, tabs, waitForRequests, createGlobal, detailGlobal, createRole, detailRole (+8) |
 | UserRetentionPo | user.retention.po.ts | PagePo | — | super, saveButton, enableRegistryCheckbox, disableAfterPeriodCheckbox, disableAfterPeriodInput, deleteAfterPeriodCheckbox, deleteAfterPeriodInput, userRetentionCron (+2) |
 | MgmtUserResourceDetailPo | users.po.ts | PagePo | `/c/${clusterId}/auth/management.cattle.io.user/${userId}` | super, waitForRequests, list, createEdit, detail, userRetentionLink, create, refreshGroupMembership (+12) |
 

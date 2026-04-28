@@ -146,6 +146,14 @@ export default class PagePo extends ComponentPo {
     return failWhale || errorPage || urlHasFailWhale;
   }
 
+  /** Wait for fail-whale or error page to become visible */
+  async waitForFailWhale(timeout = 10000): Promise<void> {
+    await Promise.race([
+      this.page.locator('.fail-whale').waitFor({ state: 'visible', timeout }),
+      this.page.locator('.main-layout.error').waitFor({ state: 'visible', timeout }),
+    ]);
+  }
+
   /** Scroll the main content area to the bottom */
   async scrollMainContentToBottom(): Promise<void> {
     await this.page

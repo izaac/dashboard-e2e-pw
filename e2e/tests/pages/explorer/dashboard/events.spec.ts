@@ -175,7 +175,7 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
         expect(afterFilter).toBeGreaterThan(0);
 
         // Filtered row should contain the search term
-        await expect(table.self().locator('tbody tr').first()).toContainText(filterTerm);
+        await expect(table.rowElements().first()).toContainText(filterTerm);
 
         // Reset filter restores original count
         await table.resetFilter();

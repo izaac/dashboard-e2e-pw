@@ -712,29 +712,29 @@ rules:
         const paging = roles.paginatedTab('GLOBAL');
 
         await expect(paging).toBeVisible();
-        await expect(paging.locator('span')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+        await expect(roles.pagingInfo('GLOBAL')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
 
-        await expect(paging.locator('button').nth(0)).toBeDisabled();
-        await expect(paging.locator('button').nth(1)).toBeDisabled();
-        await expect(paging.locator('button').nth(2)).toBeEnabled();
-        await expect(paging.locator('button').nth(3)).toBeEnabled();
+        await expect(roles.pagingFirstButton('GLOBAL')).toBeDisabled();
+        await expect(roles.pagingPrevButton('GLOBAL')).toBeDisabled();
+        await expect(roles.pagingNextButton('GLOBAL')).toBeEnabled();
+        await expect(roles.pagingLastButton('GLOBAL')).toBeEnabled();
 
         // Navigate right → page 2
-        await paging.locator('button').nth(2).click();
-        await expect(paging.locator('span')).toContainText(`11 - 20 of ${MOCK_COUNT}`);
-        await expect(paging.locator('button').nth(0)).toBeEnabled();
+        await roles.pagingNextButton('GLOBAL').click();
+        await expect(roles.pagingInfo('GLOBAL')).toContainText(`11 - 20 of ${MOCK_COUNT}`);
+        await expect(roles.pagingFirstButton('GLOBAL')).toBeEnabled();
 
         // Navigate left → page 1
-        await paging.locator('button').nth(1).click();
-        await expect(paging.locator('span')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+        await roles.pagingPrevButton('GLOBAL').click();
+        await expect(roles.pagingInfo('GLOBAL')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
 
         // Navigate to last page
-        await paging.locator('button').nth(3).click();
-        await expect(paging.locator('span')).toContainText(`21 - ${MOCK_COUNT} of ${MOCK_COUNT}`);
+        await roles.pagingLastButton('GLOBAL').click();
+        await expect(roles.pagingInfo('GLOBAL')).toContainText(`21 - ${MOCK_COUNT} of ${MOCK_COUNT}`);
 
         // Navigate to first page
-        await paging.locator('button').nth(0).click();
-        await expect(paging.locator('span')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+        await roles.pagingFirstButton('GLOBAL').click();
+        await expect(roles.pagingInfo('GLOBAL')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
       }

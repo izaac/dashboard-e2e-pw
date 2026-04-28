@@ -72,6 +72,11 @@ export class NamespaceFilterPo extends ComponentPo {
     return option.locator('i.icon-checkmark');
   }
 
+  /** Locator for all checkmarks in the options dropdown (use with toHaveCount) */
+  allCheckmarks(): Locator {
+    return this.getOptions().locator('i.icon-checkmark');
+  }
+
   /** Locator for the "all namespaces" no-filter indicator */
   noFilterIndicator(): Locator {
     return this.self().getByTestId('namespaces-values-none');
