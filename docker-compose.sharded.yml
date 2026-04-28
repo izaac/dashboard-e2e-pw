@@ -13,6 +13,9 @@ services:
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
     volumes:
       - rancher-1-data:/var/lib/rancher
+    networks:
+      e2e:
+        ipv4_address: 172.28.0.10
     healthcheck:
       test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
       interval: 15s
@@ -29,6 +32,9 @@ services:
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
     volumes:
       - rancher-2-data:/var/lib/rancher
+    networks:
+      e2e:
+        ipv4_address: 172.28.0.11
     healthcheck:
       test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
       interval: 15s
@@ -41,6 +47,8 @@ services:
     depends_on:
       rancher-1:
         condition: service_healthy
+    networks:
+      e2e:
     environment:
       TEST_BASE_URL: https://rancher-1/dashboard
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
@@ -58,6 +66,8 @@ services:
     depends_on:
       rancher-2:
         condition: service_healthy
+    networks:
+      e2e:
     environment:
       TEST_BASE_URL: https://rancher-2/dashboard
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
@@ -77,6 +87,8 @@ services:
         condition: service_started
       shard-2:
         condition: service_started
+    networks:
+      e2e:
     entrypoint: ["sh", "-c"]
     command:
       - |
@@ -96,6 +108,13 @@ services:
     volumes:
       - blob-reports:/blobs
       - ./playwright-report:/report
+
+networks:
+  e2e:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
 
 volumes:
   rancher-1-data:
