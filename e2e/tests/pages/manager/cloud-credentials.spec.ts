@@ -4,37 +4,6 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
-  test('can see error when authentication fails', async ({ login, page, rancherApi, envMeta }) => {
-    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
-
-    await login();
-
-    const cloudCredentialName = rancherApi.createE2EResourceName('cc-err');
-    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
-
-    await cloudCredentialsPage.goTo();
-    await cloudCredentialsPage.waitForPage();
-    await cloudCredentialsPage.create();
-    await cloudCredentialsPage.createEditCloudCreds().waitForPage();
-    await cloudCredentialsPage.createEditCloudCreds().cloudServiceOptions().selectSubTypeByIndex(0).click();
-    await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(cloudCredentialName);
-    await cloudCredentialsPage
-      .createEditCloudCreds()
-      .nameNsDescription()
-      .description()
-      .set(`${cloudCredentialName}-description`);
-    await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
-    await cloudCredentialsPage.createEditCloudCreds().secretKey().set(`${envMeta.awsSecretKey}abc`);
-    await expect(cloudCredentialsPage.createEditCloudCreds().defaultRegion().selectedOption()).toHaveText('us-west-2', {
-      useInnerText: true,
-    });
-    await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
-
-    await expect(cloudCredentialsPage.createEditCloudCreds().errorBanner().banner()).toContainText(
-      'Authentication test failed, please check your credentials',
-    );
-  });
-
   test('can create aws cloud credentials', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
 
@@ -81,12 +50,27 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
         SHORT_TIMEOUT_OPT,
       );
+      const errorBanner = cloudCredentialsPage.createEditCloudCreds().errorBanner().banner();
 
       await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
-      const response = await responsePromise;
 
-      expect(response.status()).toBe(201);
-      const body = await response.json();
+      // Race: save POST (proxy validated OK) vs error banner (proxy rejected creds)
+      const bannerRace = async () => {
+        await expect(errorBanner).toBeVisible(SHORT_TIMEOUT_OPT);
+
+        return { type: 'error' as const, text: await errorBanner.textContent() };
+      };
+      const result = await Promise.race([
+        responsePromise.then((resp) => ({ type: 'saved' as const, resp })),
+        bannerRace(),
+      ]);
+
+      if (result.type === 'error') {
+        throw new Error(`Cloud credential save blocked by proxy validation: ${result.text}`);
+      }
+
+      expect(result.resp.status()).toBe(201);
+      const body = await result.resp.json();
 
       cloudcredentialId = body.id;
 
@@ -209,10 +193,26 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
         (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
         SHORT_TIMEOUT_OPT,
       );
+      const cloneErrorBanner = cloudCredentialsPage.createEditCloudCreds().errorBanner().banner();
 
       await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
-      const response = await postResponsePromise;
-      const body = await response.json();
+
+      // Race: save POST (proxy validated OK) vs error banner (proxy rejected creds)
+      const cloneBannerRace = async () => {
+        await expect(cloneErrorBanner).toBeVisible(SHORT_TIMEOUT_OPT);
+
+        return { type: 'error' as const, text: await cloneErrorBanner.textContent() };
+      };
+      const cloneResult = await Promise.race([
+        postResponsePromise.then((resp) => ({ type: 'saved' as const, resp })),
+        cloneBannerRace(),
+      ]);
+
+      if (cloneResult.type === 'error') {
+        throw new Error(`Cloud credential clone blocked by proxy validation: ${cloneResult.text}`);
+      }
+
+      const body = await cloneResult.resp.json();
 
       createdIds.push(body.id);
       await cloudCredentialsPage.waitForPage();
@@ -320,5 +320,37 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
     } finally {
       await rancherApi.deleteRancherResource('v3', 'cloudCredentials', credId, false);
     }
+  });
+
+  // Intentionally last: sends bad AWS creds which can trigger AWS rate-limiting on the source IP
+  test('can see error when authentication fails', async ({ login, page, rancherApi, envMeta }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const cloudCredentialName = rancherApi.createE2EResourceName('cc-err');
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+
+    await cloudCredentialsPage.goTo();
+    await cloudCredentialsPage.waitForPage();
+    await cloudCredentialsPage.create();
+    await cloudCredentialsPage.createEditCloudCreds().waitForPage();
+    await cloudCredentialsPage.createEditCloudCreds().cloudServiceOptions().selectSubTypeByIndex(0).click();
+    await cloudCredentialsPage.createEditCloudCreds().nameNsDescription().name().set(cloudCredentialName);
+    await cloudCredentialsPage
+      .createEditCloudCreds()
+      .nameNsDescription()
+      .description()
+      .set(`${cloudCredentialName}-description`);
+    await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
+    await cloudCredentialsPage.createEditCloudCreds().secretKey().set(`${envMeta.awsSecretKey}abc`);
+    await expect(cloudCredentialsPage.createEditCloudCreds().defaultRegion().selectedOption()).toHaveText('us-west-2', {
+      useInnerText: true,
+    });
+    await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
+
+    await expect(cloudCredentialsPage.createEditCloudCreds().errorBanner().banner()).toContainText(
+      'Authentication test failed, please check your credentials',
+    );
   });
 });
