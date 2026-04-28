@@ -124,7 +124,7 @@ async function dismissBanner(page: import('@playwright/test').Page): Promise<voi
       .locator('button')
       .click()
       .catch(() => {
-        /* best effort */
+        // Banner can disappear between isVisible check and click — safe to ignore
       });
   }
 }
@@ -156,12 +156,12 @@ setup('authenticate as admin', async ({ page }) => {
         try {
           localStorage.clear();
         } catch {
-          /* noop */
+          // Throws in restricted contexts (about:blank, sandboxed iframes)
         }
         try {
           sessionStorage.clear();
         } catch {
-          /* noop */
+          // Throws in restricted contexts (about:blank, sandboxed iframes)
         }
       });
     }
