@@ -111,11 +111,17 @@ test.describe('Apps', () => {
         await expect(appRepoCreate.ociMaxRetriesInput()).toHaveValue('');
 
         // Auth dropdown: HTTP Basic available, SSH Key absent when OCI selected
-        const authSelect = appRepoCreate.clusterRepoAuthSelectOrCreate();
+        const authPo = appRepoCreate.clusterRepoAuthSelectOrCreate();
 
-        await authSelect.toggle();
-        await expect(authSelect.getOptions().filter({ hasText: 'Create an HTTP Basic Auth Secret' })).toBeVisible();
-        await expect(authSelect.getOptions().filter({ hasText: 'Create an SSH Key Secret' })).not.toBeAttached();
+        await authPo.waitForNotLoading();
+        await authPo.authSelect().toggle();
+        await authPo.authSelect().isOpened();
+        await expect(
+          authPo.authSelect().getOptions().filter({ hasText: 'Create an HTTP Basic Auth Secret' }),
+        ).toBeVisible();
+        await expect(
+          authPo.authSelect().getOptions().filter({ hasText: 'Create an SSH Key Secret' }),
+        ).not.toBeAttached();
       });
     });
 

@@ -226,25 +226,27 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
       configuration: createPayloadData.configuration,
     });
 
-    await psaPage.goTo();
-    await psaPage.waitForPage();
+    try {
+      await psaPage.goTo();
+      await psaPage.waitForPage();
 
-    const downloadPromise = page.waitForEvent('download');
-    const actionMenu = await psaPage.list().actionMenu(psaName);
+      const actionMenu = await psaPage.list().actionMenu(psaName);
 
-    await actionMenu.getMenuItem('Download YAML').click({ force: true });
-    const download = await downloadPromise;
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        actionMenu.getMenuItem('Download YAML').click(),
+      ]);
 
-    expect(download.suggestedFilename()).toBe(`${psaName}.yaml`);
+      expect(download.suggestedFilename()).toBe(`${psaName}.yaml`);
 
-    const yamlContent = fs.readFileSync((await download.path()) as string, 'utf-8');
-    const parsed: any = jsyaml.load(yamlContent);
+      const yamlContent = fs.readFileSync((await download.path()) as string, 'utf-8');
+      const parsed: any = jsyaml.load(yamlContent);
 
-    expect(parsed.kind).toBe('PodSecurityAdmissionConfigurationTemplate');
-    expect(parsed.metadata.name).toBe(psaName);
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', PSA_RESOURCE, psaName, false);
+      expect(parsed.kind).toBe('PodSecurityAdmissionConfigurationTemplate');
+      expect(parsed.metadata.name).toBe(psaName);
+    } finally {
+      await rancherApi.deleteRancherResource('v1', PSA_RESOURCE, psaName, false);
+    }
   });
 });
 

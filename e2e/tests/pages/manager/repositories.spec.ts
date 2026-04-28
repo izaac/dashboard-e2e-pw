@@ -132,11 +132,12 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.goTo();
       await repositoriesPage.waitForPage();
 
-      const downloadPromise = page.waitForEvent('download');
       const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-      await actionMenu.getMenuItem('Download YAML').click({ force: true });
-      const download = await downloadPromise;
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        actionMenu.getMenuItem('Download YAML').click(),
+      ]);
 
       expect(download.suggestedFilename()).toBe(`${repoName}.yaml`);
     } finally {
@@ -273,14 +274,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.createEditRepositories().gitRepoUrl().set(gitRepoUrl);
       await repositoriesPage.createEditRepositories().gitBranch().set('release-v2.11');
 
-      // Select "Create an HTTP Basic Auth Secret"
-      await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().toggle();
-      await repositoriesPage
-        .createEditRepositories()
-        .clusterRepoAuthSelectOrCreate()
-        .clickOptionWithLabel('Create an HTTP Basic Auth Secret');
-      await repositoriesPage.createEditRepositories().authSecretUsername().set('test');
-      await repositoriesPage.createEditRepositories().authSecretPassword().set('test');
+      await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().createBasicAuth('test', 'test');
 
       const resp = await repositoriesPage
         .createEditRepositories()
@@ -310,14 +304,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.createEditRepositories().gitRepoUrl().set(gitRepoUrl);
       await repositoriesPage.createEditRepositories().gitBranch().set('release-v2.11');
 
-      // Select "Create an SSH Key Secret"
-      await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().toggle();
       await repositoriesPage
         .createEditRepositories()
         .clusterRepoAuthSelectOrCreate()
-        .clickOptionWithLabel('Create an SSH Key Secret');
-      await repositoriesPage.createEditRepositories().authSecretSshPrivateKey().fill('privateKey');
-      await repositoriesPage.createEditRepositories().authSecretSshPublicKey().fill('publicKey');
+        .createSSHAuth('privateKey', 'publicKey');
 
       const resp = await repositoriesPage
         .createEditRepositories()
@@ -347,14 +337,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.createEditRepositories().selectOciUrlCard();
       await repositoriesPage.createEditRepositories().ociUrl().set(ociUrl);
 
-      // Set auth
-      await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().toggle();
-      await repositoriesPage
-        .createEditRepositories()
-        .clusterRepoAuthSelectOrCreate()
-        .clickOptionWithLabel('Create an HTTP Basic Auth Secret');
-      await repositoriesPage.createEditRepositories().authSecretUsername().set('test');
-      await repositoriesPage.createEditRepositories().authSecretPassword().set('test');
+      await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().createBasicAuth('test', 'test');
 
       const createResp = page.waitForResponse(
         (r) => r.url().includes(CLUSTER_REPOS_BASE_URL) && r.request().method() === 'POST',

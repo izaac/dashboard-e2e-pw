@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import KeyValuePo from '@/e2e/po/components/key-value.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import SelectOrCreateAuthPo from '@/e2e/po/components/select-or-create-auth.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
@@ -136,28 +137,8 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return new AsyncButtonPo(this.page, '[data-testid="action-button-async-button"]', this.self());
   }
 
-  authSelectOrCreate(selector: string): LabeledSelectPo {
-    return new LabeledSelectPo(this.page, `${selector} [data-testid="auth-secret-select"]`);
-  }
-
-  clusterRepoAuthSelectOrCreate(): LabeledSelectPo {
-    return this.authSelectOrCreate('[data-testid="clusterrepo-auth-secret"]');
-  }
-
-  authSecretUsername(): LabeledInputPo {
-    return LabeledInputPo.byLabel(this.page, this.self(), 'Username');
-  }
-
-  authSecretPassword(): LabeledInputPo {
-    return LabeledInputPo.byLabel(this.page, this.self(), 'Password');
-  }
-
-  authSecretSshPrivateKey(): Locator {
-    return this.self().locator('.labeled-input:has-text("Private Key") textarea');
-  }
-
-  authSecretSshPublicKey(): Locator {
-    return this.self().locator('.labeled-input:has-text("Public Key") textarea');
+  clusterRepoAuthSelectOrCreate(): SelectOrCreateAuthPo {
+    return new SelectOrCreateAuthPo(this.page, '[data-testid="clusterrepo-auth-secret"]');
   }
 
   refreshIntervalInput(): Locator {
