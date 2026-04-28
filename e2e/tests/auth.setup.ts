@@ -169,7 +169,7 @@ setup('authenticate as admin', async ({ page }) => {
     await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
 
     // Wait for login form to render
-    const submitButton = page.locator('[data-testid="login-submit"]');
+    const submitButton = page.getByTestId('login-submit');
 
     try {
       await submitButton.waitFor({ state: 'visible', timeout: AUTH_FORM_TIMEOUT });
@@ -181,7 +181,7 @@ setup('authenticate as admin', async ({ page }) => {
       continue;
     }
 
-    const useLocal = page.locator('[data-testid="login-useLocal"]');
+    const useLocal = page.getByTestId('login-useLocal');
 
     if (await useLocal.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
       await useLocal.click();
@@ -190,11 +190,10 @@ setup('authenticate as admin', async ({ page }) => {
 
     await dismissBanner(page);
 
-    await page
-      .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
-      .last()
-      .fill(username);
-    await page.locator('[data-testid="local-login-password"] input').fill(password);
+    // LabeledInput uses inheritAttrs:false + v-bind="$attrs" on <input>, so testid is ON the input
+    // Password wraps LabeledInput with default inheritAttrs, so testid is on the wrapper div
+    await page.getByTestId('local-login-username').fill(username);
+    await page.getByTestId('local-login-password').locator('input').fill(password);
 
     await dismissBanner(page);
 

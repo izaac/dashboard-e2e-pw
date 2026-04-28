@@ -84,7 +84,7 @@ async function performLogin(page: Page, username: string, password: string, atte
   }
 
   // ── 1. Wait for the login form to fully render ────────────────────────────
-  const submitButton = page.locator('[data-testid="login-submit"]');
+  const submitButton = page.getByTestId('login-submit');
 
   try {
     await submitButton.waitFor({ state: 'visible', timeout: FORM_READY_TIMEOUT });
@@ -112,16 +112,15 @@ async function performLogin(page: Page, username: string, password: string, atte
   }
 
   // ── 2. Handle multi-provider login page ───────────────────────────────────
-  const useLocal = page.locator('[data-testid="login-useLocal"]');
+  const useLocal = page.getByTestId('login-useLocal');
 
   if (await useLocal.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await useLocal.click();
   }
 
   // ── 3. Wait for the local-login form fields (not just submit button) ──────
-  const usernameField = page
-    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
-    .last();
+  // LabeledInput uses inheritAttrs:false + v-bind="$attrs" on <input>, so testid is ON the input
+  const usernameField = page.getByTestId('local-login-username');
 
   try {
     await usernameField.waitFor({ state: 'visible', timeout: FORM_READY_TIMEOUT });
@@ -134,8 +133,9 @@ async function performLogin(page: Page, username: string, password: string, atte
   await dismissConsentBanner(page);
 
   // ── 5. Fill credentials ───────────────────────────────────────────────────
+  // Password wraps LabeledInput with default inheritAttrs, so testid is on the wrapper div
   await usernameField.fill(username);
-  await page.locator('[data-testid="local-login-password"] input').fill(password);
+  await page.getByTestId('local-login-password').locator('input').fill(password);
 
   // Re-check banner — can appear after page renders more content
   await dismissConsentBanner(page);
@@ -353,11 +353,11 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
               .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
               .then(() => 'home' as const),
             page
-              .locator('[data-testid="login-submit"]')
+              .getByTestId('login-submit')
               .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
               .then(() => 'login' as const),
             page
-              .locator('[data-testid="setup-submit"]')
+              .getByTestId('setup-submit')
               .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
               .then(() => 'setup' as const),
           ]);
