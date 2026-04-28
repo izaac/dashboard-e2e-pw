@@ -8,7 +8,7 @@ import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisionin
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -93,7 +93,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached({ timeout: 30000 });
+      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached(MEDIUM_TIMEOUT_OPT);
     } finally {
       if (reenableAKS) {
         // Restore AKS to active state if test failed mid-way

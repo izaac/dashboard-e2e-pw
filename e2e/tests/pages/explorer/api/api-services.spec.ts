@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { APIServicesPagePo } from '@/e2e/po/pages/explorer/api-services.po';
+import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Cluster Explorer', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('API: APIServices', () => {
@@ -19,7 +20,7 @@ test.describe('Cluster Explorer', { tag: ['@explorer', '@adminUser'] }, () => {
       const count = 3;
 
       await sortableTable.checkLoadingIndicatorNotVisible();
-      await expect.poll(() => sortableTable.rowCount(), { timeout: 15_000 }).toBeGreaterThanOrEqual(count);
+      await expect.poll(() => sortableTable.rowCount(), SHORT_TIMEOUT_OPT).toBeGreaterThanOrEqual(count);
 
       for (let i = 0; i < count; i++) {
         await page.keyboard.down('Shift');
