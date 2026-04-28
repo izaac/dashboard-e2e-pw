@@ -19,29 +19,6 @@ const linodeDriver = 'Linode LKE';
 const exampleDriver = 'Example';
 
 /**
- * Wait for Rancher API to be healthy after driver state changes.
- * Driver activate/deactivate can restart embedded k3s controllers,
- * making the API temporarily unreachable.
- */
-async function waitForRancherHealthy(rancherApi: RancherApi, maxAttempts = 8, intervalMs = 5_000): Promise<void> {
-  for (let i = 1; i <= maxAttempts; i++) {
-    try {
-      const resp = await rancherApi.getRancherResource('v1', 'counts');
-
-      if (resp.status === 200) {
-        return;
-      }
-    } catch (err: unknown) {
-      console.warn(`[kontainer-drivers] health probe ${i}/${maxAttempts} failed:`, err);
-    }
-
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
-
-  throw new Error(`Rancher did not recover after ${(maxAttempts * intervalMs) / 1000}s — aborting to prevent cascade`);
-}
-
-/**
  * Wait for a driver to reach the expected active state, then confirm Rancher is healthy.
  */
 async function waitForDriverAndHealth(
@@ -57,7 +34,7 @@ async function waitForDriverAndHealth(
     30,
     2000,
   );
-  await waitForRancherHealthy(rancherApi);
+  await rancherApi.waitForHealthy();
 }
 
 test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
@@ -80,7 +57,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
   // Health gate: confirm Rancher is responsive before each test
   test.beforeEach(async ({ rancherApi }) => {
-    await waitForRancherHealthy(rancherApi, 4, 3_000);
+    await rancherApi.waitForHealthy(4, 3_000);
   });
 
   test.afterAll(async ({ rancherApi }) => {
@@ -185,7 +162,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     try {
       // Wait for driver to become active + Rancher to stabilize after registration
       await expect(driversPage.list().details(exampleDriver, 1)).toContainText('Active', { timeout: EXTRA_LONG });
-      await waitForRancherHealthy(rancherApi);
+      await rancherApi.waitForHealthy();
 
       // Verify driver appears on cluster create page
       await clusterList.goTo();
@@ -296,7 +273,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Active', { timeout: VERY_LONG });
 
     // Confirm Rancher is healthy after bulk-activating real drivers
-    await waitForRancherHealthy(rancherApi);
+    await rancherApi.waitForHealthy();
 
     await clusterList.goTo();
     await clusterList.waitForPage();
@@ -355,7 +332,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await expect(driversPage.list().details(oracleDriver, 1)).toContainText('Inactive');
 
     // Confirm Rancher is healthy after bulk-deactivating real drivers
-    await waitForRancherHealthy(rancherApi);
+    await rancherApi.waitForHealthy();
 
     await clusterList.goTo();
     await clusterList.waitForPage();

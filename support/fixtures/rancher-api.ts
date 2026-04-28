@@ -876,4 +876,26 @@ export class RancherApi {
       }
     }
   }
+
+  /**
+   * Poll Rancher API health via /v1/counts.
+   * Useful after operations that can restart embedded k3s (driver activation, extension installs).
+   */
+  async waitForHealthy(maxAttempts = 8, intervalMs = 5_000): Promise<void> {
+    for (let i = 1; i <= maxAttempts; i++) {
+      try {
+        const resp = await this.getRancherResource('v1', 'counts');
+
+        if (resp.status === 200) {
+          return;
+        }
+      } catch (err: unknown) {
+        console.warn(`[RancherApi] health probe ${i}/${maxAttempts} failed:`, err);
+      }
+
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+
+    throw new Error(`Rancher did not recover after ${(maxAttempts * intervalMs) / 1000}s — aborting to prevent cascade`);
+  }
 }
