@@ -553,6 +553,34 @@ export class RancherApi {
     expect(resp.status()).toBe(201);
   }
 
+  /**
+   * Create a custom GlobalRole with the given rules.
+   * Returns the v3 API response body (includes `id` for cleanup).
+   */
+  async createGlobalRole(name: string, rules: Array<{ apiGroups: string[]; resources: string[]; verbs: string[] }>) {
+    const resp = await this.fetchWithReauth(() =>
+      this.request.post(`${this.apiUrl}/v3/globalRoles`, {
+        ...this.opts({
+          data: {
+            type: 'globalRole',
+            name,
+            displayName: name,
+            rules,
+          },
+        }),
+      }),
+    );
+
+    expect([200, 201]).toContain(resp.status());
+
+    return { status: resp.status(), body: await resp.json() };
+  }
+
+  /** Delete a GlobalRole by ID (v3 API). */
+  async deleteGlobalRole(roleId: string, failOnStatusCode = false) {
+    await this.deleteRancherResource('v3', 'globalRoles', roleId, failOnStatusCode);
+  }
+
   async setGlobalRoleBinding(userId: string, role: string) {
     const resp = await this.request.post(`${this.apiUrl}/v3/globalrolebindings`, {
       headers: this.headers(),

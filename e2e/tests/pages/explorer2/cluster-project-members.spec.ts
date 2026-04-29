@@ -80,6 +80,11 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
 
       await expect(sortableTable.self()).toBeVisible();
       await expect(sortableTable.rowElementWithPartialName(actualUsername)).toBeVisible(SHORT_TIMEOUT_OPT);
+
+      // Upstream parity: verify no "Loading..." text next to member name (issue #8804)
+      const row = sortableTable.rowElementWithPartialName(actualUsername);
+
+      await expect(clusterMembership.memberNameInRow(row)).not.toContainText('Loading');
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
     }

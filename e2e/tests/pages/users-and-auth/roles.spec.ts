@@ -679,6 +679,66 @@ rules:
     });
   });
 
+  test.describe('Standard User Access', { tag: ['@standardUser'] }, () => {
+    test('Standard user with List, Get & Resources: Global Roles should be able to list users in Users and Auth', async ({
+      page,
+      login,
+      rancherApi,
+    }) => {
+      const customRoleName = `e2e-custom-role-${Date.now()}`;
+      const customUsername = `e2e-std-user-${Date.now()}`;
+      const customPassword = 'standard-password';
+
+      // Create a global role with List+Get on GlobalRoles via API
+      const roleResp = await rancherApi.createGlobalRole(customRoleName, [
+        {
+          apiGroups: ['management.cattle.io'],
+          resources: ['globalroles'],
+          verbs: ['list', 'get'],
+        },
+      ]);
+
+      try {
+        // Create user with that custom role
+        const userResp = await rancherApi.createUser({
+          username: customUsername,
+          globalRole: { role: roleResp.body.id },
+          password: customPassword,
+        });
+
+        try {
+          // Login as the custom user
+          await login({ username: userResp.body.username, password: customPassword });
+
+          // Verify user can see Role Templates page
+          const roles = new RolesPo(page);
+
+          await roles.goTo();
+          await roles.waitForPage();
+
+          const globalList = roles.list('GLOBAL');
+
+          await expect(globalList.masthead().title()).toContainText('Role Templates');
+
+          const sortableTable = globalList.resourceTable().sortableTable();
+
+          await expect(sortableTable.rowElements().first()).toBeVisible();
+
+          // Verify user can see Users page
+          const usersPage = new UsersPo(page);
+
+          await usersPage.waitForRequests();
+          await usersPage.waitForPage();
+          await expect(usersPage.list().resourceTable().sortableTable().rowElements().first()).toBeVisible();
+        } finally {
+          await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
+        }
+      } finally {
+        await rancherApi.deleteGlobalRole(roleResp.body.id);
+      }
+    });
+  });
+
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
     const MOCK_COUNT = 25;
 

@@ -76,6 +76,11 @@ export default class ClusterProjectMembersPo extends PagePo {
     return this.sortableTable().rowElementWithName(name);
   }
 
+  /** Get the displayed member name cell within a row (resolves principal display name). */
+  memberNameInRow(row: Locator): Locator {
+    return row.locator('.principal .name');
+  }
+
   projectTable(): SortableTablePo {
     return new SortableTablePo(this.page, '#project-membership [data-testid="sortable-table-list-container"]');
   }
