@@ -5,6 +5,7 @@ import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import CloudCredentialsCreateEditPo from '@/e2e/po/edit/cloud-credentials-amazon.po';
+import TabbedPo from '@/e2e/po/components/tabbed.po';
 
 export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateRke2AmazonPagePo {
   constructor(page: Page, clusterId = '_') {
@@ -63,7 +64,7 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
   }
 
   getNodeGroup(): LabeledInputPo {
-    return new LabeledInputPo(this.page, '[data-testid="eks-nodegroup-name"]');
+    return new LabeledInputPo(this.page, '[data-testid="eks-nodegroup-name"]:visible');
   }
 
   getNodeRole(): LabeledSelectPo {
@@ -126,5 +127,9 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
     }
 
     return String(latestVersion);
+  }
+
+  nodePoolTabs(): TabbedPo {
+    return new TabbedPo(this.page, '[data-testid="tabbed"]');
   }
 }

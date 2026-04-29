@@ -38,4 +38,9 @@ export default class TabbedPo extends ComponentPo {
 
     return names;
   }
+
+  /** Click the add-tab button */
+  async addTab(): Promise<void> {
+    await this.self().getByTestId('tab-list-add').click();
+  }
 }

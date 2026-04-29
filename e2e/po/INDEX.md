@@ -48,7 +48,7 @@
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, createBasicAuth, createSSHAuth, createRKEAuth, waitForNotLoading |
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
 | SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, if, bulkActionDropDownPopOver, bulkActionDropDownButton (+52) |
-| TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, getTab, tabNames, for |
+| TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, getTab, tabNames, for (+1) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
 | VersionNumberPo | version-number.po.ts | ComponentPo | — | — |
@@ -121,7 +121,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | ClusterManagerCreateAKSPagePo | cluster-create-aks.po.ts | ClusterManagerCreatePagePo | — | super, resourceDetail, cloudCredentialsForm, credentialSelect, clusterNameInput, getClusterName, getClusterDescription, clusterResourceGroup (+4) |
-| ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, credentialFormCancel, selectExistingCredential, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup (+17) |
+| ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, credentialFormCancel, selectExistingCredential, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup (+18) |
 | ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+4) |
 | ClusterManagerCreateRke2AzurePagePo | cluster-create-rke2-azure.po.ts | ClusterManagerCreatePagePo | — | super, nameNsDescription, azureEnvironmentSelect, azureDropdownOption, subscriptionIdInput, clientIdInput, clientSecretInput, poolNameInput (+9) |
 | ClusterManagerCreateRke2CustomPagePo | cluster-create-rke2-custom.po.ts | ClusterManagerCreatePagePo | — | super, goToCustomClusterCreation, goToDigitalOceanCreation, title, clusterConfigurationTabs, registries, nameNsDescription, resourceDetail (+5) |

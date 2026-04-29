@@ -282,4 +282,90 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       }
     }
   });
+
+  test('can re-name node pools without changing the order in which they are displayed in the UI', async ({
+    login,
+    page,
+    rancherApi,
+    envMeta,
+  }) => {
+    test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+
+    await login();
+
+    const credName = rancherApi.createE2EResourceName('ekscred-tabs');
+    const clusterList = new ClusterManagerListPagePo(page);
+    const createEKSClusterPage = new ClusterManagerCreateEKSPagePo(page);
+    let cloudCredId = '';
+
+    try {
+      // Navigate to EKS create page
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.createCluster();
+      await createEKSClusterPage.selectKubeProvider(0);
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
+      await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
+      await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
+
+      // Create cloud credential inline
+      const cloudCredForm = createEKSClusterPage.cloudCredentialsForm();
+
+      await cloudCredForm.nameNsDescription().name().set(credName);
+      await cloudCredForm.accessKey().set(envMeta.awsAccessKey!);
+      await cloudCredForm.secretKey().set(envMeta.awsSecretKey!);
+
+      const credCreatePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
+        SHORT_TIMEOUT_OPT,
+      );
+      const pageLoadPromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
+        { timeout: LONG },
+      );
+
+      await cloudCredForm.saveCreateForm().cruResource().saveOrCreate().click();
+      const credResp = await credCreatePromise;
+
+      expect(credResp.status()).toBe(201);
+      const credBody = await credResp.json();
+
+      cloudCredId = credBody.id;
+
+      await pageLoadPromise;
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
+      await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
+
+      // Test node pool tab rename behavior
+      const tabbedPo = createEKSClusterPage.nodePoolTabs();
+      const initialTabNames = await tabbedPo.tabNames();
+
+      // Add a new node pool tab
+      await tabbedPo.addTab();
+
+      const tabNamesAfterAdd = await tabbedPo.tabNames();
+
+      expect(tabNamesAfterAdd.length).toBe(initialTabNames.length + 1);
+
+      const lastTabAfterAdd = tabNamesAfterAdd[tabNamesAfterAdd.length - 1].trim();
+
+      expect(lastTabAfterAdd).not.toBe('');
+
+      // Click the new (last) tab and rename it
+      await tabbedPo.clickNthTab(tabNamesAfterAdd.length);
+      await createEKSClusterPage.getNodeGroup().set('aaa');
+
+      const tabNamesAfterRename = await tabbedPo.tabNames();
+
+      expect(tabNamesAfterRename.length).toBe(tabNamesAfterAdd.length);
+
+      const lastTabAfterRename = tabNamesAfterRename[tabNamesAfterRename.length - 1].trim();
+
+      expect(lastTabAfterRename).toBe('aaa');
+    } finally {
+      if (cloudCredId) {
+        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudCredId, false);
+      }
+    }
+  });
 });

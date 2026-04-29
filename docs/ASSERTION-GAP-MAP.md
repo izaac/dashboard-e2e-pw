@@ -4,9 +4,9 @@
 Generated: 2026-04-29
 
 Upstream Cypress: 127 specs, 679 live tests (58 commented out)
-Playwright: 126 specs, 698 tests (0 PW-only specs, 0 PW-only tests)
+Playwright: 126 specs, 699 tests (0 PW-only specs, 0 PW-only tests)
 
-**Upstream coverage: 99%** (670/679 upstream tests found in Playwright)
+**Upstream coverage: 99%** (671/679 upstream tests found in Playwright)
 
 ## Summary
 
@@ -38,16 +38,16 @@ Playwright: 126 specs, 698 tests (0 PW-only specs, 0 PW-only tests)
 | pages/fleet/resources | 5 | 30 | 4 | 5 | 31 | ✅ |
 | pages/generic | 11 | 68 | 0 | 11 | 69 | 99% |
 | pages/global-settings | 8 | 70 | 1 | 8 | 69 | ✅ |
-| pages/manager | 24 | 141 | 27 | 24 | 145 | 99% |
+| pages/manager | 24 | 141 | 27 | 24 | 146 | ✅ |
 | pages/user-menu | 3 | 19 | 10 | 3 | 21 | ✅ |
 | pages/users-and-auth | 8 | 51 | 1 | 8 | 59 | 98% |
 | pages/virtualization-mgmt | 1 | 3 | 0 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 0 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 0 | 1 | 4 | ✅ |
-| **TOTAL** | **127** | **679** | **58** | **126** | **698** | **99%** |
+| **TOTAL** | **127** | **679** | **58** | **126** | **699** | **99%** |
 
 - **Unconverted spec tests** (no PW file): 2
-- **Missing by name** (PW file exists but upstream test not matched by exact name): 7
+- **Missing by name** (PW file exists but upstream test not matched by exact name): 6
 - **Upstream commented-out** (ported to PW as live tests): 58
 
 ## Unconverted Specs
@@ -75,7 +75,6 @@ Playwright: 126 specs, 698 tests (0 PW-only specs, 0 PW-only tests)
 | pages/global-settings/branding.spec.ts | 10 | 0 | 9 | -1 |
 | pages/global-settings/settings.spec.ts | 13 | 1 | 14 | +1 |
 | pages/manager/agent-configuration-rke2.spec.ts | 0 | 2 | 1 | +1 |
-| pages/manager/eks-cluster-provisioning.spec.ts | 3 | 0 | 2 | -1 |
 | pages/manager/node-drivers.spec.ts | 0 | 19 | 1 | +1 |
 | pages/manager/pod-security-policy-templates.spec.ts | 0 | 6 | 1 | +1 |
 | pages/manager/v2prov-capi.spec.ts | 2 | 0 | 4 | +2 |
@@ -97,10 +96,6 @@ Playwright: 126 specs, 698 tests (0 PW-only specs, 0 PW-only tests)
 **pages/generic/home.spec.ts** (1 tests)
 
 - Validate home page with percy
-
-**pages/manager/eks-cluster-provisioning.spec.ts** (1 tests)
-
-- can re-name node pools without changing the order in which they are displayed in the UI
 
 ### Found in a different Playwright spec (cross-spec match)
 
