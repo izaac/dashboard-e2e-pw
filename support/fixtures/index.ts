@@ -238,7 +238,7 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         fs.writeFileSync(domPath, html);
         await testInfo.attach('dom-snapshot', { path: domPath, contentType: 'text/html' });
       } catch {
-        /* page may have crashed */
+        // Page may have crashed — DOM snapshot is optional diagnostic
       }
 
       // 4. Error context summary — single text file with everything agents need
@@ -268,7 +268,7 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
         fs.writeFileSync(contextPath, contextLines.join('\n'));
         await testInfo.attach('error-context', { path: contextPath, contentType: 'text/plain' });
       } catch {
-        /* best effort */
+        // Error context is optional diagnostic — don't fail the test teardown
       }
     }
   },

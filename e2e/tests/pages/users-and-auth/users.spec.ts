@@ -634,7 +634,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
           { timeout: 10000 },
         )
         .catch(() => {
-          /* second binding may have already resolved */
+          // Second role binding POST may have already resolved before waitForResponse attached
         });
 
       await usersPo.goTo();
