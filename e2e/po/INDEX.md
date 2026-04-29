@@ -120,7 +120,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | ClusterManagerCreateAKSPagePo | cluster-create-aks.po.ts | ClusterManagerCreatePagePo | — | super, resourceDetail, clusterNameInput, clusterResourceGroup, dnsPrefixInput, regionSelect, kubernetesVersionSelect, cloudCredentialSelect (+1) |
-| ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup, getClusterName, getClusterDescription (+15) |
+| ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, credentialFormCancel, selectExistingCredential, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup (+17) |
 | ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+4) |
 | ClusterManagerCreateRke2AzurePagePo | cluster-create-rke2-azure.po.ts | ClusterManagerCreatePagePo | — | super, nameNsDescription, azureEnvironmentSelect, azureDropdownOption, subscriptionIdInput, clientIdInput, clientSecretInput, poolNameInput (+9) |
 | ClusterManagerCreateRke2CustomPagePo | cluster-create-rke2-custom.po.ts | ClusterManagerCreatePagePo | — | super, goToCustomClusterCreation, goToDigitalOceanCreation, title, clusterConfigurationTabs, registries, nameNsDescription, resourceDetail (+5) |

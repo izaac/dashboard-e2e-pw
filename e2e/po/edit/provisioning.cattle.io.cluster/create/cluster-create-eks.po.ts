@@ -15,9 +15,22 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
     return new CloudCredentialsCreateEditPo(this.page);
   }
 
-  /** The credential select dropdown (supports both testId variants) */
+  /** The credential select section */
   credentialSelect(): Locator {
-    return this.page.locator('[data-testid="eks-credential-select"], [data-testid="cloud-credentials-select"]').first();
+    return this.page.getByTestId('crueks-select-credential');
+  }
+
+  /** Cancel the inline credential create form — triggers auto-select of existing credential */
+  credentialFormCancel(): Locator {
+    return this.credentialSelect().getByRole('button', { name: 'Select Existing' });
+  }
+
+  /** Select an existing credential from the dropdown after clicking "Select Existing" */
+  async selectExistingCredential(name: string): Promise<void> {
+    const dropdown = new LabeledSelectPo(this.page, '[data-testid="cluster-prov-select-credential"]');
+
+    await dropdown.toggle();
+    await dropdown.clickOptionWithLabel(name);
   }
 
   /** A dropdown list option with matching text (vue-select .vs__dropdown-menu) */
@@ -94,6 +107,9 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
     const versionSelect = this.getVersion();
 
     await versionSelect.toggle();
+
+    // vue-select renders dropdown-menu as a portal appended to <body>,
+    // not inside the component — must use page-level locator
     const options = versionSelect.getOptions();
     const texts = await options.allInnerTexts();
 
