@@ -102,6 +102,21 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
 
       expect(resp.status()).toBe(200);
 
+      // Verify the PUT payload contains the expected operator states
+      const reqBody = resp.request().postDataJSON();
+      const operators: { name: string; active: boolean }[] = JSON.parse(reqBody.value);
+      const expectedStates: Record<string, boolean> = { aks: false, eks: true, gke: true };
+
+      for (const [name, active] of Object.entries(expectedStates)) {
+        const op = operators.find((o) => o.name === name);
+
+        expect(op, `operator '${name}' should exist in payload`).toBeDefined();
+        expect(op!.active).toBe(active);
+      }
+
+      // Verify UI reflects deactivation
+      await expect(providersPage.list().details(AKS, 1)).toContainText('Inactive');
+
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
@@ -142,6 +157,21 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       const resp = await activateResp;
 
       expect(resp.status()).toBe(200);
+
+      // Verify the PUT payload contains the expected operator states
+      const reqBody = resp.request().postDataJSON();
+      const operators: { name: string; active: boolean }[] = JSON.parse(reqBody.value);
+      const expectedStates: Record<string, boolean> = { aks: true, eks: true, gke: true };
+
+      for (const [name, active] of Object.entries(expectedStates)) {
+        const op = operators.find((o) => o.name === name);
+
+        expect(op, `operator '${name}' should exist in payload`).toBeDefined();
+        expect(op!.active).toBe(active);
+      }
+
+      // Verify UI reflects activation
+      await expect(providersPage.list().details(AKS, 1)).toContainText('Active');
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -187,6 +217,18 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       const resp = await deactivateResp;
 
       expect(resp.status()).toBe(200);
+
+      // Verify the PUT payload contains the expected operator states
+      const reqBody = resp.request().postDataJSON();
+      const operators: { name: string; active: boolean }[] = JSON.parse(reqBody.value);
+      const expectedStates: Record<string, boolean> = { aks: true, eks: false, gke: false };
+
+      for (const [name, active] of Object.entries(expectedStates)) {
+        const op = operators.find((o) => o.name === name);
+
+        expect(op, `operator '${name}' should exist in payload`).toBeDefined();
+        expect(op!.active).toBe(active);
+      }
 
       await expect(providersPage.list().details(EKS, 1)).toContainText('Inactive');
       await expect(providersPage.list().details(GKE, 1)).toContainText('Inactive');
@@ -239,6 +281,18 @@ test.describe('Hosted Providers', { tag: ['@manager', '@adminUser'] }, () => {
       const resp = await activateResp;
 
       expect(resp.status()).toBe(200);
+
+      // Verify the PUT payload contains the expected operator states
+      const reqBody = resp.request().postDataJSON();
+      const operators: { name: string; active: boolean }[] = JSON.parse(reqBody.value);
+      const expectedStates: Record<string, boolean> = { aks: true, eks: true, gke: true };
+
+      for (const [name, active] of Object.entries(expectedStates)) {
+        const op = operators.find((o) => o.name === name);
+
+        expect(op, `operator '${name}' should exist in payload`).toBeDefined();
+        expect(op!.active).toBe(active);
+      }
 
       await expect(providersPage.list().details(EKS, 1)).toContainText('Active');
       await expect(providersPage.list().details(GKE, 1)).toContainText('Active');
