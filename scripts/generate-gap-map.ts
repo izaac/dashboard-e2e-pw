@@ -25,42 +25,64 @@ interface SpecEntry {
   tests: string[];
   skippedTests: string[];
   commentedOutTests: string[];
+  assertionCount: number;
 }
 
 /**
- * Normalize a test name for fuzzy matching:
+ * Normalize a test name for matching:
  * - lowercase
- * - strip leading "can " / "should " / "will " noise words
  * - collapse whitespace
- * - strip punctuation
+ * - strip trailing punctuation
+ * Keep prefixes like "can"/"should" — they distinguish tests.
  */
 function normalizeTestName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/^can\s+/, '')
-    .replace(/^should\s+/, '')
-    .replace(/^will\s+/, '')
-    .replace(/[^\w\s]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[.]+$/, '').trim();
 }
 
 /**
- * Check if an upstream test name has a fuzzy match in a set of PW test names.
- * Tries exact match first, then fuzzy.
+ * Check if an upstream test name has a match in a set of PW test names.
+ * Uses exact normalized match only — no fuzzy substring matching.
+ * Returns the original PW name if found, null otherwise.
  */
 function hasMatch(upstreamName: string, pwNamesNormalized: Map<string, string>): string | null {
   const norm = normalizeTestName(upstreamName);
 
-  // Direct lookup
+  // 1. Exact normalized match
   if (pwNamesNormalized.has(norm)) {
     return pwNamesNormalized.get(norm)!;
   }
 
-  // Substring: upstream name contained in a PW name or vice versa
+  // 2. Prefix match — one name starts with the other (handles trailing additions/removals)
   for (const [pwNorm, pwOrig] of pwNamesNormalized) {
-    if (pwNorm.includes(norm) || norm.includes(pwNorm)) {
+    if (norm.startsWith(pwNorm) || pwNorm.startsWith(norm)) {
+      // Require the shorter to be at least 60% of the longer to avoid "can" matching "can import yaml..."
+      const shorter = Math.min(norm.length, pwNorm.length);
+      const longer = Math.max(norm.length, pwNorm.length);
+
+      if (shorter / longer >= 0.5) {
+        return pwOrig;
+      }
+    }
+  }
+
+  // 3. High token overlap (≥80% of words shared) — handles rewording
+  const normTokens = norm.split(' ').filter((w) => w.length > 2);
+
+  if (normTokens.length < 3) {
+    return null;
+  }
+
+  for (const [pwNorm, pwOrig] of pwNamesNormalized) {
+    const pwTokens = pwNorm.split(' ').filter((w) => w.length > 2);
+
+    if (pwTokens.length < 3) {
+      continue;
+    }
+
+    const shared = normTokens.filter((t) => pwTokens.includes(t)).length;
+    const maxTokens = Math.max(normTokens.length, pwTokens.length);
+
+    if (shared / maxTokens >= 0.8) {
       return pwOrig;
     }
   }
@@ -117,7 +139,28 @@ function extractCypressTests(filePath: string): { tests: string[]; skipped: stri
   return { tests, skipped, commented };
 }
 
-function extractPlaywrightTests(filePath: string): { tests: string[]; skipped: string[] } {
+/** Count assertion calls: expect(), .should(), cy.wait('@...').then assertions */
+function countAssertions(filePath: string): number {
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, '');
+  let count = 0;
+
+  for (const line of src.split('\n')) {
+    const trimmed = line.trimStart();
+
+    if (trimmed.startsWith('//')) {
+      continue;
+    }
+
+    // Cypress: .should(, expect(
+    count += (trimmed.match(/\.should\(/g) || []).length;
+    count += (trimmed.match(/\bexpect\(/g) || []).length;
+  }
+
+  return count;
+}
+
+function extractPlaywrightTests(filePath: string): { tests: string[]; skipped: string[]; assertionCount: number } {
   const raw = fs.readFileSync(filePath, 'utf-8');
 
   const src = raw
@@ -142,7 +185,14 @@ function extractPlaywrightTests(filePath: string): { tests: string[]; skipped: s
     skipped.push(m[1]);
   }
 
-  return { tests, skipped };
+  // Count expect() calls (Playwright assertions)
+  let assertionCount = 0;
+
+  for (const line of src.split('\n')) {
+    assertionCount += (line.match(/\bexpect\(/g) || []).length;
+  }
+
+  return { tests, skipped, assertionCount };
 }
 
 function collectSpecs(dir: string, root: string): SpecEntry[] {
@@ -169,6 +219,7 @@ function collectSpecs(dir: string, root: string): SpecEntry[] {
         tests: [],
         skippedTests: [],
         commentedOutTests: [],
+        assertionCount: 0,
       });
     }
   }
@@ -198,20 +249,22 @@ const upstreamSpecs = collectSpecs(UPSTREAM_TEST_ROOT, UPSTREAM_TEST_ROOT).filte
   (s) => !s.suite.startsWith('accessibility'),
 );
 
-// Extract test names
+// Extract test names and assertion counts
 for (const spec of upstreamSpecs) {
   const { tests, skipped, commented } = extractCypressTests(spec.filePath);
 
   spec.tests = tests;
   spec.skippedTests = skipped;
   spec.commentedOutTests = commented;
+  spec.assertionCount = countAssertions(spec.filePath);
 }
 
 for (const spec of pwSpecs) {
-  const { tests, skipped } = extractPlaywrightTests(spec.filePath);
+  const { tests, skipped, assertionCount } = extractPlaywrightTests(spec.filePath);
 
   spec.tests = [...tests, ...skipped];
   spec.skippedTests = skipped;
+  spec.assertionCount = assertionCount;
 }
 
 // Build lookup by normalized path
@@ -290,7 +343,7 @@ for (const [suite, specs] of [...suites].sort((a, b) => a[0].localeCompare(b[0])
       pwSpecCount++;
       pwTestCount += pw.tests.length;
 
-      // Same-spec name matching with fuzzy logic
+      // Same-spec name matching — exact normalized only
       const pwNamesNormalized = new Map<string, string>();
 
       for (const t of pw.tests) {
@@ -302,14 +355,8 @@ for (const [suite, specs] of [...suites].sort((a, b) => a[0].localeCompare(b[0])
 
         if (sameSpecMatch) {
           coveredCount++;
-        } else {
-          // Cross-spec fuzzy match — test exists in PW but in a different spec
-          const crossSpecMatch = hasMatch(upTest, globalPwNamesNormalized);
-
-          if (crossSpecMatch) {
-            coveredCount++;
-          }
         }
+        // Cross-spec matches are NOT counted as covered — reported separately
       }
     }
   }
@@ -381,7 +428,7 @@ lines.push('');
 
 lines.push(`- **Unconverted spec tests** (no PW file): ${unconvertedLiveTests}`);
 lines.push(
-  `- **Missing by name** (PW file exists but upstream test not found, even with cross-spec fuzzy match): ${totalUpstreamLiveTests - totalCoveredTests - unconvertedLiveTests}`,
+  `- **Missing by name** (PW file exists but upstream test not matched by exact name): ${totalUpstreamLiveTests - totalCoveredTests - unconvertedLiveTests}`,
 );
 lines.push(`- **Upstream commented-out** (ported to PW as live tests): ${totalUpstreamCommentedTests}`);
 lines.push('');
@@ -586,6 +633,35 @@ if (portedFromComments.length > 0) {
     lines.push('');
   }
 }
+
+// Assertion density comparison
+lines.push('## Assertion Density');
+lines.push('');
+lines.push('> Compares expect()/should() counts between upstream Cypress and Playwright per spec.');
+lines.push('> Low PW density relative to upstream may indicate shallow assertions.');
+lines.push('');
+lines.push('| Spec | Upstream Assertions | PW Assertions | Ratio |');
+lines.push('|------|--------------------:|-------------:|------:|');
+
+for (const spec of upstreamSpecs) {
+  const norm = normalizeSpecPath(spec.relativePath);
+  const pw = pwByPath.get(norm);
+
+  if (!pw || spec.assertionCount === 0) {
+    continue;
+  }
+
+  const ratio = pw.assertionCount / spec.assertionCount;
+
+  // Only show specs where PW has notably fewer assertions (< 80% ratio)
+  if (ratio < 0.8) {
+    lines.push(
+      `| ${spec.relativePath} | ${spec.assertionCount} | ${pw.assertionCount} | ${Math.round(ratio * 100)}% |`,
+    );
+  }
+}
+
+lines.push('');
 
 lines.push('');
 
