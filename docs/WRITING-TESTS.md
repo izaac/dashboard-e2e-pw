@@ -163,6 +163,9 @@ export default class HomePagePo extends PagePo {
 - Methods that **find** an element return a `Locator`
 - Methods that **do** something (click, fill, navigate) are `async` and return `Promise<void>`
 - Match the upstream Cypress PO class names, method names, and selectors — we keep them in sync
+- **POs never assert** — no `expect()` inside Page Objects. POs expose Locators and perform
+  actions; specs own all assertions. The only exception is `waitFor*` helpers that check element
+  visibility as a precondition (e.g., `waitForPage()`, `waitForDebounce()`), not as a test assertion
 
 ### Where do POs live?
 
@@ -431,6 +434,36 @@ await expect(locator).toHaveAttribute('href', '/path');
 await expect(locator).not.toBeAttached();   // element doesn't exist in DOM
 ```
 
+### Rule 6: Assertions live in specs, not POs
+
+Page Objects expose Locators and perform actions. Specs own all `expect()` calls. This keeps POs
+reusable across tests that assert different things about the same element.
+
+**Don't do this** in a PO:
+
+```typescript
+// BAD — PO is making a test assertion
+async verifyTitle(expected: string): Promise<void> {
+  await expect(this.title()).toContainText(expected);
+}
+```
+
+**Do this instead** — PO returns the Locator, spec asserts:
+
+```typescript
+// PO
+title(): Locator {
+  return this.self().getByTestId('title');
+}
+
+// Spec
+await expect(myPage.title()).toContainText('Welcome');
+```
+
+The only exception is `waitFor*` helpers inside POs that check element state as a **precondition**
+(e.g., waiting for a page to load, a spinner to disappear, a debounce to settle). These are
+navigation/timing helpers, not test assertions.
+
 ---
 
 ## 5. Writing a Test Step by Step
@@ -671,6 +704,7 @@ Run through this before pushing:
 - [ ] Test passes when run alone: `npx playwright test my-test.spec.ts --reporter=line`
 - [ ] Test passes on a second run (idempotent — no leftover resources)
 - [ ] No raw CSS selectors in the spec file — all selectors live in POs
+- [ ] No `expect()` calls inside Page Objects — POs expose Locators, specs assert
 - [ ] Every resource created is cleaned up (`try/finally` or `afterEach`)
 - [ ] All assertions use `await expect(...)` (web-first, auto-retrying)
 - [ ] Tags match the feature area (`@generic`, `@explorer`, `@fleet`, etc.)

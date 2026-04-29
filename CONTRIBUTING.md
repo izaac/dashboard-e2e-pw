@@ -58,6 +58,9 @@ These are non-negotiable. See [`docs/WRITING-TESTS.md`](docs/WRITING-TESTS.md) f
 - Match upstream Cypress PO class names, method names, and selectors
 - `self()` returns the root `Locator`
 - Methods that find elements return `Locator`; methods that perform actions are `async`
+- **POs never assert** — no `expect()` inside Page Objects. POs expose Locators and perform
+  actions; specs own all assertions. Exception: `waitFor*` helpers that check visibility as a
+  precondition (not a test assertion)
 - Check [`e2e/po/INDEX.md`](e2e/po/INDEX.md) before creating a new PO — it lists every existing PO
 - Run `yarn po-diff` to compare your POs against upstream Cypress
 
