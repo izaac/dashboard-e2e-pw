@@ -78,7 +78,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       await expect(aboutPage.versionText(rancherVersion).first()).toBeVisible();
     });
 
-    test('Rancher link points to github.com/rancher/rancher', async ({ page, login }) => {
+    test('can navigate to /rancher/rancher', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);
@@ -92,7 +92,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       );
     });
 
-    test('Dashboard link points to github.com/rancher/dashboard', async ({ page, login }) => {
+    test('can navigate to /rancher/dashboard', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);
@@ -106,7 +106,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       );
     });
 
-    test('Helm link points to github.com/rancher/helm', async ({ page, login }) => {
+    test('can navigate to /rancher/helm', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);
@@ -120,7 +120,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
       );
     });
 
-    test('Machine link points to github.com/rancher/machine', async ({ page, login }) => {
+    test('can navigate to /rancher/machine', async ({ page, login }) => {
       await login();
 
       const aboutPage = new AboutPagePo(page);

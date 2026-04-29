@@ -37,7 +37,7 @@ test.describe('Support Page', () => {
   );
 
   test.describe('Support Links', { tag: ['@generic', '@adminUser'] }, () => {
-    test('Suse Rancher Support link has correct href', { tag: ['@noPrime'] }, async ({ page, login }) => {
+    test('can click on Suse Rancher Support link', { tag: ['@noPrime'] }, async ({ page, login }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -50,7 +50,7 @@ test.describe('Support Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('rancher.com/support'));
     });
 
-    test('Contact us for pricing link has correct href', { tag: ['@noPrime'] }, async ({ page, login }) => {
+    test('can click on Contact us for pricing link', { tag: ['@noPrime'] }, async ({ page, login }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -64,7 +64,7 @@ test.describe('Support Page', () => {
     });
 
     test(
-      'Suse Customer Center link has correct href',
+      'can click on Suse Customer Center link',
       { tag: ['@jenkins', '@prime', '@scc'] },
       async ({ page, login, rancherApi }) => {
         const version = await rancherApi.getRancherVersion();
@@ -81,7 +81,7 @@ test.describe('Support Page', () => {
       },
     );
 
-    test('Docs link has correct href', async ({ page, login, rancherApi }) => {
+    test('can click on Docs link', async ({ page, login, rancherApi }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -105,7 +105,7 @@ test.describe('Support Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining(expectedUrl));
     });
 
-    test('Forums link has correct href', async ({ page, login }) => {
+    test('can click on Forums link', async ({ page, login }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -118,7 +118,7 @@ test.describe('Support Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('forums.suse.com'));
     });
 
-    test('Slack link has correct href', async ({ page, login }) => {
+    test('can click on Slack link', async ({ page, login }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -131,7 +131,7 @@ test.describe('Support Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('slack.rancher.io'));
     });
 
-    test('File an Issue link has correct href', async ({ page, login }) => {
+    test('can click on File an Issue link', async ({ page, login }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -144,7 +144,7 @@ test.describe('Support Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('github.com'));
     });
 
-    test('Get Started link has correct href', async ({ page, login }) => {
+    test('can click on Get Started link', async ({ page, login }) => {
       await login();
 
       const supportPage = new SupportPagePo(page);
@@ -158,7 +158,7 @@ test.describe('Support Page', () => {
     });
 
     test(
-      'SUSE Application Collection link has correct href',
+      'can click on SUSE Application Collection link',
       { tag: ['@jenkins', '@prime', '@scc'] },
       async ({ page, login, rancherApi }) => {
         const version = await rancherApi.getRancherVersion();

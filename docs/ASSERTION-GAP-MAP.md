@@ -4,9 +4,9 @@
 Generated: 2026-04-29
 
 Upstream Cypress: 127 specs, 664 live tests (27 commented out)
-Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
+Playwright: 126 specs, 694 tests (0 PW-only specs, 0 PW-only tests)
 
-**Upstream coverage: 90%** (595/664 upstream tests found in Playwright)
+**Upstream coverage: 95%** (628/664 upstream tests found in Playwright)
 
 ## Summary
 
@@ -19,7 +19,7 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 | pages/charts | 7 | 11 | 4 | 7 | 11 | ✅ |
 | pages/explorer/api | 1 | 1 | 0 | 1 | 1 | ✅ |
 | pages/explorer/apps | 3 | 13 | 0 | 3 | 13 | ✅ |
-| pages/explorer/dashboard | 3 | 21 | 2 | 3 | 24 | 81% |
+| pages/explorer/dashboard | 3 | 21 | 2 | 3 | 24 | 86% |
 | pages/explorer/dashboard/websockets | 1 | 4 | 0 | 1 | 1 | 0% |
 | pages/explorer/manager | 1 | 1 | 0 | 1 | 1 | ✅ |
 | pages/explorer/more-resources/api | 1 | 5 | 0 | 1 | 5 | ✅ |
@@ -31,23 +31,23 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 | pages/explorer/service-discovery | 3 | 20 | 0 | 3 | 20 | 95% |
 | pages/explorer2 | 7 | 32 | 0 | 7 | 32 | 97% |
 | pages/explorer2/nodes | 2 | 2 | 0 | 2 | 2 | ✅ |
-| pages/explorer2/storage | 6 | 19 | 0 | 5 | 17 | 42% |
+| pages/explorer2/storage | 6 | 19 | 0 | 5 | 18 | 63% |
 | pages/explorer2/workloads | 8 | 54 | 1 | 8 | 54 | 98% |
 | pages/extensions | 2 | 22 | 0 | 2 | 22 | ✅ |
 | pages/fleet | 5 | 39 | 2 | 5 | 39 | ✅ |
-| pages/fleet/resources | 5 | 30 | 0 | 5 | 31 | 93% |
-| pages/generic | 11 | 65 | 0 | 11 | 69 | 66% |
+| pages/fleet/resources | 5 | 30 | 0 | 5 | 31 | 97% |
+| pages/generic | 11 | 65 | 0 | 11 | 69 | 98% |
 | pages/global-settings | 8 | 65 | 0 | 8 | 69 | 95% |
-| pages/manager | 24 | 143 | 12 | 24 | 144 | 93% |
+| pages/manager | 24 | 143 | 12 | 24 | 144 | 95% |
 | pages/user-menu | 3 | 9 | 6 | 3 | 21 | 89% |
 | pages/users-and-auth | 8 | 51 | 0 | 8 | 58 | 90% |
 | pages/virtualization-mgmt | 1 | 3 | 0 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 0 | 2 | 2 | ✅ |
-| setup | 1 | 4 | 0 | 1 | 1 | 25% |
-| **TOTAL** | **127** | **664** | **27** | **126** | **690** | **90%** |
+| setup | 1 | 4 | 0 | 1 | 4 | ✅ |
+| **TOTAL** | **127** | **664** | **27** | **126** | **694** | **95%** |
 
 - **Unconverted spec tests** (no PW file): 2
-- **Missing by name** (PW file exists but upstream test not matched by exact name): 67
+- **Missing by name** (PW file exists but upstream test not matched by exact name): 34
 - **Upstream commented-out** (ported to PW as live tests): 27
 
 ## Unconverted Specs
@@ -65,6 +65,7 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 | navigation/page-actions.spec.ts | 0 | 0 | 2 | +2 |
 | pages/explorer/dashboard/events.spec.ts | 4 | 0 | 7 | +3 |
 | pages/explorer/dashboard/websockets/connection.spec.ts | 4 | 0 | 1 | -3 |
+| pages/explorer2/storage/secrets.spec.ts | 2 | 0 | 3 | +1 |
 | pages/fleet/resources/cluster-registration-tokens.spec.ts | 6 | 0 | 7 | +1 |
 | pages/generic/home.spec.ts | 15 | 0 | 19 | +4 |
 | pages/global-settings/banners.spec.ts | 16 | 0 | 15 | -1 |
@@ -78,24 +79,17 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 | pages/user-menu/preferences.spec.ts | 6 | 0 | 17 | +11 |
 | pages/users-and-auth/roles.spec.ts | 13 | 0 | 17 | +4 |
 | pages/users-and-auth/users.spec.ts | 19 | 0 | 22 | +3 |
-| setup/rancher-setup.spec.ts | 4 | 0 | 1 | -3 |
 
 ## Missing Tests
 
 ### Not found in any Playwright spec
 
-**pages/explorer/dashboard/cluster-dashboard.spec.ts** (1 tests)
-
-- does not show fleet controller status if the user does not have permission to view the fleet controller deployment
-
 **pages/explorer/dashboard/events.spec.ts** (1 tests)
 
 - filter events
 
-**pages/explorer/dashboard/websockets/connection.spec.ts** (4 tests)
+**pages/explorer/dashboard/websockets/connection.spec.ts** (2 tests)
 
-- should create a new pod
-- should create a new folder
 - should validate the folder name
 - should delete the folder
 
@@ -103,19 +97,9 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 
 - Members added to both Cluster Membership should not show 
 
-**pages/explorer2/storage/persistent-volume-claims.spec.ts** (3 tests)
-
-- validate persistent volume claims table in empty state
-- flat list: validate persistent volume claims table
-- group by namespace: validate persistent volume claims table
-
 **pages/explorer2/storage/persistent-volumes.spec.ts** (1 tests)
 
 - validate persistent volumes table in empty state
-
-**pages/explorer2/storage/secrets.spec.ts** (1 tests)
-
-- displays the list of secrets and has a create button
 
 **pages/explorer2/storage/storage-classes.spec.ts** (1 tests)
 
@@ -125,39 +109,9 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 
 - modifying 
 
-**pages/generic/about.spec.ts** (4 tests)
-
-- can navigate to /rancher/rancher
-- can navigate to /rancher/dashboard
-- can navigate to /rancher/helm
-- can navigate to /rancher/machine
-
-**pages/generic/get-support.spec.ts** (9 tests)
-
-- can click on Suse Rancher Support link
-- can click on Contact us for pricing link
-- can click on Suse Customer Center link
-- can click on Docs link
-- can click on Forums link
-- can click on Slack link
-- can click on File an Issue link
-- can click on Get Started link
-- can click on SUSE Application Collection link
-
-**pages/generic/home.spec.ts** (8 tests)
+**pages/generic/home.spec.ts** (1 tests)
 
 - Validate home page with percy
-- can click on Docs link
-- can click on Forums link
-- can click on Slack link
-- can click on File an Issue link
-- can click on Get Started link
-- can click on Commercial Support link
-- can click on SUSE Application Collection link
-
-**pages/generic/links.spec.ts** (1 tests)
-
-- can click on Application Collection link
 
 **pages/global-settings/banners.spec.ts** (2 tests)
 
@@ -167,10 +121,6 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 **pages/global-settings/settings.spec.ts** (1 tests)
 
 - Inactivity ::: can update the setting 
-
-**pages/manager/cloud-credential.spec.ts** (1 tests)
-
-- should display empty cloud credential creation page
 
 **pages/manager/edit-fake-cluster.spec.ts** (1 tests)
 
@@ -185,19 +135,19 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 - Cloning a Global Role with 
 - Standard user with List, Get & Resources: Global Roles should be able to list users in Users and Auth
 
-**setup/rancher-setup.spec.ts** (2 tests)
-
-- Requires initial setup
-- Create standard user
-
 ### Found in a different Playwright spec (cross-spec match)
 
 > These upstream tests exist in Playwright but under a different spec file.
 
 **pages/explorer/dashboard/events.spec.ts**
 
-- `pagination is visible and user is able to navigate through events data` → PW: `pagination is visible and user is able to navigate through cronjobs data`
-- `sorting changes the order of paginated events data` → PW: `sorting changes the order of paginated configmaps data`
+- `pagination is visible and user is able to navigate through events data` → PW: `pagination is visible and user can navigate through crd data`
+- `sorting changes the order of paginated events data` → PW: `sorting changes the order of CRDs data`
+
+**pages/explorer/dashboard/websockets/connection.spec.ts**
+
+- `should create a new pod` → PW: `Should create a new user`
+- `should create a new folder` → PW: `Should create a new user`
 
 **pages/explorer/policy/network-policy.spec.ts**
 
@@ -209,7 +159,7 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 
 **pages/explorer2/storage/configmap.spec.ts**
 
-- `pagination is visible and user is able to navigate through configmaps data` → PW: `pagination is visible and user is able to navigate through cronjobs data`
+- `pagination is visible and user is able to navigate through configmaps data` → PW: `pagination is visible and user can navigate through crd data`
 
 **pages/explorer2/storage/persistent-volumes.spec.ts**
 
@@ -221,17 +171,11 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 
 **pages/fleet/resources/workspaces.spec.ts**
 
-- `check table headers are available in list and details view` → PW: `check table headers are available in list and details view`
-- `pagination is visible and user is able to navigate through workspace data` → PW: `pagination is visible and user is able to navigate through cronjobs data`
+- `pagination is visible and user is able to navigate through workspace data` → PW: `pagination is visible and user can navigate through crd data`
 
 **pages/manager/agent-configuration-rke2.spec.ts**
 
 - `every file must have a test...` → PW: `every file must have a test...`
-
-**pages/manager/hosted-providers.spec.ts**
-
-- `can deactivate drivers in bulk` → PW: `can deactivate drivers in bulk`
-- `can activate drivers in bulk` → PW: `can activate drivers in bulk`
 
 **pages/manager/node-drivers.spec.ts**
 
@@ -247,7 +191,7 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 
 **pages/manager/repositories.spec.ts**
 
-- `can delete repositories via bulk actions` → PW: `can delete MachineDeployments via bulk actions`
+- `can delete repositories via bulk actions` → PW: `can delete cloud credentials via bulk actions`
 
 **pages/user-menu/account-api-keys.spec.ts**
 
@@ -256,12 +200,8 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 **pages/users-and-auth/roles.spec.ts**
 
 - `can Download YAML` → PW: `can Download YAML`
-- `pagination is visible and user is able to navigate through global roles data` → PW: `pagination is visible and user is able to navigate through cronjobs data`
+- `pagination is visible and user is able to navigate through global roles data` → PW: `pagination is visible and user can navigate through crd data`
 - `pagination is hidden` → PW: `pagination is hidden`
-
-**setup/rancher-setup.spec.ts**
-
-- `Confirm correct number of settings requests made` → PW: `Confirm correct number of settings requests made`
 
 ## Ported from Upstream Comments
 
@@ -286,7 +226,6 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 | pages/explorer/dashboard/websockets/connection.spec.ts | 7 | 4 | 57% |
 | pages/explorer2/nodes/node-list.spec.ts | 8 | 5 | 63% |
 | pages/explorer2/project-namespace.spec.ts | 24 | 17 | 71% |
-| pages/explorer2/storage/secrets.spec.ts | 3 | 2 | 67% |
 | pages/explorer2/workloads/cronjobs.spec.ts | 14 | 1 | 7% |
 | pages/explorer2/workloads/jobs.spec.ts | 17 | 3 | 18% |
 | pages/explorer2/workloads/pods.spec.ts | 31 | 15 | 48% |
@@ -294,12 +233,11 @@ Playwright: 126 specs, 690 tests (0 PW-only specs, 0 PW-only tests)
 | pages/fleet/gitrepo.spec.ts | 28 | 13 | 46% |
 | pages/fleet/helmop.spec.ts | 38 | 22 | 58% |
 | pages/generic/prime.spec.ts | 2 | 1 | 50% |
-| pages/global-settings/settings.spec.ts | 95 | 61 | 64% |
+| pages/global-settings/settings.spec.ts | 95 | 69 | 73% |
 | pages/manager/aks-cluster-provisioning.spec.ts | 46 | 18 | 39% |
 | pages/manager/cluster-manager.spec.ts | 86 | 53 | 62% |
 | pages/manager/jwt-authentication.spec.ts | 22 | 17 | 77% |
 | pages/manager/machine-deployments.spec.ts | 10 | 7 | 70% |
 | pages/manager/machine-sets.spec.ts | 10 | 7 | 70% |
 | pages/manager/machines.spec.ts | 7 | 4 | 57% |
-| setup/rancher-setup.spec.ts | 15 | 9 | 60% |
 

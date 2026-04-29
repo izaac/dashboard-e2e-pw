@@ -137,7 +137,7 @@ test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'
   });
 
   test.describe('home page links (prime)', { tag: ['@prime', '@generic', '@adminUser', '@standardUser'] }, () => {
-    test('can see Application Collection link on prime', async ({ page, login }) => {
+    test('can click on Application Collection link', async ({ page, login }) => {
       await login();
 
       await page.route('**/rancherversion', (route) =>

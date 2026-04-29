@@ -151,7 +151,7 @@ test.describe('Home Page', () => {
   });
 
   test.describe('Support Links', { tag: ['@generic', '@adminUser', '@standardUser'] }, () => {
-    test('Docs link has correct href', async ({ page, login, rancherApi }) => {
+    test('can click on Docs link', async ({ page, login, rancherApi }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -174,7 +174,7 @@ test.describe('Home Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining(expectedUrl));
     });
 
-    test('Forums link has correct href', async ({ page, login }) => {
+    test('can click on Forums link', async ({ page, login }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -187,7 +187,7 @@ test.describe('Home Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('forums.suse.com'));
     });
 
-    test('Slack link has correct href', async ({ page, login }) => {
+    test('can click on Slack link', async ({ page, login }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -200,7 +200,7 @@ test.describe('Home Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('slack.rancher.io'));
     });
 
-    test('File an Issue link has correct href', async ({ page, login }) => {
+    test('can click on File an Issue link', async ({ page, login }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -213,7 +213,7 @@ test.describe('Home Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('github.com'));
     });
 
-    test('Get Started link has correct href', async ({ page, login }) => {
+    test('can click on Get Started link', async ({ page, login }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -226,7 +226,7 @@ test.describe('Home Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('getting-started/overview'));
     });
 
-    test('Commercial Support link navigates to support page', { tag: ['@noPrime'] }, async ({ page, login }) => {
+    test('can click on Commercial Support link', { tag: ['@noPrime'] }, async ({ page, login }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -239,7 +239,7 @@ test.describe('Home Page', () => {
     });
 
     test(
-      'SUSE Application Collection link has correct href',
+      'can click on SUSE Application Collection link',
       { tag: ['@jenkins', '@prime', '@scc'] },
       async ({ page, login }) => {
         await login();

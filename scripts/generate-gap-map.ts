@@ -40,6 +40,21 @@ function normalizeTestName(name: string): string {
 }
 
 /**
+ * Extract a "subject" from a test name by stripping common verb prefixes and suffixes.
+ * Used as a fallback match when exact/prefix/token matching fails.
+ */
+function extractSubject(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/^(can|should|will|does|it|must)\s+/i, '')
+    .replace(/^(click on|navigate to|display|show|validate|verify|check)\s+/i, '')
+    .replace(/\s+(has correct href|link|page|navigates to.*|is visible|is disabled)$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Check if an upstream test name has a match in a set of PW test names.
  * Uses exact normalized match only — no fuzzy substring matching.
  * Returns the original PW name if found, null otherwise.
@@ -68,22 +83,33 @@ function hasMatch(upstreamName: string, pwNamesNormalized: Map<string, string>):
   // 3. High token overlap (≥80% of words shared) — handles rewording
   const normTokens = norm.split(' ').filter((w) => w.length > 2);
 
-  if (normTokens.length < 3) {
-    return null;
+  if (normTokens.length >= 3) {
+    for (const [pwNorm, pwOrig] of pwNamesNormalized) {
+      const pwTokens = pwNorm.split(' ').filter((w) => w.length > 2);
+
+      if (pwTokens.length < 3) {
+        continue;
+      }
+
+      const shared = normTokens.filter((t) => pwTokens.includes(t)).length;
+      const maxTokens = Math.max(normTokens.length, pwTokens.length);
+
+      if (shared / maxTokens >= 0.7) {
+        return pwOrig;
+      }
+    }
   }
 
-  for (const [pwNorm, pwOrig] of pwNamesNormalized) {
-    const pwTokens = pwNorm.split(' ').filter((w) => w.length > 2);
+  // 4. Subject extraction — strips verbs/suffixes, matches core noun phrase
+  const upSubject = extractSubject(upstreamName);
 
-    if (pwTokens.length < 3) {
-      continue;
-    }
+  if (upSubject.length >= 8) {
+    for (const [pwNorm, pwOrig] of pwNamesNormalized) {
+      const pwSubject = extractSubject(pwOrig);
 
-    const shared = normTokens.filter((t) => pwTokens.includes(t)).length;
-    const maxTokens = Math.max(normTokens.length, pwTokens.length);
-
-    if (shared / maxTokens >= 0.8) {
-      return pwOrig;
+      if (pwSubject.length >= 8 && upSubject === pwSubject) {
+        return pwOrig;
+      }
     }
   }
 
@@ -142,17 +168,30 @@ function extractCypressTests(filePath: string): { tests: string[]; skipped: stri
 /** Count assertion calls: expect(), .should(), cy.wait('@...').then assertions */
 function countAssertions(filePath: string): number {
   const raw = fs.readFileSync(filePath, 'utf-8');
-  const src = raw.replace(/\/\*[\s\S]*?\*\//g, '');
   let count = 0;
+  let inBlockComment = false;
 
-  for (const line of src.split('\n')) {
+  for (const line of raw.split('\n')) {
+    if (inBlockComment) {
+      if (line.includes('*/')) {
+        inBlockComment = false;
+      }
+      continue;
+    }
+
     const trimmed = line.trimStart();
+
+    if (trimmed.startsWith('/*')) {
+      if (!trimmed.includes('*/')) {
+        inBlockComment = true;
+      }
+      continue;
+    }
 
     if (trimmed.startsWith('//')) {
       continue;
     }
 
-    // Cypress: .should(, expect(
     count += (trimmed.match(/\.should\(/g) || []).length;
     count += (trimmed.match(/\bexpect\(/g) || []).length;
   }
@@ -163,11 +202,50 @@ function countAssertions(filePath: string): number {
 function extractPlaywrightTests(filePath: string): { tests: string[]; skipped: string[]; assertionCount: number } {
   const raw = fs.readFileSync(filePath, 'utf-8');
 
-  const src = raw
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
-    .map((line) => (line.trimStart().startsWith('//') ? '' : line))
-    .join('\n');
+  // Line-by-line comment removal (safe for strings containing /* or */)
+  const lines = raw.split('\n');
+  const cleanLines: string[] = [];
+  let inBlockComment = false;
+
+  for (const line of lines) {
+    if (inBlockComment) {
+      const endIdx = line.indexOf('*/');
+
+      if (endIdx !== -1) {
+        inBlockComment = false;
+        cleanLines.push(line.substring(endIdx + 2));
+      } else {
+        cleanLines.push('');
+      }
+
+      continue;
+    }
+
+    const trimmed = line.trimStart();
+
+    // Only treat as block comment start if it's at the start of meaningful content
+    if (trimmed.startsWith('/*')) {
+      const endIdx = trimmed.indexOf('*/', 2);
+
+      if (endIdx !== -1) {
+        cleanLines.push('');
+      } else {
+        inBlockComment = true;
+        cleanLines.push('');
+      }
+
+      continue;
+    }
+
+    if (trimmed.startsWith('//')) {
+      cleanLines.push('');
+      continue;
+    }
+
+    cleanLines.push(line);
+  }
+
+  const src = cleanLines.join('\n');
 
   const tests: string[] = [];
   const skipped: string[] = [];
