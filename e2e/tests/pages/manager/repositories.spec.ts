@@ -36,6 +36,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -73,6 +74,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await expect(repositoriesPage.body()).toContainText(`${repoName}-desc-edit`);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -110,6 +112,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', cloneName, false);
+      await Promise.all([
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName),
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', cloneName),
+      ]);
     }
   });
 
@@ -129,15 +135,17 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.goTo();
       await repositoriesPage.waitForPage();
 
-      const downloadPromise = page.waitForEvent('download');
       const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-      await actionMenu.getMenuItem('Download YAML').click({ force: true });
-      const download = await downloadPromise;
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        actionMenu.getMenuItem('Download YAML').click(),
+      ]);
 
       expect(download.suggestedFilename()).toBe(`${repoName}.yaml`);
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
     }
   });
 
@@ -153,23 +161,26 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     });
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
+    try {
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
 
-    const refreshResp = page.waitForResponse(
-      (r) => r.url().includes(`${CLUSTER_REPOS_BASE_URL}/${repoName}`) && r.request().method() === 'PUT',
-    );
+      const refreshResp = page.waitForResponse(
+        (r) => r.url().includes(`${CLUSTER_REPOS_BASE_URL}/${repoName}`) && r.request().method() === 'PUT',
+        { timeout: 60000 },
+      );
 
-    const actionMenu = await repositoriesPage.list().actionMenu(repoName);
+      const actionMenu = await repositoriesPage.list().actionMenu(repoName);
 
-    await actionMenu.getMenuItem('Refresh').click({ force: true });
-    const resp = await refreshResp;
+      await actionMenu.getMenuItem('Refresh').click();
+      const resp = await refreshResp;
 
-    expect(resp.status()).toBe(200);
-    await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      expect(resp.status()).toBe(200);
+      await expect(repositoriesPage.list().details(repoName, 1)).toContainText('Active', { timeout: 120000 });
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+      await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
+    }
   });
 
   test('can delete a repository', async ({ page, login, rancherApi }) => {
@@ -200,6 +211,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await deleteResp;
     await repositoriesPage.waitForPage();
     await expect(repositoriesPage.body()).not.toContainText(repoName);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
   test.fixme('can delete repositories via bulk actions', async ({ page, login, rancherApi }) => {
@@ -248,6 +260,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       // Cleanup in case bulk delete failed
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', `${repoName}basic`, false);
+      await Promise.all([
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName),
+        rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', `${repoName}basic`),
+      ]);
     }
   });
 
@@ -266,14 +282,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await repositoriesPage.createEditRepositories().gitRepoUrl().set(gitRepoUrl);
     await repositoriesPage.createEditRepositories().gitBranch().set('release-v2.11');
 
-    // Select "Create an HTTP Basic Auth Secret"
-    await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().toggle();
-    await repositoriesPage
-      .createEditRepositories()
-      .clusterRepoAuthSelectOrCreate()
-      .clickOptionWithLabel('Create an HTTP Basic Auth Secret');
-    await repositoriesPage.createEditRepositories().authSecretUsername().set('test');
-    await repositoriesPage.createEditRepositories().authSecretPassword().set('test');
+    await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().createBasicAuth('test', 'test');
 
     const resp = await repositoriesPage.createEditRepositories().saveAndWaitForRequests('POST', CLUSTER_REPOS_BASE_URL);
 
@@ -283,6 +292,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
   test('can create a repository with SSH key', async ({ page, login, rancherApi }) => {
@@ -300,14 +310,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await repositoriesPage.createEditRepositories().gitRepoUrl().set(gitRepoUrl);
     await repositoriesPage.createEditRepositories().gitBranch().set('release-v2.11');
 
-    // Select "Create an SSH Key Secret"
-    await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().toggle();
     await repositoriesPage
       .createEditRepositories()
       .clusterRepoAuthSelectOrCreate()
-      .clickOptionWithLabel('Create an SSH Key Secret');
-    await repositoriesPage.createEditRepositories().authSecretSshPrivateKey().fill('privateKey');
-    await repositoriesPage.createEditRepositories().authSecretSshPublicKey().fill('publicKey');
+      .createSSHAuth('privateKey', 'publicKey');
 
     const resp = await repositoriesPage.createEditRepositories().saveAndWaitForRequests('POST', CLUSTER_REPOS_BASE_URL);
 
@@ -317,6 +323,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
   test('can create an OCI repository with basic auth', async ({ page, login, rancherApi }) => {
@@ -334,14 +341,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await repositoriesPage.createEditRepositories().selectOciUrlCard();
     await repositoriesPage.createEditRepositories().ociUrl().set(ociUrl);
 
-    // Set auth
-    await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().toggle();
-    await repositoriesPage
-      .createEditRepositories()
-      .clusterRepoAuthSelectOrCreate()
-      .clickOptionWithLabel('Create an HTTP Basic Auth Secret');
-    await repositoriesPage.createEditRepositories().authSecretUsername().set('test');
-    await repositoriesPage.createEditRepositories().authSecretPassword().set('test');
+    await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().createBasicAuth('test', 'test');
 
     const createResp = page.waitForResponse(
       (r) => r.url().includes(CLUSTER_REPOS_BASE_URL) && r.request().method() === 'POST',
@@ -360,6 +360,7 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 });
 
@@ -387,6 +388,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
   test('refresh menu item is not displayed for disabled repository', async ({ page, login, rancherApi }) => {
@@ -411,6 +413,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
   test('can enable a repository', async ({ page, login, rancherApi }) => {
@@ -436,6 +439,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 
     // Cleanup
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
+    await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 });
 

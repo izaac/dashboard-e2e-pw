@@ -21,9 +21,22 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
     return new LabeledInputPo(this.page, '[data-testid="auth-secret-basic-password"]', this.self());
   }
 
+  private sshPrivateKeyInput(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="auth-secret-ssh-private-key"]', this.self());
+  }
+
+  private sshPublicKeyInput(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="auth-secret-ssh-public-key"]', this.self());
+  }
+
   async setBasicAuthSecret(username: string, password: string): Promise<void> {
     await this.usernameInput().set(username);
     await this.passwordInput().set(password);
+  }
+
+  async setSSHSecret(privateKey: string, publicKey: string): Promise<void> {
+    await this.sshPrivateKeyInput().set(privateKey);
+    await this.sshPublicKeyInput().set(publicKey);
   }
 
   async createBasicAuth(username = 'auth-test-user', password = 'auth-test-password'): Promise<void> {
@@ -31,6 +44,15 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
     await this.authSelect().toggle();
     await this.authSelect().clickOptionWithLabel('Create an HTTP Basic Auth Secret');
     await this.setBasicAuthSecret(username, password);
+  }
+
+  async createSSHAuth(privateKey: string, publicKey: string): Promise<void> {
+    await this.waitForNotLoading();
+    await this.authSelect().self().scrollIntoViewIfNeeded();
+    await this.authSelect().toggle();
+    await this.authSelect().isOpened();
+    await this.authSelect().clickOptionWithLabel('Create an SSH Key Secret');
+    await this.setSSHSecret(privateKey, publicKey);
   }
 
   async createRKEAuth(username = 'auth-test-user', password = 'auth-test-password'): Promise<void> {

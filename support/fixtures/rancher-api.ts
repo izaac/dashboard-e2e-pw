@@ -309,6 +309,26 @@ export class RancherApi {
     }
   }
 
+  /**
+   * Poll until a resource returns 404 (fully removed from the API).
+   * Use after deleteRancherResource to ensure the controller has finished cleanup
+   * before subsequent tests interact with the same resource type.
+   */
+  async waitForResourceGone(prefix: string, resourceType: string, resourceId: string, retries = 20, delayMs = 1500) {
+    for (let i = 0; i < retries; i++) {
+      const resp = await this.fetchWithReauth(() =>
+        this.request.fetch(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { method: 'GET', ...this.opts() }),
+      );
+
+      if (resp.status() === 404) {
+        return true;
+      }
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+
+    return false;
+  }
+
   /** Wait for a resource to match a condition (polling) */
   async waitForRancherResource(
     prefix: string,
