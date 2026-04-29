@@ -3,10 +3,10 @@
 
 Generated: 2026-04-29
 
-Upstream Cypress: 127 specs, 664 live tests (27 commented out)
+Upstream Cypress: 127 specs, 679 live tests (58 commented out)
 Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 
-**Upstream coverage: 89%** (588/664 upstream tests found in Playwright)
+**Upstream coverage: 92%** (626/679 upstream tests found in Playwright)
 
 ## Summary
 
@@ -16,10 +16,10 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 | extensions/elemental | 1 | 8 | 0 | 1 | 8 | ✅ |
 | navigation | 1 | 0 | 0 | 1 | 2 | 0% |
 | navigation/side-nav | 3 | 19 | 0 | 3 | 19 | ✅ |
-| pages/charts | 7 | 11 | 4 | 7 | 11 | ✅ |
+| pages/charts | 7 | 10 | 8 | 7 | 11 | ✅ |
 | pages/explorer/api | 1 | 1 | 0 | 1 | 1 | ✅ |
 | pages/explorer/apps | 3 | 13 | 0 | 3 | 13 | ✅ |
-| pages/explorer/dashboard | 3 | 21 | 2 | 3 | 21 | 81% |
+| pages/explorer/dashboard | 3 | 21 | 4 | 3 | 21 | 86% |
 | pages/explorer/dashboard/websockets | 1 | 4 | 0 | 1 | 4 | ✅ |
 | pages/explorer/manager | 1 | 1 | 0 | 1 | 1 | ✅ |
 | pages/explorer/more-resources/api | 1 | 5 | 0 | 1 | 5 | ✅ |
@@ -27,29 +27,29 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 | pages/explorer/more-resources/fleet | 1 | 2 | 0 | 1 | 2 | ✅ |
 | pages/explorer/more-resources/rbac | 4 | 10 | 0 | 4 | 10 | ✅ |
 | pages/explorer/more-resources/yaml | 1 | 1 | 0 | 1 | 1 | ✅ |
-| pages/explorer/policy | 1 | 4 | 0 | 1 | 4 | 75% |
-| pages/explorer/service-discovery | 3 | 20 | 0 | 3 | 20 | 95% |
-| pages/explorer2 | 7 | 32 | 0 | 7 | 32 | 97% |
+| pages/explorer/policy | 1 | 4 | 0 | 1 | 4 | ✅ |
+| pages/explorer/service-discovery | 3 | 20 | 0 | 3 | 20 | ✅ |
+| pages/explorer2 | 7 | 32 | 0 | 7 | 32 | ✅ |
 | pages/explorer2/nodes | 2 | 2 | 0 | 2 | 2 | ✅ |
-| pages/explorer2/storage | 6 | 19 | 0 | 5 | 17 | 47% |
-| pages/explorer2/workloads | 8 | 54 | 1 | 8 | 54 | 98% |
+| pages/explorer2/storage | 6 | 19 | 0 | 5 | 17 | 74% |
+| pages/explorer2/workloads | 8 | 54 | 1 | 8 | 54 | ✅ |
 | pages/extensions | 2 | 22 | 0 | 2 | 22 | ✅ |
 | pages/fleet | 5 | 39 | 2 | 4 | 37 | 95% |
-| pages/fleet/resources | 5 | 30 | 0 | 5 | 31 | 97% |
-| pages/generic | 11 | 65 | 0 | 11 | 69 | 66% |
-| pages/global-settings | 8 | 65 | 0 | 8 | 69 | 95% |
-| pages/manager | 24 | 143 | 12 | 22 | 135 | 90% |
-| pages/user-menu | 3 | 9 | 6 | 3 | 20 | 78% |
-| pages/users-and-auth | 8 | 51 | 0 | 7 | 49 | 75% |
+| pages/fleet/resources | 5 | 30 | 4 | 5 | 31 | ✅ |
+| pages/generic | 11 | 68 | 0 | 11 | 69 | 69% |
+| pages/global-settings | 8 | 70 | 1 | 8 | 68 | 99% |
+| pages/manager | 24 | 141 | 27 | 22 | 136 | 94% |
+| pages/user-menu | 3 | 19 | 10 | 3 | 20 | 95% |
+| pages/users-and-auth | 8 | 51 | 1 | 7 | 49 | 78% |
 | pages/virtualization-mgmt | 1 | 3 | 0 | 1 | 3 | ✅ |
 | priority | 2 | 2 | 0 | 2 | 2 | ✅ |
 | setup | 1 | 4 | 0 | 1 | 4 | ✅ |
 | *PW-only specs* | — | — | — | 1 | 2 | — |
-| **TOTAL** | **127** | **664** | **27** | **123** | **674** | **89%** |
+| **TOTAL** | **127** | **679** | **58** | **123** | **674** | **92%** |
 
 - **Unconverted spec tests** (no PW file): 17
-- **Missing by name** (PW file exists but upstream test not matched by exact name): 59
-- **Upstream commented-out** (ported to PW as live tests): 27
+- **Missing by name** (PW file exists but upstream test not matched by exact name): 36
+- **Upstream commented-out** (ported to PW as live tests): 58
 
 ## Unconverted Specs
 
@@ -83,16 +83,17 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 | Spec | Upstream Live | Upstream Commented | PW Tests | Delta |
 |------|--------------|-------------------|----------|-------|
 | navigation/page-actions.spec.ts | 0 | 0 | 2 | +2 |
-| pages/fleet/resources/cluster-registration-tokens.spec.ts | 6 | 0 | 7 | +1 |
-| pages/generic/home.spec.ts | 15 | 0 | 19 | +4 |
+| pages/charts/v2-monitoring.spec.ts | 0 | 6 | 1 | +1 |
+| pages/fleet/resources/cluster-registration-tokens.spec.ts | 6 | 1 | 7 | +1 |
+| pages/generic/home.spec.ts | 18 | 0 | 19 | +1 |
 | pages/global-settings/banners.spec.ts | 16 | 0 | 15 | -1 |
-| pages/global-settings/branding.spec.ts | 5 | 0 | 9 | +4 |
-| pages/global-settings/settings.spec.ts | 13 | 0 | 14 | +1 |
-| pages/manager/edit-fake-cluster.spec.ts | 1 | 0 | 2 | +1 |
+| pages/global-settings/branding.spec.ts | 10 | 0 | 9 | -1 |
+| pages/manager/agent-configuration-rke2.spec.ts | 0 | 2 | 1 | +1 |
 | pages/manager/eks-cluster-provisioning.spec.ts | 3 | 0 | 2 | -1 |
-| pages/manager/repositories.spec.ts | 14 | 0 | 13 | -1 |
-| pages/user-menu/account-api-keys.spec.ts | 1 | 6 | 2 | +1 |
-| pages/user-menu/preferences.spec.ts | 6 | 0 | 16 | +10 |
+| pages/manager/node-drivers.spec.ts | 0 | 19 | 1 | +1 |
+| pages/manager/pod-security-policy-templates.spec.ts | 0 | 6 | 1 | +1 |
+| pages/user-menu/account-api-keys.spec.ts | 0 | 10 | 2 | +2 |
+| pages/user-menu/preferences.spec.ts | 17 | 0 | 16 | -1 |
 | pages/users-and-auth/roles.spec.ts | 13 | 0 | 14 | +1 |
 | pages/users-and-auth/users.spec.ts | 19 | 0 | 22 | +3 |
 
@@ -100,23 +101,11 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 
 ### Not found in any Playwright spec
 
-**pages/explorer/dashboard/cluster-dashboard.spec.ts** (1 tests)
+**pages/explorer/dashboard/events.spec.ts** (3 tests)
 
-- does not show fleet controller status if the user does not have permission to view the fleet controller deployment
-
-**pages/explorer/dashboard/events.spec.ts** (1 tests)
-
+- pagination is visible and user is able to navigate through events data
 - filter events
-
-**pages/explorer2/cluster-project-members.spec.ts** (1 tests)
-
-- Members added to both Cluster Membership should not show 
-
-**pages/explorer2/storage/persistent-volume-claims.spec.ts** (3 tests)
-
-- validate persistent volume claims table in empty state
-- flat list: validate persistent volume claims table
-- group by namespace: validate persistent volume claims table
+- sorting changes the order of paginated events data
 
 **pages/explorer2/storage/persistent-volumes.spec.ts** (1 tests)
 
@@ -130,13 +119,8 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 
 - validate storage classes table in empty state
 
-**pages/explorer2/workloads/daemonsets.spec.ts** (1 tests)
+**pages/generic/about.spec.ts** (3 tests)
 
-- modifying 
-
-**pages/generic/about.spec.ts** (4 tests)
-
-- can navigate to /rancher/rancher
 - can navigate to /rancher/dashboard
 - can navigate to /rancher/helm
 - can navigate to /rancher/machine
@@ -168,22 +152,13 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 
 - can click on Application Collection link
 
-**pages/global-settings/banners.spec.ts** (2 tests)
-
-- Show Banner
-- Hide banner
-
 **pages/global-settings/settings.spec.ts** (1 tests)
 
-- Inactivity ::: can update the setting 
+- Inactivity ::: can update the setting "auth-user-session-idle-ttl-minutes" and should show the the inactivity modal
 
 **pages/manager/cloud-credential.spec.ts** (1 tests)
 
 - should display empty cloud credential creation page
-
-**pages/manager/edit-fake-cluster.spec.ts** (1 tests)
-
-- Clearing a registry auth item on the UI (Cluster Edit Config) should retain its authentication ID
 
 **pages/manager/eks-cluster-provisioning.spec.ts** (1 tests)
 
@@ -195,68 +170,17 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 
 **pages/users-and-auth/roles.spec.ts** (4 tests)
 
-- Cloning a Global Role with 
 - filter global roles
 - sorting changes the order of paginated global roles data
+- pagination is visible and user is able to navigate through global roles data
 - Standard user with List, Get & Resources: Global Roles should be able to list users in Users and Auth
 
 ### Found in a different Playwright spec (cross-spec match)
 
 > These upstream tests exist in Playwright but under a different spec file.
 
-**pages/explorer/dashboard/events.spec.ts**
-
-- `pagination is visible and user is able to navigate through events data` → PW: `pagination is visible and user is able to navigate through configmaps data`
-- `sorting changes the order of paginated events data` → PW: `sorting changes the order of paginated configmaps data`
-
-**pages/explorer/policy/network-policy.spec.ts**
-
-- `can open ` → PW: `can open `
-
-**pages/explorer/service-discovery/ingress.spec.ts**
-
-- `can open ` → PW: `can open `
-
-**pages/explorer2/storage/persistent-volumes.spec.ts**
-
-- `can open ` → PW: `can open `
-
-**pages/explorer2/storage/storage-classes.spec.ts**
-
-- `can open ` → PW: `can open `
-
-**pages/fleet/resources/workspaces.spec.ts**
-
-- `check table headers are available in list and details view` → PW: `check table headers are available in list and details view`
-
-**pages/manager/agent-configuration-rke2.spec.ts**
-
-- `every file must have a test...` → PW: `every file must have a test...`
-
-**pages/manager/node-drivers.spec.ts**
-
-- `every file must have a test...` → PW: `every file must have a test...`
-
-**pages/manager/pod-security-admissions.spec.ts**
-
-- `can open ` → PW: `can open `
-
-**pages/manager/pod-security-policy-templates.spec.ts**
-
-- `every file must have a test...` → PW: `every file must have a test...`
-
-**pages/manager/repositories.spec.ts**
-
-- `can delete repositories via bulk actions` → PW: `can delete MachineDeployments via bulk actions`
-
-**pages/user-menu/account-api-keys.spec.ts**
-
-- `every file must have a test...` → PW: `every file must have a test...`
-
 **pages/users-and-auth/roles.spec.ts**
 
-- `can Download YAML` → PW: `can Download YAML`
-- `pagination is visible and user is able to navigate through global roles data` → PW: `pagination is visible and user is able to navigate through configmaps data`
 - `pagination is hidden` → PW: `pagination is hidden`
 
 ## Ported from Upstream Comments
@@ -265,11 +189,12 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 
 ### pages/explorer/dashboard/certificates.spec.ts
 
-- show correct 
+- show correct 'expiring' states
 
 ### pages/user-menu/account-api-keys.spec.ts
 
 - Can navigate to Account and API Keys page and change their password
+- Can create and delete API keys
 
 ## Assertion Density
 
@@ -298,6 +223,7 @@ Playwright: 123 specs, 674 tests (1 PW-only specs, 2 PW-only tests)
 | pages/fleet/resources/workspaces.spec.ts | 27 | 15 | 56% |
 | pages/generic/links.spec.ts | 7 | 2 | 29% |
 | pages/generic/prime.spec.ts | 2 | 1 | 50% |
+| pages/global-settings/branding.spec.ts | 85 | 59 | 69% |
 | pages/global-settings/settings-p2.spec.ts | 73 | 58 | 79% |
 | pages/global-settings/settings.spec.ts | 95 | 55 | 58% |
 | pages/manager/aks-cluster-provisioning.spec.ts | 46 | 13 | 28% |

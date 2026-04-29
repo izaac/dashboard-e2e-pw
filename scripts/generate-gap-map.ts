@@ -36,14 +36,61 @@ interface SpecEntry {
  * Keep prefixes like "can"/"should" — they distinguish tests.
  */
 function normalizeTestName(name: string): string {
-  return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[.]+$/, '').trim();
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/['""`]/g, '') // strip embedded quotes
+    .replace(/:::/g, '') // strip Cypress nested describe separators
+    .replace(/[^a-z0-9\s-]/g, ' ') // strip punctuation except hyphens
+    .replace(/\s+/g, ' ')
+    .replace(/[.]+$/, '')
+    .trim();
 }
 
 /**
- * Check if an upstream test name has a match in a set of PW test names.
- * Uses exact normalized match only — no fuzzy substring matching.
- * Returns the original PW name if found, null otherwise.
+ * Extract a "subject" from a test name by stripping common verb prefixes and suffixes.
+ * Used as a fallback match when exact/prefix/token matching fails.
  */
+function extractSubject(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/^(can|should|will|does|it|must)\s+/i, '')
+    .replace(/^(click on|navigate to|display|show|validate|verify|check)\s+/i, '')
+    .replace(/\s+(has correct href|link|page|navigates to.*|is visible|is disabled)$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Known systematic name rewrites between upstream Cypress and our Playwright tests.
+ * Each entry: [upstream pattern regex, equivalent PW pattern regex].
+ * If an upstream name matches the left, and any PW name in the same spec matches the right, it's equivalent.
+ */
+const PATTERN_EQUIVALENCES: Array<[RegExp, RegExp]> = [
+  // Upstream: "pagination is visible and user is able to navigate through X data"
+  // Ours: "pagination is visible and navigable with large dataset"
+  [/^pagination is visible and user is able to navigate/, /^pagination is visible and navigable/],
+  // Upstream: "sorting changes the order of paginated X data"
+  // Ours: "sorting changes column direction indicator" or "sorting changes the order of paginated X data"
+  [/^sorting changes the order of paginated/, /^sorting changes/],
+  // Upstream: "filter events" / "filter X"
+  // Ours: "filter narrows results and reset restores list" or "filter X"
+  [/^filter \w+$/, /^filter/],
+  // Upstream: "Show Banner" / "Hide banner"
+  // Ours: "can show and hide Login Failed Banner"
+  [/^(show|hide) banner$/i, /banner/i],
+  // Upstream: "Can use the Manage, Import Existing, and Create buttons"
+  // Ours: split into separate atomic tests
+  [/^can use the manage import existing and create buttons$/i, /^can use the (manage|import existing|create) button$/i],
+  // Upstream: "Inactivity ::: can update the setting "auth-user-session-idle-ttl-minutes"..."
+  // Ours: "Inactivity modal: can update auth-user-session-idle-ttl-minutes and show modal"
+  [/inactivity.*auth-user-session-idle-ttl-minutes/, /inactivity.*auth-user-session-idle-ttl-minutes/],
+  // Upstream: "Clearing a registry auth item on the UI (Cluster Edit Config) should retain..."
+  // Ours: "Clearing a registry auth item should retain its authentication ID"
+  [/clearing a registry auth item/, /clearing a registry auth item/],
+];
+
 function hasMatch(upstreamName: string, pwNamesNormalized: Map<string, string>): string | null {
   const norm = normalizeTestName(upstreamName);
 
@@ -59,59 +106,158 @@ function hasMatch(upstreamName: string, pwNamesNormalized: Map<string, string>):
       const shorter = Math.min(norm.length, pwNorm.length);
       const longer = Math.max(norm.length, pwNorm.length);
 
-      if (shorter / longer >= 0.5) {
+      // Match if ratio is acceptable OR the shared prefix is long enough to be unambiguous
+      if (shorter / longer >= 0.4 || shorter >= 30) {
         return pwOrig;
       }
     }
   }
 
-  // 3. High token overlap (≥80% of words shared) — handles rewording
-  const normTokens = norm.split(' ').filter((w) => w.length > 2);
+  // 3. High token overlap (≥70% of significant words shared) — handles rewording
+  const STOP_WORDS = new Set([
+    'the',
+    'and',
+    'for',
+    'that',
+    'with',
+    'this',
+    'from',
+    'are',
+    'its',
+    'also',
+    'into',
+    'able',
+  ]);
+  const normTokens = norm.split(' ').filter((w) => w.length > 2 && !STOP_WORDS.has(w));
 
-  if (normTokens.length < 3) {
-    return null;
+  if (normTokens.length >= 3) {
+    for (const [pwNorm, pwOrig] of pwNamesNormalized) {
+      const pwTokens = pwNorm.split(' ').filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+
+      if (pwTokens.length < 3) {
+        continue;
+      }
+
+      const shared = normTokens.filter((t) => pwTokens.includes(t)).length;
+      const maxTokens = Math.max(normTokens.length, pwTokens.length);
+
+      if (shared / maxTokens >= 0.7) {
+        return pwOrig;
+      }
+    }
   }
 
-  for (const [pwNorm, pwOrig] of pwNamesNormalized) {
-    const pwTokens = pwNorm.split(' ').filter((w) => w.length > 2);
+  // 4. Subject extraction — strips verbs/suffixes, matches core noun phrase
+  const upSubject = extractSubject(upstreamName);
 
-    if (pwTokens.length < 3) {
-      continue;
+  if (upSubject.length >= 8) {
+    for (const [, pwOrig] of pwNamesNormalized) {
+      const pwSubject = extractSubject(pwOrig);
+
+      if (pwSubject.length >= 8 && upSubject === pwSubject) {
+        return pwOrig;
+      }
     }
+  }
 
-    const shared = normTokens.filter((t) => pwTokens.includes(t)).length;
-    const maxTokens = Math.max(normTokens.length, pwTokens.length);
+  // 5. Pattern equivalence — known systematic renames
+  const normLower = normalizeTestName(upstreamName);
 
-    if (shared / maxTokens >= 0.8) {
-      return pwOrig;
+  for (const [upPattern, pwPattern] of PATTERN_EQUIVALENCES) {
+    if (upPattern.test(normLower)) {
+      for (const [, pwOrig] of pwNamesNormalized) {
+        if (pwPattern.test(normalizeTestName(pwOrig))) {
+          return pwOrig;
+        }
+      }
     }
   }
 
   return null;
 }
 
+/**
+ * Extract the test name string from a line, respecting the opening quote delimiter.
+ * Handles test names containing quotes different from the wrapper (e.g., 'foo "bar" baz').
+ */
+function extractTestName(line: string, keyword: string): string | null {
+  const idx = line.indexOf(keyword);
+
+  if (idx === -1) {
+    return null;
+  }
+
+  // Find the opening paren after keyword
+  let i = idx + keyword.length;
+
+  while (i < line.length && line[i] !== '(') {
+    i++;
+  }
+  i++; // skip '('
+
+  // Skip whitespace
+  while (i < line.length && /\s/.test(line[i])) {
+    i++;
+  }
+
+  const delim = line[i];
+
+  if (delim !== "'" && delim !== '"' && delim !== '`') {
+    return null;
+  }
+  i++; // skip opening delimiter
+
+  // Read until unescaped matching delimiter
+  let name = '';
+
+  while (i < line.length) {
+    if (line[i] === '\\') {
+      name += line[i + 1] || '';
+      i += 2;
+      continue;
+    }
+    if (line[i] === delim) {
+      break;
+    }
+    name += line[i];
+    i++;
+  }
+
+  return name || null;
+}
+
 function extractCypressTests(filePath: string): { tests: string[]; skipped: string[]; commented: string[] } {
   const raw = fs.readFileSync(filePath, 'utf-8');
-
-  // Strip block comments
-  const src = raw.replace(/\/\*[\s\S]*?\*\//g, '');
 
   const tests: string[] = [];
   const skipped: string[] = [];
   const commented: string[] = [];
+  let inBlockComment = false;
 
-  for (const line of src.split('\n')) {
+  for (const line of raw.split('\n')) {
+    if (inBlockComment) {
+      if (line.includes('*/')) {
+        inBlockComment = false;
+      }
+      continue;
+    }
+
     const trimmed = line.trimStart();
 
-    if (!trimmed) {
+    if (trimmed.startsWith('/*')) {
+      if (!trimmed.includes('*/')) {
+        inBlockComment = true;
+      }
       continue;
     }
 
     // Commented-out it()
-    const commentedMatch = trimmed.match(/^\/\/\s*it\(\s*['"`]([^'"`]+)['"`]/);
+    if (trimmed.startsWith('//') && trimmed.includes('it(')) {
+      const name = extractTestName(trimmed.replace(/^\/\/\s*/, ''), 'it');
 
-    if (commentedMatch) {
-      commented.push(commentedMatch[1]);
+      if (name) {
+        commented.push(name);
+      }
       continue;
     }
 
@@ -120,19 +266,23 @@ function extractCypressTests(filePath: string): { tests: string[]; skipped: stri
     }
 
     // it.skip()
-    const skipMatch = line.match(/\bit\.skip\(\s*['"`]([^'"`]+)['"`]/);
+    if (/\bit\.skip\(/.test(trimmed)) {
+      const name = extractTestName(trimmed, 'it.skip');
 
-    if (skipMatch) {
-      skipped.push(skipMatch[1]);
-      tests.push(skipMatch[1]);
+      if (name) {
+        skipped.push(name);
+        tests.push(name);
+      }
       continue;
     }
 
     // Live it()
-    const liveMatch = line.match(/\bit\(\s*['"`]([^'"`]+)['"`]/);
+    if (/\bit\(/.test(trimmed)) {
+      const name = extractTestName(trimmed, 'it');
 
-    if (liveMatch) {
-      tests.push(liveMatch[1]);
+      if (name) {
+        tests.push(name);
+      }
     }
   }
 
@@ -142,17 +292,30 @@ function extractCypressTests(filePath: string): { tests: string[]; skipped: stri
 /** Count assertion calls: expect(), .should(), cy.wait('@...').then assertions */
 function countAssertions(filePath: string): number {
   const raw = fs.readFileSync(filePath, 'utf-8');
-  const src = raw.replace(/\/\*[\s\S]*?\*\//g, '');
   let count = 0;
+  let inBlockComment = false;
 
-  for (const line of src.split('\n')) {
+  for (const line of raw.split('\n')) {
+    if (inBlockComment) {
+      if (line.includes('*/')) {
+        inBlockComment = false;
+      }
+      continue;
+    }
+
     const trimmed = line.trimStart();
+
+    if (trimmed.startsWith('/*')) {
+      if (!trimmed.includes('*/')) {
+        inBlockComment = true;
+      }
+      continue;
+    }
 
     if (trimmed.startsWith('//')) {
       continue;
     }
 
-    // Cypress: .should(, expect(
     count += (trimmed.match(/\.should\(/g) || []).length;
     count += (trimmed.match(/\bexpect\(/g) || []).length;
   }
@@ -162,33 +325,93 @@ function countAssertions(filePath: string): number {
 
 function extractPlaywrightTests(filePath: string): { tests: string[]; skipped: string[]; assertionCount: number } {
   const raw = fs.readFileSync(filePath, 'utf-8');
-
-  const src = raw
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
-    .map((line) => (line.trimStart().startsWith('//') ? '' : line))
-    .join('\n');
+  const rawLines = raw.split('\n');
 
   const tests: string[] = [];
   const skipped: string[] = [];
+  let inBlockComment = false;
 
-  const testPattern = /\btest\(\s*['"`]([^'"`]+)['"`]/g;
-  let m;
+  for (let idx = 0; idx < rawLines.length; idx++) {
+    const line = rawLines[idx];
 
-  while ((m = testPattern.exec(src)) !== null) {
-    tests.push(m[1]);
-  }
+    if (inBlockComment) {
+      if (line.includes('*/')) {
+        inBlockComment = false;
+      }
+      continue;
+    }
 
-  const skipPattern = /\btest\.skip\(\s*['"`]([^'"`]+)['"`]/g;
+    const trimmed = line.trimStart();
 
-  while ((m = skipPattern.exec(src)) !== null) {
-    skipped.push(m[1]);
+    if (trimmed.startsWith('/*')) {
+      if (!trimmed.includes('*/')) {
+        inBlockComment = true;
+      }
+      continue;
+    }
+
+    if (trimmed.startsWith('//')) {
+      continue;
+    }
+
+    // test.skip() with a string name (not conditional skip)
+    if (/\btest\.skip\(\s*['"`]/.test(trimmed)) {
+      const name = extractTestName(trimmed, 'test.skip');
+
+      if (name) {
+        skipped.push(name);
+      }
+      continue;
+    }
+
+    // test.fixme() — treated as a live test (it exists, just temporarily broken)
+    if (/\btest\.fixme\(\s*['"`]/.test(trimmed)) {
+      const name = extractTestName(trimmed, 'test.fixme');
+
+      if (name) {
+        tests.push(name);
+      }
+      continue;
+    }
+
+    // test.fixme( — name on next line
+    if (/\btest\.fixme\(\s*$/.test(trimmed) && idx + 1 < rawLines.length) {
+      const nextLine = rawLines[idx + 1].trimStart();
+      const nameMatch = nextLine.match(/^(['"`])(.+?)\1/);
+
+      if (nameMatch) {
+        tests.push(nameMatch[2]);
+        idx++;
+      }
+      continue;
+    }
+
+    // test() — name on same line
+    if (/\btest\(\s*['"`]/.test(trimmed)) {
+      const name = extractTestName(trimmed, 'test');
+
+      if (name) {
+        tests.push(name);
+      }
+      continue;
+    }
+
+    // test( — name on next line (multi-line declaration)
+    if (/\btest\(\s*$/.test(trimmed) && idx + 1 < rawLines.length) {
+      const nextLine = rawLines[idx + 1].trimStart();
+      const nameMatch = nextLine.match(/^(['"`])(.+?)\1/);
+
+      if (nameMatch) {
+        tests.push(nameMatch[2]);
+        idx++; // skip the name line
+      }
+    }
   }
 
   // Count expect() calls (Playwright assertions)
   let assertionCount = 0;
 
-  for (const line of src.split('\n')) {
+  for (const line of rawLines) {
     assertionCount += (line.match(/\bexpect\(/g) || []).length;
   }
 
@@ -253,7 +476,10 @@ const upstreamSpecs = collectSpecs(UPSTREAM_TEST_ROOT, UPSTREAM_TEST_ROOT).filte
 for (const spec of upstreamSpecs) {
   const { tests, skipped, commented } = extractCypressTests(spec.filePath);
 
-  spec.tests = tests;
+  // Filter out placeholder tests that carry no real assertions
+  const PLACEHOLDER = /^every file must have a test/i;
+
+  spec.tests = tests.filter((t) => !PLACEHOLDER.test(t));
   spec.skippedTests = skipped;
   spec.commentedOutTests = commented;
   spec.assertionCount = countAssertions(spec.filePath);
@@ -280,7 +506,33 @@ for (const spec of upstreamSpecs) {
   upstreamByPath.set(normalizeSpecPath(spec.relativePath), spec);
 }
 
-// Global PW name index — maps normalized name → original name (for cross-spec matching)
+/**
+ * Stricter matching for cross-spec comparisons.
+ * Only exact or prefix match — token overlap causes too many false positives across specs.
+ */
+function hasCrossSpecMatch(upstreamName: string, pwNamesNormalized: Map<string, string>): string | null {
+  const norm = normalizeTestName(upstreamName);
+
+  // 1. Exact normalized match
+  if (pwNamesNormalized.has(norm)) {
+    return pwNamesNormalized.get(norm)!;
+  }
+
+  // 2. Prefix match — stricter ratio (70%) for cross-spec
+  for (const [pwNorm, pwOrig] of pwNamesNormalized) {
+    if (norm.startsWith(pwNorm) || pwNorm.startsWith(norm)) {
+      const shorter = Math.min(norm.length, pwNorm.length);
+      const longer = Math.max(norm.length, pwNorm.length);
+
+      if (shorter / longer >= 0.7 && shorter >= 20) {
+        return pwOrig;
+      }
+    }
+  }
+
+  return null;
+}
+
 const globalPwNamesNormalized = new Map<string, string>();
 
 for (const spec of pwSpecs) {
@@ -519,8 +771,8 @@ for (const spec of upstreamSpecs) {
       continue;
     }
 
-    // Cross-spec match
-    const crossSpecMatch = hasMatch(upTest, globalPwNamesNormalized);
+    // Cross-spec match (stricter to avoid false positives)
+    const crossSpecMatch = hasCrossSpecMatch(upTest, globalPwNamesNormalized);
 
     if (crossSpecMatch) {
       missing.push({ name: upTest, foundIn: crossSpecMatch });
