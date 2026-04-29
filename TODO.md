@@ -82,7 +82,7 @@
 ### Azure credentials (`azureSubscriptionId` / `azureClientId` / `azureClientSecret`)
 
 - [ ] `cluster-provisioning-azure-rke2.spec.ts` — full spec skipped
-- [ ] `aks-cluster-provisioning.spec.ts` — full spec skipped
+- [x] `aks-cluster-provisioning.spec.ts` — 2 pass (mandatory fields, default values)
 
 ### GKE credentials (`gkeServiceAccount`)
 

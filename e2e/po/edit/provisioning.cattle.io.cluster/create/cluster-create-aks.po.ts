@@ -1,6 +1,9 @@
 import type { Locator, Page } from '@playwright/test';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
+import AzureCloudCredentialsCreateEditPo from '@/e2e/po/edit/cloud-credentials-azure.po';
+import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 
 export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreatePagePo {
   constructor(page: Page, clusterId = '_') {
@@ -11,8 +14,25 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
     return new ResourceDetailPo(this.page, ':scope', this.self());
   }
 
+  cloudCredentialsForm(): AzureCloudCredentialsCreateEditPo {
+    return new AzureCloudCredentialsCreateEditPo(this.page);
+  }
+
+  /** The credential select section */
+  credentialSelect(): Locator {
+    return this.page.getByTestId('cruaks-select-credential');
+  }
+
   clusterNameInput(): Locator {
     return this.page.locator('.col.span-4 input').first();
+  }
+
+  getClusterName(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.page.locator('.col.span-4'), 'Name');
+  }
+
+  getClusterDescription(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[placeholder*="better describes this resource"]');
   }
 
   clusterResourceGroup(): Locator {
@@ -23,16 +43,12 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
     return this.page.locator('[data-testid="cruaks-form"] input[placeholder*="aks-dns"]');
   }
 
-  regionSelect(): Locator {
-    return this.page.getByTestId('cruaks-resourcelocation');
+  regionSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="cruaks-resourcelocation"]');
   }
 
-  kubernetesVersionSelect(): Locator {
-    return this.page.getByTestId('cruaks-kubernetesversion');
-  }
-
-  cloudCredentialSelect(): Locator {
-    return this.page.getByTestId('cloud-credentials-select');
+  kubernetesVersionSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="cruaks-kubernetesversion"]');
   }
 
   create(): Locator {
