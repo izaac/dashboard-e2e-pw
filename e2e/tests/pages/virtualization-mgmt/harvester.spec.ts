@@ -8,40 +8,64 @@ import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import { LONG, VERY_LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = '/v1/catalog.cattle.io.clusterrepos';
-
-const harvesterGitRepoName = 'harvester';
 const harvesterTitle = 'Harvester';
-const branchName = 'gh-pages';
-const harvesterGitRepoUrl = 'https://github.com/harvester/harvester-ui-extension.git';
+
+// Chart repository that supplies the Harvester UI extension differs for Community vs Prime
+const HARVESTER_EXTENSION_CATALOG = {
+  community: {
+    repo: 'harvester',
+    gitRepo: 'https://github.com/harvester/harvester-ui-extension.git',
+    gitBranch: 'gh-pages',
+  },
+  prime: {
+    repo: 'rancher',
+    gitRepo: 'https://github.com/rancher/ui-plugin-charts',
+    gitBranch: 'main',
+  },
+};
 
 test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
-  let harvesterClusterName: string;
-
   test.beforeEach(async ({ login, rancherApi }) => {
-    // Clean up any leftover harvester state from previous runs (leaked afterEach)
+    // Clean up any leftover harvester state from previous runs
     await rancherApi.createRancherResource(
       'v1',
       'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
       {},
       false,
     );
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName, false);
+
+    // Clean up both possible extension repos to prevent collisions
+    const extensionRepoUrls = ['rancher/ui-plugin-charts', 'harvester/harvester-ui-extension'];
+    const repos = await rancherApi.getRancherResource('v1', 'catalog.cattle.io.clusterrepos');
+
+    for (const repo of repos.body.data ?? []) {
+      if (extensionRepoUrls.some((url) => repo?.spec?.gitRepo?.includes(url))) {
+        await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repo.id, false);
+        await rancherApi.waitForRancherResource(
+          'v1',
+          'catalog.cattle.io.clusterrepos',
+          repo.id,
+          (resp) => resp.status === 404,
+          10,
+          3000,
+        );
+      }
+    }
 
     await login();
-    harvesterClusterName = rancherApi.createE2EResourceName('harvesterclustername');
   });
 
-  test.afterEach(async ({ rancherApi }) => {
+  test.afterEach(async ({ rancherApi, isPrime }) => {
+    const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
+
     await rancherApi.createRancherResource(
       'v1',
       'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
       {},
       false,
     );
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName, false);
+    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', catalog.repo, false);
 
-    // Wait for both app and repo to be fully removed so Rancher settles
     await rancherApi.waitForRancherResource(
       'v1',
       'catalog.cattle.io.apps',
@@ -53,7 +77,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await rancherApi.waitForRancherResource(
       'v1',
       'catalog.cattle.io.clusterrepos',
-      harvesterGitRepoName,
+      catalog.repo,
       (resp) => resp.status === 404,
       20,
       3000,
@@ -61,15 +85,14 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await rancherApi.waitForHealthy();
   });
 
-  /**
-   * Assumes that Harvester Extension is NOT installed
-   *
-   * Harvester Extension will also be removed after all tests run
-   */
   test('can auto install harvester and begin process of importing a harvester cluster', async ({
     page,
     rancherApi,
-  }) => {
+    isPrime,
+  }, testInfo) => {
+    testInfo.setTimeout(180_000);
+    const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
+    const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);
     const extensionsPo = new ExtensionsPagePo(page);
     const appRepoList = new ChartRepositoriesPagePo(page, '_', 'manager');
@@ -80,23 +103,12 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(harvesterPo.updateOrInstallButton().self()).toBeVisible();
     await expect(harvesterPo.extensionWarning()).toHaveText('The Harvester UI Extension is not installed');
 
-    // Set up response listeners BEFORE clicking install
+    // Set up response listener for repo creation BEFORE clicking install
     const createHarvesterChartPromise = page.waitForResponse(
       (resp) =>
         resp.url().includes(CLUSTER_REPOS_BASE_URL) &&
         resp.request().method() === 'POST' &&
         !resp.url().includes('?action='),
-      { timeout: VERY_LONG },
-    );
-    const updateHarvesterChartPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: VERY_LONG },
-    );
-    const installPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
-        resp.request().method() === 'POST',
       { timeout: VERY_LONG },
     );
 
@@ -107,41 +119,15 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     expect(createResp.status()).toBe(201);
 
-    const updateResp = await updateHarvesterChartPromise;
-
-    expect(updateResp.status()).toBe(200);
-
-    // Wait for the installation request and handle 500 errors
-    const installResp = await installPromise;
-    const installStatus = installResp.status();
-
-    if (installStatus === 201) {
-      // Installation succeeded on first attempt
-    } else if (installStatus === 500) {
-      // Conditional retry - check for warning message and retry
-      const warningText = await harvesterPo
-        .extensionWarning()
-        .innerText()
-        .catch(() => '');
-
-      if (warningText.includes('Warning, Harvester UI extension automatic installation failed')) {
-        await page.reload();
-        await harvesterPo.waitForPage();
-        await harvesterPo.updateOrInstallButton().click();
-      }
-    } else {
-      throw new Error(`Unexpected status code: ${installStatus}`);
-    }
-
-    // Set up listener for the second PUT update before it fires
-    const updateAfterInstallPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: VERY_LONG },
+    // Poll API until extension is fully installed
+    await rancherApi.waitForResourceState(
+      'v1',
+      'catalog.cattle.io.apps',
+      'cattle-ui-plugin-system/harvester',
+      'deployed',
+      40,
     );
-
-    await harvesterPo.waitForPage();
-    await updateAfterInstallPromise;
+    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo, 30);
 
     await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: LONG });
 
@@ -154,21 +140,12 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     // verify harvester repo is added to repos list page
     await appRepoList.goTo();
     await appRepoList.waitForPage();
-    await expect(
-      appRepoList.list().resourceTable().sortableTable().rowElementWithName(harvesterGitRepoName),
-    ).toBeVisible();
-    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: VERY_LONG });
+    await expect(appRepoList.list().resourceTable().sortableTable().rowElementWithName(chartRepo)).toBeVisible();
+    await expect(appRepoList.list().state(chartRepo)).toContainText('Active', { timeout: VERY_LONG });
 
     // begin process of importing harvester cluster
-    const updateChartOnNavPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-      { timeout: VERY_LONG },
-    );
-
     await harvesterPo.goTo();
     await harvesterPo.waitForPage();
-    await updateChartOnNavPromise;
 
     const createClusterPromise = page.waitForResponse(
       (resp) => resp.url().includes('/v3/clusters') && resp.request().method() === 'POST',
@@ -181,6 +158,9 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     await createEditForm.waitForPage(undefined, 'memberRoles');
     await expect(createEditForm.title()).toContainText('Harvester Cluster:');
+
+    const harvesterClusterName = rancherApi.createE2EResourceName('harvesterclustername');
+
     await createEditForm.nameNsDescription().name().set(harvesterClusterName);
     await createEditForm.nameNsDescription().description().set(`${harvesterClusterName}-desc`);
     await createEditForm.resourceDetail().createEditView().create();
@@ -239,7 +219,14 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     }
   });
 
-  test('missing repo message should display when repo does NOT exist', async ({ page, rancherApi }) => {
+  test('missing repo message should display when repo does NOT exist', async ({
+    page,
+    rancherApi,
+    isPrime,
+  }, testInfo) => {
+    testInfo.setTimeout(180_000);
+    const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
+    const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);
     const extensionsPo = new ExtensionsPagePo(page);
     const appRepoList = new ChartRepositoriesPagePo(page, '_', 'manager');
@@ -247,23 +234,21 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     // add harvester repo
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
       type: 'catalog.cattle.io.clusterrepo',
-      metadata: { name: harvesterGitRepoName },
+      metadata: { name: catalog.repo },
       spec: {
         clientSecret: null,
-        gitRepo: harvesterGitRepoUrl,
-        gitBranch: branchName,
+        gitRepo: catalog.gitRepo,
+        gitBranch: catalog.gitBranch,
       },
     });
 
     // Wait for repository to be downloaded and ready
-    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName);
+    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo);
 
     await appRepoList.goTo();
     await appRepoList.waitForPage();
-    await expect(
-      appRepoList.list().resourceTable().sortableTable().rowElementWithName(harvesterGitRepoName),
-    ).toBeVisible();
-    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: VERY_LONG });
+    await expect(appRepoList.list().resourceTable().sortableTable().rowElementWithName(chartRepo)).toBeVisible();
+    await expect(appRepoList.list().state(chartRepo)).toContainText('Active', { timeout: VERY_LONG });
 
     await extensionsPo.goTo();
     await extensionsPo.waitForPage(undefined, 'available');
@@ -274,49 +259,25 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(extensionsPo.installModal().self()).toBeVisible();
 
     // select latest version and click install
-    const installPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
-        resp.request().method() === 'POST',
-      { timeout: LONG },
-    );
-
     await extensionsPo.installModal().selectVersionClick(1);
     await extensionsPo.installModal().installButton().click();
 
-    const installResp = await installPromise;
-    const installStatus = installResp.status();
+    // Poll until extension is fully deployed
+    await rancherApi.waitForResourceState(
+      'v1',
+      'catalog.cattle.io.apps',
+      'cattle-ui-plugin-system/harvester',
+      'deployed',
+      40,
+    );
 
-    if (installStatus === 500) {
-      test.skip(true, 'Harvester chart install returned 500 — chart not available in this environment');
-    }
-
-    expect(installStatus).toBe(201);
-
-    // Navigate explicitly — page does not auto-navigate after install
-    await extensionsPo.goTo();
-    await extensionsPo.waitForPage(undefined, 'installed');
-
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
-    await extensionsPo.extensionReloadClick();
-    await expect(extensionsPo.loading()).not.toBeAttached();
-
-    {
-      const updateOnNavPromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-        { timeout: VERY_LONG },
-      );
-
-      await harvesterPo.goTo();
-      await harvesterPo.waitForPage();
-      await updateOnNavPromise;
-    }
+    await harvesterPo.goTo();
+    await harvesterPo.waitForPage();
 
     await expect(harvesterPo.extensionWarning()).not.toBeAttached();
 
     // delete harvester repo
-    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName);
+    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', chartRepo);
 
     await harvesterPo.goTo();
     await harvesterPo.waitForPage();
@@ -330,22 +291,27 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       {},
     );
 
-    // reload extensions
-    await extensionsPo.goTo();
-    await extensionsPo.waitForPage();
-    await expect(extensionsPo.loading()).not.toBeAttached();
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
-    await extensionsPo.extensionReloadClick();
-    await expect(extensionsPo.loading()).not.toBeAttached();
+    // Poll until uninstall completes
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.apps',
+      'cattle-ui-plugin-system/harvester',
+      (resp) => resp.status === 404,
+      30,
+      3000,
+    );
 
-    // verify install button and message displays — use goTo() since page was just reloaded
+    // verify install button and message displays
     await harvesterPo.goTo();
     await harvesterPo.waitForPage();
     await expect(harvesterPo.updateOrInstallButton().self()).toBeVisible();
     await expect(harvesterPo.extensionWarning()).toHaveText('The Harvester UI Extension is not installed');
   });
 
-  test('able to update harvester extension version', async ({ page, rancherApi }) => {
+  test('able to update harvester extension version', async ({ page, rancherApi, isPrime }, testInfo) => {
+    testInfo.setTimeout(180_000);
+    const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
+    const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);
     const extensionsPo = new ExtensionsPagePo(page);
     const appRepoList = new ChartRepositoriesPagePo(page, '_', 'manager');
@@ -353,23 +319,21 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     // add harvester repo
     await rancherApi.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
       type: 'catalog.cattle.io.clusterrepo',
-      metadata: { name: harvesterGitRepoName },
+      metadata: { name: catalog.repo },
       spec: {
         clientSecret: null,
-        gitRepo: harvesterGitRepoUrl,
-        gitBranch: branchName,
+        gitRepo: catalog.gitRepo,
+        gitBranch: catalog.gitBranch,
       },
     });
 
     // Wait for repository to be downloaded and ready
-    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName);
+    await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo);
 
     await appRepoList.goTo();
     await appRepoList.waitForPage();
-    await expect(
-      appRepoList.list().resourceTable().sortableTable().rowElementWithName(harvesterGitRepoName),
-    ).toBeVisible();
-    await expect(appRepoList.list().state(harvesterGitRepoName)).toContainText('Active', { timeout: VERY_LONG });
+    await expect(appRepoList.list().resourceTable().sortableTable().rowElementWithName(chartRepo)).toBeVisible();
+    await expect(appRepoList.list().state(chartRepo)).toContainText('Active', { timeout: VERY_LONG });
 
     await extensionsPo.goTo();
     await extensionsPo.waitForPage(undefined, 'available');
@@ -384,30 +348,21 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     const versions = await extensionsPo.installModal().getOptionsAsStrings();
 
     // select older version (index 2) and click install
-    const installPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=install`) &&
-        resp.request().method() === 'POST',
-      { timeout: LONG },
-    );
-
     await extensionsPo.installModal().selectVersionClick(2, false);
     await extensionsPo.installModal().installButton().click();
 
-    const installResp = await installPromise;
-    const installStatus3 = installResp.status();
+    // Poll until extension is fully deployed
+    await rancherApi.waitForResourceState(
+      'v1',
+      'catalog.cattle.io.apps',
+      'cattle-ui-plugin-system/harvester',
+      'deployed',
+      40,
+    );
 
-    if (installStatus3 === 500) {
-      test.skip(true, 'Harvester chart install returned 500 — chart not available in this environment');
-    }
-
-    expect(installStatus3).toBe(201);
-
-    // Wait for page to transition to installed tab (matches upstream order)
-    await expect(page).toHaveURL(/uiplugins#installed/, { timeout: LONG });
-
-    await expect(extensionsPo.extensionReloadBanner()).toBeVisible({ timeout: VERY_LONG });
-    await extensionsPo.extensionReloadClick();
+    // Navigate to installed tab to verify version info
+    await extensionsPo.goTo();
+    await extensionsPo.waitForPage(undefined, 'installed');
     await expect(extensionsPo.loading()).not.toBeAttached({ timeout: LONG });
 
     // check harvester version on card - should be the latest available version
@@ -418,17 +373,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       `Installed (${versions[1]})`,
     );
 
-    {
-      const updateOnNavPromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
-        { timeout: VERY_LONG },
-      );
-
-      await harvesterPo.goTo();
-      await harvesterPo.waitForPage();
-      await updateOnNavPromise;
-    }
+    await harvesterPo.goTo();
+    await harvesterPo.waitForPage();
 
     // check for update harvester message
     await expect(harvesterPo.extensionWarning()).toHaveText(
@@ -437,13 +383,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     const upgradePromise = page.waitForResponse(
       (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}?action=upgrade`) &&
+        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${chartRepo}?action=upgrade`) &&
         resp.request().method() === 'POST',
-      { timeout: VERY_LONG },
-    );
-    const updateAfterUpgradePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_REPOS_BASE_URL}/${harvesterGitRepoName}`) && resp.request().method() === 'PUT',
       { timeout: VERY_LONG },
     );
 
@@ -456,8 +397,14 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     expect(upgradeReqBody?.charts?.[0]?.version).toBe(versions[0]);
 
-    // Wait for chart update after upgrade
-    await updateAfterUpgradePromise;
+    // Poll API until upgrade completes
+    await rancherApi.waitForResourceState(
+      'v1',
+      'catalog.cattle.io.apps',
+      'cattle-ui-plugin-system/harvester',
+      'deployed',
+      40,
+    );
 
     // verify update button and message not displayed
     await expect(harvesterPo.extensionWarning()).not.toBeAttached();
