@@ -844,4 +844,28 @@ export class RancherApi {
       }
     }
   }
+
+  /**
+   * Lightweight post-login health probe — waits for /v1/counts to return 200.
+   * Use after operations that may trigger controller churn (feature flags, helm installs).
+   */
+  async waitForHealthy(maxAttempts = 8, intervalMs = 5_000): Promise<void> {
+    for (let i = 1; i <= maxAttempts; i++) {
+      try {
+        const resp = await this.getRancherResource('v1', 'counts');
+
+        if (resp.status === 200) {
+          return;
+        }
+      } catch (err: unknown) {
+        console.warn(`[RancherApi] health probe ${i}/${maxAttempts} failed:`, err);
+      }
+
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+
+    throw new Error(
+      `Rancher did not recover after ${(maxAttempts * intervalMs) / 1000}s — aborting to prevent cascade`,
+    );
+  }
 }

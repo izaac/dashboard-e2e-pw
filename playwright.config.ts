@@ -5,14 +5,55 @@ require('dotenv').config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 /**
+ * Parse Cypress-style GREP_TAGS into Playwright grep/grepInvert regexes.
+ *
+ * Syntax: "@adminUser+-@prime+-@noVai"
+ *   +  splits tokens
+ *   -@ means exclude (grepInvert)
+ *   @  means include (grep, AND via lookaheads)
+ *
+ * Boundary-aware: @adminUser won't match @adminUserSetup
+ */
+const parseGrepTags = (tags?: string): { grep?: RegExp; grepInvert?: RegExp } => {
+  if (!tags) {
+    return {};
+  }
+
+  const tokens = tags
+    .split('+')
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const include = tokens.filter((t) => !t.startsWith('-'));
+  const exclude = tokens.filter((t) => t.startsWith('-')).map((t) => t.slice(1));
+
+  const boundary = (tag: string) => `${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-zA-Z])`;
+
+  return {
+    grep: include.length ? new RegExp(include.map((t) => `(?=.*${boundary(t)})`).join('')) : undefined,
+    grepInvert: exclude.length ? new RegExp(exclude.map((t) => boundary(t)).join('|')) : undefined,
+  };
+};
+
+/**
  * Environment Variables (matching Cypress convention)
  */
 const skipSetup = process.env.TEST_SKIP?.includes('setup');
 // Strip trailing slash for clean display/API derivation, add back for baseURL (Playwright needs it for relative path resolution)
 const rawBaseUrl = (process.env.TEST_BASE_URL || 'https://localhost:8005').replace(/\/+$/, '');
-const baseURL = rawBaseUrl + '/';
+const baseURL = `${rawBaseUrl}/`;
 const username = process.env.TEST_USERNAME || 'admin';
-const apiUrl = process.env.API || (rawBaseUrl.endsWith('/dashboard') ? rawBaseUrl.split('/').slice(0, -1).join('/') : rawBaseUrl);
+const apiUrl =
+  process.env.API || (rawBaseUrl.endsWith('/dashboard') ? rawBaseUrl.split('/').slice(0, -1).join('/') : rawBaseUrl);
+
+// Unique auth file per Rancher instance — prevents storageState collisions when sharding
+const authPort = (() => {
+  try {
+    return new URL(rawBaseUrl).port || '443';
+  } catch {
+    return '8005';
+  }
+})();
+const adminAuthFile = `.auth/admin-${authPort}.json`;
 
 /**
  * Test directories - mirrors Cypress specPattern
@@ -20,8 +61,12 @@ const apiUrl = process.env.API || (rawBaseUrl.endsWith('/dashboard') ? rawBaseUr
 const testDirs = ['priority', 'components', 'setup', 'pages', 'navigation', 'global-ui', 'features', 'extensions'];
 
 const getTestMatch = (): string[] => {
-  const only = process.env.TEST_ONLY?.split(',').map((s) => s.trim()).filter(Boolean);
-  const skip = process.env.TEST_SKIP?.split(',').map((s) => s.trim()).filter(Boolean);
+  const only = process.env.TEST_ONLY?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const skip = process.env.TEST_SKIP?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   let dirs = testDirs;
 
@@ -45,32 +90,37 @@ const getTestMatch = (): string[] => {
 if (!process.env._PW_CONFIG_LOGGED) {
   process.env._PW_CONFIG_LOGGED = '1';
 
-console.log('E2E Test Configuration (Playwright)');
-console.log('');
-console.log(`    Username: ${username}`);
+  console.log('E2E Test Configuration (Playwright)');
+  console.log('');
+  console.log(`    Username: ${username}`);
 
-if (!process.env.CATTLE_BOOTSTRAP_PASSWORD && !process.env.TEST_PASSWORD) {
-  console.log(' ❌ You must provide either CATTLE_BOOTSTRAP_PASSWORD or TEST_PASSWORD');
-}
-if (process.env.CATTLE_BOOTSTRAP_PASSWORD && process.env.TEST_PASSWORD) {
-  console.log(' ❗ If both CATTLE_BOOTSTRAP_PASSWORD and TEST_PASSWORD are provided, the first will be used');
-}
-if (!skipSetup && !process.env.CATTLE_BOOTSTRAP_PASSWORD) {
-  console.log(' ❌ You must provide CATTLE_BOOTSTRAP_PASSWORD when running setup tests');
-}
-if (skipSetup && !process.env.TEST_PASSWORD) {
-  console.log(' ❌ You must provide TEST_PASSWORD when running the tests without the setup tests');
-}
+  if (!process.env.CATTLE_BOOTSTRAP_PASSWORD && !process.env.TEST_PASSWORD) {
+    console.log(' ❌ You must provide either CATTLE_BOOTSTRAP_PASSWORD or TEST_PASSWORD');
+  }
+  if (process.env.CATTLE_BOOTSTRAP_PASSWORD && process.env.TEST_PASSWORD) {
+    console.log(' ❗ If both CATTLE_BOOTSTRAP_PASSWORD and TEST_PASSWORD are provided, the first will be used');
+  }
+  if (!skipSetup && !process.env.CATTLE_BOOTSTRAP_PASSWORD) {
+    console.log(' ❌ You must provide CATTLE_BOOTSTRAP_PASSWORD when running setup tests');
+  }
+  if (skipSetup && !process.env.TEST_PASSWORD) {
+    console.log(' ❌ You must provide TEST_PASSWORD when running the tests without the setup tests');
+  }
 
-console.log(`    Setup tests will ${skipSetup ? 'NOT' : ''} be run`);
-console.log(`    Dashboard URL: ${rawBaseUrl}`);
-console.log(`    Rancher API URL: ${apiUrl}`);
+  console.log(`    Setup tests will ${skipSetup ? 'NOT' : ''} be run`);
+  console.log(`    Dashboard URL: ${rawBaseUrl}`);
+  console.log(`    Rancher API URL: ${apiUrl}`);
+  if (process.env.GREP_TAGS) {
+    console.log(`    GREP_TAGS: ${process.env.GREP_TAGS}`);
+  }
 
-if (apiUrl && !rawBaseUrl.startsWith(apiUrl)) {
-  console.log('\n ❗ API variable is different to TEST_BASE_URL - tests may fail due to authentication issues');
-}
-console.log('');
+  if (apiUrl && !rawBaseUrl.startsWith(apiUrl)) {
+    console.log('\n ❗ API variable is different to TEST_BASE_URL - tests may fail due to authentication issues');
+  }
+  console.log('');
 } // end config log guard
+
+const { grep, grepInvert } = parseGrepTags(process.env.GREP_TAGS);
 
 /**
  * Playwright Configuration
@@ -80,12 +130,17 @@ export default defineConfig({
   testDir: '.',
   testMatch: getTestMatch(),
 
+  /* Tag filtering (parsed from GREP_TAGS env var) */
+  grep,
+  grepInvert,
+
   /* Timeouts */
   timeout: 60_000,
   expect: { timeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000 },
 
-  /* Run tests in files in parallel */
+  /* Sequential execution — single shared Rancher instance */
   fullyParallel: false,
+  workers: 1,
 
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
@@ -94,10 +149,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
 
   /* Reporter */
-  reporter: [
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['line'],
-  ],
+  reporter: [['html', { open: 'never', outputFolder: 'playwright-report' }], ['line']],
 
   /* Shared settings for all the projects below */
   use: {
@@ -107,7 +159,7 @@ export default defineConfig({
     /* Debugging artifacts — all retained on failure for full post-mortem */
     screenshot: process.env.TEST_NO_SCREENSHOTS === 'true' ? 'off' : { mode: 'only-on-failure', fullPage: true },
     video: process.env.TEST_NO_VIDEOS === 'true' ? 'off' : 'retain-on-failure',
-    trace: 'retain-on-failure',
+    trace: 'on-first-retry',
 
     actionTimeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000,
     storageState: undefined,
@@ -134,10 +186,47 @@ export default defineConfig({
   },
 
   projects: [
+    // Setup project — runs first on fresh Rancher (when CATTLE_BOOTSTRAP_PASSWORD is set)
+    // grep: /.*/ ensures setup always runs regardless of GREP_TAGS filtering
+    ...(process.env.CATTLE_BOOTSTRAP_PASSWORD
+      ? [
+          {
+            name: 'setup',
+            grep: /.*/,
+            grepInvert: undefined as RegExp | undefined,
+            testMatch: 'e2e/tests/setup/**/*.spec.ts',
+            use: {
+              ...devices['Desktop Chrome'],
+              launchOptions: {
+                executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+              },
+            },
+          },
+        ]
+      : []),
+
+    // Auth project — logs in once and saves session to .auth/admin.json
     {
-      name: 'chromium',
+      name: 'auth',
+      grep: /.*/,
+      grepInvert: undefined as RegExp | undefined,
+      testMatch: 'e2e/tests/auth.setup.ts',
+      dependencies: process.env.CATTLE_BOOTSTRAP_PASSWORD ? ['setup'] : [],
       use: {
         ...devices['Desktop Chrome'],
+        launchOptions: {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+        },
+      },
+    },
+
+    {
+      name: 'chromium',
+      dependencies: ['auth'],
+      testIgnore: ['e2e/tests/setup/**', 'e2e/tests/auth.setup.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: adminAuthFile,
         launchOptions: {
           executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
         },
