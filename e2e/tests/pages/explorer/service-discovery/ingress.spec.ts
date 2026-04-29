@@ -248,17 +248,29 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
         expect(resp.status()).toBe(200);
         expect(body.metadata.name).toBe(ingressName);
+
+        // Validate all four rules (upstream parity: host, pathType, backend.service deep check)
         expect(body.spec.rules).toHaveLength(4);
+        body.spec.rules.forEach((rule: Record<string, unknown>, i: number) => {
+          expect(rule).toMatchObject({ host: `example${i + 1}.com` });
+          const paths = (rule as { http: { paths: Array<Record<string, unknown>> } }).http.paths;
 
-        for (let i = 0; i < 4; i++) {
-          expect(body.spec.rules[i].host).toBe(`example${i + 1}.com`);
-        }
+          expect(paths).toHaveLength(1);
+          expect(paths[0]).toMatchObject({ pathType: 'ImplementationSpecific' });
+          expect((paths[0] as { backend: { service: Record<string, unknown> } }).backend.service).toMatchObject({
+            name: serviceNames[i],
+            port: { number: 8080 },
+          });
+        });
 
+        // Validate all four certificates (upstream parity: hosts array + secretName)
         expect(body.spec.tls).toHaveLength(4);
-
-        for (let i = 0; i < 4; i++) {
-          expect(body.spec.tls[i].secretName).toBe(secretNames[i]);
-        }
+        body.spec.tls.forEach((tlsEntry: Record<string, unknown>, i: number) => {
+          expect(tlsEntry).toMatchObject({
+            hosts: [`bar${i}`],
+            secretName: secretNames[i],
+          });
+        });
 
         await ingressListPage.waitForPage();
         await expect(
@@ -341,9 +353,11 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
 
       const path = body.spec.rules[0].http.paths[0];
 
-      expect(path.pathType).toBe('ImplementationSpecific');
-      expect(path.backend.service.name).toBe(headlessServiceName);
-      expect(path.backend.service.port.number).toBe(8080);
+      expect(path).toMatchObject({ pathType: 'ImplementationSpecific' });
+      expect(path.backend.service).toMatchObject({
+        name: headlessServiceName,
+        port: { number: 8080 },
+      });
 
       await ingressListPage.waitForPage();
 

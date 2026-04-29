@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import TabbedPo from '@/e2e/po/components/tabbed.po';
 
 export class ServicesPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -50,5 +51,13 @@ export class ServicesPagePo extends PagePo {
 
   externalNameInput(): Locator {
     return this.page.getByRole('textbox', { name: 'DNS Name' });
+  }
+
+  tabs(): TabbedPo {
+    return new TabbedPo(this.page);
+  }
+
+  ipAddresses(): Locator {
+    return this.page.getByTestId('ip-addresses');
   }
 }

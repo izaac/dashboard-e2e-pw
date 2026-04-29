@@ -46,6 +46,16 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
       await servicesPage.externalNameTab().click();
       await expect(servicesPage.mastheadTitle()).toContainText('ExternalName');
 
+      // Validate tabs (upstream parity: 3 tabs, correct names, active tab)
+      const tabs = servicesPage.tabs();
+
+      await expect(tabs.allTabs()).toHaveCount(3);
+
+      const tabNames = await tabs.tabNames();
+
+      expect(tabNames).toEqual(['External Name', 'IP Addresses', 'Labels & Annotations']);
+      await tabs.assertTabIsActive('[data-testid="define-external-name"]');
+
       await servicesPage.nameInput().fill(serviceExternalName);
       await servicesPage.descriptionInput().fill(`${serviceExternalName}-desc`);
 
