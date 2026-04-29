@@ -97,6 +97,6 @@ export default class ClusterManagerCreatePagePo extends PagePo {
   }
 
   credentialsBannerLocator(): Locator {
-    return this.self().locator('[data-testid="credentials-banner"], .credentials-banner');
+    return this.self().locator('.banner:has-text("Ok, Let\'s create a new credential")');
   }
 }

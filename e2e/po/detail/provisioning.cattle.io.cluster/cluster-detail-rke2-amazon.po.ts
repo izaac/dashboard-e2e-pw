@@ -106,15 +106,15 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   kubectlShell(): Locator {
-    return this.page.locator('.terminal, [data-testid="kubectl-shell"]');
+    return this.page.locator('#horizontal-window-manager');
   }
 
   kubectlConnectedText(): Locator {
-    return this.kubectlShell().locator('text=Connected');
+    return this.kubectlShell().locator('.status .text-success', { hasText: 'Connected' });
   }
 
   closeShellButton(): Locator {
-    return this.page.locator('[data-testid="close-shell-button"], .btn:has-text("Close")');
+    return this.kubectlShell().locator('.tab .closer');
   }
 
   logsContainer(): Locator {
