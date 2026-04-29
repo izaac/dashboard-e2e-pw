@@ -98,7 +98,7 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   nameInput(): Locator {
-    return this.page.locator('[data-testid="name-ns-description"] input[id*="name"]').first();
+    return this.page.getByTestId('NameNsDescriptionNameInput');
   }
 
   cancelButton(): Locator {

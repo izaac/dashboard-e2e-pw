@@ -1,4 +1,5 @@
 import { test, expect } from '@/support/fixtures';
+import jsyaml from 'js-yaml';
 import { providersList } from '@/e2e/blueprints/manager/clusterProviderUrlCheck';
 import { nodeDriveResponse } from '@/e2e/tests/pages/manager/mock-responses';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
@@ -383,11 +384,19 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     await clusterList.waitForPage();
 
     await clusterList.sortableTable().rowElementWithName('local').click();
+
+    const downloadPromise = page.waitForEvent('download');
+
     await clusterList.list().openBulkActionDropdown();
     await clusterList.list().bulkActionButton('Download YAML').click({ force: true });
 
-    // Verify download was triggered (file content validation not available without file system access in PW)
-    await expect(clusterList.sortableTable().self()).toBeVisible();
+    const download = await downloadPromise;
+    const content = (await (await download.createReadStream()).toArray()).join('');
+    const obj = jsyaml.load(content) as Record<string, any>;
+
+    expect(obj.apiVersion).toBe('provisioning.cattle.io/v1');
+    expect(obj.metadata.name).toBe('local');
+    expect(obj.kind).toBe('Cluster');
   });
 
   test('can download KubeConfig via bulk actions', async ({ page, login }) => {
@@ -401,6 +410,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     const kubeConfigResponse = page.waitForResponse(
       (resp) => resp.url().includes('/v1/ext.cattle.io.kubeconfigs') && resp.request().method() === 'POST',
     );
+    const downloadPromise = page.waitForEvent('download');
 
     await clusterList.sortableTable().rowElementWithName('local').click();
     await clusterList.list().openBulkActionDropdown();
@@ -409,6 +419,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     const resp = await kubeConfigResponse;
 
     expect(resp.status()).toBe(201);
+
+    const download = await downloadPromise;
+    const content = (await (await download.createReadStream()).toArray()).join('');
+    const obj = jsyaml.load(content) as Record<string, any>;
+
+    expect(obj.apiVersion).toBe('v1');
+    expect(obj.kind).toBe('Config');
+    expect(obj.clusters.some((c: { name: string }) => c.name === 'local')).toBe(true);
   });
 
   test('can connect to kubectl shell', async ({ page, login }) => {

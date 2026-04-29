@@ -30,7 +30,12 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   async bulkActionDropDownOpen(): Promise<void> {
-    await this.bulkActionDropDown().click();
+    // v2.15+: dropdown gear is hidden when few bulk actions exist (direct buttons shown instead)
+    const dropdown = this.bulkActionDropDown();
+
+    if (await dropdown.isVisible()) {
+      await dropdown.click();
+    }
   }
 
   bulkActionDropDownPopOver(): Locator {
