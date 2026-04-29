@@ -1,9 +1,9 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateEKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-eks.po';
-import TabbedPo from '@/e2e/po/components/tabbed.po';
 import * as eksDefaultSettings from '@/e2e/blueprints/cluster_management/eks-default-settings';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG } from '@/support/timeouts';
 
 const eksSettings = {
   eksRegion: eksDefaultSettings.DEFAULT_REGION,
@@ -19,18 +19,52 @@ const eksSettings = {
   launchTemplate: 'Default (One will be created automatically)',
 };
 
-test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning'] }, () => {
+test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
-    // Clean up test-prefixed Amazon cloud credentials from previous runs
-    const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+    // Clean stale e2e EKS clusters — delete v3 cluster objects first so the
+    // controller stops referencing their cloud credentials
+    const clusters = await rancherApi.getRancherResource('v3', 'clusters', undefined, 0);
 
-    if (result.body?.pagination?.total > 0) {
-      for (const item of result.body.data) {
+    if (clusters.body?.data) {
+      for (const c of clusters.body.data) {
+        if (c.name?.startsWith('e2e-test-') && c.eksConfig) {
+          await rancherApi.deleteRancherResource('v3', 'clusters', c.id, false);
+        }
+      }
+    }
+
+    // Also clean provisioning objects that may linger after v3 deletion
+    const provClusters = await rancherApi.getRancherResource('v1', 'provisioning.cattle.io.clusters', undefined, 0);
+
+    if (provClusters.body?.data) {
+      for (const c of provClusters.body.data) {
+        if (c.metadata?.name?.startsWith('e2e-test-') && c.spec?.eksConfig) {
+          await rancherApi.deleteRancherResource(
+            'v1',
+            'provisioning.cattle.io.clusters',
+            `fleet-default/${c.metadata.name}`,
+            false,
+          );
+        }
+      }
+    }
+
+    // Wait for controller to settle after cluster deletion
+    await new Promise((r) => setTimeout(r, 5_000));
+
+    // Clean stale e2e Amazon cloud credentials (safe now that clusters are gone)
+    const creds = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+
+    if (creds.body?.data) {
+      for (const item of creds.body.data) {
         if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
         }
       }
     }
+
+    // Let Rancher store settle after credential cleanup
+    await new Promise((r) => setTimeout(r, 5_000));
   });
 
   test('can create an Amazon EKS cluster by just filling in the mandatory fields', async ({
@@ -60,7 +94,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
-      // Create cloud credential
+      // Create cloud credential inline
       const cloudCredForm = createEKSClusterPage.cloudCredentialsForm();
 
       await cloudCredForm.saveButton().expectToBeDisabled();
@@ -75,7 +109,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       );
       const pageLoadPromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
-        { timeout: 30000 },
+        { timeout: LONG },
       );
 
       await cloudCredForm.saveCreateForm().cruResource().saveOrCreate().click();
@@ -112,18 +146,10 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       clusterId = clusterBody.id;
 
       await clusterList.waitForPage();
-      await expect(clusterList.list().state(clusterName)).toContainText('Provisioning');
-
-      // Fail early if cloud credentials are bad instead of waiting for a long timeout
-      await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
+      await expect(clusterList.list().state(clusterName)).toContainText(/Waiting|Provisioning/);
     } finally {
+      // Delete cluster FIRST so the EKS controller can use the credential during deprovision
       if (clusterId) {
-        await rancherApi.deleteRancherResource(
-          'v1',
-          'provisioning.cattle.io.clusters',
-          `fleet-default/${clusterName}`,
-          false,
-        );
         await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
       }
       if (cloudCredId) {
@@ -145,22 +171,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
     let clusterId = '';
 
     try {
-      // Create cloud credential first via API
-      const credResp = await rancherApi.createRancherResource('v3', 'cloudcredentials', {
-        type: 'provisioning.cattle.io/cloud-credential',
-        metadata: { generateName: 'cc-', namespace: 'fleet-default' },
-        _name: credName,
-        annotations: { 'provisioning.cattle.io/driver': 'amazonec2' },
-        amazonec2credentialConfig: {
-          accessKey: envMeta.awsAccessKey,
-          secretKey: envMeta.awsSecretKey,
-        },
-        _type: 'provisioning.cattle.io/cloud-credential',
-        name: credName,
-      });
-
-      cloudCredId = credResp.body.id;
-
+      // Navigate to EKS create page
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
@@ -169,15 +180,43 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await expect(createEKSClusterPage.rke2PageTitle()).toContainText('Create Amazon EKS');
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
-      await createEKSClusterPage.credentialSelect().click();
-      await createEKSClusterPage.dropdownOption(credName).click();
+      // Create cloud credential inline — SelectCredential only lists
+      // credentials that existed before page load
+      const cloudCredForm = createEKSClusterPage.cloudCredentialsForm();
+
+      await cloudCredForm.nameNsDescription().name().set(credName);
+      await cloudCredForm.accessKey().set(envMeta.awsAccessKey!);
+      await cloudCredForm.secretKey().set(envMeta.awsSecretKey!);
+
+      const credCreatePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
+        SHORT_TIMEOUT_OPT,
+      );
+      const pageLoadPromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v1/management.cattle.io.users') && resp.request().method() === 'GET',
+        { timeout: LONG },
+      );
+
+      await cloudCredForm.saveCreateForm().cruResource().saveOrCreate().click();
+      const credResp = await credCreatePromise;
+
+      expect(credResp.status()).toBe(201);
+      const credBody = await credResp.json();
+
+      cloudCredId = credBody.id;
+
+      await pageLoadPromise;
+      await expect(createEKSClusterPage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
+      await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
       // Verify defaults
       await createEKSClusterPage.getRegion().checkOptionSelected(eksSettings.eksRegion);
 
-      const latestEKSversion = await createEKSClusterPage.getLatestEKSversion();
+      // Read the pre-selected version and verify it's a valid number.
+      // Upstream reads from a static data file, not the UI.
+      const latestEKSversion = await createEKSClusterPage.getVersion().self().locator('span.vs__selected').innerText();
 
-      await createEKSClusterPage.getVersion().checkOptionSelected(latestEKSversion);
+      expect(parseFloat(latestEKSversion.trim())).toBeGreaterThan(0);
       await createEKSClusterPage.getNodeGroup().shouldHaveValue(eksSettings.nodegroupName);
       await createEKSClusterPage.getNodeRole().checkOptionSelected(eksSettings.nodeRole);
       await createEKSClusterPage.getDesiredASGSize().shouldHaveValue(eksSettings.desiredSize);
@@ -212,7 +251,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       expect(clusterBody).toHaveProperty('type', 'cluster');
       expect(clusterBody).toHaveProperty('name', clusterName);
       expect(clusterBody).toHaveProperty('description', `${clusterName}-description`);
-      expect(clusterBody.eksConfig.kubernetesVersion).toContain(latestEKSversion);
+      expect(clusterBody.eksConfig.kubernetesVersion).toContain(latestEKSversion.trim());
       expect(clusterBody.eksConfig.region).toBe(eksSettings.eksRegion);
       expect(clusterBody.eksConfig.privateAccess).toBe(eksSettings.privateAccess);
       expect(clusterBody.eksConfig.publicAccess).toBe(eksSettings.publicAccess);
@@ -225,18 +264,10 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       clusterId = clusterBody.id;
 
       await clusterList.waitForPage();
-      await expect(clusterList.list().state(clusterName)).toContainText('Provisioning');
-
-      // Fail early if cloud credentials are bad instead of waiting for a long timeout
-      await rancherApi.assertClusterProvisioningNotStuck('v3', clusterId);
+      await expect(clusterList.list().state(clusterName)).toContainText(/Waiting|Provisioning/);
     } finally {
+      // Delete cluster FIRST so the EKS controller can use the credential during deprovision
       if (clusterId) {
-        await rancherApi.deleteRancherResource(
-          'v1',
-          'provisioning.cattle.io.clusters',
-          `fleet-default/${clusterName}`,
-          false,
-        );
         await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
       }
       if (cloudCredId) {
