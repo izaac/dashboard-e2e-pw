@@ -7,6 +7,7 @@ import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import UiPluginsPagePo from '@/e2e/po/pages/explorer/uiplugins.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { EXTENDED, LONG } from '@/support/timeouts';
 
 const cluster = 'local';
 const DISABLED_CACHE_EXTENSION_NAME = 'large-extension';
@@ -139,7 +140,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     // With no extensions installed, should default to "Available"
     // Hash fragment is set after Vue mounts — may take time on slow servers
     await extensionsPo.goTo();
-    await expect(page).toHaveURL(/\/c\/local\/uiplugins#available/, { timeout: 30000 });
+    await expect(page).toHaveURL(/\/c\/local\/uiplugins#available/, { timeout: LONG });
 
     // Preserve active tab on reload
     await rancherApi.setUserPreference({ 'plugin-developer': true });
@@ -285,7 +286,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
       await extensionsPo.goTo();
       // Wait for the "add repos" banner — it only renders after fetch() completes
       // and proves addExtensionReposBannerSetting is loaded (avoids updateAddReposSetting crash)
-      await expect(extensionsPo.repoBannerActionButton()).toBeVisible({ timeout: 30000 });
+      await expect(extensionsPo.repoBannerActionButton()).toBeVisible({ timeout: LONG });
 
       // Check if burger menu nav is highlighted correctly for extensions
       const burgerMenu = new BurgerMenuPo(page);
@@ -297,7 +298,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
       await extensionsPo.repoBannerActionButton().click();
 
       // Wait for dialog to be ready (fetch complete, checkbox visible)
-      await extensionsPo.addReposModalPartnersCheckbox().waitFor({ state: 'visible', timeout: 15000 });
+      await extensionsPo.addReposModalPartnersCheckbox().waitFor({ state: 'visible', timeout: EXTENDED });
 
       // Ensure partners checkbox is checked — the dialog's fetch() sets it via v-model
       // but a Vue reactivity race can leave it unchecked even when no partner repo exists
@@ -314,7 +315,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
           resp.url().includes('catalog.cattle.io.clusterrepos') &&
           resp.request().method() === 'POST' &&
           resp.status() < 300,
-        { timeout: 30000 },
+        { timeout: LONG },
       );
 
       await extensionsPo.addReposModalAddClick();
@@ -504,7 +505,7 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     await extensionsPo.extensionTabAvailableClick();
     await extensionsPo.waitForPage(undefined, 'available');
     // Wait for extension catalog to finish loading before interacting
-    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: 30000 });
+    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: LONG });
 
     // Click on install button on card
     await extensionsPo.extensionCardInstallClick(EXTENSION_NAME);

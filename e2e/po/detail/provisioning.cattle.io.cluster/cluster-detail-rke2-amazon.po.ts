@@ -82,7 +82,7 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   drawerSaveButton(): Locator {
-    return this.configurationDrawer().locator('button:has-text("Save")');
+    return this.configurationDrawer().locator('button:has-text("Save"), button:has-text("Edit Config")');
   }
 
   drawerConfigTab(): Locator {

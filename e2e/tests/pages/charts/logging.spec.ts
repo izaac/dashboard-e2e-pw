@@ -10,6 +10,7 @@ import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { LONG, STANDARD } from '@/support/timeouts';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
@@ -26,7 +27,9 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     outputName = rancherApi.createE2EResourceName('logging-output');
   });
 
-  test.beforeEach(async ({ login, chartGuard }) => {
+  test.beforeEach(async ({ login, rancherApi, chartGuard }) => {
+    // Health gate: Rancher may still be settling after heavy chart operations
+    await rancherApi.waitForHealthy();
     await chartGuard('rancher-charts', 'rancher-logging');
     await login();
   });
@@ -123,90 +126,97 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     expect(reachedPage, 'Logging CRDs not registered after 200s — fail-whale persisted').toBeTruthy();
 
     // Create cluster output
-    await loggingPo.mastheadCreate().click();
+    try {
+      await loggingPo.mastheadCreate().click();
 
-    // Fill in output name
-    await loggingPo.nameInput().fill(outputName);
+      // Fill in output name
+      await loggingPo.nameInput().fill(outputName);
 
-    // Set target
-    await loggingPo.outputTargetInput().fill('random.domain.site');
+      // Set target
+      await loggingPo.outputTargetInput().fill('random.domain.site');
 
-    // Save and verify
-    const outputSavePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/v1/logging.banzaicloud.io.clusteroutputs') && resp.request().method() === 'POST',
-    );
+      // Save and verify
+      const outputSavePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('/v1/logging.banzaicloud.io.clusteroutputs') && resp.request().method() === 'POST',
+      );
 
-    await loggingPo.formSave().click();
+      await loggingPo.formSave().click();
 
-    const outputResp = await outputSavePromise;
-    const outputBody = await outputResp.json();
+      const outputResp = await outputSavePromise;
+      const outputBody = await outputResp.json();
 
-    expect(outputResp.status()).toBe(201);
-    expect(outputBody.metadata.name).toBe(outputName);
+      expect(outputResp.status()).toBe(201);
+      expect(outputBody.metadata.name).toBe(outputName);
 
-    // Verify output appears in list
-    await expect(loggingPo.tableRowByText(outputName)).toBeAttached();
+      // Verify output appears in list
+      await expect(loggingPo.tableRowByText(outputName)).toBeAttached();
 
-    // Navigate to ClusterFlow
-    const sideNav = new ProductNavPo(page);
+      // Navigate to ClusterFlow
+      const sideNav = new ProductNavPo(page);
 
-    await sideNav.navToSideMenuEntryByLabel('ClusterFlows');
+      await sideNav.navToSideMenuEntryByLabel('ClusterFlows');
 
-    // Create flow
-    await loggingPo.mastheadCreate().click();
+      // Create flow
+      await loggingPo.mastheadCreate().click();
 
-    // Fill in flow name
-    await loggingPo.nameInput().fill(flowName);
+      // Fill in flow name
+      await loggingPo.nameInput().fill(flowName);
 
-    // Click outputs tab
-    await loggingPo.outputsTab().click();
+      // Click outputs tab
+      await loggingPo.outputsTab().click();
 
-    // Select output
-    await loggingPo.flowOutputSelector().click();
-    await loggingPo.dropdownOptions().filter({ hasText: outputName }).first().click();
+      // Select output
+      await loggingPo.flowOutputSelector().click();
+      await loggingPo.dropdownOptions().filter({ hasText: outputName }).first().click();
 
-    // Configure namespaces (testing #13845)
-    await loggingPo.matchTab().click();
+      // Configure namespaces (testing #13845)
+      await loggingPo.matchTab().click();
 
-    const namespaces = ['fleet-default', 'cattle-system'];
+      const namespaces = ['fleet-default', 'cattle-system'];
 
-    // Scroll the match section to reveal the namespace select below nodes/containers
-    const nsSelectContainer = loggingPo.matchNamespaceSelector();
+      // Scroll the match section to reveal the namespace select below nodes/containers
+      const nsSelectContainer = loggingPo.matchNamespaceSelector();
 
-    await expect(nsSelectContainer).toBeAttached(SHORT_TIMEOUT_OPT);
-    await nsSelectContainer.scrollIntoViewIfNeeded();
-    await nsSelectContainer.click();
+      await expect(nsSelectContainer).toBeAttached(SHORT_TIMEOUT_OPT);
+      await nsSelectContainer.scrollIntoViewIfNeeded();
+      await nsSelectContainer.click();
 
-    for (const ns of namespaces) {
-      // Type into the currently focused search input
-      await page.keyboard.type(ns);
-      await expect(loggingPo.dropdownOptions().first()).toBeVisible({ timeout: 10000 });
-      await loggingPo.dropdownOptions().filter({ hasText: ns }).first().click();
+      for (const ns of namespaces) {
+        // Type into the currently focused search input
+        await page.keyboard.type(ns);
+        await expect(loggingPo.dropdownOptions().first()).toBeVisible({ timeout: STANDARD });
+        await loggingPo.dropdownOptions().filter({ hasText: ns }).first().click();
+      }
+
+      // Save flow
+      const flowSavePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/v1/logging.banzaicloud.io.clusterflows') && resp.request().method() === 'POST',
+      );
+
+      await loggingPo.formSave().click();
+
+      const flowResp = await flowSavePromise;
+      const flowBody = await flowResp.json();
+
+      expect(flowResp.status()).toBe(201);
+      expect(flowBody.metadata.name).toBe(flowName);
+      expect(flowBody.spec.match[0].select.namespaces[0]).toContain(namespaces[0]);
+      expect(flowBody.spec.match[0].select.namespaces[1]).toBe(namespaces[1]);
+
+      // Verify flow appears in list
+      await expect(loggingPo.tableRowByText(flowName)).toBeAttached();
+
+      // Go to details page
+      await loggingPo.rowDetailLink(flowName).click();
+
+      // Verify rule item is visible (the detail page shows match rules in array-list items)
+      await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: LONG });
+    } finally {
+      // Clean up flow and output so they don't leak if assertions fail
+      await rancherApi.deleteRancherResource('v1', 'logging.banzaicloud.io.clusterflows', flowName, false);
+      await rancherApi.deleteRancherResource('v1', 'logging.banzaicloud.io.clusteroutputs', outputName, false);
     }
-
-    // Save flow
-    const flowSavePromise = page.waitForResponse(
-      (resp) => resp.url().includes('/v1/logging.banzaicloud.io.clusterflows') && resp.request().method() === 'POST',
-    );
-
-    await loggingPo.formSave().click();
-
-    const flowResp = await flowSavePromise;
-    const flowBody = await flowResp.json();
-
-    expect(flowResp.status()).toBe(201);
-    expect(flowBody.metadata.name).toBe(flowName);
-    expect(flowBody.spec.match[0].select.namespaces[0]).toContain(namespaces[0]);
-    expect(flowBody.spec.match[0].select.namespaces[1]).toBe(namespaces[1]);
-
-    // Verify flow appears in list
-    await expect(loggingPo.tableRowByText(flowName)).toBeAttached();
-
-    // Go to details page
-    await loggingPo.rowDetailLink(flowName).click();
-
-    // Verify rule item is visible (the detail page shows match rules in array-list items)
-    await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: 30000 });
   });
 
   // testing https://github.com/rancher/dashboard/issues/4849
@@ -313,7 +323,30 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   });
 
   test.afterAll(async ({ rancherApi }) => {
-    await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
-    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+    try {
+      await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
+
+      // Wait for both apps to be fully removed so Rancher settles before next spec
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'catalog.cattle.io.apps',
+        `${chartNamespace}/${chartApp}`,
+        (resp) => resp.status === 404,
+        60,
+        5000,
+      );
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'catalog.cattle.io.apps',
+        `${chartNamespace}/${chartCrd}`,
+        (resp) => resp.status === 404,
+        60,
+        5000,
+      );
+    } finally {
+      // Always restore namespace filter even if uninstall polling fails
+      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+      await rancherApi.waitForHealthy();
+    }
   });
 });

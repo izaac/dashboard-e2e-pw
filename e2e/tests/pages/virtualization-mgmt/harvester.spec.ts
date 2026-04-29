@@ -39,6 +39,25 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       false,
     );
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName, false);
+
+    // Wait for both app and repo to be fully removed so Rancher settles
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.apps',
+      'cattle-ui-plugin-system/harvester',
+      (resp) => resp.status === 404,
+      30,
+      5000,
+    );
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.clusterrepos',
+      harvesterGitRepoName,
+      (resp) => resp.status === 404,
+      20,
+      3000,
+    );
+    await rancherApi.waitForHealthy();
   });
 
   /**
@@ -200,7 +219,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       await expect(actionMenu.getMenuItem('Edit Config')).toBeAttached();
       await page.keyboard.press('Escape');
     } finally {
-      // Delete both provisioning and management cluster to avoid orphans
+      // Delete both provisioning and management cluster, then wait for removal
       await rancherApi.deleteRancherResource(
         'v1',
         'provisioning.cattle.io.clusters',
@@ -208,6 +227,14 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
         false,
       );
       await rancherApi.deleteRancherResource('v3', 'clusters', harvesterClusterId, false);
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${harvesterClusterId}`,
+        (resp) => resp.status === 404,
+        20,
+        3000,
+      );
     }
   });
 

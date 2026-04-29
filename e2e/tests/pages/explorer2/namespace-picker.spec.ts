@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
 
 test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
   test.beforeEach(async ({ page, login }) => {
@@ -178,7 +178,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
       await namespacePicker.closeDropdown();
       await namespacePicker.toggle();
-      await expect(namespacePicker.optionByText(projName)).not.toBeAttached({ timeout: 20000 });
+      await expect(namespacePicker.optionByText(projName)).not.toBeAttached(MEDIUM_TIMEOUT_OPT);
     },
   );
 
