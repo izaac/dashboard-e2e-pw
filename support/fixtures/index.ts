@@ -15,51 +15,174 @@ type RancherTestFixtures = {
 
 type RancherWorkerFixtures = {
   rancherApi: RancherApi;
+  isPrime: boolean;
 };
+
+// ── Login resilience constants ──────────────────────────────────────────────
+const MAX_LOGIN_ATTEMPTS = 3;
+const FORM_READY_TIMEOUT = 30_000;
+const LOGIN_REDIRECT_TIMEOUT = 30_000;
+const SESSION_RACE_TIMEOUT = 45_000;
+const BACKOFF_BASE_MS = 3_000;
+const BANNER_CHECK_MS = 1_000;
+
+/** Clear all browser state — cookies, localStorage, sessionStorage */
+async function resetBrowserState(page: Page): Promise<void> {
+  await page.context().clearCookies();
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      // Throws in restricted contexts (about:blank, sandboxed iframes)
+    }
+    try {
+      sessionStorage.clear();
+    } catch {
+      // Throws in restricted contexts (about:blank, sandboxed iframes)
+    }
+  });
+}
+
+/** Dismiss consent banner if visible — branding tests may leave one behind */
+async function dismissConsentBanner(page: Page): Promise<void> {
+  const banner = page.locator('#banner-consent .banner-dialog');
+
+  if (await banner.isVisible({ timeout: BANNER_CHECK_MS }).catch(() => false)) {
+    await banner
+      .locator('button')
+      .click()
+      .catch(() => {
+        // Banner can disappear between isVisible check and click — safe to ignore
+      });
+  }
+}
 
 /**
  * Fill credentials and submit the login form.
- * Extracted so both the initial login and re-auth paths share the same logic.
+ *
+ * Resilient to: slow Rancher (extended timeouts), consent banners,
+ * login POST failures, SPA redirect failures. Retries with exponential
+ * backoff and clean browser state up to MAX_LOGIN_ATTEMPTS times.
  */
-async function performLogin(page: Page, username: string, password: string): Promise<void> {
+async function performLogin(page: Page, username: string, password: string, attempt = 0): Promise<void> {
+  if (attempt >= MAX_LOGIN_ATTEMPTS) {
+    throw new Error(
+      `Login failed after ${MAX_LOGIN_ATTEMPTS} attempts. ` +
+        `Last URL: ${page.url()}. ` +
+        `Possible causes: Rancher unresponsive, invalid credentials, or stale session loop.`,
+    );
+  }
+
+  if (attempt > 0) {
+    await new Promise((r) => setTimeout(r, BACKOFF_BASE_MS * Math.pow(2, attempt - 1)));
+    await resetBrowserState(page);
+    await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+  }
+
+  // ── 1. Wait for login form to render ──────────────────────────────────────
+  const submitButton = page.locator('[data-testid="login-submit"]');
+
+  try {
+    await submitButton.waitFor({ state: 'visible', timeout: FORM_READY_TIMEOUT });
+  } catch {
+    return performLogin(page, username, password, attempt + 1);
+  }
+
+  // Detect bootstrap/setup page
+  if (page.url().includes('/auth/setup')) {
+    throw new Error('Redirected to /auth/setup — run setup project first.');
+  }
+
+  const bootstrapMessage = page.getByTestId('first-login-message');
+
+  if (await bootstrapMessage.isVisible({ timeout: 500 }).catch(() => false)) {
+    throw new Error('Login page shows bootstrap form — Rancher not configured.');
+  }
+
+  // ── 2. Handle multi-provider login page ───────────────────────────────────
   const useLocal = page.locator('[data-testid="login-useLocal"]');
 
-  if (await useLocal.isVisible({ timeout: 3000 }).catch(() => false)) {
+  if (await useLocal.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await useLocal.click();
   }
 
-  // Dismiss consent banner if present (branding tests may leave one behind)
-  const consentBanner = page.locator('#banner-consent .banner-dialog');
+  // ── 3. Wait for username field ────────────────────────────────────────────
+  // v2.14: testid is on wrapper div, input is a child
+  const usernameField = page
+    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
+    .last();
 
-  if (await consentBanner.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await consentBanner.locator('button').click();
+  try {
+    await usernameField.waitFor({ state: 'visible', timeout: FORM_READY_TIMEOUT });
+  } catch {
+    return performLogin(page, username, password, attempt + 1);
   }
 
-  await page
-    .locator('[data-testid="local-login-username"] input, [data-testid="local-login-username"]')
-    .last()
-    .fill(username);
+  // ── 4. Dismiss consent banner ─────────────────────────────────────────────
+  await dismissConsentBanner(page);
+
+  // ── 5. Fill credentials ───────────────────────────────────────────────────
+  await usernameField.fill(username);
   await page.locator('[data-testid="local-login-password"] input').fill(password);
 
-  // Re-check consent banner — it may appear after page load (lazy rendering)
-  if (await consentBanner.isVisible({ timeout: 500 }).catch(() => false)) {
-    await consentBanner.locator('button').click();
-  }
+  await dismissConsentBanner(page);
 
-  // Listen for the login POST response BEFORE clicking submit.
-  // This mirrors Cypress `cy.wait('@loginReq')` — guarantees R_SESS cookie
-  // is set before we proceed (the URL may change before Set-Cookie is processed).
+  // ── 6. Submit and wait for login POST ─────────────────────────────────────
   const loginResponse = page.waitForResponse(
     (resp) =>
       (resp.url().includes('/v3-public/localProviders/local') || resp.url().includes('/v1-public/login')) &&
       resp.request().method() === 'POST',
+    { timeout: FORM_READY_TIMEOUT },
   );
 
-  await page.locator('[data-testid="login-submit"]').click();
-  await loginResponse;
+  await submitButton.click();
 
-  // Wait for the SPA to navigate away from the login page
-  await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 60000 });
+  let resp;
+
+  try {
+    resp = await loginResponse;
+  } catch {
+    return performLogin(page, username, password, attempt + 1);
+  }
+
+  if (resp.status() === 401 || resp.status() === 403) {
+    throw new Error(`Login rejected with ${resp.status()} — check credentials for user '${username}'.`);
+  }
+
+  if (resp.status() >= 500) {
+    return performLogin(page, username, password, attempt + 1);
+  }
+
+  // ── 7. Wait for SPA redirect away from /auth/login ────────────────────────
+  try {
+    await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: LOGIN_REDIRECT_TIMEOUT });
+  } catch {
+    const isAuthenticated = await page
+      .evaluate(async () => {
+        try {
+          const r = await fetch('./v1/management.cattle.io.settings/server-version', { credentials: 'include' });
+
+          return r.ok;
+        } catch {
+          return false;
+        }
+      })
+      .catch(() => false);
+
+    if (isAuthenticated) {
+      await page.goto('./home', { waitUntil: 'domcontentloaded' });
+
+      try {
+        await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: FORM_READY_TIMEOUT });
+
+        return;
+      } catch {
+        // Fall through to retry
+      }
+    }
+
+    return performLogin(page, username, password, attempt + 1);
+  }
 }
 
 export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
@@ -173,6 +296,15 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
     { scope: 'worker' },
   ],
 
+  isPrime: [
+    async ({ rancherApi }, use) => {
+      const version = await rancherApi.getRancherVersion();
+
+      await use(version.RancherPrime === 'true');
+    },
+    { scope: 'worker' },
+  ],
+
   envMeta: async ({}, use, testInfo) => {
     await use(testInfo.project.metadata as TestEnvMetadata);
   },
@@ -184,65 +316,68 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
       const username = options?.username || meta.username;
       const password = options?.password || meta.password;
 
-      // With storageState pre-loaded, navigate to home and check if already authenticated
       const storageState = testInfo.project.use?.storageState;
       const hasStorageState = typeof storageState === 'string' && storageState.length > 0;
 
       if (hasStorageState && !options) {
         await page.goto('./home', { waitUntil: 'domcontentloaded' });
 
-        // Race: either we land on home (storageState valid) or get redirected to login (invalid).
-        // The SPA needs time to check auth and redirect, so we wait for EITHER outcome.
-        const isLoginPage = await Promise.race([
-          page
-            .getByTestId('nav_header_showUserMenu')
-            .waitFor({ state: 'visible', timeout: 15000 })
-            .then(() => false),
-          page
-            .locator('[data-testid="login-submit"]')
-            .waitFor({ state: 'visible', timeout: 15000 })
-            .then(() => true),
-        ]);
+        // Race: home (valid) | login (expired) | setup (not configured) | timeout
+        let pageState: 'home' | 'login' | 'setup' | 'timeout';
 
-        if (!isLoginPage) {
-          // DOM says we're logged in, but the SPA can render from cached Vuex state
-          // even when R_SESS is expired. Verify with a real API call from the browser.
-          const isSessionValid = await page.evaluate(async () => {
-            try {
-              const resp = await fetch('./v1/management.cattle.io.settings/server-version', {
-                credentials: 'include',
-              });
-
-              return resp.ok;
-            } catch {
-              return false;
-            }
-          });
-
-          if (isSessionValid) {
-            return;
-          }
-
-          // Session expired — nuke all browser state so the SPA starts clean.
-          // Without this, Rancher's Vuex store keeps stale auth data and the
-          // login page enters a stuck "Logging in..." state after ?timed-out.
-          await page.context().clearCookies();
-          await page.evaluate(() => {
-            try {
-              localStorage.clear();
-            } catch {
-              /* noop */
-            }
-            try {
-              sessionStorage.clear();
-            } catch {
-              /* noop */
-            }
-          });
-          await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
+        try {
+          pageState = await Promise.race([
+            page
+              .getByTestId('nav_header_showUserMenu')
+              .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
+              .then(() => 'home' as const),
+            page
+              .locator('[data-testid="login-submit"]')
+              .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
+              .then(() => 'login' as const),
+            page
+              .getByTestId('setup-submit')
+              .waitFor({ state: 'visible', timeout: SESSION_RACE_TIMEOUT })
+              .then(() => 'setup' as const),
+          ]);
+        } catch {
+          pageState = 'timeout';
         }
+
+        if (pageState === 'home') {
+          // Verify session with real API call — Vuex can render from stale cache
+          for (let probe = 0; probe < 2; probe++) {
+            const probeResult = await page.evaluate(async () => {
+              try {
+                const resp = await fetch('./v1/management.cattle.io.settings/server-version', {
+                  credentials: 'include',
+                });
+
+                return resp.status;
+              } catch {
+                return 0;
+              }
+            });
+
+            if (probeResult >= 200 && probeResult < 300) {
+              return; // Session confirmed valid
+            }
+
+            if (probeResult === 401 || probeResult === 403) {
+              break; // Deterministic auth failure
+            }
+
+            // Transient error — wait and retry once
+            if (probe === 0) {
+              await new Promise((r) => setTimeout(r, 2_000));
+            }
+          }
+        }
+
+        // Session invalid or unexpected page — clear state and do fresh login
+        await resetBrowserState(page);
+        await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       } else {
-        // Clear existing auth state when logging in as a different user
         await page.context().clearCookies();
         await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
       }
