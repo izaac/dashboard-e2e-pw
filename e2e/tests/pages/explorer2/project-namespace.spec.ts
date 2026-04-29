@@ -187,6 +187,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
+          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
@@ -230,6 +231,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
+          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
@@ -262,6 +264,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
 
         const sortableTable = projectsNamespacesPage.list().resourceTable().sortableTable();
 
+        await sortableTable.checkLoadingIndicatorNotVisible();
         await sortableTable.groupByButtons(0).click();
         await sortableTable.filter(nsNames[0].slice(0, 6));
 
@@ -270,6 +273,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
+          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);

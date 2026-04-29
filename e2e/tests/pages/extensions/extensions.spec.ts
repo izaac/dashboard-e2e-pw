@@ -41,6 +41,23 @@ async function removeRepoIfExists(api: RancherApi, repoName: string): Promise<vo
   await api.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
 }
 
+/**
+ * Remove any clusterrepo matching the given git URL.
+ * The "Add Rancher Repositories" dialog checks repos by URL, not name —
+ * so a leftover repo with the same URL but different name blocks the dialog.
+ */
+async function removeReposByUrl(api: RancherApi, gitUrl: string): Promise<void> {
+  const resp = await api.getRancherResource('v1', 'catalog.cattle.io.clusterrepos');
+
+  if (resp.status === 200 && resp.body?.data) {
+    for (const repo of resp.body.data) {
+      if (repo.spec?.gitRepo === gitUrl) {
+        await api.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repo.metadata.name, false);
+      }
+    }
+  }
+}
+
 async function uninstallExtensionViaApi(api: RancherApi, extensionName: string): Promise<void> {
   await api.createRancherResource(
     'v1',
@@ -120,8 +137,9 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
     const extensionsPo = new ExtensionsPagePo(page);
 
     // With no extensions installed, should default to "Available"
+    // Hash fragment is set after Vue mounts — may take time on slow servers
     await extensionsPo.goTo();
-    await extensionsPo.waitForPage(undefined, 'available');
+    await expect(page).toHaveURL(/\/c\/local\/uiplugins#available/, { timeout: 30000 });
 
     // Preserve active tab on reload
     await rancherApi.setUserPreference({ 'plugin-developer': true });
@@ -249,7 +267,8 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
   });
 
   test('using "Add Rancher Repositories" should add a new repository (Partners repo)', async ({ page, rancherApi }) => {
-    // Ensure preconditions: repo must not exist and banner setting must allow the menu item
+    // Ensure preconditions: remove any repo matching the partner URL (dialog checks URL, not name)
+    await removeReposByUrl(rancherApi, UI_PLUGINS_PARTNERS_REPO_URL);
     await removeRepoIfExists(rancherApi, UI_PLUGINS_PARTNERS_REPO_NAME);
     const bannerResp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
 
@@ -264,6 +283,9 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
       const extensionsPo = new ExtensionsPagePo(page);
 
       await extensionsPo.goTo();
+      // Wait for the "add repos" banner — it only renders after fetch() completes
+      // and proves addExtensionReposBannerSetting is loaded (avoids updateAddReposSetting crash)
+      await expect(extensionsPo.repoBannerActionButton()).toBeVisible({ timeout: 30000 });
 
       // Check if burger menu nav is highlighted correctly for extensions
       const burgerMenu = new BurgerMenuPo(page);
@@ -271,16 +293,28 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
       await burgerMenu.checkIfMenuItemLinkIsHighlighted('Extensions');
       await burgerMenu.checkIfClusterMenuLinkIsHighlighted(cluster, false);
 
-      // Go to "add rancher repositories"
-      await extensionsPo.extensionMenuToggle();
-      await extensionsPo.addRepositoriesClick();
+      // Open "Add Rancher Repositories" dialog via the banner button
+      await extensionsPo.repoBannerActionButton().click();
 
-      // Add the partners repo — wait for the API to confirm creation
+      // Wait for dialog to be ready (fetch complete, checkbox visible)
+      await extensionsPo.addReposModalPartnersCheckbox().waitFor({ state: 'visible', timeout: 15000 });
+
+      // Ensure partners checkbox is checked — the dialog's fetch() sets it via v-model
+      // but a Vue reactivity race can leave it unchecked even when no partner repo exists
+      const partnersInput = extensionsPo.addReposModalPartnersCheckbox().locator('input[type="checkbox"]');
+
+      if (!(await partnersInput.isChecked())) {
+        await extensionsPo.addReposModalPartnersCheckbox().click();
+        await expect(partnersInput).toBeChecked();
+      }
+
+      // Click the Add button and wait for repo creation POST
       const repoCreated = page.waitForResponse(
         (resp) =>
           resp.url().includes('catalog.cattle.io.clusterrepos') &&
           resp.request().method() === 'POST' &&
           resp.status() < 300,
+        { timeout: 30000 },
       );
 
       await extensionsPo.addReposModalAddClick();
@@ -462,12 +496,6 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
       await uninstallExtensionViaApi(rancherApi, EXTENSION_NAME);
     }
 
-    const installResponsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`catalog.cattle.io.clusterrepos/${GIT_REPO_NAME}?action=install`) &&
-        resp.request().method() === 'POST',
-    );
-
     const extensionsPo = new ExtensionsPagePo(page);
 
     await extensionsPo.goTo();
@@ -475,6 +503,8 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     await extensionsPo.extensionTabAvailableClick();
     await extensionsPo.waitForPage(undefined, 'available');
+    // Wait for extension catalog to finish loading before interacting
+    await expect(extensionsPo.loading()).not.toBeAttached({ timeout: 30000 });
 
     // Click on install button on card
     await extensionsPo.extensionCardInstallClick(EXTENSION_NAME);
@@ -482,6 +512,14 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
 
     // Select version and click install
     await extensionsPo.installModal().selectVersionClick(2);
+
+    // Set up response listener BEFORE clicking install — not earlier
+    const installResponsePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`catalog.cattle.io.clusterrepos/${GIT_REPO_NAME}?action=install`) &&
+        resp.request().method() === 'POST',
+    );
+
     await extensionsPo.installModal().installButton().click();
 
     const installResponse = await installResponsePromise;

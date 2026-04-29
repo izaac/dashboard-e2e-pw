@@ -3,6 +3,7 @@ import {
   FleetWorkspaceListPagePo,
   FleetWorkspaceCreateEditPo,
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.fleetworkspace.po';
+import { FleetApplicationListPagePo } from '@/e2e/po/pages/fleet/fleet.cattle.io.application.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { fleetWorkspacesSmallResponse } from '@/e2e/blueprints/fleet/workspaces-get';
@@ -109,12 +110,13 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
       try {
         await login();
-        const listPage = new FleetWorkspaceListPagePo(page);
+        // Navigate to Fleet application page where workspace switcher is visible
+        // (the workspace LIST page hides the switcher via showWorkspaceSwitcher(false))
+        const appListPage = new FleetApplicationListPagePo(page);
         const headerPo = new HeaderPo(page);
 
-        await listPage.goTo();
-        await listPage.waitForPage();
-        await listPage.list().resourceTable().sortableTable().noRowsShouldNotExist();
+        await appListPage.goTo();
+        await appListPage.waitForPage();
         await headerPo.selectWorkspace(wsName);
         await headerPo.checkCurrentWorkspace(wsName);
       } finally {

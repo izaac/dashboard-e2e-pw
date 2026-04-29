@@ -93,7 +93,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.goTo();
       await clusterList.waitForPage();
       await clusterList.createCluster();
-      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached();
+      await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached({ timeout: 30000 });
     } finally {
       if (reenableAKS) {
         // Restore AKS to active state if test failed mid-way
@@ -294,7 +294,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterDetail.nodePoolsTab().click();
       await expect(page).toHaveURL(/node-pools/);
 
-      await expect(clusterDetail.tableRowContaining('machine-')).toBeVisible();
+      await expect(clusterDetail.tableRowContaining('machine-').first()).toBeVisible();
     });
 
     test('Show Configuration allows to edit config and view yaml for local cluster', async ({ page, login }) => {

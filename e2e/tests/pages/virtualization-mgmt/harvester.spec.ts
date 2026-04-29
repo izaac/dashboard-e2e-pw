@@ -18,6 +18,15 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
   let harvesterClusterName: string;
 
   test.beforeEach(async ({ login, rancherApi }) => {
+    // Clean up any leftover harvester state from previous runs (leaked afterEach)
+    await rancherApi.createRancherResource(
+      'v1',
+      'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
+      {},
+      false,
+    );
+    await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', harvesterGitRepoName, false);
+
     await login();
     harvesterClusterName = rancherApi.createE2EResourceName('harvesterclustername');
   });

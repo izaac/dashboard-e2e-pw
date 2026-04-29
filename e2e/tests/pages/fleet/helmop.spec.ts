@@ -70,12 +70,12 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await appBundleCreatePage.goTo();
         await appBundleCreatePage.waitForPage();
+        await headerPo.selectWorkspace(workspace);
         await appBundleCreatePage.createHelmOp();
 
         const helmOpCreatePage = new FleetHelmOpCreateEditPo(page);
 
         await helmOpCreatePage.waitForPage();
-        await headerPo.selectWorkspace(workspace);
 
         await helmOpCreatePage.resourceDetail().createEditView().nameNsDescription().name().set(helmOpName);
         await helmOpCreatePage.resourceDetail().createEditView().nextPage();

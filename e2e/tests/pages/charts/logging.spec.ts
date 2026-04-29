@@ -103,20 +103,24 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
     const basePage = new PagePo(page, '/c/local/logging');
 
     // Navigate to ClusterOutput list — retry if fail-whale (CRDs may take time to register)
-    for (let attempt = 0; attempt < 5; attempt++) {
+    // Big charts like logging can take 2+ minutes for CRDs to register
+    let reachedPage = false;
+
+    for (let attempt = 0; attempt < 20; attempt++) {
       await page.goto('./c/local/logging/logging.banzaicloud.io.clusteroutput', { waitUntil: 'domcontentloaded' });
 
-      // Check if the page loaded correctly (not fail-whale)
       const isFailWhale = await basePage.isFailWhaleVisible();
 
       if (!isFailWhale) {
+        reachedPage = true;
         break;
       }
 
-      // Wait before retrying - allows page to fully render/recover
       // eslint-disable-next-line playwright/no-wait-for-timeout
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(10000);
     }
+
+    expect(reachedPage, 'Logging CRDs not registered after 200s — fail-whale persisted').toBeTruthy();
 
     // Create cluster output
     await loggingPo.mastheadCreate().click();
