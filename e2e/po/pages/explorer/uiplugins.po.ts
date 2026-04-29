@@ -18,7 +18,7 @@ export default class UiPluginsPagePo extends PagePo {
   }
 
   cacheState(name: string): Locator {
-    return this.resourceTable().sortableTable().rowWithName(name).column(5);
+    return this.resourceTable().sortableTable().rowWithName(name).get('td[data-title="State"]');
   }
 
   async goToDetailsPage(elemName: string): Promise<void> {
