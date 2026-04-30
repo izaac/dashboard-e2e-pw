@@ -23,8 +23,11 @@ RANCHER_IMAGE=docker.io/rancher/rancher:v2.14.0 docker compose up
 # Sharded (2 Rancher instances, ~2× faster, needs ~10 GB RAM)
 docker compose -f docker-compose.sharded.yml up
 
-# Stop everything
-docker compose down
+# NixOS Users: Append `-f docker-compose.nix.yml` (Single) or `-f docker-compose.sharded.nix.yml` (Sharded)
+# e.g., docker compose -f docker-compose.yml -f docker-compose.nix.yml up
+
+# Stop everything and clean data
+docker compose down -v
 ```
 
 ### Native setup (your own Rancher instance)
