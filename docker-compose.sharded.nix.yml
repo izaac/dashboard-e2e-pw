@@ -1,0 +1,20 @@
+# NixOS override for Sharded test execution.
+#
+# Usage:
+#   docker compose -f docker-compose.sharded.yml -f docker-compose.sharded.nix.yml up
+#
+
+x-rancher-nix: &rancher-nix
+  build:
+    context: .
+    dockerfile: Dockerfile.rancher-nix
+    args:
+      RANCHER_IMAGE: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
+  image: rancher-nft:local
+
+services:
+  # Sharded overrides (docker-compose.sharded.yml)
+  rancher-1:
+    <<: *rancher-nix
+  rancher-2:
+    <<: *rancher-nix

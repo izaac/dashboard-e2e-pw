@@ -274,7 +274,7 @@ NixOS kernels ship nftables only (no legacy iptables). Use the nftables overlay:
 docker compose -f docker-compose.yml -f docker-compose.nix.yml up
 
 # Sharded
-docker compose -f docker-compose.sharded.yml -f docker-compose.nix.yml up
+docker compose -f docker-compose.sharded.yml -f docker-compose.sharded.nix.yml up
 ```
 
 This builds a patched Rancher image that replaces iptables-legacy with iptables-nft.
