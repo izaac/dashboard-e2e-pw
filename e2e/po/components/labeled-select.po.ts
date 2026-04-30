@@ -82,6 +82,6 @@ export default class LabeledSelectPo extends ComponentPo {
   static byLabel(page: Page, parent: Locator, label: string): LabeledSelectPo {
     const container = parent.locator(`label:has-text("${label}")`).locator('..').locator('+ .v-select');
 
-    return new LabeledSelectPo(page, '.v-select', container);
+    return new LabeledSelectPo(page, ':scope', container);
   }
 }

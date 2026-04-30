@@ -221,12 +221,30 @@ test.describe(
         await expect(aksCreatePage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
         await aksCreatePage.waitForPage();
 
-        // Resolve the latest AKS version from the intercepted response
+        // Resolve the latest AKS version from the intercepted response (semver comparison)
         const aksVersionsResp = await aksVersionsPromise;
         const aksVersionsBody = await aksVersionsResp.json();
-        const latestAKSversion: string = Array.isArray(aksVersionsBody)
-          ? aksVersionsBody[aksVersionsBody.length - 1]
-          : ((await aksCreatePage.kubernetesVersionSelect().selectedOption().textContent())?.trim() ?? '');
+        let latestAKSversion: string;
+
+        if (Array.isArray(aksVersionsBody) && aksVersionsBody.length > 0) {
+          latestAKSversion = aksVersionsBody.reduce((latest: string, v: string) => {
+            const lParts = latest.split('.').map(Number);
+            const vParts = v.split('.').map(Number);
+
+            for (let i = 0; i < 3; i++) {
+              const diff = (vParts[i] || 0) - (lParts[i] || 0);
+
+              if (diff !== 0) {
+                return diff > 0 ? v : latest;
+              }
+            }
+
+            return latest;
+          });
+        } else {
+          latestAKSversion =
+            (await aksCreatePage.kubernetesVersionSelect().selectedOption().textContent())?.trim() ?? '';
+        }
 
         // --- Form default assertions ---
 
@@ -239,7 +257,7 @@ test.describe(
         await expect(aksCreatePage.getVMsize().selectedOption()).toContainText(
           aksDefaultSettings.defaultNodePool.vmSize,
         );
-        await expect(aksCreatePage.getAvailabilityZones().selectedOption().first()).toBeVisible();
+        await expect(aksCreatePage.getAvailabilityZones().selectedOption().first()).toContainText(/zone/i);
         await expect(aksCreatePage.getOSdiskType().selectedOption()).toContainText(
           aksDefaultSettings.defaultNodePool.osDiskType,
         );
@@ -301,11 +319,13 @@ test.describe(
           aksDefaultSettings.defaultAksConfig.dockerBridgeCidr,
         );
 
-        // Pool mode: System radio checked (first option)
+        // Pool mode: System radio checked, User unchecked
         await expect(aksCreatePage.getPoolModeRadio().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+        await expect(aksCreatePage.getPoolModeRadio().radioSpan(1)).toHaveAttribute('aria-checked', 'false');
 
-        // Auth mode: Service Principal radio checked (first option)
+        // Auth mode: Service Principal checked, Managed Identity unchecked
         await expect(aksCreatePage.getAuthModeRadio().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+        await expect(aksCreatePage.getAuthModeRadio().radioSpan(1)).toHaveAttribute('aria-checked', 'false');
 
         // Remaining checkboxes
         await expect.poll(() => aksCreatePage.getProjNetworkIsolation().isDisabled()).toBe(true);
@@ -316,6 +336,7 @@ test.describe(
 
         // Fill mandatory fields and create
         await aksCreatePage.getClusterName().set(clusterName);
+        await aksCreatePage.getClusterDescription().set(`${clusterName}-description`);
         await aksCreatePage.clusterResourceGroup().fill(aksSettings.resourceGroup);
         await aksCreatePage.dnsPrefixInput().fill(aksSettings.dnsPrefix);
 
@@ -334,6 +355,7 @@ test.describe(
 
         expect(clusterBody).toHaveProperty('type', 'cluster');
         expect(clusterBody).toHaveProperty('name', clusterName);
+        expect(clusterBody).toHaveProperty('description', `${clusterName}-description`);
 
         // aksConfig top-level properties
         expect(clusterBody.aksConfig).toHaveProperty('kubernetesVersion', latestAKSversion);
@@ -367,24 +389,22 @@ test.describe(
         );
 
         // aksConfig.nodePools[0] properties
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('name', aksDefaultSettings.defaultNodePool.name);
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty(
-          'enableAutoScaling',
-          aksDefaultSettings.defaultNodePool.enableAutoScaling,
-        );
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty(
-          'maxSurge',
-          aksDefaultSettings.defaultNodePool.maxSurge,
-        );
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('maxPods', 110);
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('mode', aksDefaultSettings.defaultNodePool.mode);
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('vmSize', aksDefaultSettings.defaultNodePool.vmSize);
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty(
-          'osDiskType',
-          aksDefaultSettings.defaultNodePool.osDiskType,
-        );
-        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('osDiskSizeGB', 128);
-        expect(clusterBody.aksConfig.nodePools[0].count).toBe(1);
+        const nodePool = clusterBody.aksConfig.nodePools[0];
+
+        expect(nodePool).toHaveProperty('name', aksDefaultSettings.defaultNodePool.name);
+        expect(nodePool).toHaveProperty('enableAutoScaling', aksDefaultSettings.defaultNodePool.enableAutoScaling);
+        expect(nodePool).toHaveProperty('maxSurge', aksDefaultSettings.defaultNodePool.maxSurge);
+        expect(nodePool).toHaveProperty('maxPods', 110);
+        expect(nodePool).toHaveProperty('mode', aksDefaultSettings.defaultNodePool.mode);
+        expect(nodePool).toHaveProperty('vmSize', aksDefaultSettings.defaultNodePool.vmSize);
+        expect(nodePool).toHaveProperty('osDiskType', aksDefaultSettings.defaultNodePool.osDiskType);
+        expect(nodePool).toHaveProperty('osDiskSizeGB', 128);
+        expect(nodePool.count).toBe(1);
+
+        // Availability zones should contain zone numbers 1, 2, 3
+        const zoneNumbers = aksDefaultSettings.defaultNodePool.availabilityZones.match(/\d+/g);
+
+        expect(nodePool.availabilityZones).toEqual(expect.arrayContaining(zoneNumbers!));
 
         clusterId = clusterBody.id;
 
