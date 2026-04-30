@@ -16,7 +16,7 @@ export const defaultNodePool = {
   osDiskSizeGB: '128',
   osDiskType: 'Managed',
   osType: 'Linux',
-  vmSize: 'Standard_D2d_v4',
+  vmSize: 'Standard_DS2_v2',
   _isNewOrUnprovisioned: true,
   _validation: {},
 };
@@ -37,9 +37,9 @@ export const defaultAksConfig = {
   privateCluster: false,
   tags: {},
   outboundType: 'Loadbalancer',
-  serviceCidr: '10.0.0.0/16',
+  serviceCidr: '10.43.0.0/16',
   dockerBridgeCidr: '172.17.0.1/16',
-  dnsServiceIp: '10.0.0.10',
+  dnsServiceIp: '10.43.0.10',
 };
 
 export const defaultCluster = {

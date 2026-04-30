@@ -121,7 +121,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterManagerCreateAKSPagePo | cluster-create-aks.po.ts | ClusterManagerCreatePagePo | — | super, resourceDetail, cloudCredentialsForm, credentialSelect, clusterNameInput, getClusterName, getClusterDescription, clusterResourceGroup (+4) |
+| ClusterManagerCreateAKSPagePo | cluster-create-aks.po.ts | ClusterManagerCreatePagePo | — | super, resourceDetail, cloudCredentialsForm, credentialSelect, clusterNameInput, getClusterName, getClusterDescription, clusterResourceGroup (+33) |
 | ClusterManagerCreateEKSPagePo | cluster-create-eks.po.ts | ClusterManagerCreateRke2AmazonPagePo | — | super, cloudCredentialsForm, credentialSelect, credentialFormCancel, selectExistingCredential, dropdownOption, serviceRoleRadioGroup, vpcRadioGroup (+18) |
 | ClusterManagerCreateGKEPagePo | cluster-create-gke.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, authProjectId, getClusterName, getClusterDescription, gkeVersionSelect, gkeZoneSelectPo, saveCreateGkeCluster |
 | ClusterManagerCreateRke2AmazonPagePo | cluster-create-rke2-amazon.po.ts | ClusterManagerCreatePagePo | — | super, cloudCredentialsForm, clusterConfigurationTabs, machinePoolTab, basicsTab, networkTab, nameNsDescription, ipv6ConfirmationDialog (+4) |

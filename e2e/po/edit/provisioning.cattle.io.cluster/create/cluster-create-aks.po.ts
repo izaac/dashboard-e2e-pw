@@ -4,10 +4,20 @@ import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import AzureCloudCredentialsCreateEditPo from '@/e2e/po/edit/cloud-credentials-azure.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 
 export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreatePagePo {
   constructor(page: Page, clusterId = '_') {
     super(page, clusterId, 'type=aks&rkeType=rke2');
+  }
+
+  private poolLocator(): Locator {
+    return this.page.locator('.pool');
+  }
+
+  private formLocator(): Locator {
+    return this.page.locator('[data-testid="cruaks-form"]');
   }
 
   resourceDetail(): ResourceDetailPo {
@@ -53,5 +63,135 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
 
   create(): Locator {
     return this.resourceDetail().cruResource().saveOrCreate().self();
+  }
+
+  // --- Node pool fields ---
+
+  getNodeGroup(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.poolLocator(), 'Name');
+  }
+
+  getVMsize(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.poolLocator(), 'VM Size');
+  }
+
+  getAvailabilityZones(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.poolLocator(), 'Availability Zones');
+  }
+
+  getOSdiskType(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.formLocator(), 'OS Disk Type');
+  }
+
+  getOSdiskSize(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.poolLocator(), 'OS Disk Size');
+  }
+
+  getNodeCount(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.poolLocator(), 'Count');
+  }
+
+  getMaxPods(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Max Pods per Node');
+  }
+
+  getMaxSurge(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Max Surge');
+  }
+
+  // --- Cluster-level checkboxes ---
+
+  getAutoScaling(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="aks-enable-auto-scaling-checkbox"]');
+  }
+
+  getContainerMonitoring(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="aks-monitoring-checkbox"]');
+  }
+
+  getProjNetworkIsolation(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="aks-project-network-isolation-checkbox"]');
+  }
+
+  getHTTProuting(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="aks-http-routing-checkbox"]');
+  }
+
+  getEnablePrivateCluster(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="aks-private-cluster-checkbox"]');
+  }
+
+  getAuthIPranges(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="aks-auth-ip-ranges-checkbox"]');
+  }
+
+  // --- Cluster-level labeled inputs ---
+
+  getLinuxAdmin(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Linux Admin Username');
+  }
+
+  getNodeResourceGroup(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Node Resource Group');
+  }
+
+  getLogResourceGroup(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Log Analytics Workspace Resource Group');
+  }
+
+  getLogWorkspaceName(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Log Analytics Workspace Name');
+  }
+
+  getSSHkey(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'SSH Public Key');
+  }
+
+  getKubernetesSAR(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Kubernetes Service Address Range');
+  }
+
+  getKubernetesDNS(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Kubernetes DNS Service IP Address');
+  }
+
+  getDockerBridge(): LabeledInputPo {
+    return LabeledInputPo.byLabel(this.page, this.formLocator(), 'Docker Bridge Address');
+  }
+
+  // --- Cluster-level labeled selects ---
+
+  getLoadBalancerSKU(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.formLocator(), 'Load Balancer SKU');
+  }
+
+  getOutboundType(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.formLocator(), 'Outbound Type');
+  }
+
+  getNetworkPlugin(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.formLocator(), 'Network Plugin');
+  }
+
+  getNetworkPolicy(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.formLocator(), 'Network Policy');
+  }
+
+  getVirtualNetwork(): LabeledSelectPo {
+    return LabeledSelectPo.byLabel(this.page, this.formLocator(), 'Virtual Network');
+  }
+
+  // --- Radio groups ---
+
+  getPoolModeRadio(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '.radio-group', this.poolLocator());
+  }
+
+  getAuthModeRadio(): RadioGroupInputPo {
+    return new RadioGroupInputPo(
+      this.page,
+      '.radio-group:has(.radio-label:has-text("Service Principal"))',
+      this.formLocator(),
+    );
   }
 }

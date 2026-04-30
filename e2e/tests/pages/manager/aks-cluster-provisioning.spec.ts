@@ -128,6 +128,7 @@ test.describe(
 
         // Fill mandatory fields
         await aksCreatePage.getClusterName().set(clusterName);
+        await aksCreatePage.getClusterDescription().set(`${clusterName}-description`);
         await aksCreatePage.clusterResourceGroup().fill(aksSettings.resourceGroup);
         await aksCreatePage.dnsPrefixInput().fill(aksSettings.dnsPrefix);
 
@@ -144,6 +145,7 @@ test.describe(
 
         expect(clusterBody).toHaveProperty('type', 'cluster');
         expect(clusterBody).toHaveProperty('name', clusterName);
+        expect(clusterBody).toHaveProperty('description', `${clusterName}-description`);
         clusterId = clusterBody.id;
 
         await clusterList.waitForPage();
@@ -192,6 +194,12 @@ test.describe(
         await cloudCredForm.clientId().set(envMeta.azureClientId!);
         await cloudCredForm.clientSecret().set(envMeta.azureClientSecret!);
 
+        // Intercept AKS versions to determine latest version
+        const aksVersionsPromise = page.waitForResponse(
+          (resp) => resp.url().includes('/meta/aksVersions') && resp.request().method() === 'GET',
+          { timeout: LONG },
+        );
+
         const credCreatePromise = page.waitForResponse(
           (resp) => resp.url().includes('/v3/cloudcredentials') && resp.request().method() === 'POST',
           SHORT_TIMEOUT_OPT,
@@ -213,8 +221,98 @@ test.describe(
         await expect(aksCreatePage.loadingIndicator()).not.toBeAttached(SHORT_TIMEOUT_OPT);
         await aksCreatePage.waitForPage();
 
-        // Verify defaults — region dropdown shows display name (e.g. "East US"), not API value
-        await expect(aksCreatePage.regionSelect().selectedOption()).toBeVisible();
+        // Resolve the latest AKS version from the intercepted response
+        const aksVersionsResp = await aksVersionsPromise;
+        const aksVersionsBody = await aksVersionsResp.json();
+        const latestAKSversion: string = Array.isArray(aksVersionsBody)
+          ? aksVersionsBody[aksVersionsBody.length - 1]
+          : ((await aksCreatePage.kubernetesVersionSelect().selectedOption().textContent())?.trim() ?? '');
+
+        // --- Form default assertions ---
+
+        // Region & Kubernetes version
+        await expect(aksCreatePage.regionSelect().selectedOption()).toContainText('East US');
+        await expect(aksCreatePage.kubernetesVersionSelect().selectedOption()).toContainText(latestAKSversion);
+
+        // Node pool defaults
+        await expect(aksCreatePage.getNodeGroup().input()).toHaveValue(aksDefaultSettings.defaultNodePool.name);
+        await expect(aksCreatePage.getVMsize().selectedOption()).toContainText(
+          aksDefaultSettings.defaultNodePool.vmSize,
+        );
+        await expect(aksCreatePage.getAvailabilityZones().selectedOption().first()).toBeVisible();
+        await expect(aksCreatePage.getOSdiskType().selectedOption()).toContainText(
+          aksDefaultSettings.defaultNodePool.osDiskType,
+        );
+        await expect(aksCreatePage.getOSdiskSize().input()).toHaveValue(
+          aksDefaultSettings.defaultNodePool.osDiskSizeGB,
+        );
+        await expect(aksCreatePage.getNodeCount().input()).toHaveValue(aksDefaultSettings.defaultNodePool.count);
+        await expect(aksCreatePage.getMaxPods().input()).toHaveValue(aksDefaultSettings.defaultNodePool.maxPods);
+        await expect(aksCreatePage.getMaxSurge().input()).toHaveValue(aksDefaultSettings.defaultNodePool.maxSurge);
+
+        // Auto scaling unchecked
+        await expect(aksCreatePage.getAutoScaling().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
+
+        // Linux admin username
+        await expect(aksCreatePage.getLinuxAdmin().input()).toHaveValue(
+          aksDefaultSettings.defaultAksConfig.linuxAdminUsername,
+        );
+
+        // Resource group placeholders
+        await expect(aksCreatePage.clusterResourceGroup()).toHaveAttribute('placeholder', /aks-resource-group/);
+        await expect(aksCreatePage.getNodeResourceGroup().input()).toHaveAttribute(
+          'placeholder',
+          /aks-node-resource-group/,
+        );
+
+        // Log analytics fields disabled
+        await expect(aksCreatePage.getLogResourceGroup().input()).toBeDisabled();
+        await expect(aksCreatePage.getLogWorkspaceName().input()).toBeDisabled();
+
+        // Container monitoring unchecked
+        await expect(aksCreatePage.getContainerMonitoring().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
+
+        // SSH key placeholder
+        await expect(aksCreatePage.getSSHkey().input()).toHaveAttribute('placeholder', /SSH public key/i);
+
+        // Load balancer SKU disabled with value "Standard"
+        await expect(aksCreatePage.getLoadBalancerSKU().self()).toHaveClass(/disabled/);
+        await expect(aksCreatePage.getLoadBalancerSKU().selectedOption()).toContainText(
+          aksDefaultSettings.defaultAksConfig.loadBalancerSku,
+        );
+
+        // DNS prefix placeholder
+        await expect(aksCreatePage.dnsPrefixInput()).toHaveAttribute('placeholder', /aks-dns/);
+
+        // Networking defaults
+        await expect(aksCreatePage.getOutboundType().selectedOption()).toContainText(/loadBalancer/i);
+        await expect(aksCreatePage.getNetworkPlugin().selectedOption()).toContainText(/kubenet/i);
+        await expect(aksCreatePage.getNetworkPolicy().selectedOption()).toContainText('None');
+        await expect(aksCreatePage.getVirtualNetwork().selectedOption()).toContainText('None');
+
+        // CIDR defaults
+        await expect(aksCreatePage.getKubernetesSAR().input()).toHaveValue(
+          aksDefaultSettings.defaultAksConfig.serviceCidr,
+        );
+        await expect(aksCreatePage.getKubernetesDNS().input()).toHaveValue(
+          aksDefaultSettings.defaultAksConfig.dnsServiceIp,
+        );
+        await expect(aksCreatePage.getDockerBridge().input()).toHaveValue(
+          aksDefaultSettings.defaultAksConfig.dockerBridgeCidr,
+        );
+
+        // Pool mode: System radio checked (first option)
+        await expect(aksCreatePage.getPoolModeRadio().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+
+        // Auth mode: Service Principal radio checked (first option)
+        await expect(aksCreatePage.getAuthModeRadio().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+
+        // Remaining checkboxes
+        await expect.poll(() => aksCreatePage.getProjNetworkIsolation().isDisabled()).toBe(true);
+        await expect(aksCreatePage.getProjNetworkIsolation().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
+        await expect(aksCreatePage.getHTTProuting().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
+        await expect(aksCreatePage.getEnablePrivateCluster().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
+        await expect(aksCreatePage.getAuthIPranges().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
 
         // Fill mandatory fields and create
         await aksCreatePage.getClusterName().set(clusterName);
@@ -232,9 +330,62 @@ test.describe(
         expect(clusterResp.status()).toBe(201);
         const clusterBody = await clusterResp.json();
 
+        // --- Response body assertions ---
+
         expect(clusterBody).toHaveProperty('type', 'cluster');
         expect(clusterBody).toHaveProperty('name', clusterName);
-        expect(clusterBody.aksConfig.resourceLocation).toBe(aksSettings.resourceLocation);
+
+        // aksConfig top-level properties
+        expect(clusterBody.aksConfig).toHaveProperty('kubernetesVersion', latestAKSversion);
+        expect(clusterBody.aksConfig).toHaveProperty('resourceLocation', aksDefaultSettings.DEFAULT_REGION);
+        expect(clusterBody.aksConfig).toHaveProperty(
+          'linuxAdminUsername',
+          aksDefaultSettings.defaultAksConfig.linuxAdminUsername,
+        );
+        expect(clusterBody.aksConfig).toHaveProperty('resourceGroup', aksSettings.resourceGroup);
+        expect(clusterBody.aksConfig).toHaveProperty(
+          'loadBalancerSku',
+          aksDefaultSettings.defaultAksConfig.loadBalancerSku,
+        );
+        expect(clusterBody.aksConfig).toHaveProperty('dnsPrefix', aksSettings.dnsPrefix);
+        expect(clusterBody.aksConfig.outboundType.toLowerCase()).toBe('loadbalancer');
+        expect(clusterBody.aksConfig.networkPlugin.toLowerCase()).toBe('kubenet');
+        expect(clusterBody.aksConfig).not.toHaveProperty('networkPolicy');
+        expect(clusterBody.aksConfig).not.toHaveProperty('virtualNetwork');
+        expect(clusterBody.aksConfig).toHaveProperty('serviceCidr', aksDefaultSettings.defaultAksConfig.serviceCidr);
+        expect(clusterBody.aksConfig).toHaveProperty('dnsServiceIp', aksDefaultSettings.defaultAksConfig.dnsServiceIp);
+        expect(clusterBody.aksConfig).toHaveProperty(
+          'dockerBridgeCidr',
+          aksDefaultSettings.defaultAksConfig.dockerBridgeCidr,
+        );
+        expect(clusterBody.aksConfig).not.toHaveProperty('httpApplicationRouting');
+        expect(clusterBody.aksConfig).not.toHaveProperty('managedIdentity');
+        expect(clusterBody.aksConfig).not.toHaveProperty('authorizedIpRanges');
+        expect(clusterBody.aksConfig).toHaveProperty(
+          'privateCluster',
+          aksDefaultSettings.defaultAksConfig.privateCluster,
+        );
+
+        // aksConfig.nodePools[0] properties
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('name', aksDefaultSettings.defaultNodePool.name);
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty(
+          'enableAutoScaling',
+          aksDefaultSettings.defaultNodePool.enableAutoScaling,
+        );
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty(
+          'maxSurge',
+          aksDefaultSettings.defaultNodePool.maxSurge,
+        );
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('maxPods', 110);
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('mode', aksDefaultSettings.defaultNodePool.mode);
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('vmSize', aksDefaultSettings.defaultNodePool.vmSize);
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty(
+          'osDiskType',
+          aksDefaultSettings.defaultNodePool.osDiskType,
+        );
+        expect(clusterBody.aksConfig.nodePools[0]).toHaveProperty('osDiskSizeGB', 128);
+        expect(clusterBody.aksConfig.nodePools[0].count).toBe(1);
+
         clusterId = clusterBody.id;
 
         await clusterList.waitForPage();
