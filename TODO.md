@@ -44,7 +44,7 @@
 - [x] `workspaces.spec.ts` — 3 tests (pagination mock, filter real, sort real)
 - [x] `websockets/connection.spec.ts` — atomic WS exec test (mkdir/ls/rm via pod-exec helper)
 - [x] `edit-fake-cluster.spec.ts` — 2 tests (registry auth clearing, documentation link popup)
-- [ ] `repositories.spec.ts` (apps) — Refresh describe block not ported
+- [x] `repositories.spec.ts` (apps) — Refresh describe block ported
 - [x] `settings.spec.ts` — inactivity modal test (route intercept, fixed expiresAt, Resume Session)
 - [ ] `cilium-cni.spec.ts` — IPv6 test missing
 - [x] `preferences.spec.ts` — language selection test (en-us/zh-hans cycle, DOM lang, translated nav)
@@ -86,7 +86,7 @@
 
 ### GKE credentials (`gkeServiceAccount`)
 
-- [ ] `gke-cluster-provisioning.spec.ts` — full spec skipped
+- [x] `gke-cluster-provisioning.spec.ts` — ported, needs billing-enabled GCP project to provision
 
 ### Provisioning infrastructure (custom nodes, downstream clusters)
 
@@ -122,7 +122,7 @@
   `waitForCountsSettle()` extracted as reusable function
 - [x] `deployments.spec.ts` — `waitForResourceState` before redeploy to avoid 409 Conflict
 - [x] `daemonsets.spec.ts` — strict K8s reconciliation wait + goTo retry on 409 Conflict
-- [x] `harvester.spec.ts` — `test.skip` on 500 install response (chart unavailable in environment)
+- [x] `harvester.spec.ts` — API polling replaces fragile `waitForResponse`; timeout if install fails
 - [x] `project-namespace.spec.ts` — `waitForRancherResource` 404 polling after namespace deletes
 - [x] `users.spec.ts` — `deleteUserByUsername` with v3 filtered query + try/catch (cleanup never fails test)
 
@@ -191,7 +191,7 @@
 
 ## Cleanup
 
-- [ ] Replace scattered `{ timeout: 15000 }` / `{ timeout: 60000 }` with global config or named constants
+- [ ] Replace last magic timeout in `cluster-manager.spec.ts` (`15000`) with named constant
 - [ ] `custom-resource-definitions.spec.ts` — sequential run causes API server stress
 
 - `node-drivers.spec.ts` — blocked by rancher/dashboard#10275
