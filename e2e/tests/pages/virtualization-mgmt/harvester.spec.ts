@@ -5,7 +5,7 @@ import {
   HarvesterClusterPagePo,
 } from '@/e2e/po/pages/virtualization-mgmt/harvester-clusters.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
-import { LONG, VERY_LONG } from '@/support/timeouts';
+import { EXTENSION_OPS, LONG, VERY_LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = '/v1/catalog.cattle.io.clusterrepos';
 const harvesterTitle = 'Harvester';
@@ -90,7 +90,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     rancherApi,
     isPrime,
   }, testInfo) => {
-    testInfo.setTimeout(180_000);
+    testInfo.setTimeout(EXTENSION_OPS);
     const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
     const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);
@@ -224,7 +224,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     rancherApi,
     isPrime,
   }, testInfo) => {
-    testInfo.setTimeout(180_000);
+    testInfo.setTimeout(EXTENSION_OPS);
     const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
     const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);
@@ -309,7 +309,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
   });
 
   test('able to update harvester extension version', async ({ page, rancherApi, isPrime }, testInfo) => {
-    testInfo.setTimeout(180_000);
+    testInfo.setTimeout(EXTENSION_OPS);
     const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
     const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);

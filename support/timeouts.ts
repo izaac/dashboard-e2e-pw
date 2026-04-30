@@ -29,5 +29,8 @@ export const VERY_LONG = 60_000;
 /** Extra long wait — slow provisioning, chart installs (2 min) */
 export const EXTRA_LONG = 120_000;
 
+/** Extension operations — install, upgrade, uninstall full cycles (3 min) */
+export const EXTENSION_OPS = 180_000;
+
 /** Provisioning wait — cluster create, cloud provisioning (5 min) */
 export const PROVISIONING = 300_000;
