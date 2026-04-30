@@ -226,14 +226,48 @@ This starts two containers:
 The test container waits for Rancher's healthcheck to pass before starting. You don't need to
 do anything — just wait.
 
-### Run a subset of tests
+### Running specific tests via Docker
+
+By default, if you don't provide any filters, Docker will run the **ENTIRE 500+ test suite**:
 
 ```bash
-# Quick smoke test (~17 tests)
+docker compose up
+```
+
+To avoid this, you can pass arguments to the test container by overriding the `command` or using environment variables.
+
+**1. Run by Tags (The standard way)**
+Use `GREP_TAGS` to run specific suites:
+
+```bash
+# Quick smoke test (~70 tests)
 GREP_TAGS="@generic" docker compose up
 
-# Just admin tests
-GREP_TAGS="@adminUser" docker compose up
+# Run only navigation tests
+GREP_TAGS="@navigation" docker compose up
+```
+
+**2. Run a specific spec file**
+You can override the container's command to pass a specific file path. Use `run` instead of `up` to target just the tests container against a running Rancher:
+
+```bash
+# Make sure Rancher is already running in the background first
+docker compose up rancher -d
+
+# Run a specific file
+docker compose run --rm tests npx playwright test e2e/tests/pages/generic/login.spec.ts
+```
+
+**3. Run a specific test by name**
+
+```bash
+docker compose run --rm tests npx playwright test -g "Log in with valid"
+```
+
+**4. Run a whole folder**
+
+```bash
+docker compose run --rm tests npx playwright test e2e/tests/navigation/
 ```
 
 ### Run with a specific Rancher version
