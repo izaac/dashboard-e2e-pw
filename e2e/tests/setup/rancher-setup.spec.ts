@@ -150,6 +150,38 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
   test('Create standard user', async ({ rancherApi, envMeta }) => {
     await rancherApi.login(envMeta.username, envMeta.password);
 
+    // Disable telemetry (anonymous statistics) explicitly
+    const telemetrySettings = await rancherApi.getRancherResource(
+      'v1',
+      'management.cattle.io.settings',
+      'telemetry-opt',
+      0,
+    );
+
+    if (telemetrySettings.status === 404) {
+      await rancherApi.createRancherResource(
+        'v1',
+        'management.cattle.io.settings',
+        {
+          metadata: { name: 'telemetry-opt' },
+          value: 'out',
+          default: 'prompt',
+        },
+        false,
+      );
+    } else if (telemetrySettings.body?.value !== 'out') {
+      await rancherApi.setRancherResource(
+        'v1',
+        'management.cattle.io.settings',
+        'telemetry-opt',
+        {
+          ...telemetrySettings.body,
+          value: 'out',
+        },
+        false,
+      );
+    }
+
     const usersResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
     const existingUser = usersResp.body.data.find((u: { username?: string }) => u.username?.includes('standard_user'));
 
