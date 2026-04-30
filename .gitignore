@@ -30,8 +30,6 @@ docker-compose.nix.yml
 .claude/
 
 # Codex
-.codex
-.codex/
 
 # IDE
 .idea/
