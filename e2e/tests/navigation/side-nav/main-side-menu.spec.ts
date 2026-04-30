@@ -3,7 +3,7 @@ import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { generateFakeClusterDataAndIntercepts } from '@/support/blueprints/nav/fake-cluster';
+import { generateFakeClusterDataAndIntercepts } from '@/e2e/blueprints/nav/fake-cluster';
 import { LONG } from '@/support/timeouts';
 
 const longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description';

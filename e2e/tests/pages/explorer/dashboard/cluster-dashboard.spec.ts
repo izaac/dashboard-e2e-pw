@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { eventsGetEmptyEventsSet } from '@/e2e/blueprints/explorer/cluster/events';
 import { HeaderPo } from '@/e2e/po/components/header.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { STANDARD } from '@/support/timeouts';
 
 const configMapName = `e2e-test-${Date.now()}`;

@@ -1,6 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { NetworkPolicyListPagePo, NetworkPolicyCreateEditPagePo } from '@/e2e/po/pages/explorer/network-policy.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
   test('creates a network policy and displays it in the list', async ({ page, login, rancherApi }) => {
@@ -74,7 +74,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
 
     // Vue debounce trap: port input debounces $emit('update:value') for 500ms.
     // Blur/Tab does NOT flush the debounce — only elapsed time does.
-    // eslint-disable-next-line playwright/no-wait-for-timeout
+
     await page.waitForTimeout(600);
 
     const createResponse = page.waitForResponse(

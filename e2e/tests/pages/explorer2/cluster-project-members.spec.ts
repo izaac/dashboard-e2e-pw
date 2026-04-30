@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterProjectMembersPo from '@/e2e/po/pages/explorer/cluster-project-members.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser'] }, () => {
   test('Should create a new user', async ({ page, login, rancherApi }) => {

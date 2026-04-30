@@ -10,7 +10,7 @@ import ClusterManagerEditGenericPagePo from '@/e2e/po/edit/provisioning.cattle.i
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {

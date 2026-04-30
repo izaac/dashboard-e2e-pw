@@ -3,7 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import ChartRepositoriesCreateEditPo from '@/e2e/po/edit/chart-repositories.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 export default class ChartRepositoriesPagePo extends PagePo {
   private static createPath(clusterId: string, product: 'apps' | 'manager') {

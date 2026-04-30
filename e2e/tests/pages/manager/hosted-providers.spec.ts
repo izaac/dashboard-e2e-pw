@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const AKS = 'Azure AKS';
 const EKS = 'Amazon EKS';

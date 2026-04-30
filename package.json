@@ -31,6 +31,7 @@
     "gap-map": "npx tsx scripts/generate-gap-map.ts",
     "branch-diff": "sh scripts/branch-backport.sh",
     "api-diff": "npx tsx scripts/api-diff.ts",
+    "classify-skips": "npx tsx scripts/classify-skips.ts",
     "local:up": "docker compose up rancher -d",
     "local:test": "docker compose up tests",
     "local:test:sharded": "docker compose -f docker-compose.sharded.yml up",

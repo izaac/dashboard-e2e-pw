@@ -7,7 +7,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import describeSubnetsResponse from '@/e2e/blueprints/manager/describe-subnets-response';
 import describeVpcsResponse from '@/e2e/blueprints/manager/describe-vpcs-response';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG, EXTRA_LONG, CLUSTER_SETTLE, FULL_PROVISIONING } from '@/support/timeouts';
 
 // Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
@@ -721,31 +721,8 @@ test.describe(
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const credentialName = rancherApi.createE2EResourceName(CRED_SUFFIX);
 
-      // Delete cluster if still exists (mid-chain failure)
-      await rancherApi.deleteRancherResource(
-        'v1',
-        'provisioning.cattle.io.clusters',
-        `fleet-default/${clusterName}`,
-        false,
-      );
-
-      // Poll until cluster is fully removed before deleting credential (5min)
-      await rancherApi.waitForRancherResource(
-        'v1',
-        'provisioning.cattle.io.clusters',
-        `fleet-default/${clusterName}`,
-        (resp) => resp.status === 404,
-        20,
-        15000,
-      );
-
-      // Delete cloud credential if still exists
-      const credsResp = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
-      const cred = credsResp.body?.data?.find((c: { name: string }) => c.name === credentialName);
-
-      if (cred) {
-        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cred.id, false);
-      }
+      await rancherApi.deleteClusterAndWait(clusterName);
+      await rancherApi.deleteCloudCredentialByName(credentialName);
     });
   },
 );

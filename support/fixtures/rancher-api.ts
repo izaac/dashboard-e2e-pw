@@ -928,4 +928,40 @@ export class RancherApi {
       `Rancher did not recover after ${(maxAttempts * intervalMs) / 1000}s — aborting to prevent cascade`,
     );
   }
+
+  /**
+   * Delete a provisioning cluster and poll until Rancher fully removes it (404).
+   * Use in afterAll hooks to ensure clean teardown before credential deletion.
+   */
+  async deleteClusterAndWait(
+    clusterName: string,
+    namespace = 'fleet-default',
+    maxRetries = 20,
+    intervalMs = 15_000,
+  ): Promise<void> {
+    const resourceId = `${namespace}/${clusterName}`;
+
+    await this.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', resourceId, false);
+    await this.waitForRancherResource(
+      'v1',
+      'provisioning.cattle.io.clusters',
+      resourceId,
+      (resp) => resp.status === 404,
+      maxRetries,
+      intervalMs,
+    );
+  }
+
+  /**
+   * Delete a cloud credential by display name.
+   * Looks up the credential ID from the v3 API, then deletes it.
+   */
+  async deleteCloudCredentialByName(credentialName: string): Promise<void> {
+    const credsResp = await this.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+    const cred = credsResp.body?.data?.find((c: { name: string }) => c.name === credentialName);
+
+    if (cred) {
+      await this.deleteRancherResource('v3', 'cloudcredentials', cred.id, false);
+    }
+  }
 }

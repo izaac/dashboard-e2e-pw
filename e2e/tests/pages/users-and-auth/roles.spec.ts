@@ -9,7 +9,7 @@ import { HeaderPo } from '@/e2e/po/components/header.po';
 import { globalRolesLargeResponse } from '@/e2e/blueprints/roles/global-roles-get';
 import { setTablePreferences, restoreTablePreferences } from '@/e2e/tests/pages/explorer2/workloads/pagination.utils';
 import * as jsyaml from 'js-yaml';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { STANDARD } from '@/support/timeouts';
 
 const globalRoleYaml = `apiVersion: management.cattle.io/v3

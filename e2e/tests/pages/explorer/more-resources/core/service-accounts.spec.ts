@@ -4,7 +4,7 @@ import {
   serviceAccGetResponseEmpty,
   serviceAcctResponseSmallSet,
 } from '@/e2e/blueprints/explorer/core/service-accounts-get';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Service Accounts', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {

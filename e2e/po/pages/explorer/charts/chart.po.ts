@@ -1,7 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 /**

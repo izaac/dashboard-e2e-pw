@@ -4,7 +4,7 @@ import ElementalPo from '@/e2e/po/extensions/elemental/elemental.utils';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 
 import * as jsyaml from 'js-yaml';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { BRIEF, LONG } from '@/support/timeouts';
 
 const EXTENSION_NAME = 'elemental';

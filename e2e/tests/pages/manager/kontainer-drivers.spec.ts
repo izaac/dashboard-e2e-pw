@@ -6,7 +6,7 @@ import DeactivateDriverDialogPo from '@/e2e/po/prompts/deactivateDriverDialog.po
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/timeouts';
 import { EXTRA_LONG, LONG, VERY_LONG } from '@/support/timeouts';
 
 const downloadUrl =

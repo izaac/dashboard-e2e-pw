@@ -4,7 +4,7 @@ import {
   fleetContentsGetResponseEmpty,
   fleetContentsResponseSmallSet,
 } from '@/e2e/blueprints/explorer/fleet/contents-get';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Contents', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {

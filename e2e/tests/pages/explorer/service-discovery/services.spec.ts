@@ -6,7 +6,7 @@ import {
   servicesGetReponseEmpty,
   servicesGetResponseSmallSet,
 } from '@/e2e/blueprints/explorer/workloads/service-discovery/services-get';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('CRUD', () => {

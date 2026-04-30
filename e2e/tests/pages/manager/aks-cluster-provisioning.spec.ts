@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateAKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-aks.po';
 import * as aksDefaultSettings from '@/e2e/blueprints/cluster_management/aks-default-settings';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 const aksSettings = {

@@ -5,7 +5,7 @@ import {
   machineSelectorConfigPayload,
   registriesWithSecretPayload,
 } from '@/e2e/blueprints/manager/registries-rke2-payload';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const registryHost = 'docker.io';
 const registryAuthHost = 'a.registry.com';

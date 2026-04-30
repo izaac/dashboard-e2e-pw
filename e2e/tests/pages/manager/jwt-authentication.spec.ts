@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { DEBOUNCE } from '@/support/timeouts';
 
 const namespace = 'fleet-default';

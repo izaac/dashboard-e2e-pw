@@ -1,6 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { APIServicesPagePo } from '@/e2e/po/pages/explorer/api-services.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Cluster Explorer', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('API: APIServices', () => {

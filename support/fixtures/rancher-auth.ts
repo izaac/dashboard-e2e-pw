@@ -1,5 +1,5 @@
 import { test as setup, expect } from '@playwright/test';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const authFile = '.auth/user.json';
 

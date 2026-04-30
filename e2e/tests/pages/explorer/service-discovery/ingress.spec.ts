@@ -5,7 +5,7 @@ import {
   ingressesGetReponseEmpty,
   ingressesGetResponseSmallSet,
 } from '@/e2e/blueprints/explorer/workloads/service-discovery/ingresses-get';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {

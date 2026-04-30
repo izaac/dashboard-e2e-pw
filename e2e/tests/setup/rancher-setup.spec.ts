@@ -3,7 +3,7 @@ import { RancherSetupLoginPagePo } from '@/e2e/po/pages/rancher-setup-login.po';
 import { RancherSetupConfigurePage } from '@/e2e/po/pages/rancher-setup-configure.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
-import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
 import { BRIEF, EXTENDED, STANDARD } from '@/support/timeouts';
 
 /**
@@ -225,7 +225,8 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     await rancherSetupConfigurePage.waitForPage();
 
-    // Grace period to catch any unexpected extra settings requests
+    // Unavoidable: grace period to catch late-arriving settings requests after page load
+
     await page.waitForTimeout(1000);
     expect(settingsResponses).toHaveLength(2);
   });

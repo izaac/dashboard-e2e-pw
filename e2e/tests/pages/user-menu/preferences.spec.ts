@@ -7,7 +7,7 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import ProductNavPo from '@/e2e/po/components/product-nav.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 test.describe('User can update their preferences', () => {

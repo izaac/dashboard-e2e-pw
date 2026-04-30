@@ -9,7 +9,7 @@ import CardPo from '@/e2e/po/components/card.po';
 import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG, STANDARD } from '@/support/timeouts';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
@@ -119,6 +119,8 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
         reachedPage = true;
         break;
       }
+
+      // Unavoidable: polling for CRD registration — no event to wait on
 
       await page.waitForTimeout(10000);
     }

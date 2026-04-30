@@ -7,7 +7,7 @@ import {
 import FleetApplicationDetailsPo from '@/e2e/po/detail/fleet/fleet.cattle.io.application.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
-import { MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
 
 const localWorkspace = 'fleet-local';
 const gitRepoUrl = 'https://github.com/rancher/fleet-test-data';

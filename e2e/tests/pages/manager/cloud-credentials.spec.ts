@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
   test('can create aws cloud credentials', async ({ login, page, rancherApi, envMeta }) => {

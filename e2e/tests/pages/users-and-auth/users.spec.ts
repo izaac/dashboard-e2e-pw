@@ -3,7 +3,7 @@ import type { RancherApi } from '@/support/fixtures/rancher-api';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG, STANDARD } from '@/support/timeouts';
 
 const runTimestamp = Date.now();

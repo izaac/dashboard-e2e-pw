@@ -17,7 +17,7 @@ import {
   mockSmallCollection,
   type SavedPrefs,
 } from './pagination.utils';
-import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {

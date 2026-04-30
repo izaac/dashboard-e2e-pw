@@ -4,7 +4,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import MgmtUserEditPo from '@/e2e/po/edit/management.cattle.io.user.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 /**
  * Detail page object for a single user resource.

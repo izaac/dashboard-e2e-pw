@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
-import { SHORT_TIMEOUT_OPT, POLL_ITERATION_TIMEOUT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT, POLL_ITERATION_TIMEOUT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
