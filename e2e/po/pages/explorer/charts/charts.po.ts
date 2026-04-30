@@ -32,8 +32,8 @@ export class ChartsPage extends PagePo {
   }
 
   async clickChart(name: string): Promise<void> {
-    // The Vue click handler is on the inner [role="link"] div, not the outer card
-    await this.getChartByName(name).getByRole('link').click();
+    // Click the card itself — upstream RcItemCardPo.click() clicks self()
+    await this.getChartByName(name).click();
   }
 
   chartCards(): Locator {
