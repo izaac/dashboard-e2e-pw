@@ -34,3 +34,9 @@ export const EXTENSION_OPS = 180_000;
 
 /** Provisioning wait — cluster create, cloud provisioning (5 min) */
 export const PROVISIONING = 300_000;
+
+/** Cluster settle — state transitions after scale/upgrade operations (6 min) */
+export const CLUSTER_SETTLE = 360_000;
+
+/** Full provisioning — end-to-end cluster lifecycle including Active wait (15 min) */
+export const FULL_PROVISIONING = 900_000;

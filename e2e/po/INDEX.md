@@ -153,7 +153,7 @@
 | MachinePoolsListPo | machine-pools-list.po.ts | BaseResourceList | — | super, details, machinePoolReadyofDesiredCount, machineProgressBar, machineProgressBarError, scaleDownButton, scaleUpButton, machineUnavailableCount (+2) |
 | MgmtFeatureFlagListPo | management.cattle.io.feature.po.ts | BaseResourceList | `:scope` | super, elements, elementWithName, details, lockIcon, clickRowActionMenuItem, getRowActionMenuItem, getRowNoActionMenu |
 | OidcClientsListPo | management.cattle.io.oidcclient-list.po.ts | BaseResourceList | `[data-testid=` | super, details, title, issuerURL, discoveryDocument, jwksURI |
-| ProvClusterListPo | provisioning.cattle.io.cluster.po.ts | BaseResourceList | — | explore, state, name |
+| ProvClusterListPo | provisioning.cattle.io.cluster.po.ts | BaseResourceList | — | explore, state, name, version, provider, providerSubType, machines |
 | RoleListPo | role-list.po.ts | BaseResourceList | — | super, downloadYaml, rowCloneYamlClick, delete, elements, elementWithName, details, detailLink (+2) |
 
 ## other-products/

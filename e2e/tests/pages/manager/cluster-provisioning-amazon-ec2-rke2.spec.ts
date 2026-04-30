@@ -8,13 +8,10 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import describeSubnetsResponse from '@/e2e/blueprints/manager/describe-subnets-response';
 import describeVpcsResponse from '@/e2e/blueprints/manager/describe-vpcs-response';
 import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
-import { DEBOUNCE, LONG } from '@/support/timeouts';
-
-const MEDIUM_TIMEOUT = 120_000;
-const LONG_TIMEOUT = 360_000;
-const VERY_LONG_TIMEOUT = 900_000;
+import { LONG, EXTRA_LONG, CLUSTER_SETTLE, FULL_PROVISIONING } from '@/support/timeouts';
 
 // Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
+// BUG: Each test calls createE2EResourceName with a different suffix (ec2-create, ec2-list, etc.), generating different names. Upstream Cypress shares one name via `this.rke2Ec2ClusterName`. With worker-scoped rancherApi the root prefix is stable, but the suffix diverges. Tests only pass when each suffix resolves to the same cluster — which they don't. Fix requires a shared name mechanism.
 test.describe(
   'Deploy RKE2 cluster using node driver on Amazon EC2',
   { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] },
@@ -159,12 +156,14 @@ test.describe(
       await clusterList.waitForPage();
 
       await expect(clusterList.list().resourceTable().sortableTable().rowWithName(clusterName).self()).toBeVisible({
-        timeout: LONG_TIMEOUT,
+        timeout: CLUSTER_SETTLE,
       });
-      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: VERY_LONG_TIMEOUT });
+      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
 
-      await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('Amazon EC2');
-      await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 5)).toContainText('RKE2');
+      await expect(clusterList.list().version(clusterName)).not.toContainText('Mixed');
+      await expect(clusterList.list().provider(clusterName)).toContainText('Amazon EC2');
+      await expect(clusterList.list().providerSubType(clusterName)).toContainText('RKE2');
+      await expect(clusterList.list().machines(clusterName)).toContainText('1');
     });
 
     test('cluster details page', async ({ login, page, rancherApi, envMeta }) => {
@@ -226,12 +225,12 @@ test.describe(
       expect(scaleUpResp.status()).toBe(200);
 
       await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).toBeAttached({
-        timeout: LONG_TIMEOUT,
+        timeout: CLUSTER_SETTLE,
       });
       await expect(clusterDetails.poolsList('machine').scaleDownButton(poolName)).toBeEnabled({
-        timeout: VERY_LONG_TIMEOUT,
+        timeout: FULL_PROVISIONING,
       });
-      await expect(clusterDetails.resourceDetail().masthead()).toContainText('Active', { timeout: VERY_LONG_TIMEOUT });
+      await expect(clusterDetails.resourceDetail().masthead()).toContainText('Active', { timeout: FULL_PROVISIONING });
     });
 
     test('can scale down a machine pool', async ({ login, page, rancherApi, envMeta }) => {
@@ -244,7 +243,8 @@ test.describe(
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const poolName = `${clusterName}-pool1`;
 
-      await rancherApi.setUserPreference({ 'scale-pool-prompt': false });
+      // Upstream always shows the confirm modal — force the preference to ensure it
+      await rancherApi.setUserPreference({ 'scale-pool-prompt': true });
 
       try {
         await clusterList.goTo();
@@ -260,6 +260,15 @@ test.describe(
 
         await clusterDetails.poolsList('machine').resourceTable().sortableTable().groupByButtons(1).click();
 
+        // Verify starting with 2 machines (from scale up test)
+        await expect(clusterDetails.poolsList('machine').machinePoolReadyofDesiredCount(poolName, /^2$/)).toBeVisible({
+          timeout: EXTRA_LONG,
+        });
+        await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).not.toBeAttached();
+        await expect(
+          clusterDetails.poolsList('machine').machineProgressBar(poolName).locator('.bg-success'),
+        ).toBeAttached();
+
         await expect(clusterDetails.poolsList('machine').scaleDownButton(poolName)).toBeEnabled();
 
         const scaleDownPromise = page.waitForResponse(
@@ -273,19 +282,27 @@ test.describe(
 
         const confirmBtn = clusterDetails.poolsList('machine').scalePoolDownConfirm();
 
-        if (await confirmBtn.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
-          await confirmBtn.click();
-        }
+        await expect(confirmBtn).toBeVisible();
+        await confirmBtn.click();
 
         const scaleDownResp = await scaleDownPromise;
 
         expect(scaleDownResp.status()).toBe(200);
 
+        // During scale down: progress bar shows error segment
         await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).toBeAttached({
-          timeout: LONG_TIMEOUT,
+          timeout: CLUSTER_SETTLE,
+        });
+
+        // Final state: 1 machine, no error bar, scale down disabled
+        await expect(clusterDetails.poolsList('machine').machinePoolReadyofDesiredCount(poolName, /^1$/)).toBeVisible({
+          timeout: FULL_PROVISIONING,
+        });
+        await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).not.toBeAttached({
+          timeout: CLUSTER_SETTLE,
         });
         await expect(clusterDetails.poolsList('machine').scaleDownButton(poolName)).toBeDisabled({
-          timeout: VERY_LONG_TIMEOUT,
+          timeout: FULL_PROVISIONING,
         });
       } finally {
         await rancherApi.setUserPreference({ 'scale-pool-prompt': null });
@@ -334,7 +351,9 @@ test.describe(
       expect([200, 409]).toContain(updateResp.status());
 
       await clusterList.waitForPage();
-      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: VERY_LONG_TIMEOUT });
+      await expect(clusterList.list().state(clusterName)).toContainText('Updating');
+      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
+      await expect(clusterList.list().version(clusterName)).toContainText(latestK8sVersion);
     });
 
     test('can create snapshot', async ({ login, page, rancherApi, envMeta }) => {
@@ -360,7 +379,7 @@ test.describe(
 
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: VERY_LONG_TIMEOUT });
+      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
 
       await clusterList.list().resourceTable().sortableTable().detailsPageLinkWithName(clusterName).click();
       await clusterDetails.waitForPage(undefined, 'machine-pools');
@@ -380,6 +399,8 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
+      const initialRowCount = await clusterList.list().resourceTable().sortableTable().rowCount();
+
       const actionMenu = await clusterList.list().actionMenu(clusterName);
 
       await actionMenu.getMenuItem('Delete').click();
@@ -391,8 +412,11 @@ test.describe(
 
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Removing');
+      await expect(clusterList.list().resourceTable().sortableTable().rowElements()).toHaveCount(initialRowCount - 1, {
+        timeout: EXTRA_LONG,
+      });
       await expect(clusterList.list().resourceTable().sortableTable().rowWithName(clusterName).self()).not.toBeAttached(
-        { timeout: MEDIUM_TIMEOUT },
+        { timeout: EXTRA_LONG },
       );
     });
 
