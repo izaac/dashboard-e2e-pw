@@ -3,7 +3,7 @@ import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-man
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { PROVISIONING } from '@/support/timeouts';
+import { PROVISIONING, FULL_PROVISIONING } from '@/support/timeouts';
 
 /**
  * Running this test will delete all Azure cloud credentials from the target cluster.
@@ -148,6 +148,9 @@ test.describe(
 
         await clusterList.waitForPage();
         await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible();
+
+        // Verify cluster enters provisioning state
+        await expect(clusterList.list().state(clusterName)).toHaveText(/Reconciling|Updating/);
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, false);
@@ -170,8 +173,18 @@ test.describe(
 
       await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible({ timeout: PROVISIONING });
 
-      await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('Azure');
-      await expect(clusterList.list().resourceTable().resourceTableDetails(clusterName, 4)).toContainText('RKE2');
+      // Wait for cluster to reach Active state
+      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
+
+      // K8s version column is populated
+      await expect(clusterList.list().version(clusterName)).toContainText('v1.');
+
+      // Provider and sub-type
+      await expect(clusterList.list().provider(clusterName)).toContainText('Azure');
+      await expect(clusterList.list().providerSubType(clusterName)).toContainText('RKE2');
+
+      // Machine count
+      await expect(clusterList.list().machines(clusterName)).toContainText('1');
     });
 
     test('cluster details page', async ({ page, login, rancherApi }) => {
@@ -189,8 +202,14 @@ test.describe(
 
       await expect(clusterDetails.tabbedBlock()).toBeVisible();
 
+      // Machine pool shows pool name with Running status
+      await expect(clusterDetails.poolsList('machine').details(`${clusterName}-pool1-`, 1)).toContainText('Running');
+
       await clusterDetails.eventsTab().click();
       await expect(page).toHaveURL(/events/);
+
+      // Events list should be empty
+      await expect(clusterDetails.recentEventsList().emptyStateRow()).toBeVisible();
     });
 
     test('can create snapshot', async ({ page, login, rancherApi }) => {
@@ -211,8 +230,12 @@ test.describe(
 
       await clusterDetails.snapshotsList().clickOnSnapshotNow();
 
+      // Verify cluster state transitions after snapshot
       await clusterList.goTo();
       await clusterList.waitForPage();
+      await expect(clusterList.list().state(clusterName)).toContainText('Updating');
+      await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
+
       await clusterList.clusterLink(clusterName).click();
 
       await clusterDetails.snapshotsTab().click();
@@ -233,6 +256,8 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
+      const rowCountBefore = await clusterList.sortableTable().rowCount();
+
       try {
         const deleteMenu = await clusterList.list().actionMenu(clusterName);
 
@@ -241,9 +266,15 @@ test.describe(
         await promptRemove.remove();
 
         await clusterList.waitForPage();
+
+        // Verify cluster enters Removing state
+        await expect(clusterList.list().state(clusterName)).toContainText('Removing');
+
+        // Row disappears and count decreases
         await expect(clusterList.sortableTable().rowElementWithName(clusterName)).not.toBeAttached({
           timeout: PROVISIONING,
         });
+        await expect(clusterList.sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
       } finally {
         await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterName, false);
       }
