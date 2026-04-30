@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
+import BasicsRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 
 export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerCreatePagePo {
@@ -7,12 +8,16 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
     super(page, clusterId);
   }
 
+  basicsTab(): BasicsRke2 {
+    return new BasicsRke2(this.page);
+  }
+
   nameNsDescription(): NameNsDescriptionPo {
     return new NameNsDescriptionPo(this.page, ':scope', this.self());
   }
 
   azureEnvironmentSelect(): Locator {
-    return this.page.getByTestId('azure-environment');
+    return this.page.getByTestId('azure-cloud-credentials-environment');
   }
 
   azureDropdownOption(text: string): Locator {
@@ -20,35 +25,27 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
   }
 
   subscriptionIdInput(): Locator {
-    return this.page.getByTestId('subscriptionId');
+    return this.page.getByTestId('azure-cloud-credentials-subscription-id');
   }
 
   clientIdInput(): Locator {
-    return this.page.getByTestId('clientId');
+    return this.page.getByTestId('azure-cloud-credentials-client-id');
   }
 
   clientSecretInput(): Locator {
-    return this.page.getByTestId('clientSecret');
+    return this.page.getByTestId('azure-cloud-credentials-client-secret');
   }
 
   poolNameInput(): Locator {
-    return this.page.locator('[data-testid="pool-name-input"]');
+    return this.page.getByTestId('machine-pool-name-input');
   }
 
   poolQuantityInput(): Locator {
-    return this.page.locator('[data-testid="pool-quantity-input"]');
-  }
-
-  kubernetesVersionSelect(): Locator {
-    return this.page.locator('[data-testid="kubernetes-version-select"]');
-  }
-
-  kubernetesVersionOption(version: string): Locator {
-    return this.page.locator('.vs__dropdown-option').filter({ hasText: version });
+    return this.page.getByTestId('machine-pool-quantity-input');
   }
 
   errorBanner(): Locator {
-    return this.page.locator('.banner.banner-danger');
+    return this.page.getByTestId('error-banner0');
   }
 
   locationSelect(): Locator {

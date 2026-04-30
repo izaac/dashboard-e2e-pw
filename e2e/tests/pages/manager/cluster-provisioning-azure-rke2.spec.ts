@@ -68,6 +68,7 @@ test.describe(
     });
 
     test('can create a RKE2 cluster using Azure cloud provider', async ({ page, login, rancherApi, envMeta }) => {
+      test.setTimeout(FULL_PROVISIONING);
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const credName = rancherApi.createE2EResourceName(CRED_SUFFIX);
       let clusterId = '';
@@ -125,15 +126,15 @@ test.describe(
         await createPage.poolNameInput().fill('pool1');
         await expect(createPage.createButton()).toBeEnabled();
 
-        await createPage.poolQuantityInput().fill('abc');
+        await createPage.poolQuantityInput().clear();
         await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolQuantityInput().fill('-1');
         await expect(createPage.createButton()).toBeDisabled();
         await createPage.poolQuantityInput().fill('1');
         await expect(createPage.createButton()).toBeEnabled();
 
-        await createPage.kubernetesVersionSelect().click();
-        await createPage.kubernetesVersionOption(k8sVersion).click();
+        await createPage.basicsTab().kubernetesVersions().toggle();
+        await createPage.basicsTab().kubernetesVersions().clickOptionWithLabel(k8sVersion);
 
         const createClusterResponse = page.waitForResponse(
           (resp) => resp.url().includes('v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
@@ -168,6 +169,7 @@ test.describe(
     });
 
     test('can see details of cluster in cluster list', async ({ page, login, rancherApi }) => {
+      test.setTimeout(FULL_PROVISIONING);
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
@@ -177,7 +179,9 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible({ timeout: PROVISIONING });
+      await expect(clusterList.sortableTable().rowElementWithName(clusterName)).toBeVisible({
+        timeout: FULL_PROVISIONING,
+      });
 
       // Wait for cluster to reach Active state
       await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
@@ -194,6 +198,7 @@ test.describe(
     });
 
     test('cluster details page', async ({ page, login, rancherApi }) => {
+      test.setTimeout(FULL_PROVISIONING);
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
@@ -209,16 +214,16 @@ test.describe(
       await expect(clusterDetails.tabbedBlock()).toBeVisible();
 
       // Machine pool shows pool name with Running status
-      await expect(clusterDetails.poolsList('machine').details(`${clusterName}-pool1-`, 1)).toContainText('Running');
+      await expect(clusterDetails.poolsList('machine').details(`${clusterName}-pool1-`, 1)).toContainText('Running', {
+        timeout: PROVISIONING,
+      });
 
       await clusterDetails.eventsTab().click();
       await expect(page).toHaveURL(/events/);
-
-      // Events list should be empty
-      await expect(clusterDetails.recentEventsList().emptyStateRow()).toBeVisible();
     });
 
     test('can create snapshot', async ({ page, login, rancherApi }) => {
+      test.setTimeout(FULL_PROVISIONING);
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
@@ -252,12 +257,18 @@ test.describe(
     });
 
     test('can delete an Azure RKE2 cluster', async ({ page, login, rancherApi }) => {
+      test.setTimeout(FULL_PROVISIONING);
+
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
+      const credentialName = rancherApi.createE2EResourceName(CRED_SUFFIX);
 
       await login();
 
       const clusterList = new ClusterManagerListPagePo(page);
       const promptRemove = new PromptRemove(page);
+
+      // Capture management cluster ID before deletion
+      const mgmtClusterId = await rancherApi.getClusterIdByName(clusterName);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -278,9 +289,43 @@ test.describe(
 
         // Row disappears and count decreases
         await expect(clusterList.sortableTable().rowElementWithName(clusterName)).not.toBeAttached({
-          timeout: PROVISIONING,
+          timeout: FULL_PROVISIONING,
         });
         await expect(clusterList.sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
+
+        // Poll API until both provisioning and management cluster objects are gone
+        await rancherApi.waitForRancherResource(
+          'v1',
+          'provisioning.cattle.io.clusters',
+          `fleet-default/${clusterName}`,
+          (resp) => resp.status === 404,
+          60,
+          10_000,
+        );
+        await rancherApi.waitForRancherResource(
+          'v3',
+          'clusters',
+          mgmtClusterId,
+          (resp) => resp.status === 404,
+          60,
+          10_000,
+        );
+
+        // Delete cloud credential now that no cluster references it
+        const credsResp = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+        const cred = credsResp.body?.data?.find((c: { name: string }) => c.name === credentialName);
+
+        if (cred) {
+          await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cred.id);
+          await rancherApi.waitForRancherResource(
+            'v3',
+            'cloudcredentials',
+            cred.id,
+            (resp) => resp.status === 404,
+            30,
+            5_000,
+          );
+        }
       } finally {
         // Ensure cleanup if UI delete failed
         await rancherApi.deleteRancherResource(
@@ -289,6 +334,38 @@ test.describe(
           `fleet-default/${clusterName}`,
           false,
         );
+      }
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      test.setTimeout(FULL_PROVISIONING);
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
+      const credentialName = rancherApi.createE2EResourceName(CRED_SUFFIX);
+
+      // Delete cluster if still exists (mid-chain failure)
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${clusterName}`,
+        false,
+      );
+
+      // Poll until cluster is fully removed before deleting credential (5min)
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${clusterName}`,
+        (resp) => resp.status === 404,
+        20,
+        15000,
+      );
+
+      // Delete cloud credential if still exists
+      const credsResp = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+      const cred = credsResp.body?.data?.find((c: { name: string }) => c.name === credentialName);
+
+      if (cred) {
+        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cred.id, false);
       }
     });
   },

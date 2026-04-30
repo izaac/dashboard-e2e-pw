@@ -5,7 +5,7 @@
 ### Tests missing or empty stubs
 
 - [ ] `prime.spec.ts` — auth page link test (needs AuthProviderPo)
-- [ ] `aks-cluster-provisioning.spec.ts` — ~46 missing default value assertions
+- [ ] `aks-cluster-provisioning.spec.ts` — ~46 missing default value assertions (AKS creds needed for live validation)
 
 ### Systemic patterns
 
@@ -15,11 +15,11 @@
 
 ### AWS credentials (`awsAccessKey` / `awsSecretKey`)
 
-- [ ] `cluster-provisioning-amazon-ec2-rke2.spec.ts` — 8 tests (full provision lifecycle)
+- [x] `cluster-provisioning-amazon-ec2-rke2.spec.ts` — 8 tests (full provision lifecycle) — create passes, full chain needs live re-run
 
 ### Azure credentials (`azureSubscriptionId` / `azureClientId` / `azureClientSecret`)
 
-- [ ] `cluster-provisioning-azure-rke2.spec.ts` — full spec skipped
+- [x] `cluster-provisioning-azure-rke2.spec.ts` — PO testids fixed, invalid creds + create + list details + details page pass; snapshot/delete need live re-run
 
 ### Provisioning infrastructure (custom nodes, downstream clusters)
 

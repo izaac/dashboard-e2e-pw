@@ -69,7 +69,7 @@ export default class ClusterManagerCreatePagePo extends PagePo {
   }
 
   loadingIndicator(): Locator {
-    return this.page.locator('.loading-indicator');
+    return this.page.locator('.loading-indicator').first();
   }
 
   gridProviderByName(name: string): Locator {

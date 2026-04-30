@@ -44,7 +44,7 @@ export default class CloudCredentialsCreateEditPo extends PagePo {
   }
 
   defaultRegion(): LabeledSelectPo {
-    return new LabeledSelectPo(this.page, '.vs__dropdown-toggle', this.self());
+    return new LabeledSelectPo(this.page, '.v-select', this.self());
   }
 
   saveCreateForm(): ResourceDetailPo {

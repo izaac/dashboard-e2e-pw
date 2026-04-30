@@ -35,6 +35,7 @@ test.describe(
 
     test('can create an RKE2 cluster using Amazon cloud provider', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
@@ -150,6 +151,7 @@ test.describe(
 
     test('can see details of cluster in cluster list', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
@@ -196,6 +198,7 @@ test.describe(
 
     test('can scale up a machine pool', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
@@ -241,6 +244,7 @@ test.describe(
 
     test('can scale down a machine pool', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
@@ -317,6 +321,7 @@ test.describe(
 
     test('can upgrade Kubernetes version', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
@@ -364,6 +369,7 @@ test.describe(
 
     test('can create snapshot', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
@@ -396,11 +402,16 @@ test.describe(
 
     test('can delete an Amazon EC2 RKE2 cluster', async ({ login, page, rancherApi, envMeta }) => {
       test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+      test.setTimeout(FULL_PROVISIONING);
 
       await login();
 
       const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
+      const credentialName = rancherApi.createE2EResourceName(CRED_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
+
+      // Capture management cluster ID before deletion (needed to poll v3 API)
+      const mgmtClusterId = await rancherApi.getClusterIdByName(clusterName);
 
       await clusterList.goTo();
       await clusterList.waitForPage();
@@ -419,11 +430,45 @@ test.describe(
       await clusterList.waitForPage();
       await expect(clusterList.list().state(clusterName)).toContainText('Removing');
       await expect(clusterList.list().resourceTable().sortableTable().rowElements()).toHaveCount(initialRowCount - 1, {
-        timeout: EXTRA_LONG,
+        timeout: FULL_PROVISIONING,
       });
       await expect(clusterList.list().resourceTable().sortableTable().rowWithName(clusterName).self()).not.toBeAttached(
-        { timeout: EXTRA_LONG },
+        { timeout: FULL_PROVISIONING },
       );
+
+      // Poll API until both provisioning and management cluster objects are gone
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${clusterName}`,
+        (resp) => resp.status === 404,
+        60,
+        10_000,
+      );
+      await rancherApi.waitForRancherResource(
+        'v3',
+        'clusters',
+        mgmtClusterId,
+        (resp) => resp.status === 404,
+        60,
+        10_000,
+      );
+
+      // Delete cloud credential now that no cluster references it
+      const credsResp = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+      const cred = credsResp.body?.data?.find((c: { name: string }) => c.name === credentialName);
+
+      if (cred) {
+        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cred.id);
+        await rancherApi.waitForRancherResource(
+          'v3',
+          'cloudcredentials',
+          cred.id,
+          (resp) => resp.status === 404,
+          30,
+          5_000,
+        );
+      }
     });
 
     test('validates cluster networking configuration when machines are using dual-stack networking', async ({
@@ -669,6 +714,38 @@ test.describe(
 
       await createRKE2ClusterPage.create();
       await clusterCreatePromise;
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      test.setTimeout(FULL_PROVISIONING);
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
+      const credentialName = rancherApi.createE2EResourceName(CRED_SUFFIX);
+
+      // Delete cluster if still exists (mid-chain failure)
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${clusterName}`,
+        false,
+      );
+
+      // Poll until cluster is fully removed before deleting credential (5min)
+      await rancherApi.waitForRancherResource(
+        'v1',
+        'provisioning.cattle.io.clusters',
+        `fleet-default/${clusterName}`,
+        (resp) => resp.status === 404,
+        20,
+        15000,
+      );
+
+      // Delete cloud credential if still exists
+      const credsResp = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+      const cred = credsResp.body?.data?.find((c: { name: string }) => c.name === credentialName);
+
+      if (cred) {
+        await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cred.id, false);
+      }
     });
   },
 );
