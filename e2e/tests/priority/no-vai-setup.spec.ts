@@ -1,14 +1,14 @@
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
-
-const RESTART_TIMEOUT = 120000;
+import { EXTENSION_OPS } from '@/support/timeouts';
 
 // Vai ('ui-sql-cache') is now on by default. This sets up the `noVai` test suite by disabling it.
 
 test.describe('Disable Vai', { tag: ['@noVai', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-  test('Disable Feature Flag', async ({ page, login, rancherApi }) => {
+  test('Disable Feature Flag', async ({ page, login, rancherApi }, testInfo) => {
+    testInfo.setTimeout(EXTENSION_OPS);
     const key = 'ui-sql-cache';
 
     await login();
@@ -44,9 +44,8 @@ test.describe('Disable Vai', { tag: ['@noVai', '@adminUser'] }, () => {
     // This causes Rancher to restart
     await rancherApi.setRancherResource('v1', 'management.cattle.io.features', key, resource);
 
-    // Wait for Rancher to restart
-    // This is HORRIBLE, but churned on a better way (see original Cypress test for reasoning)
-    await page.waitForTimeout(RESTART_TIMEOUT);
+    // Poll until Rancher is healthy again after restart (up to 150s)
+    await rancherApi.waitForHealthy(30, 5_000);
 
     await featureFlagsPage.goToAndWait();
 

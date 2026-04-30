@@ -337,7 +337,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await nsLink.getByRole('link', { name: 'fleet-local' }).click();
 
       // Upstream expects navigation to a namespace page with Resources tab
-      await page.waitForURL(/fleet-local/, { timeout: 15000 });
+      await page.waitForURL(/fleet-local/, SHORT_TIMEOUT_OPT);
     });
   });
 
