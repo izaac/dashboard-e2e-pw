@@ -1,0 +1,46 @@
+# Rancher Dashboard Playwright E2E — Codex/DeepSeek warm cache
+# Injected at session start. Keep under 50 lines. No Claude-specific stuff here.
+
+## Communication
+Short words. No jargon. Under 3 sentences for updates. Act, don't narrate. Save tokens.
+
+## Stack
+Playwright 1.52, TypeScript 5.8, Node >=22, yarn 1.22, Vue (Rancher Dashboard)
+Upstream Cypress: ../dashboard/cypress/
+
+## Architecture
+ComponentPo (base, has .self .testId) -> PagePo (adds .goTo .waitForPage) -> domain POs
+196 POs in e2e/po/. Use e2e/po/INDEX.md to find them — never grep/find manually.
+Specs: 126 files, ~699 tests. Sequential only: workers=1, single shared Rancher.
+
+## Key files
+- PO index: e2e/po/INDEX.md (auto-regen on commit)
+- Gap map: docs/ASSERTION-GAP-MAP.md (yarn gap-map)
+- Parallelism map: docs/PARALLELISM.md (CI lane splitting, NOT worker parallelism)
+- Upstream divergences: docs/UPSTREAM-DIVERGENCES.md
+- Fixtures: support/fixtures/index.ts (login, rancherApi, chartGuard, envMeta)
+- API helper: support/fixtures/rancher-api.ts
+- Timeouts: support/timeouts.ts (single source — bare constants + timeoutOpt() + pre-built opts)
+- Auth setup: e2e/tests/auth.setup.ts -> .auth/admin-{port}.json
+
+## On test failure — MANDATORY workflow
+1. yarn summarize-failures (read test-results/FAILURE-SUMMARY.md)
+2. NEVER read raw trace/screenshot before the summary
+
+## Conversion patterns (Cypress -> Playwright)
+cy.get('[data-testid="x"]') -> page.getByTestId('x')
+.should('be.visible') -> await expect(loc).toBeVisible()
+cy.intercept().as('x') -> const p = page.waitForResponse(url); action; await p
+cy.visit('/p') -> PO.goTo() or page.goto('./p') (dots matter; baseURL has /dashboard/)
+Cypress.env('x') -> envMeta.x
+
+## Known Vue gotchas
+- RulePath.vue: 500ms debounce on emit -> call waitFor*Debounce() before save()
+- setup.vue :value binding overwrites fill() -> intercept API route instead
+- Extensions page: updateAddReposSetting TypeError on store resync -> use banner button
+- Checkbox v-model race: verify with isChecked() then explicit click+assert
+
+## Reasoning effort
+low: PO updates, selector fixes, spec conversion (mechanical)
+medium: New spec, fixture changes
+high: Architecture review, failure root-cause, debounce/Vue debugging
