@@ -153,7 +153,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
     }
   });
 
-  test('setup a user account that will be blocked', async ({ page, login, rancherApi, envMeta }) => {
+  test('setup a user account that will be blocked', async ({ login, rancherApi, envMeta }) => {
     const runTimestamp = Date.now();
     const usernameBlock = `user_to_block_${runTimestamp}`;
     const userPassword = envMeta.password;

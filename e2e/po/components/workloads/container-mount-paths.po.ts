@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import ButtonDropdownPo from '@/e2e/po/components/button-dropdown.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';

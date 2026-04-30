@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class PasswordPo extends ComponentPo {

@@ -430,7 +430,7 @@ test.describe('Banners', () => {
         await expect(bannersPage.fixedBanner()).not.toBeAttached();
       });
 
-      test('can show HTML banner in the login confirmation dialog', async ({ page, login, envMeta }) => {
+      test('can show HTML banner in the login confirmation dialog', async ({ page, envMeta }) => {
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
 

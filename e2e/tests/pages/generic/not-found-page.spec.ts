@@ -2,7 +2,6 @@ import { test, expect } from '@/support/fixtures';
 import NotFoundPagePo from '@/e2e/po/pages/not-found-page.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
-import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import PagePo from '@/e2e/po/pages/page.po';
 
@@ -85,7 +84,6 @@ test.describe('Not found page display', { tag: ['@generic', '@adminUser', '@stan
     const homePage = new HomePagePo(page);
     const notFoundPage = new NotFoundPagePo(page, '');
     const chartsPage = new ChartsPage(page);
-    const reposPage = new ChartRepositoriesPagePo(page, 'local', 'apps');
     const clustersPage = new ClusterManagerListPagePo(page, '_');
 
     await homePage.goTo();

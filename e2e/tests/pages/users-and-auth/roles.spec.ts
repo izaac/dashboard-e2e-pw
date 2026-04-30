@@ -652,7 +652,7 @@ rules:
 
       const roleName = `e2e-test-${Date.now()}-dl-cluster-yaml`;
 
-      const resp = await rancherApi.createRancherResource('v3', 'roletemplates', {
+      await rancherApi.createRancherResource('v3', 'roletemplates', {
         context: 'cluster',
         name: roleName,
         rules: [{ apiGroups: [''], resources: ['pods'], verbs: ['get', 'list'] }],

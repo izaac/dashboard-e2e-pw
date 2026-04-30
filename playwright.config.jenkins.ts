@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import baseConfig, { baseURL } from './playwright.config';
+import baseConfig from './playwright.config';
 
 /**
  * Qase integration

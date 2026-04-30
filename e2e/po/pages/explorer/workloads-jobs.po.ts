@@ -32,7 +32,7 @@ export class WorkLoadsJobDetailsPagePo extends PagePo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
   }
 
-  selectNamespaceOption(index: number): void {
+  selectNamespaceOption(_index: number): void {
     // Upstream pattern: toggle + clickOption by index
   }
 

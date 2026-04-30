@@ -1,6 +1,6 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
-import { DEBOUNCE, VERY_LONG, LONG } from '@/support/timeouts';
+import { DEBOUNCE, VERY_LONG } from '@/support/timeouts';
 
 // Unique auth file per Rancher instance — matches playwright.config.ts logic
 const authPort = (() => {

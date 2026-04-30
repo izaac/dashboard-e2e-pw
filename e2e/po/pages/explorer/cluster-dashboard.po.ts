@@ -99,8 +99,8 @@ export default class ClusterDashboardPagePo extends PagePo {
   }
 
   async goToAndConfirmNsValues(
-    cluster: string,
-    opts: {
+    _cluster: string,
+    _opts: {
       nsProject?: { values: string[] };
       all?: { is: boolean };
     },

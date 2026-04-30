@@ -6,7 +6,6 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import UiPluginsPagePo from '@/e2e/po/pages/explorer/uiplugins.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
-import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { EXTENDED, EXTRA_LONG, LONG, STANDARD, VERY_LONG } from '@/support/timeouts';
 
 const cluster = 'local';

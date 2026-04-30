@@ -157,7 +157,6 @@ test.describe('Settings', () => {
           // Navigate away and wait — modal should NOT reappear (session was resumed)
           await page.goto('./home', { waitUntil: 'domcontentloaded' });
 
-          // eslint-disable-next-line playwright/no-wait-for-timeout
           await page.waitForTimeout(STANDARD);
           await expect(modal).toBeHidden();
         } finally {
