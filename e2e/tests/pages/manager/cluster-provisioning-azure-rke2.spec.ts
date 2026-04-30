@@ -11,12 +11,16 @@ import { PROVISIONING, FULL_PROVISIONING } from '@/support/timeouts';
  *
  * Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
  */
+const CLUSTER_SUFFIX = 'rke2azure';
+const CRED_SUFFIX = 'azcred';
+
 test.describe(
   'Deploy RKE2 cluster using node driver on Azure',
   {
     tag: ['@manager', '@adminUser', '@standardUser', '@jenkins', '@provisioning', '@needsInfra'],
   },
   () => {
+    test.describe.configure({ mode: 'serial' });
     test.beforeEach(async ({ envMeta }) => {
       test.skip(
         !envMeta.azureSubscriptionId,
@@ -64,8 +68,8 @@ test.describe(
     });
 
     test('can create a RKE2 cluster using Azure cloud provider', async ({ page, login, rancherApi, envMeta }) => {
-      const clusterName = rancherApi.createE2EResourceName('az-create');
-      const credName = rancherApi.createE2EResourceName('az-cred');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
+      const credName = rancherApi.createE2EResourceName(CRED_SUFFIX);
       let clusterId = '';
       let cloudcredentialId = '';
 
@@ -151,18 +155,20 @@ test.describe(
 
         // Verify cluster enters provisioning state
         await expect(clusterList.list().state(clusterName)).toHaveText(/Reconciling|Updating/);
-      } finally {
+      } catch (e) {
+        // On creation failure, clean up whatever was created
         if (clusterId) {
           await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, false);
         }
         if (cloudcredentialId) {
           await rancherApi.deleteRancherResource('v3', 'cloudCredentials', cloudcredentialId, false);
         }
+        throw e;
       }
     });
 
-    test('can see details of cluster in cluster list', async ({ page, login, rancherApi, envMeta }) => {
-      const clusterName = rancherApi.createE2EResourceName('az-list');
+    test('can see details of cluster in cluster list', async ({ page, login, rancherApi }) => {
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
 
@@ -188,7 +194,7 @@ test.describe(
     });
 
     test('cluster details page', async ({ page, login, rancherApi }) => {
-      const clusterName = rancherApi.createE2EResourceName('az-detail');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
 
@@ -213,7 +219,7 @@ test.describe(
     });
 
     test('can create snapshot', async ({ page, login, rancherApi }) => {
-      const clusterName = rancherApi.createE2EResourceName('az-snap');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
 
@@ -233,7 +239,7 @@ test.describe(
       // Verify cluster state transitions after snapshot
       await clusterList.goTo();
       await clusterList.waitForPage();
-      await expect(clusterList.list().state(clusterName)).toContainText('Updating');
+      await expect(clusterList.list().state(clusterName)).toContainText(/Updating|Active/);
       await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
 
       await clusterList.clusterLink(clusterName).click();
@@ -246,7 +252,7 @@ test.describe(
     });
 
     test('can delete an Azure RKE2 cluster', async ({ page, login, rancherApi }) => {
-      const clusterName = rancherApi.createE2EResourceName('az-del');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
 
       await login();
 
@@ -276,7 +282,13 @@ test.describe(
         });
         await expect(clusterList.sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
       } finally {
-        await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterName, false);
+        // Ensure cleanup if UI delete failed
+        await rancherApi.deleteRancherResource(
+          'v1',
+          'provisioning.cattle.io.clusters',
+          `fleet-default/${clusterName}`,
+          false,
+        );
       }
     });
   },

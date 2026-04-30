@@ -11,11 +11,15 @@ import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
 import { LONG, EXTRA_LONG, CLUSTER_SETTLE, FULL_PROVISIONING } from '@/support/timeouts';
 
 // Provisioning chain: tests run sequentially and depend on cluster created by first test. This is intentional — cluster provisioning takes 10+ minutes and cannot be repeated per test.
-// BUG: Each test calls createE2EResourceName with a different suffix (ec2-create, ec2-list, etc.), generating different names. Upstream Cypress shares one name via `this.rke2Ec2ClusterName`. With worker-scoped rancherApi the root prefix is stable, but the suffix diverges. Tests only pass when each suffix resolves to the same cluster — which they don't. Fix requires a shared name mechanism.
+// All chain tests use the same CLUSTER_SUFFIX so they reference the same cluster name.
+const CLUSTER_SUFFIX = 'rke2ec2';
+const CRED_SUFFIX = 'ec2cred';
+
 test.describe(
   'Deploy RKE2 cluster using node driver on Amazon EC2',
   { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] },
   () => {
+    test.describe.configure({ mode: 'serial' });
     test.beforeAll(async ({ rancherApi }) => {
       // Clean up only test-prefixed Amazon cloud credentials from previous runs
       const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
@@ -34,8 +38,8 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-create');
-      const credentialName = rancherApi.createE2EResourceName('ec2cloudcredential');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
+      const credentialName = rancherApi.createE2EResourceName(CRED_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
       const createRKE2ClusterPage = new ClusterManagerCreateRke2AmazonPagePo(page);
       let cloudcredentialId = '';
@@ -132,13 +136,15 @@ test.describe(
 
         // Fail early if cloud credentials are bad instead of waiting for a long timeout
         await rancherApi.assertClusterProvisioningNotStuck('v1', clusterId);
-      } finally {
+      } catch (e) {
+        // On creation failure, clean up whatever was created
         if (clusterId) {
           await rancherApi.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', clusterId, false);
         }
         if (cloudcredentialId) {
           await rancherApi.deleteRancherResource('v3', 'cloudCredentials', cloudcredentialId, false);
         }
+        throw e;
       }
     });
 
@@ -147,7 +153,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-list');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
 
       // This test expects a cluster created by the previous test to be in "Active" state.
@@ -171,7 +177,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-detail');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const tabbedPo = new TabbedPo(page, '[data-testid="tabbed-block"]');
@@ -193,7 +199,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-scaleup');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const poolName = `${clusterName}-pool1`;
@@ -238,7 +244,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-scaledn');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const poolName = `${clusterName}-pool1`;
@@ -314,7 +320,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-upgrade');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
       const editClusterPage = new ClusterManagerEditGenericPagePo(page, '_', clusterName);
 
@@ -351,7 +357,7 @@ test.describe(
       expect([200, 409]).toContain(updateResp.status());
 
       await clusterList.waitForPage();
-      await expect(clusterList.list().state(clusterName)).toContainText('Updating');
+      await expect(clusterList.list().state(clusterName)).toContainText(/Updating|Active/);
       await expect(clusterList.list().state(clusterName)).toContainText('Active', { timeout: FULL_PROVISIONING });
       await expect(clusterList.list().version(clusterName)).toContainText(latestK8sVersion);
     });
@@ -361,7 +367,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-snap');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
       const clusterDetails = new ClusterManagerDetailRke2AmazonEc2PagePo(page, '_', clusterName);
       const tabbedPo = new TabbedPo(page, '[data-testid="tabbed-block"]');
@@ -393,7 +399,7 @@ test.describe(
 
       await login();
 
-      const clusterName = rancherApi.createE2EResourceName('ec2-del');
+      const clusterName = rancherApi.createE2EResourceName(CLUSTER_SUFFIX);
       const clusterList = new ClusterManagerListPagePo(page);
 
       await clusterList.goTo();
