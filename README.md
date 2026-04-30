@@ -7,7 +7,7 @@ Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/das
 ### Fastest path: Docker (no Node required)
 
 ```bash
-# Boots Rancher + runs a quick smoke test (~17 tests)
+# Boots Rancher + runs the generic smoke suite (~70 tests)
 GREP_TAGS="@generic" docker compose up
 ```
 
@@ -50,7 +50,7 @@ npx playwright test e2e/tests/pages/generic/login.spec.ts
 npx playwright test -g "Log in with valid"
 ```
 
-> **Tip:** Start with `GREP_TAGS="@generic" npx playwright test` for a fast smoke test before running the full suite.
+> **Tip:** Start with `GREP_TAGS="@generic" npx playwright test` for a smoke test (~70 tests) before running the full suite.
 
 ## Guides
 
