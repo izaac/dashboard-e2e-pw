@@ -458,10 +458,23 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
   });
 });
 
-test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
-  test.skip(true, 'Percy snapshot test');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('validating repositories page with percy', async () => {
-    // Upstream Percy snapshot test
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('repositories list page matches snapshot', async ({ page, login }) => {
+    await login();
+
+    const repositoriesPage = new ChartRepositoriesPagePo(page);
+
+    await repositoriesPage.goTo();
+    await repositoriesPage.waitForPage();
+    await repositoriesPage.sortableTable().checkLoadingIndicatorNotVisible();
+
+    // Mask the Age column — relative time ("3 minutes ago") drifts between runs
+    const ageColumn = repositoriesPage.sortableTable().self().locator('tbody tr td.col-age');
+
+    await expect(page).toHaveScreenshot('repositories-list.png', {
+      fullPage: true,
+      mask: [ageColumn],
+      animations: 'disabled',
+    });
   });
 });

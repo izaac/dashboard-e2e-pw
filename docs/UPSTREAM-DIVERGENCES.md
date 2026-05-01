@@ -18,6 +18,7 @@ handled differently.
 3. [Intercept / Response Timing](#3-intercept--response-timing)
 4. [Vue Debounce Handling](#4-vue-debounce-handling)
 5. [Vue v-model and fill()](#5-vue-v-model-and-fill)
+6. [Visual Snapshots (Percy → Playwright)](#6-visual-snapshots-percy--playwright)
 
 ---
 
@@ -181,6 +182,28 @@ old value — and that is what gets submitted.
 
 **Workaround:** When `fill()` doesn't stick, intercept the API request with `page.route()` and
 rewrite the payload in-flight. See `DEBUGGING-FAILURES.md` for detection patterns.
+
+---
+
+## 6. Visual Snapshots (Percy → Playwright)
+
+**Upstream (Cypress):** Visual regression uses `cy.percySnapshot()` from `@percy/cypress`.
+Baselines are stored in Percy's cloud, diffs are reviewed in the Percy web UI, and runs
+require a `PERCY_TOKEN` plus the Percy CLI in CI.
+
+**Our approach (Playwright):** Built-in `expect(page).toHaveScreenshot()`. Baselines live
+in the repo next to specs (`*-snapshots/`), diffs are local pixel comparisons via
+`pixelmatch`, and `--update-snapshots` regenerates baselines on intentional UI changes.
+No external service, no token, no separate CLI. Tagged `@visual` so they can be filtered
+in or out of normal runs.
+
+**Why diverge:** Percy adds cost and a cloud dependency we don't need at this stage.
+Playwright's built-in covers the same use case (rendering regressions) with `mask`,
+`maxDiffPixels`, and `threshold` to absorb anti-aliasing and timestamp churn. If we ever
+need cross-browser baseline review or PR-level visual diffs in a hosted UI, Percy can be
+re-added on top — the snapshot tests themselves stay valid.
+
+**Upstream pattern this replaces:** any `cy.percySnapshot('Page Name')` call.
 
 ---
 

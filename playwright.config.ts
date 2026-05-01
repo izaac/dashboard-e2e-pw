@@ -136,7 +136,21 @@ export default defineConfig({
 
   /* Timeouts */
   timeout: 60_000,
-  expect: { timeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000 },
+  expect: {
+    timeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000,
+    /* Visual snapshot defaults — anti-aliasing tolerance for rendering churn */
+    toHaveScreenshot: {
+      maxDiffPixels: 100,
+      threshold: 0.2,
+      animations: 'disabled',
+    },
+  },
+
+  /* Centralize visual baselines under snapshots/ at repo root instead of next
+   * to specs. Mirrors the spec path so a screenshot for
+   * e2e/tests/pages/manager/repositories.spec.ts ends up under
+   * snapshots/e2e/tests/pages/manager/repositories.spec.ts/. */
+  snapshotPathTemplate: 'snapshots/{testFilePath}/{arg}{ext}',
 
   /* Sequential execution — single shared Rancher instance */
   fullyParallel: false,
