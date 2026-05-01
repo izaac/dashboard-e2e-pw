@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
 import PodSecurityAdmissionsPagePo from '@/e2e/po/pages/cluster-manager/pod-security-admissions.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 import {
   createPayloadData,
   updatePayloadData,
@@ -250,9 +251,24 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
   });
 });
 
-test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test.skip('should display Pod Security Admissions list page', async () => {
-    // Percy snapshot test
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('Pod Security Admissions list page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const psaPage = new PodSecurityAdmissionsPagePo(page);
+
+      await psaPage.goTo();
+      await psaPage.waitForPage();
+      await psaPage.list().resourceTable().sortableTable().waitForReady();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'pod-security-admissions-list.png'), {
+        fullPage: true,
+        mask: [psaPage.list().resourceTable().sortableTable().ageColumn()],
+      });
+    } finally {
+      await restoreTheme();
+    }
   });
 });

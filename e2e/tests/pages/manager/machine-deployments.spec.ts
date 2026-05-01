@@ -4,6 +4,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machine-deployments.yml');
@@ -223,16 +224,29 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     await expect(mdPage.body()).not.toContainText(mdName);
   });
 
-  test.skip(true, 'Percy snapshot test');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('validating machine deployments page with percy', async () => {
-    // Upstream Percy snapshot test
-  });
-
   test.skip(true, 'Requires provisioned cluster with machine deployments');
   // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('can download YAML', async () => {
     // Upstream test downloads YAML file for a MachineDeployment
     // Needs actual provisioned cluster with machine deployment resources
+  });
+});
+
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('machine deployments page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const mdPage = new MachineDeploymentsPagePo(page);
+
+      await mdPage.goTo();
+      await mdPage.waitForPage();
+      await mdPage.list().resourceTable().sortableTable().waitForReady();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-deployments-list.png'), { fullPage: true });
+    } finally {
+      await restoreTheme();
+    }
   });
 });

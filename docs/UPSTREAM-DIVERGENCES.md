@@ -199,9 +199,22 @@ in or out of normal runs.
 
 **Why diverge:** Percy adds cost and a cloud dependency we don't need at this stage.
 Playwright's built-in covers the same use case (rendering regressions) with `mask`,
-`maxDiffPixels`, and `threshold` to absorb anti-aliasing and timestamp churn. If we ever
-need cross-browser baseline review or PR-level visual diffs in a hosted UI, Percy can be
-re-added on top — the snapshot tests themselves stay valid.
+`maxDiffPixelRatio`, and `threshold` to absorb anti-aliasing and timestamp churn. If we
+ever need cross-browser baseline review or PR-level visual diffs in a hosted UI, Percy
+can be re-added on top — the snapshot tests themselves stay valid.
+
+**Conventions for our visual tests** (`support/utils/visual-snapshot.ts`):
+
+- **Mode-keyed paths.** Prime and Community render different brand palettes, so a single
+  baseline can't match both. `visualSnapshot(isPrime, name)` produces a path-segment
+  array that lands the file under `prime/` or `community/` next to the spec.
+- **Theme pinned to light, then restored.** The user's stored theme can drift across
+  the suite (`preferences.spec.ts` cycles Light → Dark → Auto without reverting), so
+  visual tests pin `ui-light` and restore the previous value in a `finally` block.
+  Ensures the baseline is reproducible regardless of suite ordering.
+- **Wait for content, not just URL.** `waitForPage` only matches the URL — the
+  dashboard shell can still be showing its loading spinner. `SortableTablePo.waitForReady()`
+  waits for the table header so the screenshot captures real content, not the spinner.
 
 **Upstream pattern this replaces:** any `cy.percySnapshot('Page Name')` call.
 

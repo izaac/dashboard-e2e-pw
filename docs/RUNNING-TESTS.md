@@ -409,7 +409,39 @@ These are only needed if you're running tests tagged `@needsInfra`. Most people 
 
 ---
 
-## 7. Reading Test Results
+## 7. Visual snapshot tests
+
+Visual tests use Playwright's built-in `expect(page).toHaveScreenshot()` (no Percy).
+Baselines live under `snapshots/` at the repo root, mirroring the spec path.
+
+Tests are tagged `@visual`. They are excluded from the default `GREP_TAGS` filter so
+normal runs do not trigger pixel diffs. Run them explicitly:
+
+```bash
+GREP_TAGS="@visual+-@prime+-@noVai+-@needsInfra" docker compose run --rm tests
+```
+
+### Updating baselines
+
+After an intentional UI change, regenerate baselines with `--update-snapshots`:
+
+```bash
+GREP_TAGS="@visual+-@prime+-@noVai+-@needsInfra" \
+  docker compose run --rm tests sh -c "npx playwright test --update-snapshots"
+```
+
+Review the diff and commit the updated PNGs. Baselines are tied to the Rancher image
+the tests run against — bumping `RANCHER_IMAGE` will usually require regen.
+
+### Tolerance
+
+Global default in `playwright.config.ts`: `maxDiffPixels: 100`. Mask volatile content
+(e.g. timestamp columns) via PO helpers like `sortableTable().ageColumn()` rather
+than raising the global tolerance.
+
+---
+
+## 8. Reading Test Results
 
 After tests finish, results end up in two places:
 
@@ -442,7 +474,7 @@ failure types, and reproducing issues — see [Debugging Failures](DEBUGGING-FAI
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 ### "Rancher takes forever to start"
 

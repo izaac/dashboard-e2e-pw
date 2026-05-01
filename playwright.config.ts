@@ -138,12 +138,11 @@ export default defineConfig({
   timeout: 60_000,
   expect: {
     timeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000,
-    /* Visual snapshot defaults — anti-aliasing tolerance for rendering churn */
-    toHaveScreenshot: {
-      maxDiffPixels: 100,
-      threshold: 0.2,
-      animations: 'disabled',
-    },
+    /* Visual snapshot tolerance. threshold (0.2) and animations ('disabled')
+     * are already Playwright defaults. maxDiffPixelRatio scales with image
+     * size — 1% is generous enough to absorb anti-aliasing churn but tight
+     * enough to catch genuine UI regressions. */
+    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
   },
 
   /* Centralize visual baselines under snapshots/ at repo root instead of next

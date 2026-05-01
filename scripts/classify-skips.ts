@@ -46,7 +46,7 @@ function categorize(reason: string): string {
   if (/feature.*flag|env|flag.*not|requires.*flag|prime|no.*vai|harvester|vue3.*skip/.test(lower)) {
     return 'ENV';
   }
-  if (/percy|snapshot test/.test(lower)) {
+  if (/snapshot test|tohavescreenshot/.test(lower)) {
     return 'VISUAL';
   }
   if (/downstream|provisioned cluster|cluster.*machine|fleet.*multi|custom node/.test(lower)) {

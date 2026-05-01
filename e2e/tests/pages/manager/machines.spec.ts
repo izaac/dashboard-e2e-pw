@@ -3,6 +3,7 @@ import MachinesPagePo from '@/e2e/po/pages/cluster-manager/machines.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 import * as path from 'path';
 
 const nsName = 'default';
@@ -160,10 +161,23 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
     // Upstream test downloads YAML file for a Machine
     // Needs actual provisioned cluster with machine resources
   });
+});
 
-  test.skip(true, 'Percy snapshot test');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('should display machines list page', async () => {
-    // Upstream Percy snapshot test
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('machines list page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const machinesPage = new MachinesPagePo(page);
+
+      await machinesPage.goTo();
+      await machinesPage.waitForPage();
+      await machinesPage.list().resourceTable().sortableTable().waitForReady();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machines-list.png'), { fullPage: true });
+    } finally {
+      await restoreTheme();
+    }
   });
 });

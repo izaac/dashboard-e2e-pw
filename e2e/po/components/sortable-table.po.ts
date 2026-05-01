@@ -290,6 +290,25 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('thead tr th').nth(colIndex).locator(`.sort .icon-stack > i.icon-sort-${direction}`);
   }
 
+  /**
+   * Cells in the Age column. Useful as a mask target in visual snapshot
+   * tests — relative time ("3 minutes ago") drifts between runs.
+   */
+  ageColumn(): Locator {
+    return this.self().locator('tbody tr td.col-age');
+  }
+
+  /**
+   * Wait until the table itself has mounted (header row present), regardless
+   * of whether the body has rows or shows the empty state. Use before a
+   * visual snapshot — `checkLoadingIndicatorNotVisible` alone passes vacuously
+   * while the dashboard shell spinner is still covering the page.
+   */
+  async waitForReady(): Promise<void> {
+    await this.tableHeaderRow().waitFor({ state: 'visible' });
+    await this.checkLoadingIndicatorNotVisible();
+  }
+
   async deleteItemWithUI(name: string): Promise<void> {
     const actionMenu = await this.rowActionMenuOpen(name);
 

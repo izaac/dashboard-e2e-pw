@@ -10,14 +10,15 @@ import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-provide
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
  *
- * Tests that require feature flags, provisioning infrastructure (custom nodes,
- * imported clusters needing real cluster registration), or percy snapshots are
- * skipped with clear reasons. The remaining tests (hosted providers, credential
- * step mock, local cluster navigation) can run against any Rancher instance.
+ * Tests that require feature flags or provisioning infrastructure (custom nodes,
+ * imported clusters needing real cluster registration) are skipped with clear
+ * reasons. The remaining tests (hosted providers, credential step mock, local
+ * cluster navigation, visual snapshot) can run against any Rancher instance.
  */
 
 test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
@@ -622,10 +623,24 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
   });
 });
 
-test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
-  test.skip(true, 'Percy snapshot test');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('display cluster manager page', async () => {
-    // Upstream Percy snapshot test
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('cluster manager list page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const clusterList = new ClusterManagerListPagePo(page);
+
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await clusterList.sortableTable().waitForReady();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'cluster-manager-list.png'), {
+        fullPage: true,
+        mask: [clusterList.sortableTable().ageColumn()],
+      });
+    } finally {
+      await restoreTheme();
+    }
   });
 });

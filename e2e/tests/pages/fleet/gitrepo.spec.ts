@@ -5,10 +5,12 @@ import {
   FleetApplicationListPagePo,
   FleetGitRepoCreateEditPo,
   FleetGitRepoDetailsPo,
+  FleetGitRepoListPagePo,
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.application.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import { STANDARD } from '@/support/timeouts';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
  * Git Repo spec — converted from upstream fleet/gitrepo.spec.ts.
@@ -281,10 +283,28 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
     });
   });
 
-  test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
-    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-    test('should display continuous delivery page git repo', async () => {
-      test.skip(true, 'Percy visual testing — requires Percy CLI and token');
+  test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+    test('git repo list page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+      await login();
+      const restoreTheme = await ensureLightTheme(rancherApi);
+
+      try {
+        const gitRepoList = new FleetGitRepoListPagePo(page);
+
+        await gitRepoList.goTo();
+        await gitRepoList.waitForPage();
+        // TODO: Empty fleet continuous-delivery state renders a "Get Started"
+        // panel rather than a sortable table, and the standard PagePo masthead
+        // selectors don't match. Need to identify a stable wait anchor for
+        // this page specifically before we can trust the screenshot. Until
+        // then, networkidle is the pragmatic fallback for visual stability.
+        // eslint-disable-next-line playwright/no-networkidle -- visual snapshot needs all assets settled
+        await page.waitForLoadState('networkidle');
+
+        await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'gitrepo-list.png'), { fullPage: true });
+      } finally {
+        await restoreTheme();
+      }
     });
   });
 });

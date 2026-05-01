@@ -1,6 +1,6 @@
 # TODO
 
-## Empty stub tests (43 total)
+## Empty stub tests (35 total)
 
 Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-expect -- stub body never runs`. Implementation needed once blockers below are resolved.
 
@@ -8,16 +8,10 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] `cluster-manager.spec.ts` (11) — create/edit/copy/yaml/kubeconfig/download/delete on RKE2 custom + imported clusters; one display test
 - [ ] `fleet-clusters.spec.ts` (10) — list/details, bundle add/remove, pause/unpause, edit, download, workspace assign, delete
-- [ ] `machine-deployments.spec.ts` (2) — Percy validation + download YAML
-- [ ] `machine-sets.spec.ts` (2) — Percy empty-page validation + download YAML
-- [ ] `machines.spec.ts` (2) — Percy download YAML + machines list display
+- [ ] `machine-deployments.spec.ts` (1) — download YAML
+- [ ] `machine-sets.spec.ts` (1) — download YAML
+- [ ] `machines.spec.ts` (1) — download YAML
 - [ ] `gitrepo.spec.ts` (1) — `Can create a GitRepo` (needs real fleet multi-cluster)
-
-### Need Percy CLI + token (visual testing)
-
-- [ ] `gitrepo.spec.ts` (1) — continuous delivery page snapshot
-- [ ] `repositories.spec.ts` (1) — repositories page snapshot
-- [ ] `cluster-manager.spec.ts` (1) — display cluster manager page snapshot (counted in 11 above)
 
 ### Need third-party auth provider
 

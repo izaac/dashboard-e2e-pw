@@ -4,6 +4,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machine-sets.yml');
@@ -212,16 +213,29 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
     await expect(machineSetsPage.body()).not.toContainText(machineSetName);
   });
 
-  test.skip(true, 'Percy snapshot test');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('validating empty machine sets page with percy', async () => {
-    // Upstream Percy snapshot test
-  });
-
   test.skip(true, 'Requires provisioned cluster with machine sets');
   // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('can download YAML', async () => {
     // Upstream test downloads YAML file for a MachineSet
     // Needs actual provisioned cluster with machine set resources
+  });
+});
+
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('empty machine sets page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const machineSetsPage = new MachineSetsPagePo(page);
+
+      await machineSetsPage.goTo();
+      await machineSetsPage.waitForPage();
+      await machineSetsPage.list().resourceTable().sortableTable().waitForReady();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-sets-list.png'), { fullPage: true });
+    } finally {
+      await restoreTheme();
+    }
   });
 });

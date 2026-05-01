@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { EXTRA_LONG, VERY_LONG } from '@/support/timeouts';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const gitRepoUrl = 'https://github.com/rancher/charts';
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
@@ -459,22 +460,23 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 });
 
 test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
-  test('repositories list page matches snapshot', async ({ page, login }) => {
+  test('repositories list page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
     await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
 
-    const repositoriesPage = new ChartRepositoriesPagePo(page);
+    try {
+      const repositoriesPage = new ChartRepositoriesPagePo(page);
 
-    await repositoriesPage.goTo();
-    await repositoriesPage.waitForPage();
-    await repositoriesPage.sortableTable().checkLoadingIndicatorNotVisible();
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
+      await repositoriesPage.sortableTable().waitForReady();
 
-    // Mask the Age column — relative time ("3 minutes ago") drifts between runs
-    const ageColumn = repositoriesPage.sortableTable().self().locator('tbody tr td.col-age');
-
-    await expect(page).toHaveScreenshot('repositories-list.png', {
-      fullPage: true,
-      mask: [ageColumn],
-      animations: 'disabled',
-    });
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'repositories-list.png'), {
+        fullPage: true,
+        mask: [repositoriesPage.sortableTable().ageColumn()],
+      });
+    } finally {
+      await restoreTheme();
+    }
   });
 });
