@@ -1,6 +1,22 @@
 # TODO
 
-## Empty stub tests (35 total)
+## Gap-map false positives (covered, just renamed)
+
+`docs/ASSERTION-GAP-MAP.md` matches by exact upstream test name. The following
+upstream tests appear under "Missing" but are actually covered with different
+names — leave them off the work queue:
+
+- `validating repositories page with percy` → ported as `repositories list page matches snapshot` (visual)
+- `should display cluster manager page` → ported as `cluster manager list page matches snapshot` (visual)
+- `validating machine deployments page with percy` → ported as `machine deployments page matches snapshot` (visual)
+- `validating empty machine sets page with percy` → ported as `empty machine sets page matches snapshot` (visual)
+- `should display machines list page` → ported as `machines list page matches snapshot` (visual)
+- `should display kontainer drivers list page` → ported as `kontainer drivers list page matches snapshot` (visual)
+- `should display continuous delivery page git repo` → ported as `git repo list page matches snapshot` (visual)
+- `Validate home page with percy` → ported as `home page matches snapshot` (visual)
+- `should create a new pod` / `…folder` / `…validate folder name` / `…delete folder` (4 tests in `websockets/connection.spec.ts`) → consolidated into the single end-to-end test `should create a pod and manage folders via WebSocket exec`
+
+## Empty stub tests (24 total)
 
 Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-expect -- stub body never runs`. Implementation needed once blockers below are resolved.
 
@@ -25,9 +41,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] `jwt-authentication.spec.ts` (2) — bulk enable/disable JWT (websocket bug, `test.fixme`)
 - [ ] `agent-configuration-rke2.spec.ts` (1) — placeholder, Vue3 skip upstream
-- [ ] `kontainer-drivers.spec.ts` (1) — kontainer drivers list page (upstream rancher/dashboard#10275)
 - [ ] `node-drivers.spec.ts` (1) — placeholder (upstream rancher/dashboard#10275)
-- [ ] `pod-security-admissions.spec.ts` (1) — PSA list page display
 - [ ] `pod-security-policy-templates.spec.ts` (1) — placeholder (upstream rancher/dashboard#10187)
 
 ### Plain placeholders (no blocker, just unimplemented)
@@ -35,9 +49,24 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] `v2-monitoring.spec.ts` (1) — file-must-have-a-test placeholder
 - [x] `cluster-dashboard.spec.ts` — fleet controller hidden for standard user
 - [ ] `project-namespace.spec.ts` (1) — most-recent error in multi-error form
-- [ ] `secrets.spec.ts` (1) — project-scoped secret list display
 - [ ] `prime.spec.ts` (1) — prime doc link from i18n (needs AuthProviderPo)
 - [x] `cloud-credential.spec.ts` — empty cloud credential creation page
+
+### Visual snapshots (Percy → Playwright `toHaveScreenshot`, ported and live)
+
+- [x] `repositories.spec.ts` — repositories list page
+- [x] `cluster-manager.spec.ts` — cluster manager list page
+- [x] `machine-deployments.spec.ts` — machine deployments list page
+- [x] `machine-sets.spec.ts` — empty machine sets list page
+- [x] `machines.spec.ts` — machines list page
+- [x] `pod-security-admissions.spec.ts` — Pod Security Admissions list page
+- [x] `kontainer-drivers.spec.ts` — kontainer drivers list page
+- [x] `gitrepo.spec.ts` — git repo / continuous delivery list page
+- [x] `home.spec.ts` — home page
+
+### Form blocked by upstream bug
+
+- [ ] `project-secrets.spec.ts` — `creates a project-scoped secret` is `test.fixme`. Save stays disabled because v2.15-head projects no longer expose `status.backingNamespace` (read by `shell/edit/secret/index.vue`). Title test passes. See `DEBUGGING-FAILURES.md`.
 
 ## Assertion Parity Gaps
 

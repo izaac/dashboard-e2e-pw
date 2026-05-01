@@ -28,8 +28,4 @@ test.describe('Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
     await expect(secretsListPage.createButtonTitle()).toContainText('Create');
     await expect(secretsListPage.list().self()).toBeVisible();
   });
-
-  // https://github.com/rancher/dashboard/issues/14773
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test.skip('creates a project-scoped secret and displays it in the list', () => {});
 });
