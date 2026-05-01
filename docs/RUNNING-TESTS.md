@@ -201,7 +201,7 @@ The `+` is the separator between filter tokens. `-@tag` means exclude.
 | `@noVai`           | Tests requiring VAI disabled (ui-sql-cache off)       |
 | `@needsInfra`      | Needs cloud creds or external infrastructure          |
 | `@elemental`       | Elemental extension tests                             |
-| `@accessibility`   | Accessibility (axe-core) scans                        |
+| `@visual`          | Visual snapshot tests — excluded from default GREP    |
 
 ---
 
@@ -411,33 +411,42 @@ These are only needed if you're running tests tagged `@needsInfra`. Most people 
 
 ## 7. Visual snapshot tests
 
-Visual tests use Playwright's built-in `expect(page).toHaveScreenshot()` (no Percy).
-Baselines live under `snapshots/` at the repo root, mirroring the spec path.
+Visual tests use Playwright's built-in `expect(page).toHaveScreenshot()` and are
+tagged `@visual`. They are **excluded from the default `GREP_TAGS`** so normal runs
+don't pay the pixel-diff cost.
 
-Tests are tagged `@visual`. They are excluded from the default `GREP_TAGS` filter so
-normal runs do not trigger pixel diffs. Run them explicitly:
+Baselines live under `snapshots/` at the repo root, keyed by Prime vs Community
+edition (e.g. `snapshots/<spec-path>/community/<name>.png`).
+
+> **For the rationale (why no Percy) and the conventions** — Prime/Community keying,
+> theme pinning, content waits — see [UPSTREAM-DIVERGENCES.md §6](./UPSTREAM-DIVERGENCES.md#6-visual-snapshots-percy--playwright).
+>
+> **For how to add a new visual test**, see the "Visual snapshots" section in
+> [WRITING-TESTS.md](./WRITING-TESTS.md).
+
+### Run them
 
 ```bash
 GREP_TAGS="@visual+-@prime+-@noVai+-@needsInfra" docker compose run --rm tests
 ```
 
-### Updating baselines
+### Update baselines
 
-After an intentional UI change, regenerate baselines with `--update-snapshots`:
+After an intentional UI change:
 
 ```bash
 GREP_TAGS="@visual+-@prime+-@noVai+-@needsInfra" \
   docker compose run --rm tests sh -c "npx playwright test --update-snapshots"
 ```
 
-Review the diff and commit the updated PNGs. Baselines are tied to the Rancher image
-the tests run against — bumping `RANCHER_IMAGE` will usually require regen.
+Review the diff and commit the updated PNGs. Baselines are tied to the Rancher
+image — bumping `RANCHER_IMAGE` usually requires a regen.
 
 ### Tolerance
 
-Global default in `playwright.config.ts`: `maxDiffPixels: 100`. Mask volatile content
-(e.g. timestamp columns) via PO helpers like `sortableTable().ageColumn()` rather
-than raising the global tolerance.
+Global default in `playwright.config.ts`: `maxDiffPixelRatio: 0.01` (1%). Prefer
+masking volatile content (e.g. via `SortableTablePo.ageColumn()`) over raising the
+global ratio.
 
 ---
 

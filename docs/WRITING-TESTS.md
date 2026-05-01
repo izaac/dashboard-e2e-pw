@@ -14,8 +14,9 @@ you need — this guide covers the rest.
 5. [Writing a Test Step by Step](#5-writing-a-test-step-by-step)
 6. [Blueprints (Mock Data)](#6-blueprints-mock-data)
 7. [Common Patterns](#7-common-patterns)
-8. [Checklist Before You Commit](#8-checklist-before-you-commit)
-9. [Developer Tools](#9-developer-tools)
+8. [Visual Snapshots](#8-visual-snapshots)
+9. [Checklist Before You Commit](#9-checklist-before-you-commit)
+10. [Developer Tools](#10-developer-tools)
 
 ---
 
@@ -697,7 +698,91 @@ before saving.
 
 ---
 
-## 8. Checklist Before You Commit
+## 8. Visual Snapshots
+
+Visual tests use Playwright's built-in `expect(page).toHaveScreenshot()` — no Percy.
+Add one when you want to catch unintentional rendering regressions on a stable UI
+surface (list pages, settings forms, empty states). Don't use them as a substitute
+for behavioral assertions.
+
+### Anatomy of a visual test
+
+```typescript
+import { test, expect } from '@/support/fixtures';
+import RepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+
+test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }, () => {
+  test('repositories list page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const repositoriesPage = new RepositoriesPagePo(page);
+
+      await repositoriesPage.goTo();
+      await repositoriesPage.waitForPage();
+      await repositoriesPage.sortableTable().waitForReady();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'repositories-list.png'), {
+        fullPage: true,
+        mask: [repositoriesPage.sortableTable().ageColumn()],
+      });
+    } finally {
+      await restoreTheme();
+    }
+  });
+});
+```
+
+### What each piece does
+
+- **`@visual` tag** — keeps the test out of the default `GREP_TAGS` so normal runs
+  don't pay the pixel-diff cost.
+- **`ensureLightTheme(rancherApi)`** — pins the admin user to `ui-light` and returns a
+  `restoreTheme` function. Required because `preferences.spec.ts` cycles Light → Dark
+  → Auto without reverting; without the pin, suite ordering can break the baseline.
+  Always call `restoreTheme()` in `finally`.
+- **`waitForReady()`** — `waitForPage` only matches the URL. The dashboard shell can
+  still be showing its loading spinner. `SortableTablePo.waitForReady()` waits for
+  the table header so the screenshot captures real content. For pages without a
+  sortable table, use a page-specific anchor (`mastheadTitle()` or a known testid).
+- **`visualSnapshot(isPrime, name)`** — produces a path-segment array so the snapshot
+  lands under `snapshots/<spec>/{prime,community}/<name>.png`. Prime ships a
+  SUSE-themed brand palette, so the two editions need separate baselines.
+- **`mask: [...ageColumn()]`** — masks the volatile Age column so "3 minutes ago" vs
+  "4 minutes ago" doesn't fail the diff. Add a PO helper (like `ageColumn()`) for any
+  other volatile content rather than inlining a raw selector in the spec.
+- **`fullPage: true`** — captures the full scrollable page. Drop it for component-level
+  snapshots and use a locator (`expect(locator).toHaveScreenshot(...)`) instead.
+
+### Generating and committing the baseline
+
+First run with `--update-snapshots` to create the baseline:
+
+```bash
+GREP_TAGS="@visual+-@prime+-@noVai+-@needsInfra" \
+  docker compose run --rm tests sh -c "npx playwright test path/to/spec.ts --update-snapshots"
+```
+
+Open the generated PNG and confirm it shows the page you expected, **not** a loading
+spinner or an error state. Commit the PNG alongside the spec change.
+
+Run a second time without `--update-snapshots` to confirm stability before you push.
+
+### Tolerance
+
+Global default is `maxDiffPixelRatio: 0.01` (1%, set in `playwright.config.ts`). Prefer
+adding a mask helper to the relevant PO over loosening this — every fix that bumps the
+ratio makes future regressions easier to miss.
+
+> Operating notes (running, regenerating, GREP filter) live in
+> [RUNNING-TESTS.md §7](./RUNNING-TESTS.md#7-visual-snapshot-tests). Rationale and
+> conventions live in [UPSTREAM-DIVERGENCES.md §6](./UPSTREAM-DIVERGENCES.md#6-visual-snapshots-percy--playwright).
+
+---
+
+## 9. Checklist Before You Commit
 
 Run through this before pushing:
 
@@ -712,7 +797,7 @@ Run through this before pushing:
 
 ---
 
-## 9. Developer Tools
+## 10. Developer Tools
 
 These save time. Use them instead of doing things by hand.
 
