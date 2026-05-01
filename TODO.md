@@ -1,6 +1,6 @@
 # TODO
 
-## Empty stub tests (49 total)
+## Empty stub tests (45 total)
 
 Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-expect -- stub body never runs`. Implementation needed once blockers below are resolved.
 
@@ -35,10 +35,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] `node-drivers.spec.ts` (1) — placeholder (upstream rancher/dashboard#10275)
 - [ ] `pod-security-admissions.spec.ts` (1) — PSA list page display
 - [ ] `pod-security-policy-templates.spec.ts` (1) — placeholder (upstream rancher/dashboard#10187)
-
-### Need test-data setup (26+ users for pagination)
-
-- [ ] `users.spec.ts` (4) — pagination navigate / filter / sort / hidden when single page
 
 ### Plain placeholders (no blocker, just unimplemented)
 
