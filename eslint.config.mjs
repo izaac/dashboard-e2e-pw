@@ -126,4 +126,15 @@ export default [
       'no-console': 'off',
     },
   },
+  // Playwright configs, setup files, and fixtures — startup/diagnostic logs are intentional
+  {
+    files: [
+      'playwright.config*.ts',
+      'e2e/tests/*.setup.ts',
+      'support/fixtures/**/*.ts',
+    ],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 ];

@@ -58,11 +58,9 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
     // Dev builds (head/rc/alpha) point to generic "latest" pages;
     // stable releases include the exact version in the URL.
     // We assert the domain only — both patterns are valid.
-    if (isPrime) {
-      await expect(link).toHaveAttribute('href', expect.stringContaining('documentation.suse.com'));
-    } else {
-      await expect(link).toHaveAttribute('href', expect.stringContaining('github.com/rancher/rancher/releases'));
-    }
+    const expectedDomain = isPrime ? 'documentation.suse.com' : 'github.com/rancher/rancher/releases';
+
+    await expect(link).toHaveAttribute('href', expect.stringContaining(expectedDomain));
   });
 
   test.describe('Versions', () => {

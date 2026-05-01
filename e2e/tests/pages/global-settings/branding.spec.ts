@@ -455,13 +455,11 @@ test.describe('Branding', () => {
     await brandingPage.customFaviconCheckbox().set();
     await brandingPage.applyAndWait('ui-favicon', 200);
 
-    if (isPrime) {
-      const primeFaviconBase64 = fixtureBase64('global/favicons/prime-favicon.png');
+    const expectedFaviconHref: string | RegExp = isPrime
+      ? `data:image/png;base64,${fixtureBase64('global/favicons/prime-favicon.png')}`
+      : /\/favicon\.png/;
 
-      await expect(brandingPage.faviconLink()).toHaveAttribute('href', `data:image/png;base64,${primeFaviconBase64}`);
-    } else {
-      await expect(brandingPage.faviconLink()).toHaveAttribute('href', /\/favicon\.png/);
-    }
+    await expect(brandingPage.faviconLink()).toHaveAttribute('href', expectedFaviconHref);
   });
 
   test('Primary Color', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {

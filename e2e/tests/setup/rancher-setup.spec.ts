@@ -76,6 +76,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
       await rancherSetupLoginPage.bootstrapLogin(envMeta.bootstrapPassword!);
 
       // After login, SPA redirects to /auth/setup — API-agnostic (works with v1-public and v2.15+)
+      // eslint-disable-next-line playwright/no-conditional-expect -- redirect only occurs in needs-login state; expect is correct branch guard
       await expect(page).toHaveURL(/\/auth\/setup/, MEDIUM_TIMEOUT_OPT);
     }
 

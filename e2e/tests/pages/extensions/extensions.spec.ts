@@ -328,6 +328,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
 
       if (!(await partnersInput.isChecked())) {
         await extensionsPo.addReposModalPartnersCheckbox().click();
+        // eslint-disable-next-line playwright/no-conditional-expect -- verifies click effect only when checkbox was unchecked at runtime
         await expect(partnersInput).toBeChecked();
       }
 
