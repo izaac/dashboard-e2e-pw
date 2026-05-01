@@ -49,6 +49,11 @@ export default class BurgerMenuPo extends ComponentPo {
     return this.sideMenu().locator('.option').getByText(label);
   }
 
+  /** Get the menu item wrapper for highlight state checks */
+  menuItemWrapper(name: string): Locator {
+    return this.burgerMenuGetNavMenuByLabel(name).locator('..');
+  }
+
   /** Get cluster navigation item by label */
   burgerMenuGetNavClusterByLabel(label: string): Locator {
     return this.sideMenu().locator('.option .cluster-name').getByText(label);

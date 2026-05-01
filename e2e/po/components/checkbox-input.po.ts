@@ -23,6 +23,11 @@ export default class CheckboxInputPo extends ComponentPo {
     return this.self().locator('.checkbox-container');
   }
 
+  /** Locator for the checkbox custom element */
+  checkboxCustom(): Locator {
+    return this.input().locator('span.checkbox-custom');
+  }
+
   async isChecked(): Promise<void> {
     await expect(this.input().locator('span.checkbox-custom')).toHaveAttribute('aria-checked', 'true');
   }

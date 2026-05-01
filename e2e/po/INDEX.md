@@ -16,7 +16,7 @@
 | ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, isSelected |
 | CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
-| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, isChecked, isNotChecked, uncheck, if, hasAppropriateWidth, expect (+6) |
+| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, isChecked, isNotChecked, uncheck, if, hasAppropriateWidth (+7) |
 | CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled, checkVisible, checkNotVisible, checkExists, checkNotExists (+2) |
@@ -46,7 +46,7 @@
 | ResourceYamlPo | resource-yaml.po.ts | ComponentPo | `.resource-yaml` | super, body, footer, codeMirror, cancel, saveOrCreate |
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, createBasicAuth, createSSHAuth, createRKEAuth, waitForNotLoading |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+52) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+53) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, getTab, tabNames (+1) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
@@ -321,7 +321,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, burgerMenuNavClusterKeyComboIconCheckByLabel, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, checkIfClusterMenuLinkIsHighlighted (+31) |
+| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, burgerMenuNavClusterKeyComboIconCheckByLabel, burgerMenuGetNavMenuByLabel, menuItemWrapper, burgerMenuGetNavClusterByLabel (+32) |
 | ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+14) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |

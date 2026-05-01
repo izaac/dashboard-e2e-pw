@@ -292,6 +292,11 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('thead tr').locator('th').nth(index).locator('.sort');
   }
 
+  /** Locator for the sort direction icon on a column by index */
+  sortIcon(colIndex: number, direction: 'up' | 'down'): Locator {
+    return this.self().locator('thead tr th').nth(colIndex).locator(`.sort .icon-stack > i.icon-sort-${direction}`);
+  }
+
   async deleteItemWithUI(name: string): Promise<void> {
     const actionMenu = await this.rowActionMenuOpen(name);
 

@@ -31,3 +31,6 @@ export const EXTRA_LONG = 120_000;
 
 /** Provisioning wait — cluster create, cloud provisioning (5 min) */
 export const PROVISIONING = 300_000;
+
+/** 15s — API responses and navigation that may take slightly longer than default */
+export const SHORT_TIMEOUT_OPT = { timeout: EXTENDED };
