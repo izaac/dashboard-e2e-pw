@@ -1,7 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { ProjectSecretsListPagePo, ProjectSecretsCreateEditPo } from '@/e2e/po/pages/explorer/project-secrets.po';
 
-const projectScopedSecretName = 'e2e-project-scoped-secret-name';
 const username = 'test';
 
 test.describe('Project Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -12,6 +11,7 @@ test.describe('Project Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     await projectSecretsListPage.goTo();
     await projectSecretsListPage.waitForPage();
+    await projectSecretsListPage.list().resourceTable().sortableTable().waitForReady();
 
     await expect(projectSecretsListPage.title()).toContainText('Project Secrets');
     await expect(page).toHaveTitle(/Rancher.*-.*local.*-.*Project Secrets/);
@@ -24,6 +24,8 @@ test.describe('Project Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
     );
 
     await login();
+
+    const projectScopedSecretName = rancherApi.createE2EResourceName('project-secret');
 
     const projectsResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.projects');
     const defaultProject = projectsResp.body.data.find(
@@ -45,6 +47,7 @@ test.describe('Project Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
     try {
       await projectSecretsListPage.goTo();
       await projectSecretsListPage.waitForPage();
+      await projectSecretsListPage.list().resourceTable().sortableTable().waitForReady();
 
       await expect(projectSecretsListPage.createButton()).toContainText('Create');
       await projectSecretsListPage.createButton().click();
