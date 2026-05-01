@@ -321,44 +321,47 @@ Only needed on NixOS — other distros work with the stock image.
 | `RANCHER_IMAGE`    | `docker.io/rancher/rancher:head`     | Which Rancher Docker image to use                     |
 | `RANCHER_PASSWORD` | `password1234`                       | Bootstrap + test password (≥12 chars)                 |
 | `GREP_TAGS`        | *(empty)*                            | Tag filter (e.g. `@adminUser+-@prime`)                |
-| `HOST_UID`         | `1000`                               | UID for `chown` on test-results                       |
-| `HOST_GID`         | `100`                                | GID for `chown` on test-results                       |
+| `HOST_UID`         | `1000`                               | UID the tests container runs as (artifacts owned by host user) |
+| `HOST_GID`         | `100`                                | GID the tests container runs as                       |
 
 ---
 
 ## 5. Docker Gotchas
 
-### Stale images (most common issue)
+### Source is bind-mounted — no rebuild on edit
 
-Docker Compose caches build layers aggressively. After editing specs, POs, or blueprints,
-**you must delete the old images** or they will run old code:
+The `tests` service bind-mounts the repo into `/app`. Editing specs, POs, or blueprints
+takes effect on the next run with no `--build` step needed. Branch switches (e.g.
+`git checkout release-2.14`) also reflect immediately.
 
-```bash
-docker image rm dashboard-e2e-pw-tests
-docker compose up --build
-```
-
-`--build` alone is not enough — layer caching reuses the `COPY . .` step if the previous
-layer (yarn install) didn't change. Delete images or use `--no-cache`:
+The image still needs to be built once, and rebuilt when `package.json`/`yarn.lock` change
+(so the container's installed `node_modules` pick up new deps):
 
 ```bash
-docker compose build --no-cache tests
+docker compose build tests
 ```
+
+An anonymous volume on `/app/node_modules` keeps the container's installed deps separate
+from any host `node_modules` so the bind-mount doesn't shadow them.
 
 ### .dockerignore is critical
 
-Without `.dockerignore`, `COPY . .` sends `node_modules/` (500 MB+) into the build context,
-bloating images and slowing builds. The repo includes a `.dockerignore` that excludes
-`node_modules`, `test-results`, `playwright-report`, `.git`, and local config files.
+Without `.dockerignore`, the build context sends `node_modules/` (500 MB+) into the daemon,
+bloating builds. The repo includes a `.dockerignore` that excludes `node_modules`,
+`test-results`, `playwright-report`, `.git`, and local config files.
 
-### test-results owned by root
+### Artifact ownership
 
-Containers run as root, so `test-results/` files are root-owned on the host. The compose files
-include a `chown` step using `HOST_UID`/`HOST_GID`. If you still get permission errors:
+The tests container runs as `${HOST_UID}:${HOST_GID}` (defaults `1000:100`) so files
+written through the bind-mount — `test-results/`, `playwright-report/`, `.auth/` — are
+owned by the host user, not root. If your host user differs from the defaults, set them
+before running:
 
 ```bash
-HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm tests
 ```
+
+Or persist them in `.env`.
 
 ---
 

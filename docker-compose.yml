@@ -29,8 +29,16 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    command: ["sh", "-c", "npx playwright test --reporter=line; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results /app/playwright-report 2>/dev/null; exit $$rc"]
+    # Run as host user so files written via the bind-mount are owned by the host
+    # user, not root. HOST_UID/HOST_GID default to 1000:1000 (typical Linux user).
+    user: "${HOST_UID:-1000}:${HOST_GID:-100}"
+    command: ["sh", "-c", "npx playwright test --reporter=line"]
     volumes:
+      # Bind-mount source so branch switches are picked up without rebuilding.
+      # Anonymous volume on /app/node_modules keeps the image-installed deps
+      # (built via `RUN yarn install`) instead of shadowing with host's copy.
+      - .:/app
+      - /app/node_modules
       - ./test-results:/app/test-results
       - ./playwright-report:/app/playwright-report
 
