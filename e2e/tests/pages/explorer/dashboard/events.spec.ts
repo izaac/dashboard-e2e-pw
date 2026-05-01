@@ -9,6 +9,7 @@ const UNIQUE_NAME = 'aaaa-unique-test-event';
 
 test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('Dashboard Events Tab', () => {
+    // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
     test('full events link navigates to events list', async ({ page, login }) => {
       await login();
       const clusterDashboard = new ClusterDashboardPagePo(page, 'local');

@@ -7,6 +7,7 @@ test.describe(
     test.describe.configure({ mode: 'serial' });
     test.skip(true, 'All tests disabled upstream (Vue3 skip)');
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('placeholder', async () => {});
   },
 );

@@ -692,24 +692,28 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
   test.describe('List and Pagination', () => {
     test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('pagination is visible and user is able to navigate through users data', async () => {
       // Upstream test creates 26 users, sets rows-per-page to 10, validates pagination UI
       // Port when pagination infrastructure is ready
     });
 
     test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('filter users', async () => {
       // Upstream test filters by user ID and username
       // Port when pagination infrastructure is ready
     });
 
     test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('sorting changes the order of paginated users data', async () => {
       // Upstream test sorts by name column and validates order across pages
       // Port when pagination infrastructure is ready
     });
 
     test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('pagination is hidden', async () => {
       // Upstream test validates pagination UI hidden when user count < page size
       // Port when pagination infrastructure is ready

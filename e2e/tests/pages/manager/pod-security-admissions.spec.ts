@@ -251,6 +251,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
 });
 
 test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test.skip('should display Pod Security Admissions list page', async () => {
     // Percy snapshot test
   });

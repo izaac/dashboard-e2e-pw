@@ -4,6 +4,7 @@ import SupportPagePo from '@/e2e/po/pages/get-support.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 
 test.describe('Support Page', () => {
+  // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
   test('can navigate to Support page', { tag: ['@generic', '@adminUser'] }, async ({ page, login }) => {
     await login();
 

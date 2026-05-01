@@ -42,6 +42,14 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     );
     // Wait for the repo index to be downloaded before proceeding
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', EXTENSION_CLUSTER_REPO_NAME, 30);
+
+    const repoCheck = await rancherApi.getRancherResource(
+      'v1',
+      'catalog.cattle.io.clusterrepos',
+      EXTENSION_CLUSTER_REPO_NAME,
+    );
+
+    expect(repoCheck.status).toBe(200);
   });
 
   test('Should install an extension', async ({ page }) => {

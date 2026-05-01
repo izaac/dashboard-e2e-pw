@@ -18,6 +18,7 @@ metadata:
 __clone: true`;
 
 test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
+  // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
   test('can navigate to cluster dashboard', async ({ page, login }) => {
     await login();
 
@@ -94,6 +95,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     const header = new HeaderPo(page);
 
     await header.kubectlShell().openAndExecuteCommand('get no');
+    await expect(header.kubectlShell().self().getByTestId('wm-tab-close-button')).toBeVisible();
     await header.kubectlShell().closeTerminal();
   });
 
@@ -254,6 +256,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
   test.describe('Cluster dashboard with limited permissions', () => {
     test.skip(true, 'Requires creating standard user with specific project roles — complex setup skipped');
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('does not show fleet controller status for standard user', async () => {
       // requires std user creation and login
     });

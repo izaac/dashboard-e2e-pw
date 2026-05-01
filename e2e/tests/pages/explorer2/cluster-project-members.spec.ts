@@ -90,6 +90,7 @@ test.describe('Cluster Project and Members', { tag: ['@explorer2', '@adminUser']
     }
   });
 
+  // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
   test('Clicking cancel should return to Cluster and Project members', async ({ page, login }) => {
     await login();
     const homePage = new HomePagePo(page);

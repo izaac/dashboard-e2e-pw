@@ -27,6 +27,7 @@ const repoInfo = {
 };
 
 test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('Can create a GitRepo', async () => {
     test.skip(true, 'Requires downstream clusters — fake cluster intercepts need real fleet multi-cluster setup');
   });
@@ -271,6 +272,9 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().description().set(description);
         await gitRepoEditPage.resourceDetail().createEditView().nextPage();
         await gitRepoEditPage.resourceDetail().createEditView().save();
+
+        await listPage.waitForPage();
+        await expect(listPage.sortableTable().rowElementWithName(editRepoName)).toBeVisible();
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }
@@ -278,6 +282,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
   });
 
   test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('should display continuous delivery page git repo', async () => {
       test.skip(true, 'Percy visual testing — requires Percy CLI and token');
     });

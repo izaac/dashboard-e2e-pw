@@ -31,42 +31,52 @@ test.describe(
       test.skip(true, 'Requires downstream clusters — needs AWS-provisioned RKE2 cluster with fleet agent');
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('data is populated in fleet cluster list and detail view', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('check all tabs are available in the details view', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('adding git repo should add bundles on downstream cluster (deployments added)', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('can Pause', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('can Unpause', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('can Edit Config', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('can Download YAML', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('can assign cluster to different fleet workspaces', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2 + provisioningv2-fleet-workspace-back-population feature flag
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('removing git repo should remove bundles on downstream cluster (deployments removed)', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('cluster should be removed from fleet cluster list once deleted', async () => {
       // Requires: real downstream cluster provisioned via AWS RKE2
     });

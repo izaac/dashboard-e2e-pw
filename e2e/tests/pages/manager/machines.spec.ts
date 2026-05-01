@@ -155,12 +155,14 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
   });
 
   test.skip(true, 'Requires provisioned cluster with machines');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('can download YAML', async () => {
     // Upstream test downloads YAML file for a Machine
     // Needs actual provisioned cluster with machine resources
   });
 
   test.skip(true, 'Percy snapshot test');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('should display machines list page', async () => {
     // Upstream Percy snapshot test
   });

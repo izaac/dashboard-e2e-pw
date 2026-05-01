@@ -213,11 +213,13 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
   });
 
   test.skip(true, 'Percy snapshot test');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('validating empty machine sets page with percy', async () => {
     // Upstream Percy snapshot test
   });
 
   test.skip(true, 'Requires provisioned cluster with machine sets');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('can download YAML', async () => {
     // Upstream test downloads YAML file for a MachineSet
     // Needs actual provisioned cluster with machine set resources

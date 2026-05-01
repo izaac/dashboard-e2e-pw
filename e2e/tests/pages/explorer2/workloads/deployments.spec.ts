@@ -461,6 +461,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationNavigation()
     test('pagination is visible and user is able to navigate through deployments data', async ({ page, login }) => {
       await login();
       const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
@@ -472,6 +473,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await assertPaginationNavigation(table, 23);
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationSorting()
     test('sorting changes the order of paginated deployments data', async ({ page, login }) => {
       await login();
       const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
@@ -483,6 +485,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await assertPaginationSorting(table, bulkNames[0], 'e2e-');
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationFilter()
     test('filter deployments', async ({ page, login }) => {
       await login();
       const listPage = new WorkloadsDeploymentsListPagePo(page, 'local');
@@ -494,6 +497,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationHidden()
     test('pagination is hidden', async ({ page, login }) => {
       await login();
 

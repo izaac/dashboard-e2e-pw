@@ -236,6 +236,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     }
   });
 
+  // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
   test('Clicking on the tab header should navigate', async ({ page }) => {
     const productNavPo = new ProductNavPo(page);
     const group = productNavPo.groups().first(); // first group is 'Cluster'

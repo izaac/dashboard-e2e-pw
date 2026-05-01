@@ -290,6 +290,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
   // Upstream bug: websocket updates replace row objects mid-interaction, clearing
   // SortableTable checkboxes before the action button renders. Cypress is immune
   // because its command queue serialization adds enough implicit delay.
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('should be able to enable JWT Authentication in bulk', async ({ envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
     test.fixme(
@@ -298,6 +299,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
     );
   });
 
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('should be able to disable JWT Authentication in bulk', async ({ envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
     test.fixme(

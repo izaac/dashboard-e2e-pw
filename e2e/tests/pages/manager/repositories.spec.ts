@@ -460,6 +460,7 @@ test.describe('Repository Disable/Enable', { tag: ['@manager', '@adminUser'] }, 
 
 test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
   test.skip(true, 'Percy snapshot test');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('validating repositories page with percy', async () => {
     // Upstream Percy snapshot test
   });

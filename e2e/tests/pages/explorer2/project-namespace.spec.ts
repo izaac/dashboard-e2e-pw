@@ -139,6 +139,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await expect(cruResource.errorBanner()).toHaveCount(1);
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('displays the most recent error after resolving a single error in a form with multiple errors', async () => {
       test.skip(
         true,
@@ -283,6 +284,7 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
   });
 
   test.describe('Project creation with third-party auth', () => {
+    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
     test('sets the creator principal id annotation when creating a project and using third-party auth', async () => {
       test.skip(true, 'Requires third-party auth provider');
     });

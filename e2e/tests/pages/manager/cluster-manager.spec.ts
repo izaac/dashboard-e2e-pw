@@ -133,14 +133,17 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
   test.describe('Created', () => {
     test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning', '@needsInfra'] }, () => {
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can create new cluster', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (custom node SSH access)');
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can copy config to clipboard', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can edit cluster and see changes afterwards', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
       });
@@ -171,18 +174,22 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can view cluster YAML editor', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can download KubeConfig', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can download YAML', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can delete cluster', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
       });
@@ -191,6 +198,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
   test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning', '@needsInfra'] }, () => {
     test.describe('Generic', () => {
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can create new cluster', async () => {
         test.skip(
           true,
@@ -198,10 +206,12 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         );
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can edit imported cluster and see changes afterwards', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (imported cluster must exist)');
       });
 
+      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
       test('can delete cluster by bulk actions', async () => {
         test.skip(true, 'Requires feature flags and provisioning infrastructure (imported cluster must exist)');
       });
@@ -614,6 +624,7 @@ test.describe('Cluster Manager as standard user', { tag: ['@manager', '@standard
 
 test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
   test.skip(true, 'Percy snapshot test');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('display cluster manager page', async () => {
     // Upstream Percy snapshot test
   });

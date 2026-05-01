@@ -330,6 +330,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
 
 test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
   test.skip(true, 'Percy snapshot test');
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test('should display empty cloud credential creation page', async () => {
     // Upstream Percy snapshot test
   });

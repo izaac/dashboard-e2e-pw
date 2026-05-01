@@ -5,6 +5,7 @@ import DiagnosticsPagePo from '@/e2e/po/pages/diagnostics.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 
 test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }, () => {
+  // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
   test('can navigate to About page', async ({ page, login }) => {
     await login();
 
@@ -30,6 +31,7 @@ test.describe('About Page', { tag: ['@generic', '@adminUser', '@standardUser'] }
     await expect(aboutPage.rancherPrimeInfo()).not.toBeAttached();
   });
 
+  // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
   test('can navigate to Diagnostics page', async ({ page, login }) => {
     await login();
 

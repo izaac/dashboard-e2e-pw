@@ -38,6 +38,7 @@ test.describe('Prime Extension', { tag: ['@prime', '@generic', '@adminUser'] }, 
   });
 
   // Skip auth provider test — AuthProviderPo and AzureadPo not yet converted
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test.skip('should have prime doc link in a page that renders a doc link from i18n', async () => {
     // Requires AuthProviderPo and AzureadPo POs which are not yet available
   });

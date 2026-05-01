@@ -462,6 +462,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     }
   });
 
+  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
   test.skip('should display kontainer drivers list page', async () => {
     // Percy snapshot test
   });

@@ -431,6 +431,7 @@ test.describe('Home Page', () => {
       await expect(homePage.bannerGraphic()).toBeAttached();
     });
 
+    // eslint-disable-next-line playwright/expect-expect -- assertion via waitForPage()
     test('Can navigate to Home page via burger menu', async ({ page, login }) => {
       await login();
 

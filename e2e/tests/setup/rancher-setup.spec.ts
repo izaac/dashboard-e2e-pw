@@ -189,7 +189,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
       test.skip(true, 'Standard user already exists');
     }
 
-    await rancherApi.createUser(
+    const createResp = await rancherApi.createUser(
       {
         username: 'standard_user',
         globalRole: { role: 'user' },
@@ -202,6 +202,8 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
       },
       { createNameOptions: { onlyContext: true } },
     );
+
+    expect(createResp.body?.id).toBeTruthy();
   });
 
   // ── Upstream parity checks — run after critical path, skip when already bootstrapped ──

@@ -178,6 +178,7 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
         { createNameOptions: { onlyContext: true } },
       );
 
+      expect(userResp.body.id).toBeTruthy();
       userIds.push(userResp.body.id);
 
       // Login as the test user to activate retention tracking
