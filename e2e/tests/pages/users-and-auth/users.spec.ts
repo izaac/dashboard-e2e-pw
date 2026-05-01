@@ -3,7 +3,8 @@ import type { RancherApi } from '@/support/fixtures/rancher-api';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
+import { LONG, STANDARD } from '@/support/timeouts';
 
 const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
@@ -40,7 +41,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       const burgerMenu = new BurgerMenuPo(page);
 
-      await burgerMenu.checkIfMenuItemLinkIsHighlighted('Users & Authentication');
+      await expect(burgerMenu.menuItemWrapper('Users & Authentication')).toHaveClass(/active-menu-link/);
 
       await usersPo.list().create();
 
@@ -105,7 +106,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     await userCreate.confirmNewPass().set(standardPassword);
 
     // verify standard user checkbox selected by default
-    await userCreate.selectCheckbox('Standard User').isChecked();
+    await expect(userCreate.selectCheckbox('Standard User').checkboxCustom()).toHaveAttribute('aria-checked', 'true');
 
     const response = await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
     const body = await response.json();
@@ -521,7 +522,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       // Verify login with new password by logging out and back in
       await page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
       await login({ username: actualUsername, password: newPassword });
-      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 30000 });
+      await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: LONG });
     } finally {
       await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
     }
@@ -631,7 +632,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
             resp.url().includes('/v3/globalrolebindings') &&
             resp.request().method() === 'POST' &&
             resp.status() === 201,
-          { timeout: 10000 },
+          { timeout: STANDARD },
         )
         .catch(() => {
           // Second role binding POST may have already resolved before waitForResponse attached
@@ -690,28 +691,223 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
   });
 
   test.describe('List and Pagination', () => {
-    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
-    test('pagination is visible and user is able to navigate through users data', async () => {
-      // Upstream test creates 26 users, sets rows-per-page to 10, validates pagination UI
-      // Port when pagination infrastructure is ready
+    // Tests share an API-created pool of users; each test navigates fresh to the
+    // Users page so they remain atomic. afterAll resets prefs and deletes users
+    // even if a test fails mid-run.
+
+    const USERS_PER_PAGE = 10;
+    const NAME_COLUMN = 3; // [checkbox, state, ?, Name, ...] — Name column index in <th> nth(...)
+    const pageTimestamp = Date.now();
+    const userPrefix = `e2e-pgn-${pageTimestamp}`;
+    // 'aaa-' prefix sorts ahead of 'e2e-' in ASC; reused as a sort/filter anchor
+    const uniqueUsername = `aaa-${userPrefix}-unique`;
+    const createdUserIds: string[] = [];
+    let savedPerPage: string | undefined;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      // Save per-page so afterAll can restore even if a test mutates it
+      const prefsResp = await rancherApi.getRancherResource('v1', 'userpreferences');
+
+      savedPerPage = prefsResp.body.data[0]?.data?.['per-page'];
+      await rancherApi.setUserPreference({ 'per-page': String(USERS_PER_PAGE) });
+
+      const usernames = [
+        ...Array.from({ length: 25 }, (_, i) => `${userPrefix}-${String(i).padStart(2, '0')}`),
+        uniqueUsername,
+      ];
+
+      const chunkSize = 5;
+
+      for (let i = 0; i < usernames.length; i += chunkSize) {
+        const chunk = usernames.slice(i, i + chunkSize);
+        const ids = await Promise.all(
+          chunk.map(async (name) => {
+            const resp = await rancherApi.createRancherResource('v1', 'management.cattle.io.users', {
+              type: 'user',
+              enabled: true,
+              mustChangePassword: false,
+              username: name,
+            });
+
+            return resp.body.id as string;
+          }),
+        );
+
+        createdUserIds.push(...ids);
+
+        if (i + chunkSize < usernames.length) {
+          await new Promise((r) => setTimeout(r, 200));
+        }
+      }
+
+      // Wait for etcd to settle: total user count must exceed 26 (our pool) before UI tests run
+      const settled = await rancherApi.waitForRancherResources('v1', 'management.cattle.io.users', 26, true);
+
+      if (!settled) {
+        throw new Error('User count did not exceed 26 in the v1 users API after creation');
+      }
     });
 
-    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
-    test('filter users', async () => {
-      // Upstream test filters by user ID and username
-      // Port when pagination infrastructure is ready
+    test.afterAll(async ({ rancherApi }) => {
+      for (const id of createdUserIds) {
+        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', id, false);
+      }
+      await rancherApi.setUserPreference({ 'per-page': savedPerPage ?? '100' });
     });
 
-    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
-    test('sorting changes the order of paginated users data', async () => {
-      // Upstream test sorts by name column and validates order across pages
-      // Port when pagination infrastructure is ready
+    test('pagination is visible and user is able to navigate through users data', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      const table = usersPo.list().resourceTable().sortableTable();
+
+      await table.checkLoadingIndicatorNotVisible();
+
+      // Filter to the deterministic test pool (26 users) so total is independent of
+      // existing users in the cluster
+      await table.filter(userPrefix);
+      await table.checkLoadingIndicatorNotVisible();
+      await expect(table.paginationText()).toContainText(`1 - ${USERS_PER_PAGE} of 26`);
+
+      // Page 1 — beginning/prev disabled, next/end enabled
+      await expect(table.pagination()).toBeVisible();
+      await expect(table.paginationBeginButton()).toBeDisabled();
+      await expect(table.paginationPrevButton()).toBeDisabled();
+      await expect(table.paginationNextButton()).toBeEnabled();
+      await expect(table.paginationEndButton()).toBeEnabled();
+
+      // Next → page 2
+      await table.paginationNextButton().click();
+      await expect(table.paginationText()).toContainText('11 - 20 of 26');
+      await expect(table.paginationBeginButton()).toBeEnabled();
+      await expect(table.paginationPrevButton()).toBeEnabled();
+
+      // Prev → page 1
+      await table.paginationPrevButton().click();
+      await expect(table.paginationText()).toContainText(`1 - ${USERS_PER_PAGE} of 26`);
+      await expect(table.paginationBeginButton()).toBeDisabled();
+      await expect(table.paginationPrevButton()).toBeDisabled();
+
+      // End → last page (rows 21-26)
+      await table.paginationEndButton().click();
+      await expect(table.paginationText()).toContainText('21 - 26 of 26');
+      await expect(table.paginationNextButton()).toBeDisabled();
+      await expect(table.paginationEndButton()).toBeDisabled();
+
+      // Beginning → page 1
+      await table.paginationBeginButton().click();
+      await expect(table.paginationText()).toContainText(`1 - ${USERS_PER_PAGE} of 26`);
+      await expect(table.paginationBeginButton()).toBeDisabled();
     });
 
-    test.skip(true, 'Requires setup of 26+ test users and rows-per-page config');
-    test('pagination is hidden', async () => {
-      // Upstream test validates pagination UI hidden when user count < page size
-      // Port when pagination infrastructure is ready
+    test('filter users', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      const table = usersPo.list().resourceTable().sortableTable();
+
+      await table.checkLoadingIndicatorNotVisible();
+
+      // Filter by exact unique name → 1 result
+      await table.filter(uniqueUsername);
+      await expect(table.rowElements()).toHaveCount(1);
+      await expect(table.rowElementWithName(uniqueUsername)).toBeVisible();
+
+      // Filter by run prefix → all 26 users in the test pool
+      await table.filter(userPrefix);
+      await expect(table.paginationText()).toContainText('of 26');
+    });
+
+    test('sorting changes the order of paginated users data', async ({ page, login }) => {
+      await login();
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      const table = usersPo.list().resourceTable().sortableTable();
+
+      await table.checkLoadingIndicatorNotVisible();
+
+      // Constrain to our pool so order is deterministic
+      await table.filter(userPrefix);
+      await table.checkLoadingIndicatorNotVisible();
+
+      // Default ASC by Name — 'aaa-...' is the lexicographic first row → page 1
+      await expect(table.sortIcon(NAME_COLUMN, 'down')).toBeVisible();
+      await expect(table.rowElementWithName(uniqueUsername)).toBeVisible();
+
+      // Last page → 'aaa-...' must NOT appear
+      await table.paginationEndButton().click();
+      await expect(table.rowElementWithName(uniqueUsername)).toBeHidden();
+
+      // Toggle to DESC by clicking Name column sort handle. Sort toggle resets to page 1.
+      await table.sort(NAME_COLUMN).click();
+      await table.checkLoadingIndicatorNotVisible();
+      await expect(table.sortIcon(NAME_COLUMN, 'up')).toBeVisible();
+
+      // Page 1 in DESC: 'aaa-...' must NOT appear (the highest-sorting prefix is 'e2e-pgn-...')
+      await expect(table.paginationBeginButton()).toBeDisabled();
+      await expect(table.rowElementWithName(uniqueUsername)).toBeHidden();
+
+      // Last page in DESC → 'aaa-...' bubbles to the end
+      await table.paginationEndButton().click();
+      await expect(table.rowElementWithName(uniqueUsername)).toBeVisible();
+    });
+
+    test('pagination is hidden', async ({ page, login }) => {
+      await login();
+
+      // Mock the users API to return a 3-row collection so total < per-page → no pagination
+      await page.route('**/v1/management.cattle.io.users?**', (route) => {
+        const ts = new Date().toISOString();
+        const items = Array.from({ length: 3 }, (_, i) => ({
+          id: `mock-user-${i}`,
+          type: 'management.cattle.io.user',
+          username: `mock-user-${i}`,
+          principalIds: [`local://mock-user-${i}`],
+          metadata: {
+            name: `mock-user-${i}`,
+            uid: `uid-mock-${i}`,
+            creationTimestamp: ts,
+            state: {
+              name: 'active',
+              error: false,
+              transitioning: false,
+            },
+          },
+          spec: {},
+        }));
+
+        route.fulfill({
+          json: {
+            type: 'collection',
+            resourceType: 'management.cattle.io.user',
+            count: items.length,
+            data: items,
+          },
+        });
+      });
+
+      const usersPo = new UsersPo(page);
+
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+
+      const table = usersPo.list().resourceTable().sortableTable();
+
+      await table.checkLoadingIndicatorNotVisible();
+      await expect(table.rowElements()).toHaveCount(3);
+      await expect(table.pagination()).toBeHidden();
     });
   });
 });
