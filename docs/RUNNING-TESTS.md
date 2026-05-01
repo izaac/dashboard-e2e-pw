@@ -314,6 +314,23 @@ docker compose -f docker-compose.sharded.yml -f docker-compose.sharded.nix.yml u
 This builds a patched Rancher image that replaces iptables-legacy with iptables-nft.
 Only needed on NixOS — other distros work with the stock image.
 
+### Prime mode
+
+Layer the `docker-compose.prime.yml` overlay to flip Rancher into Prime mode
+(SUSE branding, `RancherPrime=true`). Required for `@prime`-tagged tests and to
+generate / verify visual baselines under `snapshots/.../prime/`.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prime.yml up rancher -d
+
+# With NixOS overlay if needed:
+docker compose -f docker-compose.yml -f docker-compose.nix.yml -f docker-compose.prime.yml up rancher -d
+```
+
+The overlay sets `RANCHER_VERSION_TYPE=prime` and `CATTLE_BASE_UI_BRAND=suse`.
+The `isPrime` test fixture reads `RancherPrime` from the API and routes visual
+snapshots to the matching `prime/` or `community/` subdirectory automatically.
+
 ### Docker environment variables
 
 | Variable           | Default                              | What it does                                          |

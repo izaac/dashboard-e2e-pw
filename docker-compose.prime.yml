@@ -1,0 +1,18 @@
+# Prime overlay — flips the Rancher container into Prime mode.
+#
+# RANCHER_VERSION_TYPE=prime turns on Prime semantics on the backend so the
+# `RancherPrime` setting comes back as 'true'. CATTLE_BASE_UI_BRAND=suse
+# tells the UI to ship the SUSE-themed brand palette by default. Together
+# they let `@prime`-tagged tests run against a local Docker Rancher.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prime.yml up rancher -d
+#
+# Compose with the NixOS iptables-nft overlay if needed:
+#   docker compose -f docker-compose.yml -f docker-compose.nix.yml -f docker-compose.prime.yml up rancher -d
+
+services:
+  rancher:
+    environment:
+      RANCHER_VERSION_TYPE: prime
+      CATTLE_BASE_UI_BRAND: suse
