@@ -256,6 +256,85 @@ values are visible in the DOM but missing from the submitted request body.
 See the [Rancher Vue Debounce Traps](./WRITING-TESTS.md) section in the
 writing guide.
 
+### Save button stays disabled even though the form looks complete
+
+A create form has every required field visibly populated — the screenshot shows
+text in the inputs — but the Save / Create button refuses to enable. The test
+times out on `expect(saveOrCreate).toBeEnabled()` and the trace contains zero
+POSTs to the resource endpoint.
+
+**Symptoms:**
+
+- DOM dump (`dom-snapshot.html`) confirms each input has the expected `value="..."`
+  attribute.
+- Form-save button has `disabled=""` and `aria-disabled="true"` for the entire
+  10-second timeout.
+- Network trace from a `--trace on` run shows no POST to the resource API after
+  the click attempt.
+- Same fields filled by hand in a real browser enable the button immediately.
+
+**The trap to avoid:** Don't assume this is a Vue v-model / `:value` /
+`fill()` issue just because the inputs look filled. That's a real failure mode
+(see *Vue v-model and fill()* in `UPSTREAM-DIVERGENCES.md`), but more often
+the form has a hidden required field that's silently `undefined` because some
+upstream model property the form reads has changed shape between Rancher
+versions. Validate the field your inputs are visible in **first**, then look
+for the invisible one.
+
+**Triage in this order — don't skip steps:**
+
+1. Run with `--trace on` (or flip `trace: 'on-first-retry'` → `'on'` in
+   `playwright.config.ts`). Open the trace with `npx playwright show-trace`.
+   The network tab confirms whether any relevant POST fired after the click —
+   zero POSTs means the button never functionally enabled.
+2. Inspect `attachments/dom-snapshot.html` for the form-save button. If it has
+   `disabled=""` and `aria-disabled="true"` while the visible inputs have
+   correct `value="..."`, the form thinks it's invalid for a reason that's
+   **not** in the visible UI.
+3. **Find the form's validation rules in the upstream source** before you
+   touch the test. Most Rancher create pages use the `form-validation` mixin
+   (`shell/mixins/form-validation.js`) with an `fvFormRuleSets` array on the
+   page component, e.g. `shell/edit/secret/index.vue`:
+
+   ```js
+   fvFormRuleSets: [
+     { path: 'metadata.name',      rules: ['required'] },
+     { path: 'metadata.namespace', rules: ['required'] },
+   ]
+   ```
+
+   For each rule, trace where the form expects that value to come from. A
+   project picker, namespace picker, or hidden watcher may be the source — and
+   that source can be silently broken on a newer Rancher backend.
+4. Only after you've ruled out (3) should you suspect synthetic-event /
+   v-model issues. Then try `pressSequentially()` instead of `fill()`. If that
+   makes the button enable, you have the v-model variant of this problem.
+
+**Workarounds (only after (3) ruled out):**
+
+- **Bypass the form** — create the resource via `rancherApi` / `page.route()`
+  and have the spec assert the resulting list / detail UI instead.
+- **Edit-as-YAML** — most Rancher create pages expose a YAML editor that
+  accepts a payload directly, sidestepping the validated form.
+- **`page.evaluate` dispatch** —
+  `await locator.evaluate((el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }, value)`.
+  Brittle — only when alternatives don't fit.
+- **`test.fixme(true, ...)`** — when the root cause is a real upstream bug
+  (not a test issue), mark fixme with the bug reference rather than skipping
+  silently. The test body should still document the intended flow so it's
+  ready to un-fixme when the upstream fix lands.
+
+**Real example:** Project Secrets create form on Rancher v2.15-head. Save
+stayed disabled with all visible fields filled. The validation rule
+`metadata.namespace: required` is the trap — the form sets it from
+`projects[i].status.backingNamespace`, and v2.15-head no longer exposes that
+field on the project resource (only `metadata.name` does), so the form's
+`metadata.namespace` ends up `undefined`. The fix is in upstream
+`shell/edit/secret/index.vue`, not in the test. We chased Vue v-model and
+`pressSequentially()` for an afternoon before reading the rule set; the rule
+set told us in 30 seconds. See `project-secrets.spec.ts`
+(`test.fixme` reference).
+
 ### Checkbox visible and enabled but v-model value is wrong
 
 A Vue dialog opens, its `fetch()` correctly determines a checkbox should be
