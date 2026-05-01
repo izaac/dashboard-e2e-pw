@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
+import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 test.describe('Home Page', () => {
   test(
@@ -476,5 +477,26 @@ test.describe('Home Page', () => {
       await homePage.createButton().click();
       await expect(page).toHaveURL(/\/c\/_\/manager\/provisioning\.cattle\.io\.cluster\/create/);
     });
+  });
+});
+
+test.describe('Visual snapshots', { tag: ['@visual', '@generic', '@adminUser'] }, () => {
+  test('home page matches snapshot', async ({ page, login, rancherApi, isPrime }) => {
+    await login();
+    const restoreTheme = await ensureLightTheme(rancherApi);
+
+    try {
+      const homePage = new HomePagePo(page);
+
+      await homePage.goTo();
+      await homePage.waitForPage();
+      // Wait for the masthead banner title — anchors that the home page
+      // banner has actually mounted (vs. the dashboard shell spinner).
+      await expect(homePage.title()).toBeVisible();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'home.png'), { fullPage: true });
+    } finally {
+      await restoreTheme();
+    }
   });
 });
