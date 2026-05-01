@@ -328,10 +328,18 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
   });
 });
 
-test.describe('Visual Testing', { tag: ['@percy', '@manager', '@adminUser'] }, () => {
-  test.skip(true, 'Percy snapshot test');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('should display empty cloud credential creation page', async () => {
-    // Upstream Percy snapshot test
+test.describe('Cloud Credential creation page', { tag: ['@manager', '@adminUser'] }, () => {
+  test('should display empty cloud credential creation page', async ({ login, page }) => {
+    await login();
+
+    const cloudCredentialsPage = new CloudCredentialsPagePo(page);
+
+    await cloudCredentialsPage.goTo();
+    await cloudCredentialsPage.waitForPage();
+    await cloudCredentialsPage.create();
+    await cloudCredentialsPage.createEditCloudCreds().waitForPage();
+
+    await expect(cloudCredentialsPage.createEditCloudCreds().self()).toBeVisible();
+    await expect(cloudCredentialsPage.createEditCloudCreds().cloudServiceOptions().self()).toBeVisible();
   });
 });

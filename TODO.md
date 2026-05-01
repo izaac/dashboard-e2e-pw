@@ -1,6 +1,6 @@
 # TODO
 
-## Empty stub tests (45 total)
+## Empty stub tests (43 total)
 
 Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-expect -- stub body never runs`. Implementation needed once blockers below are resolved.
 
@@ -39,11 +39,11 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 ### Plain placeholders (no blocker, just unimplemented)
 
 - [ ] `v2-monitoring.spec.ts` (1) — file-must-have-a-test placeholder
-- [ ] `cluster-dashboard.spec.ts` (1) — fleet controller hidden for standard user
+- [x] `cluster-dashboard.spec.ts` — fleet controller hidden for standard user
 - [ ] `project-namespace.spec.ts` (1) — most-recent error in multi-error form
 - [ ] `secrets.spec.ts` (1) — project-scoped secret list display
 - [ ] `prime.spec.ts` (1) — prime doc link from i18n (needs AuthProviderPo)
-- [ ] `cloud-credential.spec.ts` (1) — empty cloud credential creation page
+- [x] `cloud-credential.spec.ts` — empty cloud credential creation page
 
 ## Assertion Parity Gaps
 

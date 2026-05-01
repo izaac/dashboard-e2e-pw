@@ -253,12 +253,16 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
     }
   });
 
-  test.describe('Cluster dashboard with limited permissions', () => {
-    test.skip(true, 'Requires creating standard user with specific project roles — complex setup skipped');
+  test.describe('Cluster dashboard with limited permissions', { tag: ['@explorer', '@standardUser'] }, () => {
+    test('does not show fleet controller status for standard user', async ({ page, login, envMeta }) => {
+      await login({ username: 'standard_user', password: envMeta.password });
 
-    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-    test('does not show fleet controller status for standard user', async () => {
-      // requires std user creation and login
+      const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
+
+      await clusterDashboard.goTo();
+      await clusterDashboard.waitForPage();
+
+      await expect(clusterDashboard.fleetStatus()).not.toBeAttached();
     });
   });
 
