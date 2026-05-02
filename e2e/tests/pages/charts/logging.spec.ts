@@ -239,12 +239,12 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
       const chartUninstallPromise = page.waitForResponse(
         (resp) =>
-          resp.url().includes(`${CLUSTER_APPS_BASE_URL}/cattle-logging-system/rancher-logging?action=uninstall`) &&
+          resp.url().includes(`${CLUSTER_APPS_BASE_URL}/${chartNamespace}/${chartApp}?action=uninstall`) &&
           resp.request().method() === 'POST',
       );
       const crdUninstallPromise = page.waitForResponse(
         (resp) =>
-          resp.url().includes(`${CLUSTER_APPS_BASE_URL}/cattle-logging-system/rancher-logging-crd?action=uninstall`) &&
+          resp.url().includes(`${CLUSTER_APPS_BASE_URL}/${chartNamespace}/${chartCrd}?action=uninstall`) &&
           resp.request().method() === 'POST',
       );
 
@@ -264,9 +264,9 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
       expect(crdUninstallResp.status()).toBe(201);
 
       await terminal.waitForTerminalStatus('Disconnected', LONG);
-      await terminal.closeTerminalByTabName('Uninstall cattle-logging-system:rancher-logging');
+      await terminal.closeTerminalByTabName(`Uninstall ${chartNamespace}:${chartApp}`);
       await terminal.waitForTerminalStatus('Disconnected', LONG);
-      await terminal.closeTerminalByTabName('Uninstall cattle-logging-system:rancher-logging-crd');
+      await terminal.closeTerminalByTabName(`Uninstall ${chartNamespace}:${chartCrd}`);
 
       await installedAppsPage.goTo();
       await installedAppsPage.waitForPage();

@@ -922,8 +922,9 @@ export class RancherApi {
 
   /**
    * Uninstall and wait for full cleanup of the chart and its CRD chart (if any).
-   * Polls until the catalog.cattle.io.apps resources return 404 — confirming
-   * helm finished and any k8s CRDs from the CRD chart were removed.
+   * Polls until the catalog.cattle.io.apps resources return 404, confirming the
+   * helm release wrappers are gone. Helm's uninstall of the CRD chart also
+   * removes the underlying k8s CRDs.
    */
   async ensureChartUninstalled(
     namespace: string,
@@ -977,7 +978,7 @@ export class RancherApi {
       await this.ensureChartUninstalled(namespace, name, crdName);
     }
 
-    const charts = [];
+    const charts: Array<{ chartName: string; version: string; namespace: string; releaseName: string }> = [];
 
     if (crdName) {
       const crdVersion = await this.getLatestChartVersion(repo, crdName);

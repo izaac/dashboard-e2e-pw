@@ -49,6 +49,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
 
     test.describe('install', () => {
       test.beforeEach(async ({ rancherApi, chartGuard }) => {
+        test.setTimeout(PROVISIONING);
         await chartGuard(chartRepo, chartKey);
         await rancherApi.ensureChartUninstalled(chartNamespace, chartKey, chartCrd);
       });
