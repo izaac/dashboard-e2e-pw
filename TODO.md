@@ -16,7 +16,7 @@ names — leave them off the work queue:
 - `Validate home page with percy` → ported as `home page matches snapshot` (visual)
 - `should create a new pod` / `…folder` / `…validate folder name` / `…delete folder` (4 tests in `websockets/connection.spec.ts`) → consolidated into the single end-to-end test `should create a pod and manage folders via WebSocket exec`
 
-## Empty stub tests (24 total)
+## Empty stub tests
 
 Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-expect -- stub body never runs`. Implementation needed once blockers below are resolved.
 
@@ -44,26 +44,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] `node-drivers.spec.ts` (1) — placeholder (upstream rancher/dashboard#10275)
 - [ ] `pod-security-policy-templates.spec.ts` (1) — placeholder (upstream rancher/dashboard#10187)
 
-### Plain placeholders (no blocker, just unimplemented)
-
-- [x] `v2-monitoring.spec.ts` — 3 atomic tests (alertmanagerconfig proxyURL, prometheusrules multi-group form, severity-select chinese-translation regression for rancher/dashboard#9923). Real chart install via `ensureChartInstalled` with polling, AlertmanagerConfig PUT mocked via `page.route()` (Rancher steve aggregator rejects the form payload as 422 against a seed CR), describe-level `actionTimeout: LONG` for slow form rendering on min-resource Rancher.
-- [x] `cluster-dashboard.spec.ts` — fleet controller hidden for standard user
-- [x] `project-namespace.spec.ts` — most-recent error in multi-error form (regression test for rancher/dashboard#11881)
-- [x] `prime.spec.ts` — both tests live; doc link from i18n via AuthProviderPo + AzureadPo, mock helper at `blueprints/global/prime-version-mock.ts`
-- [x] `cloud-credential.spec.ts` — empty cloud credential creation page
-
-### Visual snapshots (Percy → Playwright `toHaveScreenshot`, ported and live)
-
-- [x] `repositories.spec.ts` — repositories list page
-- [x] `cluster-manager.spec.ts` — cluster manager list page
-- [x] `machine-deployments.spec.ts` — machine deployments list page
-- [x] `machine-sets.spec.ts` — empty machine sets list page
-- [x] `machines.spec.ts` — machines list page
-- [x] `pod-security-admissions.spec.ts` — Pod Security Admissions list page
-- [x] `kontainer-drivers.spec.ts` — kontainer drivers list page
-- [x] `gitrepo.spec.ts` — git repo / continuous delivery list page
-- [x] `home.spec.ts` — home page
-
 ### Form blocked by upstream bug
 
 - [ ] `project-secrets.spec.ts` — `creates a project-scoped secret` is `test.fixme`. Save stays disabled because v2.15-head projects no longer expose `status.backingNamespace` (read by `shell/edit/secret/index.vue`). Title test passes. See `DEBUGGING-FAILURES.md`.
@@ -77,22 +57,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 ### Systemic patterns
 
 - [ ] `custom-resource-definitions.spec.ts` — sequential run causes API server stress
-
-## Not yet validated (need credentials or infra)
-
-### AWS credentials (`awsAccessKey` / `awsSecretKey`)
-
-- [x] `cluster-provisioning-amazon-ec2-rke2.spec.ts` — 8 tests (full provision lifecycle) — create passes, full chain needs live re-run
-
-### Azure credentials (`azureSubscriptionId` / `azureClientId` / `azureClientSecret`)
-
-- [x] `cluster-provisioning-azure-rke2.spec.ts` — PO testids fixed, invalid creds + create + list details + details page pass; snapshot/delete need live re-run
-
-### Elemental operator
-
-- [x] `elemental.spec.ts` — 8/8 atomic with API-seeded operator install + provisioning cluster mock for upgrade-group test
-
-(Provisioning-infra and upstream-blocked stubs are listed in the "Empty stub tests" section above.)
 
 ## CI / Infra
 
