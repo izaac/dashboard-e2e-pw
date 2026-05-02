@@ -47,10 +47,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 ## Assertion Parity Gaps
 
-### Other parity gaps
-
-- [ ] `aks-cluster-provisioning.spec.ts` — ~46 missing default value assertions (AKS creds needed for live validation)
-
 ### Systemic patterns
 
 - [ ] `custom-resource-definitions.spec.ts` — sequential run causes API server stress

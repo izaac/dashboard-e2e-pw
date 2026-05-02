@@ -38,7 +38,7 @@
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, readIcon, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
 | ProductNavPo | product-nav.po.ts | ComponentPo | `.side-nav` | super, groups, navToSideMenuGroupByLabel, sideMenuEntryByLabel, navToSideMenuEntryByLabel, for, if |
-| RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, radioSpan, getAllOptions, getOptionByIndex |
+| RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, radioSpan, radioSpanByLabel, getAllOptions, getOptionByIndex |
 | RegistriesTabPo | registries-tab.po.ts | ComponentPo | — | super, enableRegistryCheckbox, showAdvanced, clickShowAdvanced, advancedToggle, registryHostInput, addRegistryHost, registryConfigs (+1) |
 | RegistryConfigsPo | registry-configs.po.ts | ComponentPo | — | registryAuthHost, addRegistryAuthHost, registryAuthSelectOrCreate |
 | ResourceListMastheadPo | resource-list-masthead.po.ts | ComponentPo | — | super, actions, title, createButton, createYaml, create |

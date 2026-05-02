@@ -15,6 +15,12 @@ export default class RadioGroupInputPo extends ComponentPo {
     return this.self().locator('.radio-container > span').nth(value);
   }
 
+  /** Locator for a radio option's `aria-checked` span by visible label —
+   *  more resilient than index-based access when the rendering order changes. */
+  radioSpanByLabel(label: string): Locator {
+    return this.self().locator('.radio-container').filter({ hasText: label }).locator('> span').first();
+  }
+
   getAllOptions(): Locator {
     return this.self().locator('.radio-label');
   }

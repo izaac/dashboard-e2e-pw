@@ -19,14 +19,23 @@ test.describe(
   'Create AKS cluster',
   { tag: ['@manager', '@adminUser', '@jenkins', '@provisioning', '@needsInfra'] },
   () => {
+    test.beforeEach(async ({ envMeta }) => {
+      test.skip(
+        !envMeta.azureSubscriptionId || !envMeta.azureClientId || !envMeta.azureClientSecret,
+        'Requires Azure credentials (AZURE_AKS_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET)',
+      );
+    });
+
     test.beforeAll(async ({ rancherApi }) => {
       // Clean stale e2e AKS clusters — delete v3 cluster objects first so the
-      // controller stops referencing their cloud credentials
+      // controller stops referencing their cloud credentials.
       const clusters = await rancherApi.getRancherResource('v3', 'clusters', undefined, 0);
+      const staleClusterIds: string[] = [];
 
       if (clusters.body?.data) {
         for (const c of clusters.body.data) {
           if (c.name?.startsWith('e2e-test-') && c.aksConfig) {
+            staleClusterIds.push(c.id);
             await rancherApi.deleteRancherResource('v3', 'clusters', c.id, false);
           }
         }
@@ -48,22 +57,28 @@ test.describe(
         }
       }
 
-      // Wait for controller to settle after cluster deletion
-      await new Promise((r) => setTimeout(r, 5_000));
+      // Poll until each cluster is gone — controller can hold credential
+      // references until the v3 object reaches 404.
+      for (const id of staleClusterIds) {
+        await rancherApi.waitForRancherResource('v3', 'clusters', id, (r: any) => r.status === 404, 30, 1000);
+      }
 
       // Clean stale e2e Azure cloud credentials (safe now that clusters are gone)
       const creds = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+      const staleCredIds: string[] = [];
 
       if (creds.body?.data) {
         for (const item of creds.body.data) {
           if (item.azurecredentialConfig && item.name?.startsWith('e2e-test-')) {
+            staleCredIds.push(item.id);
             await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
           }
         }
       }
 
-      // Let Rancher store settle after credential cleanup
-      await new Promise((r) => setTimeout(r, 5_000));
+      for (const id of staleCredIds) {
+        await rancherApi.waitForRancherResource('v3', 'cloudcredentials', id, (r: any) => r.status === 404, 30, 1000);
+      }
     });
 
     test('can create an Azure AKS cluster by just filling in the mandatory fields', async ({
@@ -72,11 +87,6 @@ test.describe(
       rancherApi,
       envMeta,
     }) => {
-      test.skip(
-        !envMeta.azureSubscriptionId || !envMeta.azureClientId || !envMeta.azureClientSecret,
-        'Requires Azure credentials (AZURE_AKS_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET)',
-      );
-
       await login();
 
       const clusterName = rancherApi.createE2EResourceName('akscluster');
@@ -162,11 +172,6 @@ test.describe(
     });
 
     test('can create an Azure AKS cluster with default values', async ({ page, login, rancherApi, envMeta }) => {
-      test.skip(
-        !envMeta.azureSubscriptionId || !envMeta.azureClientId || !envMeta.azureClientSecret,
-        'Requires Azure credentials (AZURE_AKS_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET)',
-      );
-
       await login();
 
       const clusterName = rancherApi.createE2EResourceName('akscluster2');
@@ -319,13 +324,25 @@ test.describe(
           aksDefaultSettings.defaultAksConfig.dockerBridgeCidr,
         );
 
-        // Pool mode: System radio checked, User unchecked
-        await expect(aksCreatePage.getPoolModeRadio().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
-        await expect(aksCreatePage.getPoolModeRadio().radioSpan(1)).toHaveAttribute('aria-checked', 'false');
+        // Pool mode: System checked, User unchecked
+        await expect(aksCreatePage.getPoolModeRadio().radioSpanByLabel('System')).toHaveAttribute(
+          'aria-checked',
+          'true',
+        );
+        await expect(aksCreatePage.getPoolModeRadio().radioSpanByLabel('User')).toHaveAttribute(
+          'aria-checked',
+          'false',
+        );
 
         // Auth mode: Service Principal checked, Managed Identity unchecked
-        await expect(aksCreatePage.getAuthModeRadio().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
-        await expect(aksCreatePage.getAuthModeRadio().radioSpan(1)).toHaveAttribute('aria-checked', 'false');
+        await expect(aksCreatePage.getAuthModeRadio().radioSpanByLabel('Service Principal')).toHaveAttribute(
+          'aria-checked',
+          'true',
+        );
+        await expect(aksCreatePage.getAuthModeRadio().radioSpanByLabel('Managed Identity')).toHaveAttribute(
+          'aria-checked',
+          'false',
+        );
 
         // Remaining checkboxes
         await expect.poll(() => aksCreatePage.getProjNetworkIsolation().isDisabled()).toBe(true);

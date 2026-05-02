@@ -101,28 +101,30 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
 
   // --- Cluster-level checkboxes ---
 
+  // The aks-*-checkbox testids dropped out of the AKS Vue component in newer
+  // Rancher releases. Match upstream cypress and look up checkboxes by label.
   getAutoScaling(): CheckboxInputPo {
-    return new CheckboxInputPo(this.page, '[data-testid="aks-enable-auto-scaling-checkbox"]');
+    return CheckboxInputPo.byLabel(this.page, this.formLocator(), 'Enable Auto Scaling');
   }
 
   getContainerMonitoring(): CheckboxInputPo {
-    return new CheckboxInputPo(this.page, '[data-testid="aks-monitoring-checkbox"]');
+    return CheckboxInputPo.byLabel(this.page, this.formLocator(), 'Configure Container Monitoring');
   }
 
   getProjNetworkIsolation(): CheckboxInputPo {
-    return new CheckboxInputPo(this.page, '[data-testid="aks-project-network-isolation-checkbox"]');
+    return CheckboxInputPo.byLabel(this.page, this.formLocator(), 'Project Network Isolation');
   }
 
   getHTTProuting(): CheckboxInputPo {
-    return new CheckboxInputPo(this.page, '[data-testid="aks-http-routing-checkbox"]');
+    return CheckboxInputPo.byLabel(this.page, this.formLocator(), 'HTTP Application Routing');
   }
 
   getEnablePrivateCluster(): CheckboxInputPo {
-    return new CheckboxInputPo(this.page, '[data-testid="aks-private-cluster-checkbox"]');
+    return CheckboxInputPo.byLabel(this.page, this.formLocator(), 'Enable Private Cluster');
   }
 
   getAuthIPranges(): CheckboxInputPo {
-    return new CheckboxInputPo(this.page, '[data-testid="aks-auth-ip-ranges-checkbox"]');
+    return CheckboxInputPo.byLabel(this.page, this.formLocator(), 'Set Authorized IP Ranges');
   }
 
   // --- Cluster-level labeled inputs ---
