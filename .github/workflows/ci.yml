@@ -43,12 +43,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pre-create artifact dirs with runner ownership
+        run: mkdir -p test-results playwright-report
+
       - name: Run @generic tests against live Rancher
-        run: docker compose up --build --abort-on-container-exit --exit-code-from tests --no-attach rancher
+        run: HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build --abort-on-container-exit --exit-code-from tests --no-attach rancher
         env:
           GREP_TAGS: "@generic"
-          HOST_UID: 1001
-          HOST_GID: 116
           # Strip credential-bearing artifacts before they hit a public artifact
           # bucket: traces capture Authorization headers and session cookies;
           # videos capture the whole login flow.
