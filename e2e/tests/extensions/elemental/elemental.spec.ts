@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures/index';
 import ExtensionsPagePo from '@/e2e/po/pages/extensions.po';
 import ElementalPo from '@/e2e/po/extensions/elemental/elemental.utils';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import { buildElementalClusterMock } from '@/e2e/blueprints/extensions/elemental-cluster-mock';
 
 import * as jsyaml from 'js-yaml';
 import { SHORT_TIMEOUT_OPT, LONG, PROVISIONING } from '@/support/timeouts';
@@ -311,6 +312,38 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
     test('can create an upgrade group targeting the elemental cluster', async ({ page }) => {
       const elementalPo = new ElementalPo(page);
+
+      // Inject a mocked cluster into the target-clusters dropdown so this test
+      // can run atomically. The provisioning.cattle.io webhook rejects bare CR
+      // creates, so we mock the list response at the UI layer instead — the
+      // upstream cypress pattern (see blueprints/manager/v2prov-capi-cluster-mocks.ts).
+      // When the cluster-create test ran first in the chain, its real CR is
+      // included in the upstream response; the mock just appends our stub if
+      // it isn't already there.
+      await page.route(/\/v1\/provisioning\.cattle\.io\.clusters/, async (route, request) => {
+        if (request.method() !== 'GET') {
+          await route.continue();
+
+          return;
+        }
+
+        const response = await route.fetch();
+        const body = await response.json().catch(() => ({}));
+        const data = Array.isArray(body?.data) ? body.data : [];
+        const alreadyPresent = data.some(
+          (c: { metadata?: { name?: string } }) => c.metadata?.name === elementalClusterName,
+        );
+
+        if (!alreadyPresent) {
+          data.push(buildElementalClusterMock(elementalClusterName));
+        }
+
+        await route.fulfill({
+          status: response.status(),
+          headers: response.headers(),
+          body: JSON.stringify({ ...body, data }),
+        });
+      });
 
       await elementalPo.dashboard().goTo();
       await elementalPo.dashboard().createUpdateGroupClick();

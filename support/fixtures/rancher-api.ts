@@ -890,7 +890,7 @@ export class RancherApi {
     name: string,
     gitRepo: string,
     gitBranch: string,
-    retries = 30,
+    retries = 60,
     delayMs = 5000,
   ): Promise<void> {
     const existing = await this.getRancherResource('v1', 'catalog.cattle.io.clusterrepos', name, 0);
