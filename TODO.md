@@ -46,7 +46,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 ### Plain placeholders (no blocker, just unimplemented)
 
-- [ ] `v2-monitoring.spec.ts` (1) — file-must-have-a-test placeholder. Upstream cypress has 3 commented-out tests against the live monitoring UI (alertmanagerconfig proxyURL, prometheusrules group form, severity-select chinese-translation regression). Reviving them needs the rancher-monitoring chart installed (prometheus + alertmanager + grafana). Assume the CI runs on a Rancher with the minimum resources to host the chart, so the install path must use polling with generous timeouts, not fixed waits. Save-response intercepts (`page.route()`) cover the actual assertions per upstream pattern. Alternative: port upstream's 377KB mock blueprint at `cypress/e2e/blueprints/other-products/v2-monitoring.js` instead of installing — keeps tests deterministic but forfeits real-page coverage.
+- [x] `v2-monitoring.spec.ts` — 3 atomic tests (alertmanagerconfig proxyURL, prometheusrules multi-group form, severity-select chinese-translation regression for rancher/dashboard#9923). Real chart install via `ensureChartInstalled` with polling, AlertmanagerConfig PUT mocked via `page.route()` (Rancher steve aggregator rejects the form payload as 422 against a seed CR), describe-level `actionTimeout: LONG` for slow form rendering on min-resource Rancher.
 - [x] `cluster-dashboard.spec.ts` — fleet controller hidden for standard user
 - [x] `project-namespace.spec.ts` — most-recent error in multi-error form (regression test for rancher/dashboard#11881)
 - [x] `prime.spec.ts` — both tests live; doc link from i18n via AuthProviderPo + AzureadPo, mock helper at `blueprints/global/prime-version-mock.ts`
