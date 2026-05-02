@@ -4,7 +4,7 @@ import SelectIconGridPo from '@/e2e/po/components/select-icon-grid.po';
 
 export enum AuthProvider {
   AMAZON_COGNITO = 'Amazon Cognito',
-  AZURE = 'AzureAD',
+  AZURE = 'Microsoft Entra ID',
   GITHUB_APP = 'GitHub App',
 }
 

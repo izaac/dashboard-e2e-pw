@@ -49,7 +49,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] `v2-monitoring.spec.ts` (1) — file-must-have-a-test placeholder
 - [x] `cluster-dashboard.spec.ts` — fleet controller hidden for standard user
 - [ ] `project-namespace.spec.ts` (1) — most-recent error in multi-error form
-- [ ] `prime.spec.ts` (1) — prime doc link from i18n (needs AuthProviderPo)
+- [x] `prime.spec.ts` — both tests live; doc link from i18n via AuthProviderPo + AzureadPo, mock helper at `blueprints/global/prime-version-mock.ts`
 - [x] `cloud-credential.spec.ts` — empty cloud credential creation page
 
 ### Visual snapshots (Percy → Playwright `toHaveScreenshot`, ported and live)
@@ -90,7 +90,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 ### Elemental operator
 
-- [ ] `elemental.spec.ts` — 4 tests need elemental-operator CRDs installed
+- [x] `elemental.spec.ts` — 8/8 atomic with API-seeded operator install + provisioning cluster mock for upgrade-group test
 
 (Provisioning-infra and upstream-blocked stubs are listed in the "Empty stub tests" section above.)
 
