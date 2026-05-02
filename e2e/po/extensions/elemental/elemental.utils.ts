@@ -15,8 +15,22 @@ class DashboardPagePo extends PagePo {
     return this.page.getByTestId('elemental-main-title');
   }
 
-  async waitForTitle(): Promise<void> {
-    await this.mainTitle().filter({ hasText: 'OS Management' }).waitFor();
+  descriptionText(): Locator {
+    return this.page.getByTestId('elemental-description-text');
+  }
+
+  /**
+   * Wait for the elemental dashboard to render in either state:
+   *  - operator not installed: shows the description + install button
+   *  - operator installed: shows the OS Management Dashboard title
+   * The pre-install state in current elemental UI extension v3.0.x does not
+   * render `elemental-main-title`, so waiting on it alone times out.
+   */
+  async waitForReady(): Promise<void> {
+    await Promise.race([
+      this.descriptionText().waitFor({ state: 'visible' }),
+      this.mainTitle().waitFor({ state: 'visible' }),
+    ]);
   }
 
   /** The install operator button locator */

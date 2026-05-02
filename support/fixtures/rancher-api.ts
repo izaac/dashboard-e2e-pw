@@ -882,6 +882,48 @@ export class RancherApi {
   }
 
   /**
+   * Idempotently add a git-based ClusterRepo and wait for its index to download.
+   * Used by extension specs that need a third-party charts repo registered before
+   * installing the extension or its dependent charts.
+   */
+  async ensureClusterRepoAdded(
+    name: string,
+    gitRepo: string,
+    gitBranch: string,
+    retries = 30,
+    delayMs = 5000,
+  ): Promise<void> {
+    const existing = await this.getRancherResource('v1', 'catalog.cattle.io.clusterrepos', name, 0);
+
+    if (existing.status !== 200) {
+      await this.createRancherResource(
+        'v1',
+        'catalog.cattle.io.clusterrepos',
+        {
+          apiVersion: 'catalog.cattle.io/v1',
+          kind: 'ClusterRepo',
+          metadata: { name },
+          spec: { gitRepo, gitBranch },
+        },
+        false,
+      );
+    }
+
+    const downloaded = await this.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.clusterrepos',
+      name,
+      (resp) => (resp.body?.status?.conditions || []).some((c: any) => c.type === 'Downloaded' && c.status === 'True'),
+      retries,
+      delayMs,
+    );
+
+    if (!downloaded) {
+      throw new Error(`ClusterRepo '${name}' did not finish downloading within polling window`);
+    }
+  }
+
+  /**
    * Resolve the latest chart version from a cluster repo's index. The
    * `?action=install` endpoint requires `version` in each chart entry — without
    * it the helm command gets `chart-.tgz` (empty version) and fails with exit 123.

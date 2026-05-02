@@ -77,14 +77,13 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     await extensionsPo.extensionTabAvailableClick();
 
-    // Check if elemental card exists in available tab — repo may not have compatible version
-    const cardAvailable = await extensionsPo.checkForExtensionCardWithName(EXTENSION_NAME);
-
-    if (!cardAvailable) {
-      test.skip(true, 'Elemental extension not available — repo may not have compatible version for this Rancher');
-
-      return;
-    }
+    // Card must be present in Available tab — repo gates the version check, so
+    // missing card here means the repo is misconfigured or the version no longer
+    // matches this Rancher (fail loud rather than silently skip).
+    await expect(
+      page.getByTestId('item-card-header-title').filter({ hasText: EXTENSION_NAME }).first(),
+      `Elemental extension '${EXTENSION_NAME}' not visible in Available tab — repo may be missing or incompatible`,
+    ).toBeVisible({ timeout: LONG });
 
     // click on install button on card
     await extensionsPo.extensionCardInstallClick(EXTENSION_NAME);
@@ -111,22 +110,15 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     await elementalPo.dashboard().goTo();
 
-    // Wait for either the elemental title or an error page to appear
-    await Promise.race([
-      page.getByTestId('elemental-main-title').waitFor({ state: 'visible', ...SHORT_TIMEOUT_OPT }),
-      elementalPo.dashboard().waitForFailWhale(SHORT_TIMEOUT_OPT.timeout),
-    ]);
+    // Pre-install state shows description + chartsInstallButton; post-install
+    // state shows mainTitle. waitForReady covers both — the prior test installs
+    // the UI extension, so a fail-whale here is a real failure, not a skip path.
+    await elementalPo.dashboard().waitForReady();
 
-    // If the elemental extension is not installed, the route will hit fail-whale (404)
-    const isFailWhale = await elementalPo.dashboard().isFailWhaleVisible();
-
-    if (isFailWhale) {
-      test.skip(true, 'Elemental UI extension is not installed — run "Should install an extension" first');
-
-      return;
-    }
-
-    await elementalPo.dashboard().waitForTitle();
+    await expect(
+      elementalPo.dashboard().isFailWhaleVisible(),
+      'Elemental dashboard failed to load — extension UI did not register',
+    ).resolves.toBe(false);
 
     // Check if operator is already installed — if the install button is not visible, operator is set up
     const installBtn = elementalPo.dashboard().chartsInstallButton();
@@ -177,11 +169,10 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
       0,
     );
 
-    if (crdCheck.status === 404) {
-      test.skip(true, 'Elemental operator CRDs not installed — requires elemental-operator');
-
-      return;
-    }
+    expect(
+      crdCheck.status,
+      'Elemental operator CRDs missing — operator install (prior test) must have failed',
+    ).not.toBe(404);
 
     // Check if resource already exists via API — if so, verify and skip creation
     const existing = await rancherApi.getRancherResource(
@@ -239,11 +230,10 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     // Check if elemental CRDs exist (operator must be installed)
     const crdCheck = await rancherApi.getRancherResource('v1', 'elemental.cattle.io.machineinventories', undefined, 0);
 
-    if (crdCheck.status === 404) {
-      test.skip(true, 'Elemental operator CRDs not installed — requires elemental-operator');
-
-      return;
-    }
+    expect(
+      crdCheck.status,
+      'Elemental operator CRDs missing — operator install (prior test) must have failed',
+    ).not.toBe(404);
 
     // Check if resource already exists via API
     const existing = await rancherApi.getRancherResource(
@@ -305,11 +295,10 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     // Check if elemental CRDs exist (operator must be installed)
     const crdCheck = await rancherApi.getRancherResource('v1', 'elemental.cattle.io.machineinventories', undefined, 0);
 
-    if (crdCheck.status === 404) {
-      test.skip(true, 'Elemental operator CRDs not installed — requires elemental-operator');
-
-      return;
-    }
+    expect(
+      crdCheck.status,
+      'Elemental operator CRDs missing — operator install (prior test) must have failed',
+    ).not.toBe(404);
 
     // Check if cluster already exists via API
     const existing = await rancherApi.getRancherResource(
@@ -360,11 +349,10 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     // Check if elemental CRDs exist (operator must be installed)
     const crdCheck = await rancherApi.getRancherResource('v1', 'elemental.cattle.io.managedosimages', undefined, 0);
 
-    if (crdCheck.status === 404) {
-      test.skip(true, 'Elemental operator CRDs not installed — requires elemental-operator');
-
-      return;
-    }
+    expect(
+      crdCheck.status,
+      'Elemental operator CRDs missing — operator install (prior test) must have failed',
+    ).not.toBe(404);
 
     // Check if update group already exists via API
     const existing = await rancherApi.getRancherResource(
@@ -434,14 +422,12 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     await extensionsPo.goTo();
 
-    // If there is no "Installed" tab, the extension is not installed — skip
-    const hasInstalledTab = await extensionsPo.checkForExtensionTab('installed');
-
-    if (!hasInstalledTab) {
-      test.skip(true, 'Extension is not installed — nothing to uninstall');
-
-      return;
-    }
+    // The Installed tab must exist — the prior test installed the extension. A
+    // missing tab means the install test failed; surface that loud rather than skip.
+    await expect(
+      extensionsPo.checkForExtensionTab('installed'),
+      'Installed tab missing — extension install (prior test) must have failed',
+    ).resolves.toBe(true);
 
     await extensionsPo.extensionTabInstalledClick();
 
