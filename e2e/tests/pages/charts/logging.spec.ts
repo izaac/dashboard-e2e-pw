@@ -9,59 +9,42 @@ import CardPo from '@/e2e/po/components/card.po';
 import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
-import { LONG, STANDARD } from '@/support/timeouts';
+import { SHORT_TIMEOUT_OPT, LONG, STANDARD, VERY_LONG, PROVISIONING } from '@/support/timeouts';
+
+const chartAppDisplayName = 'Logging';
+const chartApp = 'rancher-logging';
+const chartCrd = 'rancher-logging-crd';
+const chartNamespace = 'cattle-logging-system';
+const chartRepo = 'rancher-charts';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe.configure({ mode: 'serial' });
-  const chartAppDisplayName = 'Logging';
-  const chartApp = 'rancher-logging';
-  const chartCrd = 'rancher-logging-crd';
-  const chartNamespace = 'cattle-logging-system';
-
-  let flowName: string;
-  let outputName: string;
-
-  test.beforeAll(async ({ rancherApi }) => {
-    flowName = rancherApi.createE2EResourceName('logging-flow');
-    outputName = rancherApi.createE2EResourceName('logging-output');
-  });
 
   test.beforeEach(async ({ login, rancherApi, chartGuard }) => {
-    // Health gate: Rancher may still be settling after heavy chart operations
     await rancherApi.waitForHealthy();
-    await chartGuard('rancher-charts', 'rancher-logging');
+    await chartGuard(chartRepo, chartApp);
     await login();
   });
 
-  test('is installed and a rule created', async ({ page, rancherApi }) => {
-    test.setTimeout(300000);
-    // Set namespace filter to show all namespaces (logging installs to a system namespace)
-    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":[]}');
+  test.afterAll(async ({ rancherApi }) => {
+    try {
+      await rancherApi.ensureChartUninstalled(chartNamespace, chartApp, chartCrd, 60, 5000);
+    } finally {
+      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
+      await rancherApi.waitForHealthy();
+    }
+  });
 
-    // Ensure logging is installed and deployed
-    const appResp = await rancherApi.getRancherResource(
-      'v1',
-      'catalog.cattle.io.apps',
-      `${chartNamespace}/${chartApp}`,
-      0,
-    );
-    const isDeployed = appResp.status === 200 && appResp.body?.metadata?.state?.name === 'deployed';
+  test.describe('install', () => {
+    test.beforeEach(async ({ rancherApi }) => {
+      test.setTimeout(PROVISIONING);
+      await rancherApi.ensureChartUninstalled(chartNamespace, chartApp, chartCrd, 60, 5000);
+    });
 
-    if (!isDeployed) {
-      // If app exists in non-deployed state (e.g., uninstalling), wait for it to be gone
-      if (appResp.status === 200) {
-        await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
-        // Poll until apps are fully removed (404)
-        await rancherApi.waitForRancherResource(
-          'v1',
-          'catalog.cattle.io.apps',
-          `${chartNamespace}/${chartApp}`,
-          (resp) => resp.status === 404,
-          60,
-          5000,
-        );
-      }
+    test('can deploy chart via UI', async ({ page, rancherApi }) => {
+      test.setTimeout(PROVISIONING);
+
+      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":[]}');
 
       const installChartPage = new InstallChartPage(page);
       const chartPage = new ChartPage(page);
@@ -73,10 +56,9 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
       await chartPage.goToInstall();
       await installChartPage.nextPage();
 
-      // Set up install response listener right before the action
       const chartInstallPromise = page.waitForResponse(
         (resp) =>
-          resp.url().includes('v1/catalog.cattle.io.clusterrepos/rancher-charts?action=install') &&
+          resp.url().includes(`v1/catalog.cattle.io.clusterrepos/${chartRepo}?action=install`) &&
           resp.request().method() === 'POST',
       );
 
@@ -84,271 +66,222 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
       const installResp = await chartInstallPromise;
 
-      // eslint-disable-next-line playwright/no-conditional-expect -- only runs when chart needs install
       expect(installResp.status()).toBe(201);
 
-      await terminal.waitForTerminalStatus('Disconnected');
+      await terminal.waitForTerminalStatus('Disconnected', VERY_LONG);
       await terminal.closeTerminal();
 
-      // Wait for the logging app to be fully deployed
-      await rancherApi.waitForRancherResource(
+      const deployed = await rancherApi.waitForRancherResource(
         'v1',
         'catalog.cattle.io.apps',
         `${chartNamespace}/${chartApp}`,
-        (resp) => {
-          return resp.body?.metadata?.state?.name === 'deployed';
-        },
-        40,
+        (resp) => resp.body?.metadata?.state?.name === 'deployed',
+        60,
         5000,
       );
-    }
 
-    const loggingPo = new LoggingPo(page);
-    const basePage = new PagePo(page, '/c/local/logging');
+      expect(deployed, `Chart '${chartApp}' did not reach deployed state`).toBeTruthy();
+    });
+  });
 
-    // Navigate to ClusterOutput list — retry if fail-whale (CRDs may take time to register)
-    // Big charts like logging can take 2+ minutes for CRDs to register
-    let reachedPage = false;
+  test.describe('manage installed chart', () => {
+    let flowName: string;
+    let outputName: string;
 
-    for (let attempt = 0; attempt < 20; attempt++) {
-      await page.goto('./c/local/logging/logging.banzaicloud.io.clusteroutput', { waitUntil: 'domcontentloaded' });
+    test.beforeAll(async ({ rancherApi }) => {
+      flowName = rancherApi.createE2EResourceName('logging-flow');
+      outputName = rancherApi.createE2EResourceName('logging-output');
+    });
 
-      const isFailWhale = await basePage.isFailWhaleVisible();
+    test.beforeEach(async ({ rancherApi }) => {
+      test.setTimeout(PROVISIONING);
+      await rancherApi.ensureChartInstalled(chartRepo, chartNamespace, chartApp, chartCrd);
+      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":[]}');
+    });
 
-      if (!isFailWhale) {
-        reachedPage = true;
-        break;
+    // testing https://github.com/rancher/dashboard/issues/13845
+    test('can create cluster output and flow', async ({ page, rancherApi }) => {
+      test.setTimeout(PROVISIONING);
+
+      const loggingPo = new LoggingPo(page);
+      const basePage = new PagePo(page, '/c/local/logging');
+
+      // Big charts like logging can take 2+ minutes for CRDs to register
+      let reachedPage = false;
+
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await page.goto('./c/local/logging/logging.banzaicloud.io.clusteroutput', { waitUntil: 'domcontentloaded' });
+
+        const isFailWhale = await basePage.isFailWhaleVisible();
+
+        if (!isFailWhale) {
+          reachedPage = true;
+          break;
+        }
+
+        // Unavoidable: polling for CRD registration — no event to wait on
+
+        await page.waitForTimeout(10000);
       }
 
-      // Unavoidable: polling for CRD registration — no event to wait on
+      expect(reachedPage, 'Logging CRDs not registered after 200s — fail-whale persisted').toBeTruthy();
 
-      await page.waitForTimeout(10000);
-    }
+      try {
+        await loggingPo.mastheadCreate().click();
 
-    expect(reachedPage, 'Logging CRDs not registered after 200s — fail-whale persisted').toBeTruthy();
+        await loggingPo.nameInput().fill(outputName);
+        await loggingPo.outputTargetInput().fill('random.domain.site');
 
-    // Create cluster output
-    try {
-      await loggingPo.mastheadCreate().click();
+        const outputSavePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes('/v1/logging.banzaicloud.io.clusteroutputs') && resp.request().method() === 'POST',
+        );
 
-      // Fill in output name
-      await loggingPo.nameInput().fill(outputName);
+        await loggingPo.formSave().click();
 
-      // Set target
-      await loggingPo.outputTargetInput().fill('random.domain.site');
+        const outputResp = await outputSavePromise;
+        const outputBody = await outputResp.json();
 
-      // Save and verify
-      const outputSavePromise = page.waitForResponse(
+        expect(outputResp.status()).toBe(201);
+        expect(outputBody.metadata.name).toBe(outputName);
+
+        await expect(loggingPo.tableRowByText(outputName)).toBeAttached();
+
+        const sideNav = new ProductNavPo(page);
+
+        await sideNav.navToSideMenuEntryByLabel('ClusterFlows');
+
+        await loggingPo.mastheadCreate().click();
+        await loggingPo.nameInput().fill(flowName);
+        await loggingPo.outputsTab().click();
+        await loggingPo.flowOutputSelector().click();
+        await loggingPo.dropdownOptions().filter({ hasText: outputName }).first().click();
+
+        await loggingPo.matchTab().click();
+
+        const namespaces = ['fleet-default', 'cattle-system'];
+
+        const nsSelectContainer = loggingPo.matchNamespaceSelector();
+
+        await expect(nsSelectContainer).toBeAttached(SHORT_TIMEOUT_OPT);
+        await nsSelectContainer.scrollIntoViewIfNeeded();
+        await nsSelectContainer.click();
+
+        for (const ns of namespaces) {
+          await page.keyboard.type(ns);
+          await expect(loggingPo.dropdownOptions().first()).toBeVisible({ timeout: STANDARD });
+          await loggingPo.dropdownOptions().filter({ hasText: ns }).first().click();
+        }
+
+        const flowSavePromise = page.waitForResponse(
+          (resp) =>
+            resp.url().includes('/v1/logging.banzaicloud.io.clusterflows') && resp.request().method() === 'POST',
+        );
+
+        await loggingPo.formSave().click();
+
+        const flowResp = await flowSavePromise;
+        const flowBody = await flowResp.json();
+
+        expect(flowResp.status()).toBe(201);
+        expect(flowBody.metadata.name).toBe(flowName);
+        expect(flowBody.spec.match[0].select.namespaces[0]).toContain(namespaces[0]);
+        expect(flowBody.spec.match[0].select.namespaces[1]).toBe(namespaces[1]);
+
+        await expect(loggingPo.tableRowByText(flowName)).toBeAttached();
+
+        await loggingPo.rowDetailLink(flowName).click();
+
+        await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: LONG });
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'logging.banzaicloud.io.clusterflows', flowName, false);
+        await rancherApi.deleteRancherResource('v1', 'logging.banzaicloud.io.clusteroutputs', outputName, false);
+      }
+    });
+
+    // testing https://github.com/rancher/dashboard/issues/4849
+    test('can uninstall both chart and crd at once', async ({ page }) => {
+      test.setTimeout(PROVISIONING);
+
+      const clusterTools = new ClusterToolsPagePo(page, 'local');
+      const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
+      const terminal = new KubectlPo(page);
+
+      const CLUSTER_APPS_BASE_URL = 'v1/catalog.cattle.io.apps';
+
+      await installedAppsPage.goTo();
+      await installedAppsPage.waitForPage();
+
+      const getChartsResp = await page.waitForResponse(
+        (resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok(),
+      );
+
+      expect(getChartsResp.status()).toBe(200);
+
+      await expect(installedAppsPage.appsList().self()).toBeVisible();
+      await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
+
+      await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartApp)).toBeVisible({
+        timeout: LONG,
+      });
+      await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartCrd)).toBeVisible({
+        timeout: LONG,
+      });
+
+      await clusterTools.goTo();
+      await clusterTools.waitForPage();
+
+      await page.waitForResponse((resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok());
+
+      await clusterTools.deleteChart(chartAppDisplayName);
+
+      const promptRemove = new PromptRemove(page);
+
+      const chartUninstallPromise = page.waitForResponse(
         (resp) =>
-          resp.url().includes('/v1/logging.banzaicloud.io.clusteroutputs') && resp.request().method() === 'POST',
+          resp.url().includes(`${CLUSTER_APPS_BASE_URL}/cattle-logging-system/rancher-logging?action=uninstall`) &&
+          resp.request().method() === 'POST',
+      );
+      const crdUninstallPromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`${CLUSTER_APPS_BASE_URL}/cattle-logging-system/rancher-logging-crd?action=uninstall`) &&
+          resp.request().method() === 'POST',
       );
 
-      await loggingPo.formSave().click();
+      await expect(promptRemove.checkbox().self()).toContainText('Delete the CRD associated with this app');
+      await promptRemove.checkbox().set();
+      await expect(promptRemove.checkbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+      await promptRemove.remove();
 
-      const outputResp = await outputSavePromise;
-      const outputBody = await outputResp.json();
+      const card = new CardPo(page);
 
-      expect(outputResp.status()).toBe(201);
-      expect(outputBody.metadata.name).toBe(outputName);
+      await expect(card.self()).not.toBeAttached();
 
-      // Verify output appears in list
-      await expect(loggingPo.tableRowByText(outputName)).toBeAttached();
+      const chartUninstallResp = await chartUninstallPromise;
+      const crdUninstallResp = await crdUninstallPromise;
 
-      // Navigate to ClusterFlow
-      const sideNav = new ProductNavPo(page);
+      expect(chartUninstallResp.status()).toBe(201);
+      expect(crdUninstallResp.status()).toBe(201);
 
-      await sideNav.navToSideMenuEntryByLabel('ClusterFlows');
+      await terminal.waitForTerminalStatus('Disconnected', LONG);
+      await terminal.closeTerminalByTabName('Uninstall cattle-logging-system:rancher-logging');
+      await terminal.waitForTerminalStatus('Disconnected', LONG);
+      await terminal.closeTerminalByTabName('Uninstall cattle-logging-system:rancher-logging-crd');
 
-      // Create flow
-      await loggingPo.mastheadCreate().click();
+      await installedAppsPage.goTo();
+      await installedAppsPage.waitForPage();
 
-      // Fill in flow name
-      await loggingPo.nameInput().fill(flowName);
+      await page.waitForResponse((resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok());
 
-      // Click outputs tab
-      await loggingPo.outputsTab().click();
+      await expect(installedAppsPage.appsList().self()).toBeVisible();
+      await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
 
-      // Select output
-      await loggingPo.flowOutputSelector().click();
-      await loggingPo.dropdownOptions().filter({ hasText: outputName }).first().click();
-
-      // Configure namespaces (testing #13845)
-      await loggingPo.matchTab().click();
-
-      const namespaces = ['fleet-default', 'cattle-system'];
-
-      // Scroll the match section to reveal the namespace select below nodes/containers
-      const nsSelectContainer = loggingPo.matchNamespaceSelector();
-
-      await expect(nsSelectContainer).toBeAttached(SHORT_TIMEOUT_OPT);
-      await nsSelectContainer.scrollIntoViewIfNeeded();
-      await nsSelectContainer.click();
-
-      for (const ns of namespaces) {
-        // Type into the currently focused search input
-        await page.keyboard.type(ns);
-        await expect(loggingPo.dropdownOptions().first()).toBeVisible({ timeout: STANDARD });
-        await loggingPo.dropdownOptions().filter({ hasText: ns }).first().click();
-      }
-
-      // Save flow
-      const flowSavePromise = page.waitForResponse(
-        (resp) => resp.url().includes('/v1/logging.banzaicloud.io.clusterflows') && resp.request().method() === 'POST',
-      );
-
-      await loggingPo.formSave().click();
-
-      const flowResp = await flowSavePromise;
-      const flowBody = await flowResp.json();
-
-      expect(flowResp.status()).toBe(201);
-      expect(flowBody.metadata.name).toBe(flowName);
-      expect(flowBody.spec.match[0].select.namespaces[0]).toContain(namespaces[0]);
-      expect(flowBody.spec.match[0].select.namespaces[1]).toBe(namespaces[1]);
-
-      // Verify flow appears in list
-      await expect(loggingPo.tableRowByText(flowName)).toBeAttached();
-
-      // Go to details page
-      await loggingPo.rowDetailLink(flowName).click();
-
-      // Verify rule item is visible (the detail page shows match rules in array-list items)
-      await expect(loggingPo.flowRuleItem(0)).toBeVisible({ timeout: LONG });
-    } finally {
-      // Clean up flow and output so they don't leak if assertions fail
-      await rancherApi.deleteRancherResource('v1', 'logging.banzaicloud.io.clusterflows', flowName, false);
-      await rancherApi.deleteRancherResource('v1', 'logging.banzaicloud.io.clusteroutputs', outputName, false);
-    }
-  });
-
-  // testing https://github.com/rancher/dashboard/issues/4849
-  test('can uninstall both chart and crd at once', async ({ page, rancherApi }) => {
-    test.setTimeout(180000);
-    // This test requires logging to be installed and deployed.
-    const appResp = await rancherApi.getRancherResource(
-      'v1',
-      'catalog.cattle.io.apps',
-      `${chartNamespace}/${chartApp}`,
-      0,
-    );
-    const loggingInstalled = appResp.status === 200 && appResp.body?.metadata?.state?.name === 'deployed';
-
-    test.skip(!loggingInstalled, 'Logging chart is not deployed — cannot test uninstall');
-
-    // Set namespace filter to show all namespaces (logging installs to a system namespace)
-    await rancherApi.updateNamespaceFilter('local', 'none', '{"local":[]}');
-
-    const clusterTools = new ClusterToolsPagePo(page, 'local');
-    const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
-    const terminal = new KubectlPo(page);
-
-    const CLUSTER_APPS_BASE_URL = 'v1/catalog.cattle.io.apps';
-
-    await installedAppsPage.goTo();
-    await installedAppsPage.waitForPage();
-
-    const getChartsResp = await page.waitForResponse(
-      (resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok(),
-    );
-
-    expect(getChartsResp.status()).toBe(200);
-
-    await expect(installedAppsPage.appsList().self()).toBeVisible();
-    await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
-
-    // Verify both charts exist
-    await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartApp)).toBeVisible({
-      timeout: LONG,
+      await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartApp)).not.toBeVisible({
+        timeout: LONG,
+      });
+      await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartCrd)).not.toBeVisible({
+        timeout: LONG,
+      });
     });
-    await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartCrd)).toBeVisible({
-      timeout: LONG,
-    });
-
-    // Navigate to Cluster Tools and delete
-    await clusterTools.goTo();
-    await clusterTools.waitForPage();
-
-    await page.waitForResponse((resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok());
-
-    await clusterTools.deleteChart(chartAppDisplayName);
-
-    const promptRemove = new PromptRemove(page);
-
-    // Set up uninstall response listeners before triggering
-    const chartUninstallPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_APPS_BASE_URL}/cattle-logging-system/rancher-logging?action=uninstall`) &&
-        resp.request().method() === 'POST',
-    );
-    const crdUninstallPromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes(`${CLUSTER_APPS_BASE_URL}/cattle-logging-system/rancher-logging-crd?action=uninstall`) &&
-        resp.request().method() === 'POST',
-    );
-
-    await expect(promptRemove.checkbox().self()).toContainText('Delete the CRD associated with this app');
-    await promptRemove.checkbox().set();
-    await expect(promptRemove.checkbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
-    await promptRemove.remove();
-
-    const card = new CardPo(page);
-
-    await expect(card.self()).not.toBeAttached();
-
-    const chartUninstallResp = await chartUninstallPromise;
-    const crdUninstallResp = await crdUninstallPromise;
-
-    expect(chartUninstallResp.status()).toBe(201);
-    expect(crdUninstallResp.status()).toBe(201);
-
-    await terminal.waitForTerminalStatus('Disconnected', 30000);
-    await terminal.closeTerminalByTabName('Uninstall cattle-logging-system:rancher-logging');
-    await terminal.waitForTerminalStatus('Disconnected', 30000);
-    await terminal.closeTerminalByTabName('Uninstall cattle-logging-system:rancher-logging-crd');
-
-    // Verify charts are removed
-    await installedAppsPage.goTo();
-    await installedAppsPage.waitForPage();
-
-    await page.waitForResponse((resp) => resp.url().includes(`${CLUSTER_APPS_BASE_URL}?`) && resp.ok());
-
-    await expect(installedAppsPage.appsList().self()).toBeVisible();
-    await installedAppsPage.appsList().sortableTable().checkLoadingIndicatorNotVisible();
-
-    // Verify chart rows are gone
-    await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartApp)).not.toBeVisible({
-      timeout: LONG,
-    });
-    await expect(installedAppsPage.appsList().sortableTable().rowElementWithName(chartCrd)).not.toBeVisible({
-      timeout: LONG,
-    });
-  });
-
-  test.afterAll(async ({ rancherApi }) => {
-    try {
-      await rancherApi.uninstallChart(chartNamespace, chartApp, chartCrd);
-
-      // Wait for both apps to be fully removed so Rancher settles before next spec
-      await rancherApi.waitForRancherResource(
-        'v1',
-        'catalog.cattle.io.apps',
-        `${chartNamespace}/${chartApp}`,
-        (resp) => resp.status === 404,
-        60,
-        5000,
-      );
-      await rancherApi.waitForRancherResource(
-        'v1',
-        'catalog.cattle.io.apps',
-        `${chartNamespace}/${chartCrd}`,
-        (resp) => resp.status === 404,
-        60,
-        5000,
-      );
-    } finally {
-      // Always restore namespace filter even if uninstall polling fails
-      await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
-      await rancherApi.waitForHealthy();
-    }
   });
 });

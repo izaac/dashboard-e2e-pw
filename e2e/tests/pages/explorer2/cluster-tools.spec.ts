@@ -5,7 +5,6 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
 import { LONG, VERY_LONG, PROVISIONING } from '@/support/timeouts';
-import type { RancherApi } from '@/support/fixtures/rancher-api';
 
 // Upstream Cypress test uses 'rancher-alerting-drivers'; we use OPA Gatekeeper because
 // alerting-drivers (and most 109.x charts) require k8s 1.33+ AND a working
@@ -13,68 +12,9 @@ import type { RancherApi } from '@/support/fixtures/rancher-api';
 // has looser kubeVersion and no patch-sa hook — installs cleanly across rancher tags.
 const chartName = 'OPA Gatekeeper';
 const chartKey = 'rancher-gatekeeper';
+const chartCrd = 'rancher-gatekeeper-crd';
 const chartRepo = 'rancher-charts';
 const chartNamespace = 'cattle-gatekeeper-system';
-
-async function ensureChartUninstalled(rancherApi: RancherApi): Promise<void> {
-  await rancherApi.uninstallChart(chartNamespace, chartKey);
-  await rancherApi.waitForRancherResource(
-    'v1',
-    'catalog.cattle.io.apps',
-    `${chartNamespace}/${chartKey}`,
-    (resp) => resp.status === 404,
-    30,
-    2000,
-  );
-}
-
-/**
- * Seed the chart in 'deployed' state via API. Faster and more reliable than
- * driving the UI install flow for tests that only assert the edit/uninstall flow.
- */
-async function ensureChartInstalled(rancherApi: RancherApi): Promise<void> {
-  const appResp = await rancherApi.getRancherResource(
-    'v1',
-    'catalog.cattle.io.apps',
-    `${chartNamespace}/${chartKey}`,
-    0,
-  );
-
-  if (appResp.status === 200 && appResp.body?.metadata?.state?.name === 'deployed') {
-    return;
-  }
-
-  if (appResp.status === 200) {
-    await ensureChartUninstalled(rancherApi);
-  }
-
-  await rancherApi.createRancherResource(
-    'v1',
-    `catalog.cattle.io.clusterrepos/${chartRepo}?action=install`,
-    {
-      charts: [{ chartName: chartKey, namespace: chartNamespace, releaseName: chartKey }],
-      noHooks: false,
-      timeout: '600s',
-      wait: false,
-      namespace: chartNamespace,
-      projectId: '',
-    },
-    false,
-  );
-
-  const deployed = await rancherApi.waitForRancherResource(
-    'v1',
-    'catalog.cattle.io.apps',
-    `${chartNamespace}/${chartKey}`,
-    (resp) => resp.body?.metadata?.state?.name === 'deployed',
-    40,
-    3000,
-  );
-
-  if (!deployed) {
-    throw new Error(`Chart '${chartKey}' did not reach deployed state within polling window`);
-  }
-}
 
 test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -104,13 +44,13 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
     test.describe.configure({ mode: 'serial' });
 
     test.afterAll(async ({ rancherApi }) => {
-      await ensureChartUninstalled(rancherApi);
+      await rancherApi.ensureChartUninstalled(chartNamespace, chartKey, chartCrd);
     });
 
     test.describe('install', () => {
       test.beforeEach(async ({ rancherApi, chartGuard }) => {
         await chartGuard(chartRepo, chartKey);
-        await ensureChartUninstalled(rancherApi);
+        await rancherApi.ensureChartUninstalled(chartNamespace, chartKey, chartCrd);
       });
 
       test('can deploy chart successfully', async ({ page, rancherApi }) => {
@@ -163,7 +103,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       test.beforeEach(async ({ rancherApi, chartGuard }) => {
         test.setTimeout(PROVISIONING);
         await chartGuard(chartRepo, chartKey);
-        await ensureChartInstalled(rancherApi);
+        await rancherApi.ensureChartInstalled(chartRepo, chartNamespace, chartKey, chartCrd, 40, 3000);
       });
 
       test('can edit chart successfully', async ({ page }) => {

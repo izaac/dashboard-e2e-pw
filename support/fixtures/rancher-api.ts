@@ -882,6 +882,23 @@ export class RancherApi {
   }
 
   /**
+   * Resolve the latest chart version from a cluster repo's index. The
+   * `?action=install` endpoint requires `version` in each chart entry — without
+   * it the helm command gets `chart-.tgz` (empty version) and fails with exit 123.
+   * Index entries are pre-sorted by Rancher with the newest version at index 0.
+   */
+  async getLatestChartVersion(repo: string, chartName: string): Promise<string> {
+    const idxResp = await this.getRancherResource('v1', `catalog.cattle.io.clusterrepos/${repo}?link=index`);
+    const versions = idxResp.body?.entries?.[chartName];
+
+    if (!versions || versions.length === 0) {
+      throw new Error(`No versions found for chart '${chartName}' in repo '${repo}'`);
+    }
+
+    return versions[0].version;
+  }
+
+  /**
    * Uninstall a Helm chart via API. Safe to call when the chart is not installed.
    * When crdName is provided, uninstalls the app first, then the CRD (order matters).
    */
@@ -900,6 +917,106 @@ export class RancherApi {
       if (crdResp.status === 200) {
         await this.createRancherResource('v1', `${base}/${crdName}?action=uninstall`, {}, false, 30000);
       }
+    }
+  }
+
+  /**
+   * Uninstall and wait for full cleanup of the chart and its CRD chart (if any).
+   * Polls until the catalog.cattle.io.apps resources return 404 — confirming
+   * helm finished and any k8s CRDs from the CRD chart were removed.
+   */
+  async ensureChartUninstalled(
+    namespace: string,
+    name: string,
+    crdName?: string,
+    retries = 30,
+    delayMs = 2000,
+  ): Promise<void> {
+    await this.uninstallChart(namespace, name, crdName);
+    await this.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.apps',
+      `${namespace}/${name}`,
+      (resp) => resp.status === 404,
+      retries,
+      delayMs,
+    );
+    if (crdName) {
+      await this.waitForRancherResource(
+        'v1',
+        'catalog.cattle.io.apps',
+        `${namespace}/${crdName}`,
+        (resp) => resp.status === 404,
+        retries,
+        delayMs,
+      );
+    }
+  }
+
+  /**
+   * Install a chart (and its CRD chart, if any) at the latest version via the
+   * cluster-repo install action. No-ops if already deployed; uninstalls and
+   * reinstalls if the chart exists in a non-deployed state. Throws if the chart
+   * does not reach `deployed` within the polling window.
+   */
+  async ensureChartInstalled(
+    repo: string,
+    namespace: string,
+    name: string,
+    crdName?: string,
+    retries = 60,
+    delayMs = 5000,
+  ): Promise<void> {
+    const appResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${name}`, 0);
+
+    if (appResp.status === 200 && appResp.body?.metadata?.state?.name === 'deployed') {
+      return;
+    }
+
+    if (appResp.status === 200) {
+      await this.ensureChartUninstalled(namespace, name, crdName);
+    }
+
+    const charts = [];
+
+    if (crdName) {
+      const crdVersion = await this.getLatestChartVersion(repo, crdName);
+
+      charts.push({ chartName: crdName, version: crdVersion, namespace, releaseName: crdName });
+    }
+
+    const appVersion = await this.getLatestChartVersion(repo, name);
+
+    charts.push({ chartName: name, version: appVersion, namespace, releaseName: name });
+
+    await this.createRancherResource(
+      'v1',
+      `catalog.cattle.io.clusterrepos/${repo}?action=install`,
+      {
+        charts,
+        noHooks: false,
+        timeout: '600s',
+        // wait: true is required for multi-chart installs (CRD + app): without it, helm runs
+        // both `helm upgrade --install` commands back-to-back and the second fails because
+        // the first chart's CRDs haven't been registered with the k8s API server yet.
+        wait: true,
+        namespace,
+        projectId: '',
+      },
+      false,
+    );
+
+    const deployed = await this.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.apps',
+      `${namespace}/${name}`,
+      (resp) => resp.body?.metadata?.state?.name === 'deployed',
+      retries,
+      delayMs,
+    );
+
+    if (!deployed) {
+      throw new Error(`Chart '${name}' did not reach deployed state within polling window`);
     }
   }
 
