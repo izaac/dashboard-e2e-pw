@@ -963,6 +963,47 @@ export class RancherApi {
   }
 
   /**
+   * Force-clean k8s CRDs whose group matches `group` and which are stuck with
+   * a deletionTimestamp. Some charts (e.g. elemental) leave their CRDs in
+   * pending-deletion state after uninstall because their own resources hold
+   * finalizers that the controller isn't around to clear. Clears finalizers via
+   * a merge-patch so Kubernetes can finish GC.
+   */
+  async forceCleanStuckCRDs(group: string): Promise<void> {
+    const crdsResp = await this.getRancherResource(
+      'v1',
+      'apiextensions.k8s.io.customresourcedefinitions',
+      undefined,
+      0,
+    );
+
+    if (crdsResp.status !== 200) {
+      return;
+    }
+
+    const stuck = (crdsResp.body?.data || []).filter(
+      (crd: any) => crd.spec?.group === group && crd.metadata?.deletionTimestamp,
+    );
+
+    for (const crd of stuck) {
+      const url = `${this.apiUrl}/v1/apiextensions.k8s.io.customresourcedefinitions/${crd.metadata.name}`;
+
+      await this.fetchWithReauth(() =>
+        this.request.fetch(url, {
+          method: 'PATCH',
+          ...this.opts({
+            headers: {
+              ...this.headers(),
+              'Content-Type': 'application/merge-patch+json',
+            },
+            data: { metadata: { finalizers: [] } },
+          }),
+        }),
+      );
+    }
+  }
+
+  /**
    * Uninstall and wait for full cleanup of the chart and its CRD chart (if any).
    * Polls until the catalog.cattle.io.apps resources return 404, confirming the
    * helm release wrappers are gone. Helm's uninstall of the CRD chart also
@@ -1001,6 +1042,10 @@ export class RancherApi {
    * cluster-repo install action. No-ops if already deployed; uninstalls and
    * reinstalls if the chart exists in a non-deployed state. Throws if the chart
    * does not reach `deployed` within the polling window.
+   *
+   * `releaseName` / `crdReleaseName` default to chart names, but can be
+   * overridden for charts whose helm release name differs (e.g. the
+   * `elemental` chart in rancher-charts releases as `elemental-operator`).
    */
   async ensureChartInstalled(
     repo: string,
@@ -1009,15 +1054,20 @@ export class RancherApi {
     crdName?: string,
     retries = 60,
     delayMs = 5000,
+    releaseName?: string,
+    crdReleaseName?: string,
   ): Promise<void> {
-    const appResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${name}`, 0);
+    const release = releaseName ?? name;
+    const crdRelease = crdReleaseName ?? crdName;
+
+    const appResp = await this.getRancherResource('v1', 'catalog.cattle.io.apps', `${namespace}/${release}`, 0);
 
     if (appResp.status === 200 && appResp.body?.metadata?.state?.name === 'deployed') {
       return;
     }
 
     if (appResp.status === 200) {
-      await this.ensureChartUninstalled(namespace, name, crdName);
+      await this.ensureChartUninstalled(namespace, release, crdRelease);
     }
 
     const charts: Array<{ chartName: string; version: string; namespace: string; releaseName: string }> = [];
@@ -1025,12 +1075,12 @@ export class RancherApi {
     if (crdName) {
       const crdVersion = await this.getLatestChartVersion(repo, crdName);
 
-      charts.push({ chartName: crdName, version: crdVersion, namespace, releaseName: crdName });
+      charts.push({ chartName: crdName, version: crdVersion, namespace, releaseName: crdRelease ?? crdName });
     }
 
     const appVersion = await this.getLatestChartVersion(repo, name);
 
-    charts.push({ chartName: name, version: appVersion, namespace, releaseName: name });
+    charts.push({ chartName: name, version: appVersion, namespace, releaseName: release });
 
     await this.createRancherResource(
       'v1',
@@ -1052,14 +1102,14 @@ export class RancherApi {
     const deployed = await this.waitForRancherResource(
       'v1',
       'catalog.cattle.io.apps',
-      `${namespace}/${name}`,
+      `${namespace}/${release}`,
       (resp) => resp.body?.metadata?.state?.name === 'deployed',
       retries,
       delayMs,
     );
 
     if (!deployed) {
-      throw new Error(`Chart '${name}' did not reach deployed state within polling window`);
+      throw new Error(`Chart release '${release}' did not reach deployed state within polling window`);
     }
   }
 

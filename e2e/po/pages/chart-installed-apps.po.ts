@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
-import { LONG } from '@/support/timeouts';
+import { VERY_LONG } from '@/support/timeouts';
 
 export default class ChartInstalledAppsListPagePo extends PagePo {
   private terminal: KubectlPo;
@@ -37,7 +37,13 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {
-      await this.appsList().resourceTableDetails(item, 1).filter({ hasText: 'Deployed' }).waitFor({ timeout: LONG });
+      // VERY_LONG (60s) instead of 30s — multi-chart installs (CRD + main app)
+      // can take ~45s for all rows to reflect Deployed state in the SPA after
+      // helm finishes (steve aggregator + Vue list re-render lag).
+      await this.appsList()
+        .resourceTableDetails(item, 1)
+        .filter({ hasText: 'Deployed' })
+        .waitFor({ timeout: VERY_LONG });
     }
 
     // Additional wait for everything to be set up
