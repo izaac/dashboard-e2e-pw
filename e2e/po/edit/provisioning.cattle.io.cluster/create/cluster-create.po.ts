@@ -64,8 +64,11 @@ export default class ClusterManagerCreatePagePo extends PagePo {
     return this.self().locator('.checkbox-label').filter({ hasText: 'Insecure:' });
   }
 
-  customClusterRegistrationCmd(cmd: string, customNodeIp: string): string {
-    return `ssh -i custom_node.key -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" root@${customNodeIp} "nohup ${cmd}"`;
+  customClusterRegistrationCmd(cmd: string): string {
+    const sshUser = process.env.CUSTOM_NODE_USER || 'ec2-user';
+    const customNodeIp = process.env.CUSTOM_NODE_IP;
+
+    return `ssh -i custom_node.key -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" ${sshUser}@${customNodeIp} "nohup ${cmd}"`;
   }
 
   loadingIndicator(): Locator {
