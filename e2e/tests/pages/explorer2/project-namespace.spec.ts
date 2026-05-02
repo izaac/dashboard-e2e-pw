@@ -1,5 +1,5 @@
 import { test, expect } from '@/support/fixtures';
-import { ProjectsNamespacesListPagePo } from '@/e2e/po/pages/explorer/projects-namespaces.po';
+import { ProjectsNamespacesListPagePo, ProjectCreateEditPagePo } from '@/e2e/po/pages/explorer/projects-namespaces.po';
 
 test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -139,12 +139,60 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       await expect(cruResource.errorBanner()).toHaveCount(1);
     });
 
-    // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-    test('displays the most recent error after resolving a single error in a form with multiple errors', async () => {
-      test.skip(
-        true,
-        'Test for multiple error resolution requires complex form interaction with resource quotas and container limits',
+    // Regression: rancher/dashboard#11881 — when a form has multiple errors and the
+    // user resolves the first, the next save must replace the banner with the *new*
+    // most-recent error rather than stacking or leaving the stale error visible.
+    test('displays the most recent error after resolving a single error in a form with multiple errors', async ({
+      page,
+    }) => {
+      const projectsNamespacesPage = new ProjectsNamespacesListPagePo(page);
+      const createProjectPage = new ProjectCreateEditPagePo(page);
+
+      await projectsNamespacesPage.goTo();
+      await projectsNamespacesPage.waitForPage();
+
+      const masthead = projectsNamespacesPage.masthead();
+
+      await masthead.create();
+
+      const cruResource = projectsNamespacesPage.createEditView();
+
+      // First error: resourceQuota with project limit set but no namespace default limit
+      await cruResource.nameNsDescription().name().set('test-1234');
+      await cruResource.tabResourceQuotas().click();
+      await cruResource.btnAddResource().click();
+      await cruResource.selectResourceType(1);
+      await cruResource.inputProjectLimit().set('50');
+      await cruResource.formSave().click();
+
+      // Second invalid input: container limits where reservations exceed limits
+      await createProjectPage.tabContainerDefaultResourceLimit().click();
+      await createProjectPage.inputCpuReservation().set('1000');
+      await createProjectPage.inputMemoryReservation().set('128');
+      await createProjectPage.inputCpuLimit().set('200');
+      await createProjectPage.inputMemoryLimit().set('64');
+      await cruResource.formSave().click();
+
+      // Assert: still only the resourceQuota error showing (not stacked)
+      await expect(createProjectPage.bannerError(0)).toBeVisible();
+      await expect(createProjectPage.bannerError(0)).toContainText(
+        'does not have all fields defined on a resourceQuota',
       );
+      await expect(createProjectPage.bannerError(0)).toHaveCount(1);
+      await expect(createProjectPage.bannerError(1)).toHaveCount(0);
+
+      // Resolve the first error
+      await cruResource.tabResourceQuotas().click();
+      await createProjectPage.inputNamespaceDefaultLimit().set('50');
+      await cruResource.formSave().click();
+
+      // Assert: banner now shows the *new* most-recent error (admission webhook denial)
+      await expect(createProjectPage.bannerError(0)).toBeVisible();
+      await expect(createProjectPage.bannerError(0)).toContainText(
+        'admission webhook "rancher.cattle.io.projects.management.cattle.io" denied the request',
+      );
+      await expect(createProjectPage.bannerError(0)).toHaveCount(1);
+      await expect(createProjectPage.bannerError(1)).toHaveCount(0);
     });
   });
 

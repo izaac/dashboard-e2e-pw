@@ -48,7 +48,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] `v2-monitoring.spec.ts` (1) — file-must-have-a-test placeholder
 - [x] `cluster-dashboard.spec.ts` — fleet controller hidden for standard user
-- [ ] `project-namespace.spec.ts` (1) — most-recent error in multi-error form
+- [x] `project-namespace.spec.ts` — most-recent error in multi-error form (regression test for rancher/dashboard#11881)
 - [x] `prime.spec.ts` — both tests live; doc link from i18n via AuthProviderPo + AzureadPo, mock helper at `blueprints/global/prime-version-mock.ts`
 - [x] `cloud-credential.spec.ts` — empty cloud credential creation page
 
