@@ -19,6 +19,17 @@ async function cleanupMachine(rancherApi: any, fullName: string) {
       delete resource.body.metadata.finalizers;
       await rancherApi.setRancherResource('v1', 'cluster.x-k8s.io.machines', fullName, resource.body);
     }
+    // Wait for the resource to actually disappear — the dashboard list keeps
+    // a "Removing…" row visible until the steve cache catches up, which can
+    // bleed into peer tests and visual snapshots.
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'cluster.x-k8s.io.machines',
+      fullName,
+      (resp: any) => resp.status === 404,
+      30,
+      1000,
+    );
   } catch {
     // resource may already be gone
   }
@@ -149,17 +160,49 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
       await deleteResp;
       await machinesPage.waitForPage();
 
+      // Strip finalizers eagerly — without them the row sticks in the list as
+      // "Removing… N secs" and the body assertion below times out before the
+      // cluster.x-k8s.io controller reconciles.
+      await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+      await page.reload();
+      await machinesPage.waitForPage();
+
       await expect(machinesPage.body()).not.toContainText(machineName);
     } finally {
       await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
     }
   });
 
-  test.skip(true, 'Requires provisioned cluster with machines');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('can download YAML', async () => {
-    // Upstream test downloads YAML file for a Machine
-    // Needs actual provisioned cluster with machine resources
+  test('can download YAML', async ({ page, login, rancherApi }) => {
+    await login();
+    const machinesPage = new MachinesPagePo(page);
+    const machineName = rancherApi.createE2EResourceName('mach-dl');
+
+    const doc = fs.readFileSync(blueprintPath, 'utf-8');
+    const json: any = jsyaml.load(doc);
+
+    json.metadata.name = machineName;
+    json.metadata.namespace = nsName;
+    await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machines', json);
+
+    try {
+      await machinesPage.goTo();
+      await machinesPage.waitForPage();
+
+      const actionMenu = await machinesPage.list().actionMenu(machineName);
+      const downloadPromise = page.waitForEvent('download');
+
+      await actionMenu.getMenuItem('Download YAML').click();
+      const download = await downloadPromise;
+      const downloadPath = await download.path();
+      const obj: any = jsyaml.load(fs.readFileSync(downloadPath, 'utf-8'));
+
+      expect(obj.apiVersion).toBe('cluster.x-k8s.io/v1beta2');
+      expect(obj.kind).toBe('Machine');
+      expect(obj.metadata.name).toBe(machineName);
+    } finally {
+      await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
+    }
   });
 });
 

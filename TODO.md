@@ -24,9 +24,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] `cluster-manager.spec.ts` (11) — create/edit/copy/yaml/kubeconfig/download/delete on RKE2 custom + imported clusters; one display test
 - [ ] `fleet-clusters.spec.ts` (10) — list/details, bundle add/remove, pause/unpause, edit, download, workspace assign, delete
-- [ ] `machine-deployments.spec.ts` (1) — download YAML
-- [ ] `machine-sets.spec.ts` (1) — download YAML
-- [ ] `machines.spec.ts` (1) — download YAML
 - [ ] `gitrepo.spec.ts` (1) — `Can create a GitRepo` (needs real fleet multi-cluster)
 
 ### Need third-party auth provider

@@ -19,6 +19,17 @@ async function cleanupMachineDeployment(rancherApi: any, fullName: string) {
       delete resource.body.metadata.finalizers;
       await rancherApi.setRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', fullName, resource.body);
     }
+    // Wait for the resource to actually disappear — the dashboard list keeps
+    // a "Removing…" row visible until the steve cache catches up, which can
+    // bleed into peer tests and visual snapshots.
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'cluster.x-k8s.io.machinedeployments',
+      fullName,
+      (resp: any) => resp.status === 404,
+      30,
+      1000,
+    );
   } catch {
     // resource may already be gone
   }
@@ -224,11 +235,36 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     await expect(mdPage.body()).not.toContainText(mdName);
   });
 
-  test.skip(true, 'Requires provisioned cluster with machine deployments');
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('can download YAML', async () => {
-    // Upstream test downloads YAML file for a MachineDeployment
-    // Needs actual provisioned cluster with machine deployment resources
+  test('can download YAML', async ({ page, login, rancherApi }) => {
+    await login();
+    const mdPage = new MachineDeploymentsPagePo(page);
+    const mdName = rancherApi.createE2EResourceName('md-dl');
+
+    const doc = fs.readFileSync(blueprintPath, 'utf-8');
+    const json: any = jsyaml.load(doc);
+
+    json.metadata.name = mdName;
+    json.metadata.namespace = nsName;
+    await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
+
+    try {
+      await mdPage.goTo();
+      await mdPage.waitForPage();
+
+      const actionMenu = await mdPage.list().actionMenu(mdName);
+      const downloadPromise = page.waitForEvent('download');
+
+      await actionMenu.getMenuItem('Download YAML').click();
+      const download = await downloadPromise;
+      const downloadPath = await download.path();
+      const obj: any = jsyaml.load(fs.readFileSync(downloadPath, 'utf-8'));
+
+      expect(obj.apiVersion).toBe('cluster.x-k8s.io/v1beta2');
+      expect(obj.kind).toBe('MachineDeployment');
+      expect(obj.metadata.name).toBe(mdName);
+    } finally {
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    }
   });
 });
 
