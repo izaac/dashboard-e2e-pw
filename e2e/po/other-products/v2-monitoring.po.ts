@@ -27,10 +27,6 @@ export default class V2MonitoringPagePo extends PagePo {
     return new ResourceListMastheadPo(this.page, ':scope', this.self());
   }
 
-  createButton(): Locator {
-    return this.masthead().createButton();
-  }
-
   async editV2MonitoringItem(name: string): Promise<void> {
     const sortableTable = this.list().sortableTable();
     const menu = await sortableTable.rowActionMenuOpen(name);

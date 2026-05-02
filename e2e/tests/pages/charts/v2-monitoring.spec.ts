@@ -83,8 +83,6 @@ test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
         INSTALL_DELAY_MS,
       );
 
-      // Seed an AlertmanagerConfig the test will edit. Idempotent: best-effort delete
-      // first, then create.
       await rancherApi.deleteRancherResource(
         'v1',
         'monitoring.coreos.com.alertmanagerconfigs',
@@ -173,6 +171,12 @@ test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
         CHART_CRD_NAME,
         INSTALL_RETRIES,
         INSTALL_DELAY_MS,
+      );
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'monitoring.coreos.com.prometheusrules',
+        `${PROM_RULE_NAMESPACE}/${PROM_RULE_NAME}`,
+        false,
       );
     });
 
@@ -270,11 +274,23 @@ test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
         INSTALL_RETRIES,
         INSTALL_DELAY_MS,
       );
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'monitoring.coreos.com.prometheusrules',
+        `${PROM_RULE_NAMESPACE}/${PROM_RULE_NAME}`,
+        false,
+      );
       await rancherApi.setUserPreference({ language: 'zh-hans' });
     });
 
     test.afterEach(async ({ rancherApi }) => {
       await rancherApi.setUserPreference({ language: 'en-us' });
+      await rancherApi.deleteRancherResource(
+        'v1',
+        'monitoring.coreos.com.prometheusrules',
+        `${PROM_RULE_NAMESPACE}/${PROM_RULE_NAME}`,
+        false,
+      );
     });
 
     test('Alerting Rules "Severity" select should NOT be translating the values to Chinese', async ({ page }) => {
@@ -307,7 +323,6 @@ test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
       await v2.prometheusRulesAlertName(0).set('record-0');
       await v2.prometheusRulesAlertPromQl(0).set('promql-0');
 
-      // Open the severity dropdown and pick "critical" (option index 1)
       await v2.alertingRuleSeveritySelect(0).toggle();
       await v2.alertingRuleSeveritySelect(0).clickOption(1);
 

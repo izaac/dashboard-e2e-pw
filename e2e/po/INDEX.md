@@ -162,7 +162,7 @@
 |-------|------|---------|----------|---------|
 | LoggingPo | logging.po.ts | ComponentPo | `.dashboard-root` | super, mastheadCreate, nameInput, formSave, outputTargetInput, outputsTab, matchTab, flowOutputSelector (+7) |
 | OpaGatekeeperPo | opa-gatekeeper.po.ts | PagePo | `/c/${clusterId}/gatekeeper` | super, create, selectConstraintSubtype, createFromYaml, saveCreateForm |
-| V2MonitoringPagePo | v2-monitoring.po.ts | PagePo | `/c/${clusterId}/monitoring` | super, list, masthead, createButton, editV2MonitoringItem, alertManagerConfigAddReceiver, pagerDutyTab, groupTab (+15) |
+| V2MonitoringPagePo | v2-monitoring.po.ts | PagePo | `/c/${clusterId}/monitoring` | super, list, masthead, editV2MonitoringItem, alertManagerConfigAddReceiver, pagerDutyTab, groupTab, addPagerDutyReceiver (+14) |
 
 ## pages/
 
