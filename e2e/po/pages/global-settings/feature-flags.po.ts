@@ -111,7 +111,8 @@ export class FeatureFlagsPagePo extends RootClusterPage {
   }
 
   async getFeatureFlag(featureFlag: string): Promise<any> {
-    const response = await this.page.request.get(`v1/management.cattle.io.features/${featureFlag}`);
+    // Absolute path bypasses the /dashboard/ baseURL — see extensions.po.ts for context.
+    const response = await this.page.request.get(`/v1/management.cattle.io.features/${featureFlag}`);
 
     return response.json();
   }
@@ -120,6 +121,6 @@ export class FeatureFlagsPagePo extends RootClusterPage {
     const res = await this.getFeatureFlag(featureFlag);
     const obj = { ...res, spec: { value } };
 
-    await this.page.request.put(`v1/management.cattle.io.features/${featureFlag}`, { data: obj });
+    await this.page.request.put(`/v1/management.cattle.io.features/${featureFlag}`, { data: obj });
   }
 }

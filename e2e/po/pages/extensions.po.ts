@@ -336,8 +336,11 @@ export default class ExtensionsPagePo extends PagePo {
     name: string,
     waitForActiveState = true,
   ): Promise<void> {
-    // Check if repo already exists via API before attempting UI creation
-    const apiResp = await this.page.request.get(`v1/catalog.cattle.io.clusterrepos/${name}`, {
+    // Check if repo already exists via API before attempting UI creation.
+    // Absolute path (leading slash) escapes the dashboard baseURL — without it
+    // Playwright resolves relative URLs against /dashboard/ and the SPA returns
+    // 200 (index.html) for every unmatched route, masking real 404s.
+    const apiResp = await this.page.request.get(`/v1/catalog.cattle.io.clusterrepos/${name}`, {
       failOnStatusCode: false,
     });
 

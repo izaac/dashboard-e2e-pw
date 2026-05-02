@@ -111,7 +111,9 @@ export default class MgmtUserEditPo extends PagePo {
     const bindingResp = await bindingPromise;
 
     if (bindingResp.status() !== 201 && userId) {
-      await this.page.request.delete(`v1/management.cattle.io.users/${userId}`);
+      // Absolute path bypasses the /dashboard/ baseURL — without it the SPA
+      // catches the request and returns 200 (index.html), masking real failures.
+      await this.page.request.delete(`/v1/management.cattle.io.users/${userId}`);
       await this.page.waitForTimeout(2000);
       await this.saveCreateWithErrorRetry(attempt + 1);
     }
