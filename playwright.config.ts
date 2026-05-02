@@ -172,7 +172,7 @@ export default defineConfig({
     /* Debugging artifacts — all retained on failure for full post-mortem */
     screenshot: process.env.TEST_NO_SCREENSHOTS === 'true' ? 'off' : { mode: 'only-on-failure', fullPage: true },
     video: process.env.TEST_NO_VIDEOS === 'true' ? 'off' : 'retain-on-failure',
-    trace: 'on-first-retry',
+    trace: process.env.TEST_NO_TRACES === 'true' ? 'off' : 'on-first-retry',
 
     actionTimeout: process.env.TEST_TIMEOUT ? +process.env.TEST_TIMEOUT : 10_000,
     storageState: undefined,
