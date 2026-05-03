@@ -3,7 +3,7 @@ import MachinesPagePo from '@/e2e/po/pages/cluster-manager/machines.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 import * as path from 'path';
 
 const nsName = 'default';
@@ -167,7 +167,9 @@ test.describe('Machines', { tag: ['@manager', '@adminUser'] }, () => {
       await page.reload();
       await machinesPage.waitForPage();
 
-      await expect(machinesPage.body()).not.toContainText(machineName);
+      await expect(
+        machinesPage.list().resourceTable().sortableTable().rowElementWithName(machineName),
+      ).not.toBeAttached();
     } finally {
       await cleanupMachine(rancherApi, `${nsName}/${machineName}`);
     }
@@ -218,7 +220,14 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
       await machinesPage.waitForPage();
       await machinesPage.list().resourceTable().sortableTable().waitForReady();
 
-      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machines-list.png'), { fullPage: true });
+      // Empty-state guard: snapshot baseline expects "There are no rows to show."
+      // If a peer test left an orphan Machine, fail loudly instead of producing a misleading visual diff.
+      await expect(machinesPage.list().resourceTable().sortableTable().noRowsText()).toBeVisible();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machines-list.png'), {
+        fullPage: true,
+        mask: mastheadMasks(page),
+      });
     } finally {
       await restoreTheme();
     }

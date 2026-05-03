@@ -4,7 +4,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machine-sets.yml');
@@ -187,7 +187,9 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
     await machineSetsPage.waitForPage();
 
     await cleanupMachineSet(rancherApi, `${nsName}/${machineSetName}`);
-    await expect(machineSetsPage.body()).not.toContainText(machineSetName);
+    await expect(
+      machineSetsPage.list().resourceTable().sortableTable().rowElementWithName(machineSetName),
+    ).not.toBeAttached();
   });
 
   test('can delete MachineSet via bulk actions', async ({ page, login, rancherApi }) => {
@@ -221,7 +223,9 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
     await machineSetsPage.waitForPage();
 
     await cleanupMachineSet(rancherApi, `${nsName}/${machineSetName}`);
-    await expect(machineSetsPage.body()).not.toContainText(machineSetName);
+    await expect(
+      machineSetsPage.list().resourceTable().sortableTable().rowElementWithName(machineSetName),
+    ).not.toBeAttached();
   });
 
   test('can download YAML', async ({ page, login, rancherApi }) => {
@@ -269,7 +273,13 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
       await machineSetsPage.waitForPage();
       await machineSetsPage.list().resourceTable().sortableTable().waitForReady();
 
-      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-sets-list.png'), { fullPage: true });
+      // Empty-state guard: snapshot baseline expects "There are no rows to show."
+      await expect(machineSetsPage.list().resourceTable().sortableTable().noRowsText()).toBeVisible();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-sets-list.png'), {
+        fullPage: true,
+        mask: mastheadMasks(page),
+      });
     } finally {
       await restoreTheme();
     }

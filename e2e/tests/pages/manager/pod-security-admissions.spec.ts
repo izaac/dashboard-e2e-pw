@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
 import PodSecurityAdmissionsPagePo from '@/e2e/po/pages/cluster-manager/pod-security-admissions.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 import {
   createPayloadData,
   updatePayloadData,
@@ -181,7 +181,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
 
     expect(resp.status()).toBe(204);
     await psaPage.waitForPage();
-    await expect(psaPage.body()).not.toContainText(psaName);
+    await expect(psaPage.list().resourceTable().sortableTable().rowElementWithName(psaName)).not.toBeAttached();
   });
 
   test('can delete a pod security admission via bulk actions', async ({ page, login, rancherApi }) => {
@@ -212,7 +212,7 @@ test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, ()
 
     expect(resp.status()).toBe(204);
     await psaPage.waitForPage();
-    await expect(psaPage.body()).not.toContainText(psaName);
+    await expect(psaPage.list().resourceTable().sortableTable().rowElementWithName(psaName)).not.toBeAttached();
   });
 
   test('can download YAML for a pod security admission', async ({ page, login, rancherApi }) => {
@@ -265,7 +265,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'pod-security-admissions-list.png'), {
         fullPage: true,
-        mask: [psaPage.list().resourceTable().sortableTable().ageColumn()],
+        mask: [psaPage.list().resourceTable().sortableTable().ageColumn(), ...mastheadMasks(page)],
       });
     } finally {
       await restoreTheme();

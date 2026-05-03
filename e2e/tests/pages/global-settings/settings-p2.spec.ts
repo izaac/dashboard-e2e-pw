@@ -422,7 +422,7 @@ test.describe('Settings (Part 2)', () => {
       await burgerMenu.burgerMenuNavToMenuByLabel('Home');
       const homePage = new HomePagePo(page);
 
-      await expect(homePage.body()).not.toContainText('local');
+      await expect(homePage.clusterRow('local')).not.toBeAttached();
 
       // Reset via UI
       await navToSettings(page);

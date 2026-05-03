@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 test.describe('Home Page', () => {
   test(
@@ -494,7 +494,15 @@ test.describe('Visual snapshots', { tag: ['@visual', '@generic', '@adminUser'] }
       // banner has actually mounted (vs. the dashboard shell spinner).
       await expect(homePage.title()).toBeVisible();
 
-      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'home.png'), { fullPage: true });
+      // Empty-state guard: snapshot baseline expects only the local cluster row.
+      // If a peer provisioning test left an orphan, fail loudly.
+      await expect(homePage.list().locator('tbody tr')).toHaveCount(1);
+      await expect(homePage.clusterRow('local')).toBeVisible();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'home.png'), {
+        fullPage: true,
+        mask: mastheadMasks(page),
+      });
     } finally {
       await restoreTheme();
     }

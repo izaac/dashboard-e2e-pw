@@ -10,7 +10,7 @@ import {
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import { STANDARD } from '@/support/timeouts';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
  * Git Repo spec — converted from upstream fleet/gitrepo.spec.ts.
@@ -301,7 +301,10 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         // eslint-disable-next-line playwright/no-networkidle -- visual snapshot needs all assets settled
         await page.waitForLoadState('networkidle');
 
-        await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'gitrepo-list.png'), { fullPage: true });
+        await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'gitrepo-list.png'), {
+          fullPage: true,
+          mask: mastheadMasks(page),
+        });
       } finally {
         await restoreTheme();
       }

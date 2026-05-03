@@ -8,7 +8,7 @@ import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.clu
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/timeouts';
 import { EXTRA_LONG, LONG, VERY_LONG } from '@/support/timeouts';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const downloadUrl =
   'https://github.com/rancher-plugins/kontainer-engine-driver-example/releases/download/v0.2.3/kontainer-engine-driver-example-copy1-linux-amd64';
@@ -570,7 +570,10 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
       await driversPage.waitForPage();
       await driversPage.list().resourceTable().sortableTable().waitForReady();
 
-      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'kontainer-drivers-list.png'), { fullPage: true });
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'kontainer-drivers-list.png'), {
+        fullPage: true,
+        mask: mastheadMasks(page),
+      });
     } finally {
       await restoreTheme();
     }

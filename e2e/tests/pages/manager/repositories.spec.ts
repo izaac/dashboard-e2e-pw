@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { EXTRA_LONG, VERY_LONG } from '@/support/timeouts';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const gitRepoUrl = 'https://github.com/rancher/charts';
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
@@ -214,7 +214,9 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     await promptRemove.remove();
     await deleteResp;
     await repositoriesPage.waitForPage();
-    await expect(repositoriesPage.body()).not.toContainText(repoName);
+    await expect(
+      repositoriesPage.list().resourceTable().sortableTable().rowElementWithName(repoName),
+    ).not.toBeAttached();
     await rancherApi.waitForResourceGone('v1', 'catalog.cattle.io.clusterrepos', repoName);
   });
 
@@ -261,7 +263,9 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await promptRemove.remove();
       await Promise.all([deleteResp1, deleteResp2]);
       await repositoriesPage.waitForPage();
-      await expect(repositoriesPage.body()).not.toContainText(repoName);
+      await expect(
+        repositoriesPage.list().resourceTable().sortableTable().rowElementWithName(repoName),
+      ).not.toBeAttached();
     } finally {
       // Cleanup in case bulk delete failed
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, false);
@@ -473,7 +477,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'repositories-list.png'), {
         fullPage: true,
-        mask: [repositoriesPage.sortableTable().ageColumn()],
+        mask: [repositoriesPage.sortableTable().ageColumn(), ...mastheadMasks(page)],
       });
     } finally {
       await restoreTheme();

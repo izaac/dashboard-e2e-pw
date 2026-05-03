@@ -4,7 +4,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machine-deployments.yml');
@@ -197,7 +197,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     await mdPage.waitForPage();
 
     await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    await expect(mdPage.body()).not.toContainText(mdName);
+    await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
   });
 
   test('can delete MachineDeployments via bulk actions', async ({ page, login, rancherApi }) => {
@@ -232,7 +232,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     await mdPage.waitForPage();
 
     await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    await expect(mdPage.body()).not.toContainText(mdName);
+    await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
   });
 
   test('can download YAML', async ({ page, login, rancherApi }) => {
@@ -280,7 +280,13 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
       await mdPage.waitForPage();
       await mdPage.list().resourceTable().sortableTable().waitForReady();
 
-      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-deployments-list.png'), { fullPage: true });
+      // Empty-state guard: snapshot baseline expects "There are no rows to show."
+      await expect(mdPage.list().resourceTable().sortableTable().noRowsText()).toBeVisible();
+
+      await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-deployments-list.png'), {
+        fullPage: true,
+        mask: mastheadMasks(page),
+      });
     } finally {
       await restoreTheme();
     }

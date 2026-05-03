@@ -10,7 +10,7 @@ import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-provide
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
-import { ensureLightTheme, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -635,9 +635,14 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
       await clusterList.waitForPage();
       await clusterList.sortableTable().waitForReady();
 
+      // Empty-state guard: snapshot baseline expects only the local cluster.
+      // If a peer provisioning test left an orphan, fail loudly.
+      await expect(clusterList.sortableTable().rowElements()).toHaveCount(1);
+      await expect(clusterList.sortableTable().rowWithName('local').self()).toBeVisible();
+
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'cluster-manager-list.png'), {
         fullPage: true,
-        mask: [clusterList.sortableTable().ageColumn()],
+        mask: [clusterList.sortableTable().ageColumn(), ...mastheadMasks(page)],
       });
     } finally {
       await restoreTheme();
