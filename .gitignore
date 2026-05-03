@@ -21,6 +21,9 @@ docker-compose.nix.yml
 # Claude Code
 .claude/
 
+# Local-only audit notes (kept out of repo)
+docs/AUDIT-*.md
+
 # Codex
 
 # IDE
