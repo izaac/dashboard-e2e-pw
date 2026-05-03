@@ -9,7 +9,7 @@ import {
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.application.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
 import { HeaderPo } from '@/e2e/po/components/header.po';
-import { STANDARD } from '@/support/timeouts';
+import { BRIEF, LONG, STANDARD } from '@/support/timeouts';
 import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
@@ -272,8 +272,25 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await gitRepoEditPage.waitForPage('mode=edit');
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().description().set(description);
-        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
-        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+
+        // Wizard has 4 steps (Metadata → Repository details → Target details → Advanced).
+        // Click Next until the primary button changes label to "Save", then click once more.
+        const primary = gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().self();
+
+        await expect
+          .poll(async () => (await primary.innerText()).trim().toLowerCase(), { timeout: LONG, intervals: [BRIEF] })
+          .toMatch(/next|save/);
+
+        for (let i = 0; i < 5; i++) {
+          const label = (await primary.innerText()).trim().toLowerCase();
+
+          if (label === 'save') {
+            break;
+          }
+          await primary.click();
+        }
+
+        await primary.click();
 
         await listPage.waitForPage();
         await expect(listPage.sortableTable().rowElementWithName(editRepoName)).toBeVisible();

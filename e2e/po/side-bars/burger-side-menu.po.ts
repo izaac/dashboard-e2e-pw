@@ -17,8 +17,12 @@ export default class BurgerMenuPo extends ComponentPo {
   async toggle(): Promise<void> {
     await this.page.getByTestId('top-level-menu').click({ force: true });
     // Wait for the fade transition to actually finish instead of guessing 500 ms.
-    // The Animations API resolves once any in-flight CSS transition on .side-menu (or any descendants) completes.
-    await this.sideMenu().evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)));
+    // The Animations API resolves once any in-flight CSS transition on .side-menu (or descendants) completes.
+    // Wrapped in catch so a navigation/element-detachment mid-evaluate (Vue <transition> replaces the node)
+    // does not blow up the toggle — Playwright's auto-wait on the next action handles residual settle.
+    await this.sideMenu()
+      .evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {}))))
+      .catch(() => {});
   }
 
   /** Navigate to a top-level side menu entry by label (non-cluster) */
