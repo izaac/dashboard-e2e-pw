@@ -53,6 +53,11 @@ export default class ClusterDashboardPagePo extends PagePo {
     return this.page.locator('[dropdown-menu-collection]:visible');
   }
 
+  /** Locator for a "Show N events" option inside the row-count dropdown. */
+  eventsRowCountOption(count: 10 | 25 | 50 | 100): Locator {
+    return this.eventsRowCountMenu().getByText(`Show ${count} events`);
+  }
+
   tabs(): TabbedPo {
     return new TabbedPo(this.page, '[data-testid="tabbed"]');
   }

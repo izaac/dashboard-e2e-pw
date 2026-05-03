@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
-import { STANDARD, VERY_LONG, EXTRA_LONG } from '@/support/timeouts';
+import { VERY_LONG, EXTRA_LONG } from '@/support/timeouts';
 
 const BANNER_TEXT =
   "Typical users will not need to change these. Proceed with caution, incorrect values can break your Explorer installation. Settings which have been customized from default settings are tagged 'Modified'.";
@@ -154,10 +154,13 @@ test.describe('Settings', () => {
           await settingsPage.resumeSessionButton().click({ force: true });
           await expect(modal).toBeHidden();
 
-          // Navigate away and wait — modal should NOT reappear (session was resumed)
+          // Navigate away and let any in-flight idle-timer logic settle — the
+          // modal can flicker on SPA re-render before the resumed session
+          // re-arms. networkidle gives a deterministic settle point so the
+          // hidden assertion is a true snapshot rather than a polling race.
           await page.goto('./home', { waitUntil: 'domcontentloaded' });
-
-          await page.waitForTimeout(STANDARD);
+          // eslint-disable-next-line playwright/no-networkidle -- intentional: deterministic settle for the post-resume modal-hidden assertion
+          await page.waitForLoadState('networkidle');
           await expect(modal).toBeHidden();
         } finally {
           await page.unroute('**/v1/ext.cattle.io.useractivities/*');

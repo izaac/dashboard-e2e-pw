@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import { RancherSetupLoginPagePo } from '@/e2e/po/pages/rancher-setup-login.po';
 import { RancherSetupConfigurePage } from '@/e2e/po/pages/rancher-setup-configure.po';
+import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
 import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
@@ -43,10 +44,10 @@ async function detectBootstrapState(page: import('@playwright/test').Page): Prom
   }
 
   // Check for username field (only on real login page, not bootstrap page)
-  const usernameField = page.getByTestId('local-login-username');
+  const loginPage = new LoginPagePo(page);
 
   try {
-    await usernameField.waitFor({ state: 'visible', timeout: BRIEF });
+    await loginPage.username().self().waitFor({ state: 'visible', timeout: BRIEF });
 
     return 'bootstrapped';
   } catch {
@@ -260,9 +261,11 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     await rancherSetupConfigurePage.waitForPage();
 
-    // Unavoidable: grace period to catch late-arriving settings requests after page load
-
-    await page.waitForTimeout(1000);
+    // networkidle gives a deterministic settle point after the configure page
+    // mounts — any late settings request lands before this resolves and is
+    // counted, replacing the previous fixed 1 s grace period.
+    // eslint-disable-next-line playwright/no-networkidle -- intentional: we are explicitly counting all settings requests, so we need to wait for network quiescence rather than a single response
+    await page.waitForLoadState('networkidle');
     expect(settingsResponses).toHaveLength(2);
   });
 });

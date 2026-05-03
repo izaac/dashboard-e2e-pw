@@ -5,7 +5,7 @@ import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import { buildElementalClusterMock } from '@/e2e/blueprints/extensions/elemental-cluster-mock';
 
 import * as jsyaml from 'js-yaml';
-import { SHORT_TIMEOUT_OPT, LONG, PROVISIONING } from '@/support/timeouts';
+import { SHORT_TIMEOUT_OPT, LONG, PROVISIONING, EXTENSION_OPS, BRIEF } from '@/support/timeouts';
 
 const EXTENSION_NAME = 'elemental';
 const EXTENSION_VERSION = '3.0.1';
@@ -72,7 +72,7 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
       await extensionsPo.extensionTabAvailableClick();
 
       await expect(
-        page.getByTestId('item-card-header-title').filter({ hasText: EXTENSION_NAME }).first(),
+        extensionsPo.extensionCardTitle(EXTENSION_NAME),
         `Elemental extension '${EXTENSION_NAME}' not visible in Available tab — repo may be missing or incompatible`,
       ).toBeVisible({ timeout: LONG });
 
@@ -243,7 +243,6 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
     test('can create a machine inventory via YAML', async ({ page, request }) => {
       const elementalPo = new ElementalPo(page);
-      const maxPollingRetries = 36;
 
       await elementalPo.dashboard().goTo();
       await elementalPo.dashboard().productNav().navToSideMenuEntryByLabel('Inventory of Machines');
@@ -252,20 +251,18 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
       // Poll for schemaDefinition: the steve schema for newly-registered CRDs is
       // populated lazily; without this wait the YAML editor renders empty.
-      for (let i = 0; i < maxPollingRetries; i++) {
-        const resp = await request.get('/v1/schemaDefinitions/elemental.cattle.io.machineinventory', {
-          failOnStatusCode: false,
-        });
+      await expect
+        .poll(
+          async () => {
+            const resp = await request.get('/v1/schemaDefinitions/elemental.cattle.io.machineinventory', {
+              failOnStatusCode: false,
+            });
 
-        if (resp.status() === 200) {
-          break;
-        }
-        if (i === maxPollingRetries - 1) {
-          throw new Error('schemaDefinition polling failed');
-        }
-
-        await page.waitForTimeout(5000);
-      }
+            return resp.status();
+          },
+          { timeout: EXTENSION_OPS, intervals: [BRIEF] },
+        )
+        .toBe(200);
 
       const yamlValue = await elementalPo.genericResourceDetail().resourceYaml().codeMirror().value();
       const json: any = jsyaml.load(yamlValue);

@@ -76,6 +76,16 @@ export class NetworkPolicyCreateEditPagePo extends PagePo {
     return this.page.locator(`section #rule-ingress0 .box:nth-of-type(${index + 1}) .col:nth-of-type(1) input`);
   }
 
+  /**
+   * Port-input debounce: the underlying Vue field debounces `update:value` for
+   * 500 ms. Blur/Tab does NOT flush the debounce — only elapsed time does.
+   * Call after the last port-field edit and before save() so the form's
+   * v-model has the latest value when POST fires.
+   */
+  async waitForPortDebounce(): Promise<void> {
+    await this.page.waitForTimeout(600);
+  }
+
   policyRuleTargetSelect(index: number): LabeledSelectPo {
     return new LabeledSelectPo(
       this.page,

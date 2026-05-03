@@ -73,10 +73,6 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await chartPage.goToInstall();
 
         await installChartPage.nextPage();
-
-        // Set up intercept right before the action that triggers it
-        page.waitForResponse((resp) => resp.url().includes('action=install') && resp.request().method() === 'POST');
-
         await installChartPage.installChart();
 
         // Wait for terminal to show installation progress and complete

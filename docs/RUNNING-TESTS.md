@@ -291,6 +291,49 @@ RANCHER_PASSWORD=mysecretpassword docker compose up
 docker compose down
 ```
 
+### Wait for Rancher to be healthy from a script
+
+Bring Rancher up detached and block until its docker healthcheck flips green:
+
+```bash
+docker compose up rancher -d
+sh scripts/wait-rancher-healthy.sh
+```
+
+The script polls `docker inspect ... .State.Health.Status` every 10 s, exits 0
+on `healthy`, exits 1 after 240 s. Useful in CI scripts and ad-hoc shell loops
+that need to defer the next step (e.g. running tests against a fresh-volume
+Rancher) until the API is reachable. Override the container name with
+`sh scripts/wait-rancher-healthy.sh <container-name>` if needed.
+
+### Re-running `e2e/tests/setup/rancher-setup.spec.ts` against a fresh Rancher
+
+`rancher-setup.spec.ts` is the bootstrap shim — it covers four backend states
+detected at runtime by `detectBootstrapState`:
+
+| State | Trigger | Tests that run |
+|---|---|---|
+| `needs-configure` | `CATTLE_BOOTSTRAP_PASSWORD` env set, configure not done | `Login & Configure`, `Create standard user` |
+| `bootstrapped` | admin user already exists | `Create standard user` (skips if `standard_user` exists) |
+| `needs-login` | fresh Rancher, no env-supplied bootstrap password | `Requires initial setup`, `Confirm correct number of settings requests made` |
+| `fully-configured` | admin + standard_user already exist | all skip |
+
+To re-validate the spec from a clean slate:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.nix.yml down -v
+docker compose -f docker-compose.yml -f docker-compose.nix.yml up rancher -d
+sh scripts/wait-rancher-healthy.sh
+npx playwright test e2e/tests/setup/rancher-setup.spec.ts
+```
+
+The `needs-login` branch only fires if Rancher comes up *without* a bootstrap
+password env var (auto-generated password printed in
+`docker logs dashboard-e2e-pw-rancher-1 | grep "Bootstrap Password"`). Recent
+Rancher (v2.15+) auto-creates the admin user even in that mode, so the
+state machine collapses into `bootstrapped` once the user logs in once. The
+`needs-login` test paths are kept for older Rancher images.
+
 ### Sharded (2 Rancher instances, ~2× faster, ~10 GB RAM)
 
 ```bash

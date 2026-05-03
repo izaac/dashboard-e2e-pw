@@ -14,7 +14,6 @@ const tokenEndpoint = 'https://login.test.com/564b6f53-ebf4-43c3-8077-44c56a4499
 const graphEndpoint = 'https://graph.test.com';
 
 test.describe('AzureAD', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
-  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ page, login }) => {
     await login();
 
@@ -32,7 +31,7 @@ test.describe('AzureAD', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
   test('can navigate Auth Provider and select AzureAD', async ({ page }) => {
     const azureadPo = new AzureadPo(page, authClusterId);
 
-    await expect(azureadPo.mastheadTitle()).toContainText('AzureAD');
+    await expect(azureadPo.mastheadTitle()).toContainText('Microsoft Entra ID');
   });
 
   test('sends correct request to create custom Azure AD', async ({ page }) => {

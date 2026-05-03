@@ -175,7 +175,7 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+47) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+48) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
@@ -205,7 +205,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | APIServicesPagePo | api-services.po.ts | PagePo | — | super, resourcesList, sortableTable, title |
-| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, expiredBanner, expiringBanner, clickCertificatesTab (+19) |
+| ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, expiredBanner, expiringBanner, clickCertificatesTab (+20) |
 | ClusterProjectMembersPo | cluster-project-members.po.ts | PagePo | — | super, triggerAddClusterOrProjectMemberAction, triggerAddProjectMemberAction, selectClusterOrProjectMember, selectProjectCustomPermission, checkTheseProjectCustomPermissions, for, submitProjectCreateButton (+8) |
 | ClusterRoleBindingsPagePo | cluster-role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterRolesPagePo | cluster-roles.po.ts | PagePo | — | super, list, clickCreate |
@@ -218,7 +218,7 @@
 | IngressCreateEditPo | ingress-create-edit.po.ts | PagePo | — | super, createEditView, tabs, rulesList, setRuleRequestHostValue, setPathTypeByLabel, setTargetServiceValueByLabel, setPortValue (+5) |
 | IngressListPagePo | ingress.po.ts | PagePo | — | super, list, baseResourceList |
 | LeasesPagePo | leases.po.ts | PagePo | — | super, list, clickCreateYaml, listElementWithName, saveYamlButton |
-| NetworkPolicyListPagePo | network-policy.po.ts | PagePo | — | super, list, baseResourceList, promptRemove, resourceDetail, nameInput, descriptionInput, formSave (+10) |
+| NetworkPolicyListPagePo | network-policy.po.ts | PagePo | — | super, list, baseResourceList, promptRemove, resourceDetail, nameInput, descriptionInput, formSave (+11) |
 | NodesPagePo | nodes.po.ts | PagePo | — | super, list |
 | PersistentVolumeClaimsPagePo | persistent-volume-claims.po.ts | PagePo | — | super, list |
 | PersistentVolumesPagePo | persistent-volumes.po.ts | PagePo | — | super, list |
@@ -320,13 +320,13 @@
 | DeactivateDriverDialogPo | deactivateDriverDialog.po.ts | ComponentPo | `[data-testid=` | super, errorBannerContent, deactivate, cancel |
 | GenericDialog | genericDialog.po.ts | ComponentPo | — | super, labeledSelect, clickActionButton |
 | GenericPrompt | genericPrompt.po.ts | ComponentPo | — | super, getTitle, getBody, labeledSelect, checkbox, clickActionButton |
-| PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, deactivate, cancel, warning, checkbox |
+| PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, cancel, warning, checkbox |
 
 ## side-bars/
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, clusterOptionWrapper (+29) |
+| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, clusterOptionWrapper (+26) |
 | ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+15) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |

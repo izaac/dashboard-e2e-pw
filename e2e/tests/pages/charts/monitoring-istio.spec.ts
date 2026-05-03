@@ -8,7 +8,6 @@ import { PrometheusTab } from '@/e2e/po/pages/explorer/charts/tabs/prometheus-ta
 import { GrafanaTab } from '@/e2e/po/pages/explorer/charts/tabs/grafana-tab.po';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
   const CHART = {
     name: 'Monitoring',
     id: 'rancher-monitoring',

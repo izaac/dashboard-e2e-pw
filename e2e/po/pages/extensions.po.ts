@@ -95,6 +95,11 @@ export default class ExtensionsPagePo extends PagePo {
     });
   }
 
+  /** Title element on the extension card; useful for asserting the card is rendered. */
+  extensionCardTitle(extensionTitle: string): Locator {
+    return this.page.getByTestId('item-card-header-title').filter({ hasText: extensionTitle }).first();
+  }
+
   extensionCardVersion(extensionTitle: string): Locator {
     return this.extensionCard(extensionTitle).locator('[data-testid="app-chart-card-sub-header-item"]').first();
   }

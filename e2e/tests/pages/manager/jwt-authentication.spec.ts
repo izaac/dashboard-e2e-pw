@@ -36,26 +36,26 @@ async function createAmazonRke2ClusterWithoutMachineConfig(
   });
 
   // Poll for management cluster ID — Rancher controller creates it asynchronously
-  let mgmtClusterId = '';
+  const ready = await rancherApi.waitForRancherResource(
+    'v1',
+    'provisioning.cattle.io.clusters',
+    `${namespace}/${name}`,
+    (resp: any) => Boolean(resp.body?.status?.clusterName),
+    10,
+    1000,
+  );
 
-  for (let i = 0; i < 10; i++) {
-    const resp = await rancherApi.getRancherResource(
-      'v1',
-      'provisioning.cattle.io.clusters',
-      `${namespace}/${name}`,
-      0,
-    );
-
-    mgmtClusterId = resp.body?.status?.clusterName ?? '';
-    if (mgmtClusterId) {
-      break;
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-
-  if (!mgmtClusterId) {
+  if (!ready) {
     throw new Error(`Management cluster ID not assigned for ${name} after 10s`);
   }
+
+  const finalResp = await rancherApi.getRancherResource(
+    'v1',
+    'provisioning.cattle.io.clusters',
+    `${namespace}/${name}`,
+    0,
+  );
+  const mgmtClusterId: string = finalResp.body.status.clusterName;
 
   return { name, mgmtClusterId, credId };
 }
@@ -71,30 +71,25 @@ async function cleanupClusterAndCredential(
   await rancherApi.deleteRancherResource('v1', `provisioning.cattle.io.clusters/${namespace}`, clusterName, false);
 
   // Poll until provisioning cluster is gone so credential is unlinked
-  for (let i = 0; i < 15; i++) {
-    const resp = await rancherApi.getRancherResource(
-      'v1',
-      'provisioning.cattle.io.clusters',
-      `${namespace}/${clusterName}`,
-      0,
-    );
-
-    if (resp.status === 404) {
-      break;
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
+  await rancherApi.waitForRancherResource(
+    'v1',
+    'provisioning.cattle.io.clusters',
+    `${namespace}/${clusterName}`,
+    (resp: any) => resp.status === 404,
+    15,
+    1000,
+  );
 
   // Wait for management cluster removal — prevents Rancher controller error loops
   if (mgmtClusterId) {
-    for (let i = 0; i < 15; i++) {
-      const resp = await rancherApi.getRancherResource('v3', 'clusters', mgmtClusterId, 0);
-
-      if (resp.status === 404) {
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 1000));
-    }
+    await rancherApi.waitForRancherResource(
+      'v3',
+      'clusters',
+      mgmtClusterId,
+      (resp: any) => resp.status === 404,
+      15,
+      1000,
+    );
   }
 
   if (credId) {

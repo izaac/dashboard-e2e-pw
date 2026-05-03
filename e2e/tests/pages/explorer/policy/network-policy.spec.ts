@@ -71,11 +71,7 @@ test.describe('NetworkPolicies', { tag: ['@explorer', '@adminUser'] }, () => {
     await createPage.newNetworkPolicyRuleAddBtn().click();
     await createPage.addAllowedPortButton().click();
     await createPage.ingressRuleItemPortInput(0).fill(portValue.toString());
-
-    // Vue debounce trap: port input debounces $emit('update:value') for 500ms.
-    // Blur/Tab does NOT flush the debounce — only elapsed time does.
-
-    await page.waitForTimeout(600);
+    await createPage.waitForPortDebounce();
 
     const createResponse = page.waitForResponse(
       (resp) => resp.url().includes('/v1/networking.k8s.io.networkpolicies') && resp.request().method() === 'POST',

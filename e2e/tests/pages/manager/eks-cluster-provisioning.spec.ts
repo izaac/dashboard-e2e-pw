@@ -22,12 +22,14 @@ const eksSettings = {
 test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
     // Clean stale e2e EKS clusters — delete v3 cluster objects first so the
-    // controller stops referencing their cloud credentials
+    // controller stops referencing their cloud credentials.
     const clusters = await rancherApi.getRancherResource('v3', 'clusters', undefined, 0);
+    const staleClusterIds: string[] = [];
 
     if (clusters.body?.data) {
       for (const c of clusters.body.data) {
         if (c.name?.startsWith('e2e-test-') && c.eksConfig) {
+          staleClusterIds.push(c.id);
           await rancherApi.deleteRancherResource('v3', 'clusters', c.id, false);
         }
       }
@@ -49,22 +51,28 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       }
     }
 
-    // Wait for controller to settle after cluster deletion
-    await new Promise((r) => setTimeout(r, 5_000));
+    // Poll until each cluster is gone — controller can hold credential
+    // references until the v3 object reaches 404.
+    for (const id of staleClusterIds) {
+      await rancherApi.waitForRancherResource('v3', 'clusters', id, (r: any) => r.status === 404, 30, 1000);
+    }
 
     // Clean stale e2e Amazon cloud credentials (safe now that clusters are gone)
     const creds = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
+    const staleCredIds: string[] = [];
 
     if (creds.body?.data) {
       for (const item of creds.body.data) {
         if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
+          staleCredIds.push(item.id);
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
         }
       }
     }
 
-    // Let Rancher store settle after credential cleanup
-    await new Promise((r) => setTimeout(r, 5_000));
+    for (const id of staleCredIds) {
+      await rancherApi.waitForRancherResource('v3', 'cloudcredentials', id, (r: any) => r.status === 404, 30, 1000);
+    }
   });
 
   test('can create an Amazon EKS cluster by just filling in the mandatory fields', async ({

@@ -20,10 +20,6 @@ export default class PromptRemove extends ComponentPo {
     await this.self().getByTestId('prompt-remove-confirm-button').click();
   }
 
-  async deactivate(): Promise<void> {
-    await this.self().getByTestId('prompt-remove-confirm-button').click();
-  }
-
   async cancel(): Promise<void> {
     await this.self().locator('.btn.role-secondary').filter({ hasText: 'Cancel' }).click();
   }

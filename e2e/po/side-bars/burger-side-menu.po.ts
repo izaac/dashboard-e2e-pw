@@ -194,19 +194,4 @@ export default class BurgerMenuPo extends ComponentPo {
   headerBrandLogoImage(): Locator {
     return this.page.getByTestId('header__brand-img');
   }
-
-  /** Alias matching upstream static method name (lowercase 'by') */
-  async burgerMenuNavToMenubyLabel(label: string): Promise<void> {
-    return this.burgerMenuNavToMenuByLabel(label);
-  }
-
-  /** Alias matching upstream static method name (lowercase 'by') */
-  async burgerMenuNavToClusterbyLabel(label: string): Promise<void> {
-    return this.burgerMenuNavToClusterByLabel(label);
-  }
-
-  /** Alias matching upstream static method name (lowercase 'by') */
-  burgerMenuGetNavMenubyLabel(label: string): Locator {
-    return this.burgerMenuGetNavMenuByLabel(label);
-  }
 }

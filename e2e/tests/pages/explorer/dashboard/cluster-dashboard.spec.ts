@@ -224,10 +224,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
       const initialCount = await eventsTable.rowElements().count();
 
       await clusterDashboard.eventsRowCountMenuToggle();
-
-      const menu = clusterDashboard.eventsRowCountMenu();
-
-      await menu.getByText('Show 25 events').click();
+      await clusterDashboard.eventsRowCountOption(25).click();
 
       // After switching to 25 events, count should be >= initial (more events visible)
       await expect(async () => {
@@ -244,7 +241,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
         await clusterDashboard.goTo();
         await clusterDashboard.waitForPage(undefined, 'cluster-events');
         await clusterDashboard.eventsRowCountMenuToggle();
-        await clusterDashboard.eventsRowCountMenu().getByText('Show 10 events').click();
+        await clusterDashboard.eventsRowCountOption(10).click();
       } catch {
         // Cleanup is best-effort — events count restore may fail if page navigated away
       }
