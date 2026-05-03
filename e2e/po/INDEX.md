@@ -29,7 +29,7 @@
 | KeyValuePo | key-value.po.ts | ComponentPo | — | addButton, setKeyValueAtIndex |
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, input, byLabel (+1) |
-| LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, toggle, setOptionAndClick, clickOption, clickOptionWithLabel, clickLabel, checkOptionSelected, checkContainsOptionSelected (+8) |
+| LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, dropdown, searchInput, optionByIndex, optionByLabel, deselectButton, setOptionAndClick, clickOptionWithLabel (+7) |
 | ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkExists, checkVisible, checkNotVisible |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
@@ -38,7 +38,7 @@
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, checkRead, checkUnread, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
 | ProductNavPo | product-nav.po.ts | ComponentPo | `.side-nav` | super, groups, navToSideMenuGroupByLabel, sideMenuEntryByLabel, navToSideMenuEntryByLabel, for, if |
-| RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, isChecked, getAllOptions, getOptionByIndex |
+| RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, isChecked, getAllOptions, getOptionByIndex, radioSpanByLabel |
 | RegistriesTabPo | registries-tab.po.ts | ComponentPo | — | super, enableRegistryCheckbox, showAdvanced, clickShowAdvanced, advancedToggle, registryHostInput, addRegistryHost, registryConfigs (+1) |
 | RegistryConfigsPo | registry-configs.po.ts | ComponentPo | — | registryAuthHost, addRegistryAuthHost, registryAuthSelectOrCreate |
 | ResourceListMastheadPo | resource-list-masthead.po.ts | ComponentPo | — | super, actions, title, createButton, createYaml, create |

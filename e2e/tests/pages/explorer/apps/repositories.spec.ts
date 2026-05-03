@@ -114,7 +114,7 @@ test.describe('Apps', () => {
         const authPo = appRepoCreate.clusterRepoAuthSelectOrCreate();
 
         await authPo.waitForNotLoading();
-        await authPo.authSelect().toggle();
+        await authPo.authSelect().dropdown().click();
         await authPo.authSelect().isOpened();
         await expect(
           authPo.authSelect().getOptions().filter({ hasText: 'Create an HTTP Basic Auth Secret' }),

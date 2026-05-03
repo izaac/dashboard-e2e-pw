@@ -25,7 +25,9 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
       .set(`${cloudCredentialName}-description`);
     await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
     await cloudCredentialsPage.createEditCloudCreds().secretKey().set(`${envMeta.awsSecretKey}abc`);
-    await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
+    await expect(cloudCredentialsPage.createEditCloudCreds().defaultRegion().selectedOption()).toHaveText('us-west-2', {
+      useInnerText: true,
+    });
     await cloudCredentialsPage.createEditCloudCreds().saveCreateForm().cruResource().saveOrCreate().click();
 
     await expect(cloudCredentialsPage.createEditCloudCreds().errorBanner().banner()).toContainText(
@@ -56,7 +58,10 @@ test.describe('Cloud Credentials', { tag: ['@manager', '@adminUser', '@needsInfr
         .set(`${cloudCredentialName}-description`);
       await cloudCredentialsPage.createEditCloudCreds().accessKey().set(envMeta.awsAccessKey!);
       await cloudCredentialsPage.createEditCloudCreds().secretKey().set(envMeta.awsSecretKey!);
-      await cloudCredentialsPage.createEditCloudCreds().defaultRegion().checkOptionSelected('us-west-2');
+      await expect(cloudCredentialsPage.createEditCloudCreds().defaultRegion().selectedOption()).toHaveText(
+        'us-west-2',
+        { useInnerText: true },
+      );
 
       // Name is mandatory — verify placeholder has no "optional"
       const placeholder = await cloudCredentialsPage

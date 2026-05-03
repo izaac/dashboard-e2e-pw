@@ -370,7 +370,7 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
     await elementalPo.dashboard().createUpdateGroupClick();
 
     await elementalPo.genericNameNsDescription().name().set(UPDATE_GROUP_NAME);
-    await elementalPo.updateGroupTargetClustersSelect().toggle();
+    await elementalPo.updateGroupTargetClustersSelect().dropdown().click();
     await elementalPo.updateGroupTargetClustersSelect().clickOptionWithLabel(ELEMENTAL_CLUSTER_NAME);
     await elementalPo.updateGroupImageOption().set(1);
 

@@ -33,7 +33,7 @@ class InstallExtensionDialog {
   async selectVersionLabel(label: string): Promise<void> {
     const selectVersion = this.versionLabelSelect();
 
-    await selectVersion.toggle();
+    await selectVersion.dropdown().click();
     await selectVersion.setOptionAndClick(label);
   }
 
@@ -49,10 +49,10 @@ class InstallExtensionDialog {
     const selectVersion = this.versionLabelSelect();
 
     if (toggle) {
-      await selectVersion.toggle();
+      await selectVersion.dropdown().click();
     }
 
-    await selectVersion.clickOption(optionIndex);
+    await selectVersion.optionByIndex(optionIndex).click();
   }
 
   async getOptionsAsStrings(): Promise<string[]> {

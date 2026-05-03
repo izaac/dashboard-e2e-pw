@@ -82,7 +82,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installChart.waitForChartPage(CHART.repo, CHART.id);
 
         await expect(grafana.storageOptions().getAllOptions()).toHaveCount(4);
-        await grafana.storageOptions().isChecked(0); // Disabled by default
+        await expect(grafana.storageOptions().radioSpanByLabel('Disabled')).toHaveAttribute('aria-checked', 'true');
 
         const options = [
           'Disabled',
@@ -97,16 +97,16 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         // Check Grafana has storage class input: https://github.com/rancher/dashboard/issues/11539
         await grafana.storageOptions().set(2);
-        await grafana.storageClass().checkExists();
-        await grafana.storageClass().toggle();
+        await expect(grafana.storageClass().self()).toBeAttached();
+        await grafana.storageClass().dropdown().click();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
-        await grafana.storageClass().checkOptionSelected(storageClass);
+        await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
         await grafana.storageOptions().set(3);
-        await grafana.storageClass().checkExists();
-        await grafana.storageClass().toggle();
+        await expect(grafana.storageClass().self()).toBeAttached();
+        await grafana.storageClass().dropdown().click();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
-        await grafana.storageClass().checkOptionSelected(storageClass);
+        await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
         // Check Prometheus has storage class input: https://github.com/rancher/dashboard/issues/11539
         await installChart.selectTab(tabbedOptions, prometheus.tabID());
@@ -114,13 +114,13 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
         await prometheus.scrollToTabBottom();
 
-        await prometheus.persistentStorage().checkVisible();
+        await expect(prometheus.persistentStorage().self()).toBeVisible();
         await prometheus.persistentStorage().set();
 
-        await prometheus.storageClass().checkExists();
-        await prometheus.storageClass().toggle();
+        await expect(prometheus.storageClass().self()).toBeAttached();
+        await prometheus.storageClass().dropdown().click();
         await prometheus.storageClass().clickOptionWithLabel(storageClass);
-        await prometheus.storageClass().checkOptionSelected(storageClass);
+        await expect(prometheus.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
       });
     });
   });

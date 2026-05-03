@@ -61,7 +61,7 @@ test.describe(
         await cloudCredForm.nameNsDescription().name().set(credentialName);
         await cloudCredForm.accessKey().set(envMeta.awsAccessKey!);
         await cloudCredForm.secretKey().set(envMeta.awsSecretKey!);
-        await cloudCredForm.defaultRegion().toggle();
+        await cloudCredForm.defaultRegion().dropdown().click();
         await cloudCredForm.defaultRegion().clickOptionWithLabel('us-west-1');
         await cloudCredForm.saveButton().expectToBeEnabled();
 
@@ -90,7 +90,7 @@ test.describe(
         await createRKE2ClusterPage.nameNsDescription().description().set(`${clusterName}-description`);
 
         // Get K8s versions from dropdown
-        await createRKE2ClusterPage.basicsTab().kubernetesVersions().toggle();
+        await createRKE2ClusterPage.basicsTab().kubernetesVersions().dropdown().click();
         const options = createRKE2ClusterPage.basicsTab().kubernetesVersions().getOptions();
 
         await expect(options.first()).toBeVisible();
@@ -104,7 +104,7 @@ test.describe(
           await page.keyboard.press('Escape');
         }
 
-        await createRKE2ClusterPage.machinePoolTab().networks().toggle();
+        await createRKE2ClusterPage.machinePoolTab().networks().dropdown().click();
         await createRKE2ClusterPage.machinePoolTab().networks().clickOptionWithLabel('default');
 
         const clusterCreatePromise = page.waitForResponse(
@@ -306,7 +306,7 @@ test.describe(
       await editClusterPage.waitForPage('mode=edit', 'basic');
 
       // Open k8s version dropdown and pick the latest version (index 1 = first after header)
-      await editClusterPage.basicsTab().kubernetesVersions().toggle();
+      await editClusterPage.basicsTab().kubernetesVersions().dropdown().click();
       const options = editClusterPage.basicsTab().kubernetesVersions().getOptions();
 
       await expect(options.first()).toBeVisible();
@@ -438,7 +438,7 @@ test.describe(
 
       await createRKE2ClusterPage.nameNsDescription().name().set(clusterName);
       await createRKE2ClusterPage.machinePoolTab().enableDualStack().set();
-      await createRKE2ClusterPage.machinePoolTab().networks().toggle();
+      await createRKE2ClusterPage.machinePoolTab().networks().dropdown().click();
       await createRKE2ClusterPage.machinePoolTab().networks().clickOptionWithLabel('(vpc-123)');
       await createRKE2ClusterPage.machinePoolTab().enableIpv6().set();
 
@@ -450,7 +450,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Toggle to k3s — should have 3 warnings
-      await createRKE2ClusterPage.basicsTab().kubernetesVersions().toggle();
+      await createRKE2ClusterPage.basicsTab().kubernetesVersions().dropdown().click();
       await createRKE2ClusterPage.basicsTab().kubernetesVersions().clickOptionWithLabel('k3s');
 
       await createRKE2ClusterPage.create();
@@ -469,7 +469,7 @@ test.describe(
 
       // Set stack preference to IPv6
       await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('#networking').click();
-      await createRKE2ClusterPage.networkTab().stackPreference().toggle();
+      await createRKE2ClusterPage.networkTab().stackPreference().dropdown().click();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('IPv6');
 
       await createRKE2ClusterPage.create();
@@ -479,7 +479,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set to Dual — should not reintroduce the warning
-      await createRKE2ClusterPage.networkTab().stackPreference().toggle();
+      await createRKE2ClusterPage.networkTab().stackPreference().dropdown().click();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('Dual');
 
       await createRKE2ClusterPage.create();
@@ -498,7 +498,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set to IPv6 — removes stack preference warning
-      await createRKE2ClusterPage.networkTab().stackPreference().toggle();
+      await createRKE2ClusterPage.networkTab().stackPreference().dropdown().click();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('IPv6');
 
       await createRKE2ClusterPage.create();
@@ -573,7 +573,7 @@ test.describe(
 
       await createRKE2ClusterPage.nameNsDescription().name().set(clusterName);
       await createRKE2ClusterPage.machinePoolTab().enableDualStack().set();
-      await createRKE2ClusterPage.machinePoolTab().networks().toggle();
+      await createRKE2ClusterPage.machinePoolTab().networks().dropdown().click();
       await createRKE2ClusterPage.machinePoolTab().networks().clickOptionWithLabel('ipv6only');
 
       // Ipv6 checkbox should be auto-set
@@ -585,7 +585,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Toggle to k3s — 3 warnings
-      await createRKE2ClusterPage.basicsTab().kubernetesVersions().toggle();
+      await createRKE2ClusterPage.basicsTab().kubernetesVersions().dropdown().click();
       await createRKE2ClusterPage.basicsTab().kubernetesVersions().clickOptionWithLabel('k3s');
 
       await createRKE2ClusterPage.create();
@@ -595,7 +595,7 @@ test.describe(
 
       // Dual stack pref should NOT remove stack preference warning for ipv6-only
       await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('#networking').click();
-      await createRKE2ClusterPage.networkTab().stackPreference().toggle();
+      await createRKE2ClusterPage.networkTab().stackPreference().dropdown().click();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('Dual');
 
       await createRKE2ClusterPage.create();
@@ -605,7 +605,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // IPv6 stack pref DOES remove the warning
-      await createRKE2ClusterPage.networkTab().stackPreference().toggle();
+      await createRKE2ClusterPage.networkTab().stackPreference().dropdown().click();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('IPv6');
 
       await createRKE2ClusterPage.create();

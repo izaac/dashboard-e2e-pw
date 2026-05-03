@@ -22,4 +22,9 @@ export default class RadioGroupInputPo extends ComponentPo {
   getOptionByIndex(index: number): Locator {
     return this.self().locator('.radio-label').nth(index);
   }
+
+  /** Locator for a radio span by visible label (caller asserts aria-checked attribute). */
+  radioSpanByLabel(label: string): Locator {
+    return this.self().locator('.radio-container').filter({ hasText: label }).locator('> span').first();
+  }
 }

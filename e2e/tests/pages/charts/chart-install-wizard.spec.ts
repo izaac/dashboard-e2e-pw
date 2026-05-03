@@ -100,8 +100,8 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       const labeledSelect = new LabeledSelectPo(page, 'section[id="Other Demo Fields"] [type="search"]');
 
       await labeledSelect.self().scrollIntoViewIfNeeded();
-      await labeledSelect.toggle();
-      await labeledSelect.clickLabel(configMapPayload.metadata.name);
+      await labeledSelect.dropdown().click();
+      await labeledSelect.optionByLabel(configMapPayload.metadata.name).click();
     });
   });
 
@@ -169,8 +169,8 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       await installChartPage.customRegistryInput().set(customRegistry);
 
       // Change chart version
-      await installChartPage.chartVersionSelector().toggle();
-      await installChartPage.chartVersionSelector().clickOption(2);
+      await installChartPage.chartVersionSelector().dropdown().click();
+      await installChartPage.chartVersionSelector().optionByIndex(2).click();
 
       // Verify custom registry is still there
       await installChartPage.customRegistryCheckbox().isChecked();

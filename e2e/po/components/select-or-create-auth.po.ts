@@ -41,7 +41,7 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
 
   async createBasicAuth(username = 'auth-test-user', password = 'auth-test-password'): Promise<void> {
     await this.waitForNotLoading();
-    await this.authSelect().toggle();
+    await this.authSelect().dropdown().click();
     await this.authSelect().clickOptionWithLabel('Create an HTTP Basic Auth Secret');
     await this.setBasicAuthSecret(username, password);
   }
@@ -49,7 +49,7 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
   async createSSHAuth(privateKey: string, publicKey: string): Promise<void> {
     await this.waitForNotLoading();
     await this.authSelect().self().scrollIntoViewIfNeeded();
-    await this.authSelect().toggle();
+    await this.authSelect().dropdown().click();
     await this.authSelect().isOpened();
     await this.authSelect().clickOptionWithLabel('Create an SSH Key Secret');
     await this.setSSHSecret(privateKey, publicKey);
@@ -58,7 +58,7 @@ export default class SelectOrCreateAuthPo extends ComponentPo {
   async createRKEAuth(username = 'auth-test-user', password = 'auth-test-password'): Promise<void> {
     await this.waitForNotLoading();
     await this.authSelect().self().scrollIntoViewIfNeeded();
-    await this.authSelect().toggle();
+    await this.authSelect().dropdown().click();
     await this.authSelect().isOpened();
     await this.authSelect().clickOptionWithLabel('Create an RKE Auth Config Secret');
     await this.setBasicAuthSecret(username, password);

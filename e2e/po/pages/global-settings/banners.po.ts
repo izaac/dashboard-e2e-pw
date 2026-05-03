@@ -133,7 +133,7 @@ export class BannersPagePo extends RootClusterPage {
   async selectFontSizeByValue(bannerType: string, label: string): Promise<void> {
     const select = new LabeledSelectPo(this.page, `[data-testid="banner_font_size_options${bannerType}"]`, this.self());
 
-    await select.toggle();
+    await select.dropdown().click();
     await select.clickOptionWithLabel(label);
   }
 

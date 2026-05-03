@@ -379,7 +379,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await extensionsPo.installModal().checkVisible();
 
     // Open version dropdown and get available versions
-    await extensionsPo.installModal().versionLabelSelect().toggle();
+    await extensionsPo.installModal().versionLabelSelect().dropdown().click();
     const versions = await extensionsPo.installModal().getOptionsAsStrings();
 
     // select older version (index 2) and click install

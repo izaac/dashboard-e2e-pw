@@ -218,7 +218,9 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await createEKSClusterPage.waitForPage('type=eks&rkeType=rke2');
 
       // Verify defaults
-      await createEKSClusterPage.getRegion().checkOptionSelected(eksSettings.eksRegion);
+      await expect(createEKSClusterPage.getRegion().selectedOption()).toHaveText(eksSettings.eksRegion, {
+        useInnerText: true,
+      });
 
       // Read the pre-selected version and verify it's a valid number.
       // Upstream reads from a static data file, not the UI.
@@ -226,12 +228,16 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
 
       expect(parseFloat(latestEKSversion.trim())).toBeGreaterThan(0);
       await createEKSClusterPage.getNodeGroup().shouldHaveValue(eksSettings.nodegroupName);
-      await createEKSClusterPage.getNodeRole().checkOptionSelected(eksSettings.nodeRole);
+      await expect(createEKSClusterPage.getNodeRole().selectedOption()).toHaveText(eksSettings.nodeRole, {
+        useInnerText: true,
+      });
       await createEKSClusterPage.getDesiredASGSize().shouldHaveValue(eksSettings.desiredSize);
       await createEKSClusterPage.getMinASGSize().shouldHaveValue(eksSettings.minSize);
       await createEKSClusterPage.getMaxASGSize().shouldHaveValue(eksSettings.maxSize);
-      await createEKSClusterPage.getLaunchTemplate().checkOptionSelected(eksSettings.launchTemplate);
-      await createEKSClusterPage.getInstanceType().checkContainsOptionSelected(eksSettings.instanceType);
+      await expect(createEKSClusterPage.getLaunchTemplate().selectedOption()).toHaveText(eksSettings.launchTemplate, {
+        useInnerText: true,
+      });
+      await expect(createEKSClusterPage.getInstanceType().selectedOption()).toContainText(eksSettings.instanceType);
       await createEKSClusterPage.getDiskSize().shouldHaveValue(eksSettings.diskSize);
 
       await createEKSClusterPage.serviceRoleRadioGroup().isChecked(0);
