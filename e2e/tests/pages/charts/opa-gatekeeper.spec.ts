@@ -5,7 +5,6 @@ import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.
 import { setupOpaGatekeeperRoutes } from '@/e2e/blueprints/other-products/opa-gatekeeper-routes';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
-  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();
   });

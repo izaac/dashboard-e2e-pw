@@ -4,7 +4,6 @@ import ChartRepositoriesCreateEditPo from '@/e2e/po/edit/chart-repositories.po';
 import { LONG } from '@/support/timeouts';
 
 test.describe('Apps', () => {
-  test.describe.configure({ mode: 'serial' });
   test.describe('Repositories', { tag: ['@explorer', '@adminUser'] }, () => {
     test.describe('Add', () => {
       test('after add, repo list should not contain multiple entries', async ({ page, login, rancherApi }) => {
