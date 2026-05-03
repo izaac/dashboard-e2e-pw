@@ -7,7 +7,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ActionMenuPo | action-menu.po.ts | ComponentPo | `[dropdown-menu-collection]` | super, clickMenuItem, getMenuItem |
+| ActionMenuPo | action-menu.po.ts | ComponentPo | `[dropdown-menu-collection]` | super, menuItem, getMenuItem |
 | AddonConfigPo | addon-config.po.ts | ComponentPo | `.dashboard-root` | super, yamlEditor |
 | ArrayListPo | array-list.po.ts | ComponentPo | — | super, arrayListItem, if, closeArrayListItem, clickAdd, clearListItem, setValueAtIndex |
 | AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, label, action, apply |
@@ -25,7 +25,7 @@
 | CruResourcePo | cru-resource.po.ts | ComponentPo | — | super, saveOrCreate, cancel, findSubTypeByName, selectSubType, selectSubTypeByIndex, saveAndWaitForRequests |
 | DialogPo | dialog.po.ts | ComponentPo | — | super, getActionButton |
 | HeaderPo | header.po.ts | ComponentPo | `[data-testid=` | super, projectNamespaceFilter, selectNamespaceFilterOption, selectWorkspace, workspaceSwitcher, importYamlHeaderAction, importYaml, kubectlShell (+10) |
-| ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, successIndicator, importYamlImportClick, importYamlCloseClick, importYamlCancelClick, importYamlSortableTable |
+| ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, successIndicator, importButton, closeButton, cancelButton, importYamlSortableTable |
 | KeyValuePo | key-value.po.ts | ComponentPo | — | addButton, setKeyValueAtIndex |
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, input, byLabel, bySelector |
@@ -33,7 +33,7 @@
 | ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
-| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, clickOptionByLabel, searchByName, clearSearchFilter, clearSelectionButton (+13) |
+| NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, optionByLabel, searchByName, clearSearchButton, clearSelectionButton (+13) |
 | NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, statusIndicator, unreadIndicator, expandedState, collapsedState, getNotificationByName (+4) |
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, readIcon, title, primaryActionButton, secondaryActionButton |
 | PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
@@ -320,13 +320,13 @@
 | DeactivateDriverDialogPo | deactivateDriverDialog.po.ts | ComponentPo | `[data-testid=` | super, errorBannerContent, deactivate, cancel |
 | GenericDialog | genericDialog.po.ts | ComponentPo | — | super, labeledSelect, clickActionButton |
 | GenericPrompt | genericPrompt.po.ts | ComponentPo | — | super, getTitle, getBody, labeledSelect, checkbox, clickActionButton |
-| PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, cancel, warning, checkbox |
+| PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, cancelButton, warning, checkbox |
 
 ## side-bars/
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, clusterOptionWrapper (+26) |
-| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+15) |
+| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+13) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |

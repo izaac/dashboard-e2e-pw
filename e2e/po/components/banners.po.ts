@@ -20,7 +20,7 @@ export default class BannersPo extends ComponentPo {
     return this.self().getByTestId('banner-content').locator(element);
   }
 
-  async closeButton(): Promise<void> {
-    await this.self().getByTestId('banner-close').click({ force: true });
+  closeButton(): Locator {
+    return this.self().getByTestId('banner-close');
   }
 }

@@ -138,8 +138,8 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
 
       // Set up namespace selection
       await namespacePicker.toggle();
-      await namespacePicker.clickOptionByLabel('All Namespaces');
-      await namespacePicker.closeDropdown();
+      await namespacePicker.optionByLabel('All Namespaces').click();
+      await namespacePicker.closeChevron().click();
 
       // Listen for install response before triggering
       const installResponsePromise = page.waitForResponse(

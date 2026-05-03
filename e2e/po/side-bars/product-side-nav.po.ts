@@ -67,35 +67,17 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Get the count badge for a side menu entry */
   async sideMenuEntryByLabelCount(label: string): Promise<string> {
-    const entry = await this.sideMenuEntryByLabel(label);
-
-    return await entry.locator('..').locator('.count').innerText();
+    return await this.sideMenuEntryByLabel(label).locator('..').locator('.count').innerText();
   }
 
-  /** Find a side menu entry by exact label text */
-  async sideMenuEntryByLabel(label: string): Promise<Locator> {
-    await this.self().waitFor({ state: 'attached', timeout: LONG });
-
-    const labels = this.self().locator('.child.nav-type a .label');
-    const count = await labels.count();
-
-    for (let i = 0; i < count; i++) {
-      const text = await labels.nth(i).innerText();
-
-      if (text.trim() === label) {
-        return labels.nth(i);
-      }
-    }
-
-    // Fallback: return the first matching element
-    return labels.getByText(label, { exact: true });
+  /** Locator for a side menu entry by exact label text. */
+  sideMenuEntryByLabel(label: string): Locator {
+    return this.self().locator('.child.nav-type a .label').getByText(label, { exact: true });
   }
 
   /** Navigate to a side menu entry by label */
   async navToSideMenuEntryByLabel(label: string): Promise<void> {
-    const entry = await this.sideMenuEntryByLabel(label);
-
-    await entry.click({ force: true });
+    await this.sideMenuEntryByLabel(label).click({ force: true });
   }
 
   /** Get side menu entry locator by label text */

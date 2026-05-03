@@ -68,7 +68,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
 
     await header.importYamlHeaderAction().click();
     await header.importYaml().importYamlEditor().set(configMapYaml);
-    await header.importYaml().importYamlImportClick();
+    await header.importYaml().importButton().click();
 
     try {
       await expect(header.importYaml().successIndicator()).toBeVisible();
@@ -78,7 +78,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
       ).not.toBeAttached();
       await expect(header.importYaml().importYamlSortableTable().subRows()).not.toBeAttached();
 
-      await header.importYaml().importYamlCloseClick();
+      await header.importYaml().closeButton().click();
     } finally {
       await rancherApi.deleteRancherResource('v1', 'configmaps', `default/${configMapName}`, false);
     }

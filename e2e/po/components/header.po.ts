@@ -17,7 +17,7 @@ export class HeaderPo extends ComponentPo {
     const filter = this.projectNamespaceFilter();
 
     await filter.toggle();
-    await filter.clickOptionByLabel(singleOption);
+    await filter.optionByLabel(singleOption).click();
     await filter.optionCheckmark(singleOption).waitFor({ state: 'attached' });
     await filter.toggle();
   }

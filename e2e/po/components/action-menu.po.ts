@@ -6,10 +6,12 @@ export default class ActionMenuPo extends ComponentPo {
     super(page, '[dropdown-menu-collection]', parent);
   }
 
-  async clickMenuItem(index: number): Promise<void> {
-    await this.self().locator('[dropdown-menu-item]').nth(index).click();
+  /** Locator for a menu item by 0-based index. */
+  menuItem(index: number): Locator {
+    return this.self().locator('[dropdown-menu-item]').nth(index);
   }
 
+  /** Locator for a menu item by visible label. */
   getMenuItem(label: string): Locator {
     return this.self().locator('[dropdown-menu-item]').filter({ hasText: label });
   }

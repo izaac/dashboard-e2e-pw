@@ -16,9 +16,9 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     const namespacePicker = new NamespaceFilterPo(page);
 
     await namespacePicker.toggle();
-    await namespacePicker.clickOptionByLabel('Only User Namespaces');
+    await namespacePicker.optionByLabel('Only User Namespaces').click();
     await expect(namespacePicker.optionCheckmark('Only User Namespaces')).toBeAttached();
-    await namespacePicker.closeDropdown();
+    await namespacePicker.closeChevron().click();
   });
 
   test.afterAll(async ({ rancherApi }) => {
@@ -34,23 +34,23 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
       await namespacePicker.toggle();
 
-      await namespacePicker.clickOptionByLabel('All Namespaces');
+      await namespacePicker.optionByLabel('All Namespaces').click();
       await expect(namespacePicker.optionCheckmark('All Namespaces')).toBeAttached();
       await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-      await namespacePicker.clickOptionByLabel('Only User Namespaces');
+      await namespacePicker.optionByLabel('Only User Namespaces').click();
       await expect(namespacePicker.optionCheckmark('Only User Namespaces')).toBeAttached();
       await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-      await namespacePicker.clickOptionByLabel('Only System Namespaces');
+      await namespacePicker.optionByLabel('Only System Namespaces').click();
       await expect(namespacePicker.optionCheckmark('Only System Namespaces')).toBeAttached();
       await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-      await namespacePicker.clickOptionByLabel('Only Namespaced Resources');
+      await namespacePicker.optionByLabel('Only Namespaced Resources').click();
       await expect(namespacePicker.optionCheckmark('Only Namespaced Resources')).toBeAttached();
       await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-      await namespacePicker.clickOptionByLabel('Only Cluster Resources');
+      await namespacePicker.optionByLabel('Only Cluster Resources').click();
       await expect(namespacePicker.optionCheckmark('Only Cluster Resources')).toBeAttached();
       await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
     },
@@ -61,19 +61,19 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.toggle();
 
-    await namespacePicker.clickOptionByLabel('Project: Default');
+    await namespacePicker.optionByLabel('Project: Default').click();
     await expect(namespacePicker.optionCheckmark('Project: Default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-    await namespacePicker.clickOptionByLabel('default');
+    await namespacePicker.optionByLabel('default').click();
     await expect(namespacePicker.optionCheckmark('default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(2);
 
-    await namespacePicker.clickOptionByLabel('Project: System');
+    await namespacePicker.optionByLabel('Project: System').click();
     await expect(namespacePicker.optionCheckmark('Project: System')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(3);
 
-    await namespacePicker.clickOptionByLabel('cattle-fleet-clusters-system');
+    await namespacePicker.optionByLabel('cattle-fleet-clusters-system').click();
     await expect(namespacePicker.optionCheckmark('cattle-fleet-clusters-system')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(4);
 
@@ -88,7 +88,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.toggle();
 
-    await namespacePicker.clickOptionByLabel('default');
+    await namespacePicker.optionByLabel('default').click();
     await expect(namespacePicker.optionCheckmark('default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
@@ -98,11 +98,11 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
     // Select 'Project: Default' then deselect via dropdown menu clear button
-    await namespacePicker.clickOptionByLabel('Project: Default');
+    await namespacePicker.optionByLabel('Project: Default').click();
     await expect(namespacePicker.optionCheckmark('Project: Default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-    await namespacePicker.clearSelectionButton();
+    await namespacePicker.clearSelectionButton().click();
     await expect(namespacePicker.optionCheckmark('Only User Namespaces')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
   });
@@ -112,7 +112,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     await namespacePicker.toggle();
 
-    await namespacePicker.clickOptionByLabel('Project: Default');
+    await namespacePicker.optionByLabel('Project: Default').click();
     await expect(namespacePicker.optionCheckmark('Project: Default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
@@ -136,16 +136,16 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
 
     expect(count).toBeGreaterThanOrEqual(2);
 
-    await namespacePicker.clickOptionByLabel('Project: Default');
+    await namespacePicker.optionByLabel('Project: Default').click();
     await expect(namespacePicker.optionCheckmark('Project: Default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
-    await namespacePicker.clearSearchFilter();
+    await namespacePicker.clearSearchButton().click();
     await expect(namespacePicker.optionCheckmark('Project: Default')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
 
     // Reset: clear selection from dropdown menu
-    await namespacePicker.clearSelectionButton();
+    await namespacePicker.clearSelectionButton().click();
     await expect(namespacePicker.optionCheckmark('Only User Namespaces')).toBeAttached();
     await expect(namespacePicker.allCheckmarks()).toHaveCount(1);
   });
@@ -225,7 +225,7 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
       await rancherApi.deleteRancherResource('v1', 'namespaces', nsName, false);
       await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
 
-      await namespacePicker.closeDropdown();
+      await namespacePicker.closeChevron().click();
       await namespacePicker.toggle();
       await expect(namespacePicker.optionByText(projName)).not.toBeAttached(MEDIUM_TIMEOUT_OPT);
     },
@@ -253,9 +253,9 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         await namespacePicker.toggle();
         await expect(namespacePicker.getOptions()).toBeVisible();
         await expect(namespacePicker.optionById('ns_cattle-fleet-system')).toBeVisible();
-        await namespacePicker.clickOptionByLabel('cattle-fleet-system');
+        await namespacePicker.optionByLabel('cattle-fleet-system').click();
         await expect(namespacePicker.optionCheckmark('cattle-fleet-system')).toBeAttached();
-        await namespacePicker.closeDropdown();
+        await namespacePicker.closeChevron().click();
 
         // Verify dropdown closed
         await expect(namespacePicker.getOptions()).not.toBeAttached();
@@ -267,9 +267,9 @@ test.describe('Namespace picker', { tag: ['@explorer2'] }, () => {
         await namespacePicker.clearIcon().click();
         await expect(namespacePicker.optionCheckmark('Only User Namespaces')).toBeAttached();
 
-        await namespacePicker.clickOptionByLabel('Project: System');
+        await namespacePicker.optionByLabel('Project: System').click();
         await expect(namespacePicker.optionCheckmark('Project: System')).toBeAttached();
-        await namespacePicker.closeDropdown();
+        await namespacePicker.closeChevron().click();
 
         // Verify dropdown closed
         await expect(namespacePicker.getOptions()).not.toBeAttached();

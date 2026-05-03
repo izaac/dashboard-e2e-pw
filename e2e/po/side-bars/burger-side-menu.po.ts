@@ -16,8 +16,9 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Toggle side navigation via the hamburger icon */
   async toggle(): Promise<void> {
     await this.page.getByTestId('top-level-menu').click({ force: true });
-    // Allow CSS transition to settle
-    await this.page.waitForTimeout(500);
+    // Wait for the fade transition to actually finish instead of guessing 500 ms.
+    // The Animations API resolves once any in-flight CSS transition on .side-menu (or any descendants) completes.
+    await this.sideMenu().evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)));
   }
 
   /** Navigate to a top-level side menu entry by label (non-cluster) */

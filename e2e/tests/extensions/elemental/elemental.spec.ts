@@ -137,8 +137,8 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
       await elementalPo.chartInstallPage().waitForChartPage(OPERATOR_REPO, OPERATOR_CHART);
 
       await namespaceFilter.toggle();
-      await namespaceFilter.clickOptionByLabel('All Namespaces');
-      await namespaceFilter.closeDropdown();
+      await namespaceFilter.optionByLabel('All Namespaces').click();
+      await namespaceFilter.closeChevron().click();
 
       await elementalPo.chartInstallPage().nextPage();
       await elementalPo.chartInstallPage().installChart();
