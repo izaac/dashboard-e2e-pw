@@ -71,10 +71,10 @@ test.describe('User can update their preferences', () => {
     };
 
     for (const [langCode, index] of Object.entries(languages)) {
-      await langDropdown.toggle();
+      await langDropdown.dropdown().click();
       await langDropdown.isOpened();
       await expect(langDropdown.getOptions()).toHaveCount(2);
-      await langDropdown.clickOption(index);
+      await langDropdown.optionByIndex(index).click();
       await langDropdown.isClosed();
       await expect(prefPage.langDomElement(langCode)).toBeAttached();
     }
@@ -112,8 +112,8 @@ test.describe('User can update their preferences', () => {
       (resp) => resp.url().includes('userpreferences') && resp.request().method() === 'PUT',
     );
 
-    await langDropdown.toggle();
-    await langDropdown.clickOption(1);
+    await langDropdown.dropdown().click();
+    await langDropdown.optionByIndex(1).click();
     await prefSavePromise;
     await expect(prefPage.langDomElement('en-us')).toBeAttached();
   });

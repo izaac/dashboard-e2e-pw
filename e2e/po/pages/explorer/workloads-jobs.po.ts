@@ -39,7 +39,7 @@ export class WorkLoadsJobDetailsPagePo extends PagePo {
   async selectNamespace(label: string): Promise<void> {
     const nsSelect = new LabeledSelectPo(this.page, '[data-testid="name-ns-description-namespace"]');
 
-    await nsSelect.toggle();
+    await nsSelect.dropdown().click();
     await nsSelect.clickOptionWithLabel(label);
   }
 

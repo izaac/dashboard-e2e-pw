@@ -250,7 +250,7 @@ test.describe('Settings (Part 2)', () => {
 
       const select = settingsPage.unlabeledSelect();
 
-      await select.toggle();
+      await select.dropdown().click();
       await select.clickOptionWithLabel('Local');
 
       let saveResponsePromise = page.waitForResponse(
@@ -269,7 +269,7 @@ test.describe('Settings (Part 2)', () => {
       await navToSettings(page);
       await editSetting(page, settingName);
 
-      await select.toggle();
+      await select.dropdown().click();
       await select.clickOptionWithLabel('Remote');
 
       saveResponsePromise = page.waitForResponse(
@@ -288,7 +288,7 @@ test.describe('Settings (Part 2)', () => {
       await navToSettings(page);
       await editSetting(page, settingName);
 
-      await select.toggle();
+      await select.dropdown().click();
       await select.clickOptionWithLabel('Dynamic');
 
       saveResponsePromise = page.waitForResponse(

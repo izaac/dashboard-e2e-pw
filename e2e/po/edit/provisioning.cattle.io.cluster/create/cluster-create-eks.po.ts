@@ -30,7 +30,7 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
   async selectExistingCredential(name: string): Promise<void> {
     const dropdown = new LabeledSelectPo(this.page, '[data-testid="cluster-prov-select-credential"]');
 
-    await dropdown.toggle();
+    await dropdown.dropdown().click();
     await dropdown.clickOptionWithLabel(name);
   }
 
@@ -107,14 +107,14 @@ export default class ClusterManagerCreateEKSPagePo extends ClusterManagerCreateR
   async getLatestEKSversion(): Promise<string> {
     const versionSelect = this.getVersion();
 
-    await versionSelect.toggle();
+    await versionSelect.dropdown().click();
 
     // vue-select renders dropdown-menu as a portal appended to <body>,
     // not inside the component — must use page-level locator
     const options = versionSelect.getOptions();
     const texts = await options.allInnerTexts();
 
-    await versionSelect.toggle();
+    await versionSelect.dropdown().click();
 
     let latestVersion = 0;
 

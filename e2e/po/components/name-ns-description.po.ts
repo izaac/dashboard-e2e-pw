@@ -21,8 +21,8 @@ export default class NameNsDescriptionPo extends ComponentPo {
   }
 
   async selectNamespace(label: string): Promise<void> {
-    await this.namespace().toggle();
-    await this.namespace().clickLabel(label);
+    await this.namespace().dropdown().click();
+    await this.namespace().optionByLabel(label).click();
   }
 
   project(): LabeledInputPo {

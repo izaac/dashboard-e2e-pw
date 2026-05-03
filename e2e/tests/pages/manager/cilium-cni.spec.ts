@@ -68,8 +68,8 @@ test.describe('RKE2 Cilium CNI', () => {
 
       await expect(bandwidthManager.self()).not.toBeAttached();
 
-      await cniSelect.toggle();
-      await cniSelect.clickLabel('cilium');
+      await cniSelect.dropdown().click();
+      await cniSelect.optionByLabel('cilium').click();
       await expect(cniSelect.selectedOption()).toHaveText('cilium', { useInnerText: true });
       await cniSelect.isClosed();
 

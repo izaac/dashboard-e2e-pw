@@ -323,8 +323,8 @@ test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
       await v2.prometheusRulesAlertName(0).set('record-0');
       await v2.prometheusRulesAlertPromQl(0).set('promql-0');
 
-      await v2.alertingRuleSeveritySelect(0).toggle();
-      await v2.alertingRuleSeveritySelect(0).clickOption(1);
+      await v2.alertingRuleSeveritySelect(0).dropdown().click();
+      await v2.alertingRuleSeveritySelect(0).optionByIndex(1).click();
 
       await v2.saveCreateForm().click();
 

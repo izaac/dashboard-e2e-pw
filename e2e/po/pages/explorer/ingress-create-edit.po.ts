@@ -96,7 +96,7 @@ export class IngressCreateEditPo extends PagePo {
     const item = this.certificatesList().arrayListItem(index, parentIndex);
     const select = new LabeledSelectPo(this.page, '.labeled-select', item);
 
-    await select.toggle();
+    await select.dropdown().click();
     await select.clickOptionWithLabel(value);
   }
 
@@ -110,7 +110,7 @@ export class IngressCreateEditPo extends PagePo {
   // (e.g. after namespace change triggers service loading). Retry the full toggle+click sequence.
   private async selectWithRetry(select: LabeledSelectPo, label: string): Promise<void> {
     await expect(async () => {
-      await select.toggle();
+      await select.dropdown().click();
       const option = select.getOptions().filter({ hasText: label }).first();
 
       await expect(option).toBeVisible({ timeout: DEBOUNCE });

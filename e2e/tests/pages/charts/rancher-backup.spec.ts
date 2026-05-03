@@ -74,7 +74,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         const select = new LabeledSelectPo(page, '[data-testid="backup-chart-select-existing-storage-class"]');
 
         await expect(select.self()).toBeAttached();
-        await select.toggle();
+        await select.dropdown().click();
         await select.clickOptionWithLabel('test-default-storage-class');
         await expect(select.selectedOption()).toHaveText('test-default-storage-class', { useInnerText: true });
 

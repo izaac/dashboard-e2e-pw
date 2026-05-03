@@ -54,7 +54,7 @@ test.describe('Project Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
       await secretCreatePage.waitForPage();
 
       await secretCreatePage.selectSecretSubtype('kubernetes.io/basic-auth').click();
-      await secretCreatePage.projectSelect().toggle();
+      await secretCreatePage.projectSelect().dropdown().click();
       await secretCreatePage.projectSelect().clickOptionWithLabel('Default');
       await secretCreatePage.nameNsDescription().name().set(projectScopedSecretName);
       await secretCreatePage.basicAuthUsernameInput().input().pressSequentially(username);

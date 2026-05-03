@@ -346,7 +346,7 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
       await elementalPo.dashboard().createUpdateGroupClick();
 
       await elementalPo.genericNameNsDescription().name().set(updateGroupName);
-      await elementalPo.updateGroupTargetClustersSelect().toggle();
+      await elementalPo.updateGroupTargetClustersSelect().dropdown().click();
       await elementalPo.updateGroupTargetClustersSelect().clickOptionWithLabel(elementalClusterName);
       await elementalPo.updateGroupImageOption().set(1);
 

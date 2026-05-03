@@ -133,7 +133,7 @@ test.describe(
         await createPage.poolQuantityInput().fill('1');
         await expect(createPage.createButton()).toBeEnabled();
 
-        await createPage.basicsTab().kubernetesVersions().toggle();
+        await createPage.basicsTab().kubernetesVersions().dropdown().click();
         await createPage.basicsTab().kubernetesVersions().clickOptionWithLabel(k8sVersion);
 
         const createClusterResponse = page.waitForResponse(

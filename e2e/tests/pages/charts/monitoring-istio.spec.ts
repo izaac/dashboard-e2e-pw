@@ -98,13 +98,13 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         // Check Grafana has storage class input: https://github.com/rancher/dashboard/issues/11539
         await grafana.storageOptions().set(2);
         await expect(grafana.storageClass().self()).toBeAttached();
-        await grafana.storageClass().toggle();
+        await grafana.storageClass().dropdown().click();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
         await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
         await grafana.storageOptions().set(3);
         await expect(grafana.storageClass().self()).toBeAttached();
-        await grafana.storageClass().toggle();
+        await grafana.storageClass().dropdown().click();
         await grafana.storageClass().clickOptionWithLabel(storageClass);
         await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
@@ -118,7 +118,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await prometheus.persistentStorage().set();
 
         await expect(prometheus.storageClass().self()).toBeAttached();
-        await prometheus.storageClass().toggle();
+        await prometheus.storageClass().dropdown().click();
         await prometheus.storageClass().clickOptionWithLabel(storageClass);
         await expect(prometheus.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
       });
