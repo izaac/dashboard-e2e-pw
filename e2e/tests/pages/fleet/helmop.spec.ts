@@ -78,22 +78,22 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await helmOpCreatePage.waitForPage();
 
         await helmOpCreatePage.resourceDetail().createEditView().nameNsDescription().name().set(helmOpName);
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         await helmOpCreatePage.setChart('redis');
         await helmOpCreatePage.setRepository('https://charts.bitnami.com/bitnami');
         await helmOpCreatePage.setVersion('24.0.0');
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Values step
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Target step
         await helmOpCreatePage.setTargetNamespace('default');
         await helmOpCreatePage.targetClusterOptions().set(2);
         await helmOpCreatePage.targetCluster().dropdown().click();
         await helmOpCreatePage.targetCluster().optionByLabel(downstreamClusterName).click();
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Advanced step - wait for secrets/configmaps to load
         await page.waitForResponse((resp) => resp.url().includes('/v1/secrets') && resp.status() === 200);
@@ -112,7 +112,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await helmOpCreatePage.configMapsSelector().dropdown().click();
         await helmOpCreatePage.configMapsSelector().optionByLabel(configMap2Name).click();
 
-        await helmOpCreatePage.resourceDetail().createEditView().create();
+        await helmOpCreatePage.resourceDetail().createEditView().createButton().click();
 
         const response = await createResponsePromise;
         const responseBody = await response.json();
@@ -227,10 +227,10 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await helmOpEditPage.waitForPage('mode=edit');
 
         // Navigate through steps to advanced
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Wait for secrets/configmaps to load
         await page.waitForResponse((resp) => resp.url().includes('/v1/secrets') && resp.status() === 200);
@@ -260,7 +260,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
             resp.status() === 200,
         );
 
-        await helmOpEditPage.resourceDetail().createEditView().save();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
 
         const response = await updateResponsePromise;
         const responseBody = await response.json();

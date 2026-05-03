@@ -34,7 +34,7 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       expect(titleText.replace(/\s+/g, ' ')).toContain('Cluster: Create Custom');
       await createPage.nameNsDescription().name().checkVisible();
 
-      await createPage.resourceDetail().createEditView().editClusterAsYaml();
+      await createPage.resourceDetail().createEditView().editClusterYamlButton().click();
       const modal = promptModal(page);
 
       await modal.checkVisible();
@@ -53,7 +53,7 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       json.metadata.namespace = nsName;
 
       await createPage.resourceDetail().resourceYaml().codeMirror().set(jsyaml.dump(json));
-      await createPage.resourceDetail().createEditView().saveClusterAsYaml();
+      await createPage.resourceDetail().createEditView().saveClusterYamlButton().click();
 
       const clusterResponse = await clusterCreateResponsePromise;
 

@@ -185,7 +185,7 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
         SHORT_TIMEOUT_OPT,
       );
 
-      await editClusterPage.resourceDetail().createEditView().save();
+      await editClusterPage.resourceDetail().createEditView().saveButtonPo().click();
       const putResp = await putResponsePromise;
       const putBody = await putResp.json().catch(() => ({}));
 

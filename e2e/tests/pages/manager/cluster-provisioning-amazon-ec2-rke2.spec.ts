@@ -326,7 +326,7 @@ test.describe(
         SHORT_TIMEOUT_OPT,
       );
 
-      await editClusterPage.resourceDetail().createEditView().save();
+      await editClusterPage.resourceDetail().createEditView().saveButtonPo().click();
       const updateResp = await updatePromise;
 
       expect([200, 409]).toContain(updateResp.status());

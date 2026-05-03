@@ -89,7 +89,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
           (resp) => resp.url().includes('/v3/fleetworkspaces') && resp.request().method() === 'POST',
         );
 
-        await createPage.resourceDetail().createEditView().create();
+        await createPage.resourceDetail().createEditView().createButton().click();
         const resp = await responsePromise;
 
         expect(resp.status()).toBe(201);

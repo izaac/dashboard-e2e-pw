@@ -151,10 +151,10 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         cloneName = `clone-${editRepoName}`;
 
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().name().set(cloneName);
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().create();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
 
         await listPage.waitForPage();
         await expect(listPage.sortableTable().rowElementWithName(cloneName)).toBeVisible();
@@ -256,8 +256,8 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await gitRepoEditPage.waitForPage('mode=edit');
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().description().set(description);
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().save();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }

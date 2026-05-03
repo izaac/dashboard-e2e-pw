@@ -58,7 +58,7 @@ export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManager
   }
 
   async create(): Promise<void> {
-    await this.resourceDetail().createEditView().create();
+    await this.resourceDetail().createEditView().createButton().click();
   }
 
   calicoAddonConfig(): AddonConfigPo {
