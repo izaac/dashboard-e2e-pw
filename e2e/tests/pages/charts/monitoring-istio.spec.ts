@@ -82,7 +82,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installChart.waitForChartPage(CHART.repo, CHART.id);
 
         await expect(grafana.storageOptions().getAllOptions()).toHaveCount(4);
-        await expect(grafana.storageOptions().radioSpan(0)).toHaveAttribute('aria-checked', 'true'); // Disabled by default
+        await expect(grafana.storageOptions().radioSpanByLabel('Disabled')).toHaveAttribute('aria-checked', 'true');
 
         const options = [
           'Disabled',

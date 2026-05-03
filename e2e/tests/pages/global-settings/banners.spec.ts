@@ -159,7 +159,7 @@ test.describe('Banners', () => {
       await expect(innerDiv).toHaveCSS('font-size', settings.fontSize.new);
 
       await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
-      await expect(bannersPage.textAlignmentRadioGroup('bannerHeader').radioSpan(2)).toHaveAttribute(
+      await expect(bannersPage.textAlignmentRadioGroup('bannerHeader').radioSpanByLabel('Right')).toHaveAttribute(
         'aria-checked',
         'true',
       );
@@ -180,7 +180,7 @@ test.describe('Banners', () => {
       await expect(innerDivReload).toHaveCSS('font-size', settings.fontSize.new);
 
       await expect(bannersPage.headerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
-      await expect(bannersPage.textAlignmentRadioGroup('bannerHeader').radioSpan(2)).toHaveAttribute(
+      await expect(bannersPage.textAlignmentRadioGroup('bannerHeader').radioSpanByLabel('Right')).toHaveAttribute(
         'aria-checked',
         'true',
       );
@@ -233,7 +233,7 @@ test.describe('Banners', () => {
       await expect(innerDiv).toHaveCSS('font-size', settings.fontSize.new);
 
       await expect(bannersPage.footerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
-      await expect(bannersPage.textAlignmentRadioGroup('bannerFooter').radioSpan(2)).toHaveAttribute(
+      await expect(bannersPage.textAlignmentRadioGroup('bannerFooter').radioSpanByLabel('Right')).toHaveAttribute(
         'aria-checked',
         'true',
       );
@@ -254,7 +254,7 @@ test.describe('Banners', () => {
       await expect(innerDivReload).toHaveCSS('font-size', settings.fontSize.new);
 
       await expect(bannersPage.footerBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
-      await expect(bannersPage.textAlignmentRadioGroup('bannerFooter').radioSpan(2)).toHaveAttribute(
+      await expect(bannersPage.textAlignmentRadioGroup('bannerFooter').radioSpanByLabel('Right')).toHaveAttribute(
         'aria-checked',
         'true',
       );
@@ -323,7 +323,7 @@ test.describe('Banners', () => {
         await bannersPage.goTo();
         await bannersPage.waitForPageWithClusterId();
         await expect(bannersPage.loginScreenBannerCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
-        await expect(bannersPage.textAlignmentRadioGroup('bannerConsent').radioSpan(2)).toHaveAttribute(
+        await expect(bannersPage.textAlignmentRadioGroup('bannerConsent').radioSpanByLabel('Right')).toHaveAttribute(
           'aria-checked',
           'true',
         );

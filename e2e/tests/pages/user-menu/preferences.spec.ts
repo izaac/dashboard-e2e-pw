@@ -692,7 +692,7 @@ test.describe('User can update their preferences', () => {
     expect(respBody.data).toHaveProperty('after-login-route', '"home"');
 
     // Verify radio is checked
-    await expect(radioGroup.radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(radioGroup.radioSpanByLabel('home page')).toHaveAttribute('aria-checked', 'true');
 
     // Logout and verify landing page
     await userMenu.clickMenuItem('Log Out');
@@ -736,7 +736,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '"last-visited"');
 
       // Verify radio is checked
-      await expect(radioGroup.radioSpan(1)).toHaveAttribute('aria-checked', 'true');
+      await expect(radioGroup.radioSpanByLabel('last visited')).toHaveAttribute('aria-checked', 'true');
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');
@@ -787,7 +787,7 @@ test.describe('User can update their preferences', () => {
       expect(respBody.data).toHaveProperty('after-login-route', '{"name":"c-cluster","params":{"cluster":"local"}}');
 
       // Verify radio is checked
-      await expect(radioGroup.radioSpan(2)).toHaveAttribute('aria-checked', 'true');
+      await expect(radioGroup.radioSpanByLabel('cluster:')).toHaveAttribute('aria-checked', 'true');
 
       // Logout and verify landing page
       await userMenu.clickMenuItem('Log Out');

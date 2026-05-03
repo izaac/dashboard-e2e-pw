@@ -241,12 +241,18 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       await expect(createEKSClusterPage.getInstanceType().selectedOption()).toContainText(eksSettings.instanceType);
       await expect(createEKSClusterPage.getDiskSize().self()).toHaveValue(eksSettings.diskSize);
 
-      await expect(createEKSClusterPage.serviceRoleRadioGroup().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+      await expect(createEKSClusterPage.serviceRoleRadioGroup().radioSpanByLabel('Standard:')).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
 
       await expect(createEKSClusterPage.getPublicAccess().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
       await expect(createEKSClusterPage.getPrivateAccess().checkboxCustom()).toHaveAttribute('aria-checked', 'false');
 
-      await expect(createEKSClusterPage.vpcRadioGroup().radioSpan(0)).toHaveAttribute('aria-checked', 'true');
+      await expect(createEKSClusterPage.vpcRadioGroup().radioSpanByLabel('Create a new vpc')).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
 
       // Set cluster name and create
       await createEKSClusterPage.getClusterName().set(clusterName);
