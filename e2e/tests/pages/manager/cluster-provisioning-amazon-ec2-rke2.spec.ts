@@ -545,7 +545,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Set stack preference to IPv6
-      await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('#networking');
+      await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('#networking').click();
       await createRKE2ClusterPage.networkTab().stackPreference().toggle();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('IPv6');
 
@@ -674,7 +674,7 @@ test.describe(
       await createRKE2ClusterPage.ipv6DialogCancelButton().click();
 
       // Dual stack pref should NOT remove stack preference warning for ipv6-only
-      await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('#networking');
+      await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('#networking').click();
       await createRKE2ClusterPage.networkTab().stackPreference().toggle();
       await createRKE2ClusterPage.networkTab().stackPreference().clickOptionWithLabel('Dual');
 

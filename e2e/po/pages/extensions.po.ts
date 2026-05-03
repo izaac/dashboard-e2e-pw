@@ -218,7 +218,7 @@ export default class ExtensionsPagePo extends PagePo {
   }
 
   extensionTabBuiltin(): Locator {
-    return this.extensionTabs.getTab('builtin');
+    return this.extensionTabs.tabByTestId('builtin');
   }
 
   async checkForExtensionTab(tab: 'available' | 'installed' | 'builtin'): Promise<boolean> {
@@ -247,15 +247,15 @@ export default class ExtensionsPagePo extends PagePo {
   }
 
   async extensionTabInstalledClick(): Promise<void> {
-    await this.extensionTabs.clickTabWithName('installed');
+    await this.extensionTabs.tab('installed').click();
   }
 
   async extensionTabAvailableClick(): Promise<void> {
-    await this.extensionTabs.clickTabWithName('available');
+    await this.extensionTabs.tab('available').click();
   }
 
   async extensionTabBuiltinClick(): Promise<void> {
-    await this.extensionTabs.clickTabWithName('builtin');
+    await this.extensionTabs.tab('builtin').click();
   }
 
   // --- extension reload banner ---

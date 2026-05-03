@@ -164,7 +164,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await createRKE2ClusterPage.selectCustom(0);
         await createRKE2ClusterPage.nameNsDescription().name().set('abc');
 
-        await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('li#rke2-calico');
+        await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('li#rke2-calico').click();
 
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
 

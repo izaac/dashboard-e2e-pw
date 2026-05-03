@@ -134,7 +134,7 @@ test.describe('Side navigation: Highlighting', { tag: ['@navigation', '@adminUse
 
     expect(activeOnGlobal).toBe('Role Templates');
 
-    await roles.tabs().clickTabWithName(CLUSTER);
+    await roles.tabs().tab(CLUSTER).click();
     await expect(roles.list(CLUSTER).rowWithName('Cluster Owner').self()).toBeAttached();
 
     const activeOnCluster = await productNavPo.activeNavItem();

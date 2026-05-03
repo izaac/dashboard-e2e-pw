@@ -115,7 +115,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         await ingressForm.setPortValue(1, '8080');
 
         // Certificates tab
-        await ingressForm.tabs().clickTabWithName('certificates');
+        await ingressForm.tabs().tab('certificates').click();
         await ingressForm.waitForPage(undefined, 'certificates');
         await ingressForm.certificatesList().clickAdd('Add Certificate');
         await ingressForm.setSecretNameValueByLabel(0, secretNames[0]);
@@ -229,7 +229,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         await ingressForm.setPortValue(3, '8080');
 
         // Add 2 more certificates
-        await ingressForm.tabs().clickTabWithName('certificates');
+        await ingressForm.tabs().tab('certificates').click();
         await ingressForm.waitForPage('mode=edit', 'certificates');
         await ingressForm.certificatesList().clickAdd('Add Certificate');
         await ingressForm.setSecretNameValueByLabel(2, secretNames[2]);

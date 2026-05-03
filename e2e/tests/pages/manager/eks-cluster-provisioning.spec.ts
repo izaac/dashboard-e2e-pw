@@ -355,7 +355,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       const initialTabNames = await tabbedPo.tabNames();
 
       // Add a new node pool tab
-      await tabbedPo.addTab();
+      await tabbedPo.addTabButton().click();
 
       const tabNamesAfterAdd = await tabbedPo.tabNames();
 
@@ -366,7 +366,7 @@ test.describe('Create EKS cluster', { tag: ['@manager', '@adminUser', '@provisio
       expect(lastTabAfterAdd).not.toBe('');
 
       // Click the new (last) tab and rename it
-      await tabbedPo.clickNthTab(tabNamesAfterAdd.length);
+      await tabbedPo.tabByIndex(tabNamesAfterAdd.length).click();
       await createEKSClusterPage.getNodeGroup().set('aaa');
 
       const tabNamesAfterRename = await tabbedPo.tabNames();

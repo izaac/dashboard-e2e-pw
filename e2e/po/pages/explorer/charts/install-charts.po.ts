@@ -33,7 +33,7 @@ export class InstallChartPage extends PagePo {
   }
 
   async editOptions(options: TabbedPo, selector: string): Promise<void> {
-    await options.clickTabWithSelector(selector);
+    await options.tabBySelector(selector).click();
   }
 
   async selectTab(options: TabbedPo, tabID: string): Promise<void> {

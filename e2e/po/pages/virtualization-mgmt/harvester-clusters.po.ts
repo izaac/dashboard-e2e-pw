@@ -95,7 +95,7 @@ export class HarvesterClusterCreateEditPo extends PagePo {
   }
 
   async memberRolesTab(): Promise<void> {
-    await this.tabs().clickTabWithSelector('[data-testid="memberRoles"]');
+    await this.tabs().tabBySelector('[data-testid="memberRoles"]').click();
   }
 }
 

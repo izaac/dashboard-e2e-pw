@@ -42,7 +42,7 @@ export default class ClusterDashboardPagePo extends PagePo {
 
   async clickCertificatesTab(): Promise<void> {
     await this.tabs().self().scrollIntoViewIfNeeded();
-    await this.tabs().clickNthTab(2);
+    await this.tabs().tabByIndex(2).click();
   }
 
   async eventsRowCountMenuToggle(): Promise<void> {
