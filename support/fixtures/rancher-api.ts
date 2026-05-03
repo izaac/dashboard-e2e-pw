@@ -1116,16 +1116,28 @@ export class RancherApi {
   /**
    * Poll Rancher API health via /v1/counts.
    * Useful after operations that can restart embedded k3s (driver activation, extension installs).
+   *
+   * Requires `requiredConsecutiveOk` consecutive 200 responses before declaring healthy —
+   * single 200s during a restart can land in a brief stable window before the web layer
+   * fully accepts traffic again, leaving the next test to race a TLS hiccup.
    */
-  async waitForHealthy(maxAttempts = 8, intervalMs = 5_000): Promise<void> {
+  async waitForHealthy(maxAttempts = 8, intervalMs = 5_000, requiredConsecutiveOk = 3): Promise<void> {
+    let consecutive = 0;
+
     for (let i = 1; i <= maxAttempts; i++) {
       try {
         const resp = await this.getRancherResource('v1', 'counts');
 
         if (resp.status === 200) {
-          return;
+          consecutive += 1;
+          if (consecutive >= requiredConsecutiveOk) {
+            return;
+          }
+        } else {
+          consecutive = 0;
         }
       } catch (err: unknown) {
+        consecutive = 0;
         console.warn(`[RancherApi] health probe ${i}/${maxAttempts} failed:`, err);
       }
 

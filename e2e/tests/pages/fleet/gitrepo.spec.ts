@@ -318,6 +318,16 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         // eslint-disable-next-line playwright/no-networkidle -- visual snapshot needs all assets settled
         await page.waitForLoadState('networkidle');
 
+        // Empty-state guard: peer tests in this spec create-and-delete gitrepos. A finalizer
+        // that has not yet reconciled leaves a `Removing...` row in the list and blows up the
+        // visual diff. Poll until the table body has zero rows before screenshotting.
+        await expect
+          .poll(async () => await gitRepoList.sortableTable().rowElements().count(), {
+            timeout: LONG,
+            intervals: [BRIEF],
+          })
+          .toBe(0);
+
         await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'gitrepo-list.png'), {
           fullPage: true,
           mask: mastheadMasks(page),
