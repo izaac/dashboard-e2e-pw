@@ -43,7 +43,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
     const ingressForm = new IngressCreateEditPo(page);
 
     await ingressForm.waitForPage(undefined, 'rules');
-    await ingressForm.createEditView().editAsYaml();
+    await ingressForm.createEditView().editYamlButton().click();
     await expect(ingressForm.createEditView().yamlEditor()).toBeVisible();
   });
 
@@ -130,7 +130,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         );
 
         await ingressForm.waitForRulePathDebounce();
-        await ingressForm.createEditView().save();
+        await ingressForm.createEditView().saveButtonPo().click();
         const resp = await responsePromise;
         const body = await resp.json();
 
@@ -246,7 +246,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         );
 
         await ingressForm.waitForRulePathDebounce();
-        await ingressForm.createEditView().save();
+        await ingressForm.createEditView().saveButtonPo().click();
         const resp = await responsePromise;
         const body = await resp.json();
 
@@ -349,7 +349,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
       );
 
       await ingressForm.waitForRulePathDebounce();
-      await ingressForm.createEditView().save();
+      await ingressForm.createEditView().saveButtonPo().click();
       const resp = await createResponse;
 
       expect(resp.status()).toBe(201);

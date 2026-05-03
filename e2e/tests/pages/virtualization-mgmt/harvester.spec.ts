@@ -163,7 +163,7 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     await createEditForm.nameNsDescription().name().set(harvesterClusterName);
     await createEditForm.nameNsDescription().description().set(`${harvesterClusterName}-desc`);
-    await createEditForm.resourceDetail().createEditView().create();
+    await createEditForm.resourceDetail().createEditView().createButton().click();
 
     const createClusterResp = await createClusterPromise;
 

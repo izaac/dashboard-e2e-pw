@@ -87,7 +87,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
           resp.request().method() === 'PUT',
       );
 
-      await editPage.resourceDetail().createEditView().save();
+      await editPage.resourceDetail().createEditView().saveButtonPo().click();
       const response = await responsePromise;
       const body = await response.json();
 
@@ -143,7 +143,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
         (resp) => resp.url().includes('v1/fleet.cattle.io.clustergroups') && resp.request().method() === 'POST',
       );
 
-      await clonePage.resourceDetail().createEditView().create();
+      await clonePage.resourceDetail().createEditView().createButton().click();
       const response = await responsePromise;
       const body = await response.json();
 
@@ -229,7 +229,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
 
     const createPage = new FleetClusterGroupsCreateEditPo(page);
 
-    await createPage.resourceDetail().createEditView().editAsYaml();
+    await createPage.resourceDetail().createEditView().editYamlButton().click();
     await expect(createPage.resourceDetail().resourceYaml().codeMirror().self()).toBeAttached();
   });
 

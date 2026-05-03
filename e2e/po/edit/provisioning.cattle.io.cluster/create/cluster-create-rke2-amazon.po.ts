@@ -49,10 +49,10 @@ export default class ClusterManagerCreateRke2AmazonPagePo extends ClusterManager
   }
 
   async create(): Promise<void> {
-    await this.resourceDetail().createEditView().create();
+    await this.resourceDetail().createEditView().createButton().click();
   }
 
   async save(): Promise<void> {
-    await this.resourceDetail().createEditView().save();
+    await this.resourceDetail().createEditView().saveButtonPo().click();
   }
 }
