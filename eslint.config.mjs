@@ -88,11 +88,23 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
   },
-  // PO files — relaxed boundary types (upstream does this)
+  // PO + support files — relaxed boundary types (upstream does this) + lightweight
+  // Playwright guardrails for the sleep / force-click rules. Avoid pulling
+  // `flat/recommended` whole-cloth here: POs legitimately use raw locators and
+  // chained `.locator(...)` selectors (that's literally what they are for), so
+  // `no-raw-locators` and most other recommended rules would create noise.
   {
-    files: ['e2e/po/**/*.ts'],
+    files: ['e2e/po/**/*.ts', 'support/utils/**/*.ts'],
+    plugins: {
+      playwright: playwrightPlugin,
+    },
     rules: {
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      // Sleeps in Page Objects are a known flake source — every spec using the
+      // PO inherits the timing assumption. Allow with `eslint-disable-next-line`
+      // + reason for the genuine debounce / canvas-render escape hatches.
+      'playwright/no-wait-for-timeout': 'warn',
+      'playwright/no-force-option': 'warn',
     },
   },
   // Spec files — Playwright rules

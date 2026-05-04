@@ -4,8 +4,8 @@ import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import ComponentPo from '@/e2e/po/components/component.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
-import { STANDARD } from '@/support/timeouts';
+import { SHORT_TIMEOUT_OPT, STANDARD } from '@/support/timeouts';
+import { retryBackoff } from '@/support/utils/debounce';
 
 class GlobalRoleBindingsPo extends ComponentPo {
   constructor(page: Page) {
@@ -94,7 +94,7 @@ export default class MgmtUserEditPo extends PagePo {
     const userResp = await userCreationPromise;
 
     if (userResp.status() !== 201) {
-      await this.page.waitForTimeout(1500);
+      await retryBackoff(this.page);
       await this.saveCreateWithErrorRetry(attempt + 1);
 
       return;
@@ -114,7 +114,11 @@ export default class MgmtUserEditPo extends PagePo {
       // Absolute path bypasses the /dashboard/ baseURL — without it the SPA
       // catches the request and returns 200 (index.html), masking real failures.
       await this.page.request.delete(`/v1/management.cattle.io.users/${userId}`);
-      await this.page.waitForTimeout(2000);
+      // Slightly longer backoff than retryBackoff's default — give the user
+      // delete to propagate before the next saveCreate attempt re-tries the
+      // username (otherwise the create can race the cleanup and fail with a
+      // duplicate-name error).
+      await retryBackoff(this.page, 2000);
       await this.saveCreateWithErrorRetry(attempt + 1);
     }
   }

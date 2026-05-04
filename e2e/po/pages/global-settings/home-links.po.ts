@@ -3,6 +3,7 @@ import RootClusterPage from '@/e2e/po/pages/root-cluster-page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
+import { waitForVueDebounce } from '@/support/utils/debounce';
 
 export class HomeLinksPagePo extends RootClusterPage {
   static url = '/c/_/settings/links';
@@ -86,8 +87,11 @@ export class HomeLinksPagePo extends RootClusterPage {
     // Placeholder - upstream uses goToAndWaitForGet which is Cypress-specific
   }
 
-  /** KeyValue component debounces update events by 500ms — call after last field interaction */
+  /**
+   * KeyValue component debounces update events by 500 ms — call after the last
+   * field interaction so the next save observes the latest typed value.
+   */
   async waitForKeyValueDebounce(): Promise<void> {
-    await this.page.waitForTimeout(600);
+    await waitForVueDebounce(this.page);
   }
 }

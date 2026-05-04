@@ -7,6 +7,7 @@ export class NotificationPo extends ComponentPo {
   }
 
   async toggleRead(): Promise<void> {
+    // eslint-disable-next-line playwright/no-force-option -- read-indicator is a tiny dot inside the notification row; click target can be obscured by hover overlay
     await this.self().locator('.read-indicator').click({ force: true });
   }
 

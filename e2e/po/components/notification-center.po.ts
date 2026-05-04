@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import { NotificationPo } from '@/e2e/po/components/notification.po';
 
@@ -11,10 +12,15 @@ export default class NotificationsCenterPo extends ComponentPo {
     return this.page.getByTestId('notifications-center');
   }
 
-  /** Open/close the notification center */
+  /** Open/close the notification center. Waits for the panel's aria-expanded
+   *  attribute to flip to the opposite of its pre-click value, replacing the
+   *  prior fixed 500 ms sleep with a web-first attribute assertion. */
   async toggle(): Promise<void> {
+    const before = (await this.dropdownButton().getAttribute('aria-expanded')) ?? 'false';
+    const expected = before === 'true' ? 'false' : 'true';
+
     await this.dropdownButton().click();
-    await this.page.waitForTimeout(500);
+    await expect(this.dropdownButton()).toHaveAttribute('aria-expanded', expected);
   }
 
   /** Status indicator locator (read state) */
@@ -46,6 +52,7 @@ export default class NotificationsCenterPo extends ComponentPo {
 
   /** Mark all notifications as read */
   async markAllRead(): Promise<void> {
+    // eslint-disable-next-line playwright/no-force-option -- "mark all" lives inside the slide-in panel which can intercept normal clicks while the panel is still settling
     await this.page.getByTestId('notifications-center-markall-read').click({ force: true });
   }
 

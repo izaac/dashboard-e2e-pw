@@ -15,19 +15,25 @@ export default class BurgerMenuPo extends ComponentPo {
 
   /** Toggle side navigation via the hamburger icon */
   async toggle(): Promise<void> {
+    // eslint-disable-next-line playwright/no-force-option -- hamburger icon can be briefly covered by SPA route-transition overlay
     await this.page.getByTestId('top-level-menu').click({ force: true });
     // Wait for the fade transition to actually finish instead of guessing 500 ms.
-    // The Animations API resolves once any in-flight CSS transition on .side-menu (or descendants) completes.
-    // Wrapped in catch so a navigation/element-detachment mid-evaluate (Vue <transition> replaces the node)
-    // does not blow up the toggle — Playwright's auto-wait on the next action handles residual settle.
+    // The Animations API resolves once any in-flight CSS transition on .side-menu
+    // (or descendants) completes. `Promise.allSettled` absorbs per-animation
+    // cancellations (Vue <transition> replaces nodes mid-flight); the outer
+    // .catch logs an evaluate-level failure (element detached pre-evaluate) so
+    // it surfaces in CI rather than being silently swallowed.
     await this.sideMenu()
-      .evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {}))))
-      .catch(() => {});
+      .evaluate((el) => Promise.allSettled(el.getAnimations({ subtree: true }).map((a) => a.finished)))
+      .catch((err) =>
+        console.warn(`[burger-side-menu toggle] animation settle skipped: ${(err as Error)?.message ?? err}`),
+      );
   }
 
   /** Navigate to a top-level side menu entry by label (non-cluster) */
   async burgerMenuNavToMenuByLabel(label: string): Promise<void> {
     await this.sideMenu().waitFor({ state: 'attached' });
+    // eslint-disable-next-line playwright/no-force-option -- side-menu link can be partially obscured by sticky scroll header in tall menus
     await this.sideMenu().locator('.option').getByText(label).click({ force: true });
   }
 
@@ -129,6 +135,7 @@ export default class BurgerMenuPo extends ComponentPo {
     const clusterName = this.self().locator('.cluster-name').getByText(clusterId);
 
     await clusterName.waitFor({ state: 'attached' });
+    // eslint-disable-next-line playwright/no-force-option -- cluster name in side-menu can be covered by sticky group header in tall cluster lists
     await clusterName.click({ force: true });
   }
 

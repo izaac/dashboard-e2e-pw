@@ -77,6 +77,7 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Navigate to a side menu entry by label */
   async navToSideMenuEntryByLabel(label: string): Promise<void> {
+    // eslint-disable-next-line playwright/no-force-option -- side-nav link can be briefly covered by collapsing accordion / sticky header in tall menus
     await this.sideMenuEntryByLabel(label).click({ force: true });
   }
 

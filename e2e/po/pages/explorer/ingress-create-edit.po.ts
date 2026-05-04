@@ -6,6 +6,7 @@ import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import { DEBOUNCE, EXTENDED } from '@/support/timeouts';
+import { waitForVueDebounce } from '@/support/utils/debounce';
 
 export class IngressCreateEditPo extends PagePo {
   private static createPath(clusterId: string, namespace?: string, id?: string) {
@@ -79,11 +80,12 @@ export class IngressCreateEditPo extends PagePo {
   }
 
   /**
-   * RulePath.vue debounces update emissions by 500ms.
-   * Call this after the last rule-path field change and before save().
+   * RulePath.vue debounces update emissions by 500 ms — call after the last
+   * rule-path field change and before save() so the form payload reflects
+   * the latest typed value.
    */
   async waitForRulePathDebounce(): Promise<void> {
-    await this.page.waitForTimeout(600);
+    await waitForVueDebounce(this.page);
   }
 
   // --- Certificates ---

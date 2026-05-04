@@ -6,6 +6,7 @@ import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import { waitForVueDebounce } from '@/support/utils/debounce';
 
 export class NetworkPolicyListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -83,7 +84,7 @@ export class NetworkPolicyCreateEditPagePo extends PagePo {
    * v-model has the latest value when POST fires.
    */
   async waitForPortDebounce(): Promise<void> {
-    await this.page.waitForTimeout(600);
+    await waitForVueDebounce(this.page);
   }
 
   policyRuleTargetSelect(index: number): LabeledSelectPo {

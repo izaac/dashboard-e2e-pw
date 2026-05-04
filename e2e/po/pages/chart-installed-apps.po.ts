@@ -23,6 +23,8 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
 
   /**
    * Wait for chart install POST response, close terminal, verify apps are Deployed.
+   * The per-row `Deployed` waitFor below handles the install propagation
+   * window — no separate buffer sleep is needed before/after the loop.
    */
   async waitForInstallCloseTerminal(
     installResponse: Promise<import('@playwright/test').Response>,
@@ -32,8 +34,6 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
 
     expect([200, 201]).toContain(response.status());
 
-    // Buffer for install to be properly triggered
-    await this.page.waitForTimeout(15000);
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {
@@ -45,8 +45,5 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
         .filter({ hasText: 'Deployed' })
         .waitFor({ timeout: VERY_LONG });
     }
-
-    // Additional wait for everything to be set up
-    await this.page.waitForTimeout(10000);
   }
 }
