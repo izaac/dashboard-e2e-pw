@@ -6,4 +6,5 @@ globs:
 
 ignores:
   - "docs/ASSERTION-GAP-MAP.md"
+  - "docs/AUDIT-*.md"
   - "e2e/po/INDEX.md"
