@@ -868,16 +868,28 @@ export class RancherApi {
   /**
    * Lightweight post-login health probe — waits for /v1/counts to return 200.
    * Use after operations that may trigger controller churn (feature flags, helm installs).
+   *
+   * Requires N consecutive successes (default 3) — a single 200 during a restart
+   * can land in a brief stable window before the web layer fully accepts traffic,
+   * causing downstream specs to hit ERR_CONNECTION_CLOSED.
    */
-  async waitForHealthy(maxAttempts = 8, intervalMs = 5_000): Promise<void> {
+  async waitForHealthy(maxAttempts = 8, intervalMs = 5_000, requiredConsecutiveOk = 3): Promise<void> {
+    let consecutive = 0;
+
     for (let i = 1; i <= maxAttempts; i++) {
       try {
         const resp = await this.getRancherResource('v1', 'counts');
 
         if (resp.status === 200) {
-          return;
+          consecutive += 1;
+          if (consecutive >= requiredConsecutiveOk) {
+            return;
+          }
+        } else {
+          consecutive = 0;
         }
       } catch (err: unknown) {
+        consecutive = 0;
         console.warn(`[RancherApi] health probe ${i}/${maxAttempts} failed:`, err);
       }
 
