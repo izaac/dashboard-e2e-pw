@@ -148,13 +148,16 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         expect(scanBody.metadata.name).toBeTruthy();
         expect(scanBody.metadata.generateName).toBe('scan-');
 
-        // Navigate back to compliance list and verify row count
+        // Navigate back to compliance list and verify the new scan landed.
+        // Assert by name rather than `toHaveCount(N)`: a leftover ClusterScan
+        // from a prior failed run would shift the total without invalidating
+        // this test's outcome.
         await expect(page).toHaveURL(/compliance/);
 
         const complianceResourceTable = new ResourceTablePo(page, '.dashboard-root');
 
         await expect(complianceResourceTable.self()).toBeVisible();
-        await expect(complianceResourceTable.sortableTable().rowElements()).toHaveCount(2);
+        await expect(complianceResourceTable.sortableTable().rowElementWithName(scanBody.metadata.name)).toBeVisible();
       });
     });
   });

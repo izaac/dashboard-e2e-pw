@@ -186,8 +186,6 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await listPage.waitForPage();
       await headerPo.selectWorkspace(localWorkspace);
 
-      const rowCountBefore = await listPage.list().resourceTable().sortableTable().rowCount();
-
       const actionMenu = await listPage.list().actionMenu(clusterGroupName);
 
       await actionMenu.getMenuItem('Delete').click();
@@ -204,8 +202,10 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await deletePromise;
 
       await listPage.waitForPage();
-      await expect(listPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
-
+      // Assert the specific row is gone rather than `rowCountBefore - 1`. Fleet
+      // controllers can async create/recreate clustergroups in the workspace
+      // between the baseline read and the post-delete assertion, which would
+      // shift the total even though the user-driven delete succeeded.
       await expect(
         listPage.list().resourceTable().sortableTable().rowElementWithName(clusterGroupName),
       ).not.toBeAttached();
