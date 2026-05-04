@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export class NamespaceFilterPo extends ComponentPo {
@@ -7,6 +6,7 @@ export class NamespaceFilterPo extends ComponentPo {
     super(page, '[data-testid="namespaces-filter"]');
   }
 
+  /** Toggle the dropdown by clicking the chevron. Has open/closed branching, so kept as orchestration. */
   async toggle(): Promise<void> {
     // Click the chevron icon to avoid hitting selected value tags
     const isOpen = await this.getOptions().isVisible();
@@ -15,7 +15,7 @@ export class NamespaceFilterPo extends ComponentPo {
     await this.namespaceDropdown().locator(chevronClass).click();
 
     if (!isOpen) {
-      await expect(this.getOptions()).toBeVisible();
+      await this.getOptions().first().waitFor({ state: 'visible' });
     }
   }
 
@@ -23,27 +23,33 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.page.locator('.ns-options');
   }
 
-  async clickOptionByLabel(label: string): Promise<void> {
-    await this.getOptions()
-      .getByText(new RegExp(` ${label} `))
-      .click();
+  /** Locator for an option whose text contains the given label (regex `\bLABEL\b`). */
+  optionByLabel(label: string): Locator {
+    return this.getOptions().getByText(new RegExp(` ${label} `));
   }
 
+  /** Clear the search input and re-fill it with `label` (orchestration). */
   async searchByName(label: string): Promise<void> {
     await this.self().locator('.ns-controls > .ns-input > .ns-filter-input').clear();
     await this.self().locator('.ns-controls > .ns-input > .ns-filter-input').fill(label);
   }
 
-  async clearSearchFilter(): Promise<void> {
-    await this.self().locator('.ns-filter-clear').click();
+  /** Locator for the search-input clear button. */
+  clearSearchButton(): Locator {
+    return this.self().locator('.ns-filter-clear');
   }
 
-  async clearSelectionButton(): Promise<void> {
-    await this.self().locator('.ns-controls > .ns-clear').click();
+  /** Locator for the "clear all selected namespaces" button. */
+  clearSelectionButton(): Locator {
+    return this.self().locator('.ns-controls > .ns-clear');
   }
 
   selectedValues(): Locator {
     return this.namespaceDropdown().getByTestId('namespaces-values');
+  }
+
+  selectedValueChips(): Locator {
+    return this.selectedValues().locator('.ns-value');
   }
 
   clearIcon(): Locator {
@@ -62,21 +68,19 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.getOptions().locator(`#${id}`);
   }
 
-  /** Check if an option is checked by label */
-  async isChecked(label: string): Promise<void> {
-    const option = this.getOptions().getByText(new RegExp(` ${label} `));
-
-    await expect(option.locator('i.icon-checkmark')).toBeAttached();
+  /** Locator for the checkmark on a selected filter option */
+  optionCheckmark(label: string): Locator {
+    return this.optionByLabel(label).locator('i.icon-checkmark');
   }
 
-  /** Get checkmark icon */
-  checkIcon(): Locator {
-    return this.self().locator('.icon-checkmark');
+  /** Locator for all checkmarks in the options dropdown (use with toHaveCount) */
+  allCheckmarks(): Locator {
+    return this.getOptions().locator('i.icon-checkmark');
   }
 
-  /** Verify "All" is selected (no specific namespace filter) */
-  async allSelected(): Promise<void> {
-    await expect(this.self().getByTestId('namespaces-values-none')).toBeAttached();
+  /** Locator for the "all namespaces" no-filter indicator */
+  noFilterIndicator(): Locator {
+    return this.self().getByTestId('namespaces-values-none');
   }
 
   /** Get the "more" badge when multiple namespaces are selected */
@@ -84,16 +88,18 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.namespaceDropdown().locator('.ns-more');
   }
 
-  async closeDropdown(): Promise<void> {
-    await this.namespaceDropdown().locator('.icon-chevron-up').click();
+  /** Locator for the chevron-up that closes the dropdown when it's open. */
+  closeChevron(): Locator {
+    return this.namespaceDropdown().locator('.icon-chevron-up');
   }
 
+  /** Click an option by label and await the user-preferences PUT (orchestration). */
   async clickOptionByLabelAndWaitForRequest(label: string): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
     );
 
-    await this.clickOptionByLabel(label);
+    await this.optionByLabel(label).click();
     await responsePromise;
   }
 

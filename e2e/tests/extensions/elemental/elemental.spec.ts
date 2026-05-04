@@ -142,8 +142,8 @@ test.describe('Extensions Compatibility spec', { tag: ['@elemental', '@adminUser
 
     // change the namespace picker
     await namespaceFilter.toggle();
-    await namespaceFilter.clickOptionByLabel('All Namespaces');
-    await namespaceFilter.closeDropdown();
+    await namespaceFilter.optionByLabel('All Namespaces').click();
+    await namespaceFilter.closeChevron().click();
 
     await elementalPo.chartInstallPage().nextPage();
     await elementalPo.chartInstallPage().installChart();

@@ -38,8 +38,8 @@ test.describe('Services', { tag: ['@explorer', '@adminUser'] }, () => {
       // Set header namespace filter to our isolated namespace so the form creates there
       await nsFilter.toggle();
       await nsFilter.searchByName(namespace);
-      await nsFilter.clickOptionByLabel(namespace);
-      await nsFilter.closeDropdown();
+      await nsFilter.optionByLabel(namespace).click();
+      await nsFilter.closeChevron().click();
 
       await servicesPage.clickCreate();
 

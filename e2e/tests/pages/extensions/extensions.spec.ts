@@ -678,8 +678,8 @@ test.describe('Extensions page (with repo)', { tag: ['@extensions', '@adminUser'
     const namespaceFilter = new NamespaceFilterPo(page);
 
     await namespaceFilter.toggle();
-    await namespaceFilter.clickOptionByLabel('All Namespaces');
-    await namespaceFilter.closeDropdown();
+    await namespaceFilter.optionByLabel('All Namespaces').click();
+    await namespaceFilter.closeChevron().click();
 
     await uiPluginsPo.resourceTable().sortableTable().groupByButtons(1).click();
     await expect(uiPluginsPo.cacheState(DISABLED_CACHE_EXTENSION_NAME)).toContainText('disabled');
