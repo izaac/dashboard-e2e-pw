@@ -194,6 +194,12 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
       await deleteResp;
       await machineSetsPage.waitForPage();
 
+      // Strip finalizers eagerly — without them the row sticks as "Removing…"
+      // and the not-attached assertion below times out before the controller
+      // reconciles. cleanupMachineSet tolerates 404 so the defensive call in
+      // finally is idempotent.
+      await cleanupMachineSet(rancherApi, `${nsName}/${machineSetName}`);
+
       await expect(
         machineSetsPage.list().resourceTable().sortableTable().rowElementWithName(machineSetName),
       ).not.toBeAttached();
@@ -232,6 +238,9 @@ test.describe('MachineSets', { tag: ['@manager', '@adminUser'] }, () => {
       await promptRemove.remove();
       await deleteResp;
       await machineSetsPage.waitForPage();
+
+      // Strip finalizers eagerly — see "can delete a MachineSet" above for rationale.
+      await cleanupMachineSet(rancherApi, `${nsName}/${machineSetName}`);
 
       await expect(
         machineSetsPage.list().resourceTable().sortableTable().rowElementWithName(machineSetName),
