@@ -10,6 +10,7 @@ const gitRepoName = 'rancher-extensions';
 const gitRepoUrl = 'https://github.com/rancher/ui-plugin-charts';
 
 test.describe('Kubewarden Extension', { tag: ['@extensions', '@adminUser'] }, () => {
+  // Serial: tests share the kubewarden extension install/uninstall lifecycle; parallel runs would race the cluster repo + extension app.
   test.describe.configure({ mode: 'serial' });
   let kubewardenAvailable = false;
 

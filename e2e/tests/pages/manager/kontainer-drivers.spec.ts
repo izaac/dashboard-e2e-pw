@@ -6,8 +6,7 @@ import DeactivateDriverDialogPo from '@/e2e/po/prompts/deactivateDriverDialog.po
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { SHORT_TIMEOUT_OPT, LONG_TIMEOUT_OPT } from '@/support/timeouts';
-import { EXTRA_LONG, LONG, VERY_LONG } from '@/support/timeouts';
+import { EXTRA_LONG, LONG, LONG_TIMEOUT_OPT, POLL_INTERVAL, SHORT_TIMEOUT_OPT, VERY_LONG } from '@/support/timeouts';
 import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const downloadUrl =
@@ -39,6 +38,7 @@ async function waitForDriverAndHealth(
 }
 
 test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
+  // Serial: tests mutate built-in driver activation states (snapshot in beforeAll, restore in afterAll); parallel runs would race the global drivers list.
   test.describe.configure({ mode: 'serial' });
 
   // Snapshot original states of built-in drivers we mutate, so we can restore them
@@ -355,7 +355,14 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
-      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
+      await rancherApi.waitForRancherResource(
+        'v3',
+        'kontainerdrivers',
+        found.id,
+        (r) => r.status === 404,
+        20,
+        POLL_INTERVAL,
+      );
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
@@ -474,7 +481,14 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
-      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
+      await rancherApi.waitForRancherResource(
+        'v3',
+        'kontainerdrivers',
+        found.id,
+        (r) => r.status === 404,
+        20,
+        POLL_INTERVAL,
+      );
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {
@@ -521,7 +535,14 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     if (found) {
       await rancherApi.deleteRancherResource('v3', 'kontainerDrivers', found.id, false);
-      await rancherApi.waitForRancherResource('v3', 'kontainerdrivers', found.id, (r) => r.status === 404, 20, 2000);
+      await rancherApi.waitForRancherResource(
+        'v3',
+        'kontainerdrivers',
+        found.id,
+        (r) => r.status === 404,
+        20,
+        POLL_INTERVAL,
+      );
     }
 
     const created = await rancherApi.createRancherResource('v3', 'kontainerdrivers', {

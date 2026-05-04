@@ -128,6 +128,7 @@ async function isExtensionInstalled(api: RancherApi, extensionName: string): Pro
 // =============================================================
 
 test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
+  // Serial: tests mutate the global `display-add-extension-repos-banner` setting and the extension repo set; parallel runs would race the snapshot/restore.
   test.describe.configure({ mode: 'serial' });
   let originalBannerSetting: string | undefined;
 

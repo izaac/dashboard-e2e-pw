@@ -9,7 +9,7 @@ import CardPo from '@/e2e/po/components/card.po';
 import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { SHORT_TIMEOUT_OPT, LONG, STANDARD, VERY_LONG, PROVISIONING } from '@/support/timeouts';
+import { BRIEF, SHORT_TIMEOUT_OPT, LONG, STANDARD, VERY_LONG, PROVISIONING } from '@/support/timeouts';
 
 const chartAppDisplayName = 'Logging';
 const chartApp = 'rancher-logging';
@@ -18,6 +18,7 @@ const chartNamespace = 'cattle-logging-system';
 const chartRepo = 'rancher-charts';
 
 test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
+  // Serial: install + manage tests share a single rancher-logging install/uninstall cycle in cattle-logging-system.
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ login, rancherApi, chartGuard }) => {
@@ -28,7 +29,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
   test.afterAll(async ({ rancherApi }) => {
     try {
-      await rancherApi.ensureChartUninstalled(chartNamespace, chartApp, chartCrd, 60, 5000);
+      await rancherApi.ensureChartUninstalled(chartNamespace, chartApp, chartCrd, 60, BRIEF);
     } finally {
       await rancherApi.updateNamespaceFilter('local', 'none', '{"local":["all://user"]}');
       await rancherApi.waitForHealthy();
@@ -38,7 +39,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
   test.describe('install', () => {
     test.beforeEach(async ({ rancherApi }) => {
       test.setTimeout(PROVISIONING);
-      await rancherApi.ensureChartUninstalled(chartNamespace, chartApp, chartCrd, 60, 5000);
+      await rancherApi.ensureChartUninstalled(chartNamespace, chartApp, chartCrd, 60, BRIEF);
     });
 
     test('can deploy chart via UI', async ({ page, rancherApi }) => {
@@ -51,7 +52,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
       const terminal = new KubectlPo(page);
 
       await chartPage.navTo('Logging');
-      await chartPage.waitForChartHeader('Logging', 20000);
+      await chartPage.waitForChartHeader('Logging', 20_000);
       await chartPage.waitForPage();
       await chartPage.goToInstall();
       await installChartPage.nextPage();
@@ -77,7 +78,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
         `${chartNamespace}/${chartApp}`,
         (resp) => resp.body?.metadata?.state?.name === 'deployed',
         60,
-        5000,
+        BRIEF,
       );
 
       expect(deployed, `Chart '${chartApp}' did not reach deployed state`).toBeTruthy();
@@ -121,7 +122,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
         // Unavoidable: polling for CRD registration — no event to wait on
 
-        await page.waitForTimeout(10000);
+        await page.waitForTimeout(STANDARD);
       }
 
       expect(reachedPage, 'Logging CRDs not registered after 200s — fail-whale persisted').toBeTruthy();

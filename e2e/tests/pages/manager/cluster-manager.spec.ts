@@ -22,6 +22,7 @@ import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils
  */
 
 test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
+  // Serial: tests mutate the global `kev2-operators` setting + hosted-provider activation; concurrent runs would race the snapshot/restore.
   test.describe.configure({ mode: 'serial' });
   test('deactivating a hosted provider should hide its card from the cluster creation page', async ({
     page,

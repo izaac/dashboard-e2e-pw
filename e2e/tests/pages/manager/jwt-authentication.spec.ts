@@ -130,6 +130,7 @@ async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAut
 }
 
 test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
+  // Serial: tests share the AWS-provisioned JWT instances + reuse the same downstream cluster fixture across cases.
   test.describe.configure({ mode: 'serial' });
   test('should show the JWT Authentication list page', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');

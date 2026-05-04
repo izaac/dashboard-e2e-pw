@@ -1,6 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import { WorkloadsCronJobsListPagePo } from '@/e2e/po/pages/explorer/workloads-cronjobs.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
+import { EXTRA_LONG } from '@/support/timeouts';
 import {
   createBulkResources,
   setTablePreferences,
@@ -16,7 +17,7 @@ import {
 test.describe('CronJobs', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('Details', () => {
     test('Jobs list updates automatically in CronJob details page', async ({ page, login, rancherApi }) => {
-      test.setTimeout(120000);
+      test.setTimeout(EXTRA_LONG);
       await login();
       const cronJobName = `e2e-cj-${Date.now()}`;
       const namespace = 'default';

@@ -79,6 +79,7 @@ const BRANDING_SETTINGS = [
 ];
 
 test.describe('Branding', () => {
+  // Serial: tests mutate the BRANDING_SETTINGS singletons and rely on per-test snapshot/restore; parallel runs would race the resourceVersion handshake.
   test.describe.configure({ mode: 'serial' });
   let savedBrandingValues: Record<string, { value: string; resourceVersion: string }> = {};
 
@@ -95,8 +96,10 @@ test.describe('Branding', () => {
             resourceVersion: resp.body.metadata.resourceVersion,
           };
         }
-      } catch {
-        // Setting may not exist yet — will be created by the test
+      } catch (err) {
+        // Setting may not exist yet — will be created by the test. Log so genuine API/auth
+        // failures still surface in CI rather than being silently treated as "not yet created".
+        console.warn(`[branding beforeEach] saving ${setting} failed: ${(err as Error)?.message ?? err}`);
       }
     }
 
@@ -120,8 +123,10 @@ test.describe('Branding', () => {
           resp.body.value = restoreValue;
           await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', setting, resp.body);
         }
-      } catch {
-        // Best-effort: setting may have been deleted or not exist
+      } catch (err) {
+        // Best-effort restore: setting may have been deleted or not exist. Log so genuine
+        // API/auth failures aren't silently swallowed and leak state into the next test.
+        console.warn(`[branding afterEach] restoring ${setting} failed: ${(err as Error)?.message ?? err}`);
       }
     }
   });

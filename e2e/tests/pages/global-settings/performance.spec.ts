@@ -5,6 +5,7 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { PerformancePagePo } from '@/e2e/po/pages/global-settings/performance.po';
 
 test.describe('Performance', { tag: ['@globalSettings', '@adminUser'] }, () => {
+  // Serial: tests mutate the global `ui-performance` setting and rely on snapshot/restore in beforeEach/afterEach.
   test.describe.configure({ mode: 'serial' });
   let performanceSettingsOriginal: any;
   let perfPage: PerformancePagePo;

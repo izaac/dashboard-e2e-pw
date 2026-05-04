@@ -19,6 +19,7 @@ test.describe(
   'Deploy RKE2 cluster using node driver on Amazon EC2',
   { tag: ['@manager', '@adminUser', '@provisioning', '@needsInfra'] },
   () => {
+    // Serial: cred + cluster create/delete share the same e2e-test-prefixed cloud credential pool; parallel runs would orphan creds and clusters.
     test.describe.configure({ mode: 'serial' });
     test.beforeAll(async ({ rancherApi }) => {
       // Clean up only test-prefixed Amazon cloud credentials from previous runs

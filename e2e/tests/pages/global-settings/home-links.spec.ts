@@ -8,6 +8,7 @@ const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
 
 test.describe('Home Links', () => {
+  // Serial: tests mutate the global `ui-custom-links` setting; parallel runs would race the snapshot/restore cycle.
   test.describe.configure({ mode: 'serial' });
   let homeLinksPage: HomeLinksPagePo;
   let originalCustomLinks: any;
@@ -35,8 +36,10 @@ test.describe('Home Links', () => {
           'ui-custom-links',
           originalCustomLinks,
         );
-      } catch {
-        // ignore cleanup errors
+      } catch (err) {
+        // Best-effort restore — log so genuine failures surface in CI rather than silently
+        // leaking custom-links state into subsequent tests
+        console.warn(`[home-links afterEach] restoring ui-custom-links failed: ${(err as Error)?.message ?? err}`);
       }
     }
   });

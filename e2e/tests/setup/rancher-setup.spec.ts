@@ -56,6 +56,7 @@ async function detectBootstrapState(page: import('@playwright/test').Page): Prom
 }
 
 test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUserSetup'] }, () => {
+  // Serial: bootstrap flow has a hard ordering — login/EULA/password change must complete before standard-user provisioning.
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ envMeta }) => {
     test.skip(!envMeta.bootstrapPassword, 'Requires CATTLE_BOOTSTRAP_PASSWORD');

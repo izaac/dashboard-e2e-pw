@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import { ProjectsNamespacesListPagePo, ProjectCreateEditPagePo } from '@/e2e/po/pages/explorer/projects-namespaces.po';
+import { POLL_INTERVAL } from '@/support/timeouts';
 
 test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -236,7 +237,14 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
-          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
+          await rancherApi.waitForRancherResource(
+            'v1',
+            'namespaces',
+            ns,
+            (resp) => resp.status === 404,
+            15,
+            POLL_INTERVAL,
+          );
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
@@ -280,7 +288,14 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
-          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
+          await rancherApi.waitForRancherResource(
+            'v1',
+            'namespaces',
+            ns,
+            (resp) => resp.status === 404,
+            15,
+            POLL_INTERVAL,
+          );
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);
@@ -322,7 +337,14 @@ test.describe('Projects/Namespaces', { tag: ['@explorer2', '@adminUser'] }, () =
       } finally {
         for (const ns of nsNames) {
           await rancherApi.deleteRancherResource('v1', 'namespaces', ns, false);
-          await rancherApi.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 15, 2000);
+          await rancherApi.waitForRancherResource(
+            'v1',
+            'namespaces',
+            ns,
+            (resp) => resp.status === 404,
+            15,
+            POLL_INTERVAL,
+          );
         }
         for (const id of projectIds) {
           await rancherApi.deleteRancherResource('v3', 'projects', id, false);

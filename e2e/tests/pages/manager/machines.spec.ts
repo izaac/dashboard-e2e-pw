@@ -30,8 +30,9 @@ async function cleanupMachine(rancherApi: any, fullName: string) {
       30,
       1000,
     );
-  } catch {
-    // resource may already be gone
+  } catch (err) {
+    // Resource may already be gone — log to surface unexpected failures (auth, network) in CI
+    console.warn(`[machines cleanup] ${fullName}: ${(err as Error)?.message ?? err}`);
   }
 }
 

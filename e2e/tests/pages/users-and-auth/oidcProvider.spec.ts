@@ -40,7 +40,11 @@ async function isOidcProviderEnabled(rancherApi: RancherApi): Promise<boolean> {
     }
 
     return resp.body.status?.default ?? false;
-  } catch {
+  } catch (err) {
+    // Treat any probe failure as "not enabled" so the spec can skip gracefully — log so
+    // genuine API/auth issues are still observable rather than silently treated as missing flag
+    console.warn(`[oidcProvider] isOidcProviderEnabled probe failed: ${(err as Error)?.message ?? err}`);
+
     return false;
   }
 }
@@ -82,6 +86,7 @@ async function deleteOidcClientIfExists(rancherApi: RancherApi): Promise<void> {
 }
 
 test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminUser'] }, () => {
+  // Serial: every test creates/edits/deletes the same single OIDC client (APP_NAME); parallel runs would collide on the resource.
   test.describe.configure({ mode: 'serial' });
   test('should be able to create an OIDC client application', async ({ page, login, rancherApi }) => {
     test.skip(!(await isOidcProviderEnabled(rancherApi)), 'OIDC Provider feature flag is not enabled');

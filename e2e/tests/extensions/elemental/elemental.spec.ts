@@ -31,6 +31,7 @@ const ELEMENTAL_CLUSTER_MACHINE_CONFIG_REF = 'MachineInventorySelectorTemplate';
 const UPDATE_GROUP_IMAGE_PATH = 'some/path';
 
 test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () => {
+  // Serial: extension + operator + CRDs are installed/uninstalled across tests; finalizers on elemental.cattle.io CRs make parallel runs race the cleanup.
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ login }) => {
@@ -39,18 +40,19 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
   test.afterAll(async ({ rancherApi }) => {
     try {
-      await rancherApi.ensureChartUninstalled(OPERATOR_NAMESPACE, OPERATOR_RELEASE, OPERATOR_CRD_RELEASE).catch(() => {
-        // best-effort
-      });
+      // best-effort cleanup — log failures so they surface in CI but don't abort the chain
+      await rancherApi
+        .ensureChartUninstalled(OPERATOR_NAMESPACE, OPERATOR_RELEASE, OPERATOR_CRD_RELEASE)
+        .catch((err) => console.warn(`[elemental afterAll] operator uninstall failed: ${err?.message ?? err}`));
       // The elemental-crd chart's own resources (managedosversions, etc.) hold
       // finalizers that block CRD GC after uninstall. Without forceCleanStuckCRDs
       // the next install fails the chart's `validate-no-pending-deletions` hook.
-      await rancherApi.forceCleanStuckCRDs('elemental.cattle.io').catch(() => {
-        // best-effort
-      });
-      await rancherApi.ensureChartUninstalled(EXTENSION_NAMESPACE, EXTENSION_NAME).catch(() => {
-        // best-effort
-      });
+      await rancherApi
+        .forceCleanStuckCRDs('elemental.cattle.io')
+        .catch((err) => console.warn(`[elemental afterAll] forceCleanStuckCRDs failed: ${err?.message ?? err}`));
+      await rancherApi
+        .ensureChartUninstalled(EXTENSION_NAMESPACE, EXTENSION_NAME)
+        .catch((err) => console.warn(`[elemental afterAll] extension uninstall failed: ${err?.message ?? err}`));
     } finally {
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', EXTENSION_REPO_NAME, false);
     }
@@ -192,9 +194,9 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
       ];
 
       for (const { type, id } of resources) {
-        await rancherApi.deleteRancherResource('v1', type, id, false).catch(() => {
-          // best-effort
-        });
+        await rancherApi
+          .deleteRancherResource('v1', type, id, false)
+          .catch((err) => console.warn(`[elemental afterAll] cleanup ${type}/${id} failed: ${err?.message ?? err}`));
       }
     });
 

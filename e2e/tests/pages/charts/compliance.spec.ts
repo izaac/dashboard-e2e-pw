@@ -9,11 +9,12 @@ import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.p
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { LONG } from '@/support/timeouts';
+import { EXTENSION_OPS, LONG, VERY_LONG } from '@/support/timeouts';
 
 const chartNamespace = 'compliance-operator-system';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
+  // Serial: rancher-compliance install/uninstall cycle in compliance-operator-system is shared across tests.
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login, chartGuard }) => {
     await chartGuard('rancher-charts', 'rancher-compliance');
@@ -32,7 +33,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         const installChartPage = new InstallChartPage(page);
 
         await chartPage.navTo('Rancher Compliance');
-        await chartPage.waitForChartHeader('Rancher Compliance', 30000);
+        await chartPage.waitForChartHeader('Rancher Compliance', LONG);
         await chartPage.goToInstall();
         await installChartPage.nextPage();
         await installChartPage.editYaml();
@@ -56,7 +57,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
 
     test.describe('Compliance Chart setup', () => {
       test('Complete install and a Scan is created', async ({ page, rancherApi }) => {
-        test.setTimeout(180000);
+        test.setTimeout(EXTENSION_OPS);
         // Clean up first in case charts exist from a previous failed run
         await rancherApi.uninstallChart(chartNamespace, 'rancher-compliance', 'rancher-compliance-crd');
 
@@ -69,14 +70,14 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         const installedAppsPage = new ChartInstalledAppsListPagePo(page, 'local', 'apps');
 
         await chartPage.navTo('Rancher Compliance');
-        await chartPage.waitForChartHeader('Rancher Compliance', 30000);
+        await chartPage.waitForChartHeader('Rancher Compliance', LONG);
         await chartPage.goToInstall();
 
         await installChartPage.nextPage();
         await installChartPage.installChart();
 
         // Wait for terminal to show installation progress and complete
-        await terminal.waitForTerminalStatus('Disconnected', 60000);
+        await terminal.waitForTerminalStatus('Disconnected', VERY_LONG);
         await terminal.closeTerminal();
 
         // Navigate to installed apps page and wait for load
@@ -118,7 +119,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await sideNav.navToSideMenuGroupByLabel('Compliance');
 
         // Open terminal and apply test profile
-        await terminal.openTerminal(60000);
+        await terminal.openTerminal(VERY_LONG);
         await terminal.executeCommand(
           'apply -f https://raw.githubusercontent.com/rancher/compliance-operator/refs/heads/main/tests/k3s-bench-test.yaml',
         );

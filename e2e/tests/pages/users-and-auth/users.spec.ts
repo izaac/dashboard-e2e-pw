@@ -21,8 +21,9 @@ async function deleteUserByUsername(api: RancherApi, username: string): Promise<
     if (user) {
       await api.deleteRancherResource('v3', 'users', user.id, false);
     }
-  } catch {
-    // Cleanup must not fail the test
+  } catch (err) {
+    // Cleanup must not fail the test, but log so failures surface in CI
+    console.warn(`[users cleanup] deleteUserByUsername(${username}) failed: ${(err as Error)?.message ?? err}`);
   }
 }
 

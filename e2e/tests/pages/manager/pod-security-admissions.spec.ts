@@ -12,6 +12,7 @@ import {
 const PSA_RESOURCE = 'management.cattle.io.podsecurityadmissionconfigurationtemplates';
 
 test.describe('Pod Security Admissions', { tag: ['@manager', '@adminUser'] }, () => {
+  // Serial: tests create/edit/delete the same global `management.cattle.io.podsecurityadmissionconfigurationtemplates` resource; parallel would race the singleton.
   test.describe.configure({ mode: 'serial' });
   test('can open Edit as YAML', async ({ page, login }) => {
     await login();

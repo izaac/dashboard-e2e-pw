@@ -20,6 +20,7 @@ test.describe(
     tag: ['@manager', '@adminUser', '@standardUser', '@jenkins', '@provisioning', '@needsInfra'],
   },
   () => {
+    // Serial: cred + cluster create/delete share the same e2e-test-prefixed cloud credential pool; parallel runs would orphan creds and clusters.
     test.describe.configure({ mode: 'serial' });
     test.beforeEach(async ({ envMeta }) => {
       test.skip(

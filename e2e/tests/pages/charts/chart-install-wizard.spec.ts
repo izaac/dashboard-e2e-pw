@@ -5,6 +5,7 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import ChartInstalledAppsListPagePo from '@/e2e/po/pages/chart-installed-apps.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import { EXTENSION_OPS, EXTRA_LONG, LONG } from '@/support/timeouts';
 
 const configMapPayload = {
   apiVersion: 'v1',
@@ -20,6 +21,7 @@ const configMapPayload = {
 };
 
 test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () => {
+  // Serial: tests share the test-charts cluster repo + a fixed-name configmap; parallel would race repo download and configmap creation.
   test.describe.configure({ mode: 'serial' });
   const testChartsRepoName = 'test-charts';
   const testChartsGitRepoUrl = 'https://github.com/richard-cox/rodeo';
@@ -42,7 +44,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
     });
 
     test('Resource dropdown picker has ConfigMaps listed', async ({ page, rancherApi }) => {
-      test.setTimeout(120000);
+      test.setTimeout(EXTRA_LONG);
       // Clean up first in case resources exist from a previous failed run
       await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', testChartsRepoName, false);
       await rancherApi.deleteRancherResource(
@@ -76,7 +78,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       const tabbedPo = new TabbedPo(page, '[data-testid="tabbed-block"]');
 
       await chartPage.navTo('rancher-demo');
-      await chartPage.waitForChartHeader('rancher-demo', 30000);
+      await chartPage.waitForChartHeader('rancher-demo', LONG);
       await chartPage.goToInstall();
       await installChartPage.chartName().fill('rancher-demo');
 
@@ -117,7 +119,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
     });
 
     test('should persist custom registry when changing chart version', async ({ page, rancherApi, chartGuard }) => {
-      test.setTimeout(180000);
+      test.setTimeout(EXTENSION_OPS);
       await chartGuard('rancher-charts', 'rancher-backup');
       const namespacePicker = new NamespaceFilterPo(page);
       const installChartPage = new InstallChartPage(page);
@@ -132,7 +134,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
 
       // Install the chart first so the versions selector shows up later
       await chartPage.navTo(chartName);
-      await chartPage.waitForChartHeader(chartName, 30000);
+      await chartPage.waitForChartHeader(chartName, LONG);
       await chartPage.goToInstall();
       await installChartPage.nextPage();
 
@@ -156,7 +158,7 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
 
       // Navigate back to chart
       await chartPage.navTo(chartName);
-      await chartPage.waitForChartHeader(chartName, 30000);
+      await chartPage.waitForChartHeader(chartName, LONG);
       await chartPage.goToInstall();
 
       // The version selector should now be visible

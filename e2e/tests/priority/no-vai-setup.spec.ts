@@ -1,11 +1,12 @@
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
-import { EXTENSION_OPS } from '@/support/timeouts';
+import { BRIEF, EXTENSION_OPS } from '@/support/timeouts';
 
 // Vai ('ui-sql-cache') is now on by default. This sets up the `noVai` test suite by disabling it.
 
 test.describe('Disable Vai', { tag: ['@noVai', '@adminUser'] }, () => {
+  // Serial: toggling the `ui-sql-cache` feature flag restarts Rancher; concurrent runs would interleave restarts and break health probes.
   test.describe.configure({ mode: 'serial' });
   test('Disable Feature Flag', async ({ page, login, rancherApi }, testInfo) => {
     testInfo.setTimeout(EXTENSION_OPS);
@@ -45,7 +46,7 @@ test.describe('Disable Vai', { tag: ['@noVai', '@adminUser'] }, () => {
     await rancherApi.setRancherResource('v1', 'management.cattle.io.features', key, resource);
 
     // Poll until Rancher is healthy again after restart (up to 150s)
-    await rancherApi.waitForHealthy(30, 5_000);
+    await rancherApi.waitForHealthy(30, BRIEF);
 
     await featureFlagsPage.goToAndWait();
 

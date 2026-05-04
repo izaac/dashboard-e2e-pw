@@ -10,6 +10,9 @@
 
 // ── Bare constants (for test.setTimeout, polling loops, arithmetic) ──────────
 
+/** Polling interval — per-iteration sleep in retry/polling loops (2s) */
+export const POLL_INTERVAL = 2_000;
+
 /** Short wait — UI debounce, minor animation (3s) */
 export const DEBOUNCE = 3_000;
 
@@ -54,7 +57,7 @@ export const timeoutOpt = (ms: number) => ({ timeout: ms });
 // ── Pre-built option objects (legacy — prefer `timeoutOpt(CONSTANT)` in new code) ──
 
 /** 2s — Per-iteration ceiling for polling loops (e.g. virtual-scroll render) */
-export const POLL_ITERATION_TIMEOUT = { timeout: 2_000 };
+export const POLL_ITERATION_TIMEOUT = { timeout: POLL_INTERVAL };
 
 /** 15s — API responses and navigation that may take slightly longer than default */
 export const SHORT_TIMEOUT_OPT = { timeout: EXTENDED };

@@ -66,6 +66,7 @@ rules:
 `;
 
 test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
+  // Serial: tests create/edit/delete global role templates that accumulate cluster-wide; parallel runs would orphan roles and break filtered counts.
   test.describe.configure({ mode: 'serial' });
   test.describe('Roles', () => {
     test('can create a Global Role template', async ({ page, login, rancherApi }) => {

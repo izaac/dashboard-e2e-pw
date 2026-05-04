@@ -38,6 +38,7 @@ async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boo
 const DANGEROUS_FLAGS = ['oidc-provider', 'harvester', 'istio-virtual-service-ui'];
 
 test.describe('Feature Flags', () => {
+  // Serial: toggling DANGEROUS_FLAGS triggers helm operations / Rancher restart; concurrent runs would interleave restarts and corrupt the suite.
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
     await login();

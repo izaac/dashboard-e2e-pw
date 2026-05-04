@@ -4,7 +4,7 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
-import { LONG, VERY_LONG, PROVISIONING } from '@/support/timeouts';
+import { DEBOUNCE, LONG, VERY_LONG, PROVISIONING } from '@/support/timeouts';
 
 // Upstream Cypress test uses 'rancher-alerting-drivers'; we use OPA Gatekeeper because
 // alerting-drivers (and most 109.x charts) require k8s 1.33+ AND a working
@@ -41,6 +41,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
   });
 
   test.describe(`${chartName} chart lifecycle`, () => {
+    // Serial: install → edit → uninstall act on the same chart in cattle-gatekeeper-system; parallel would race the apps CR.
     test.describe.configure({ mode: 'serial' });
 
     test.afterAll(async ({ rancherApi }) => {
@@ -93,7 +94,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
           `${chartNamespace}/${chartKey}`,
           (resp) => resp.body?.metadata?.state?.name === 'deployed',
           40,
-          3000,
+          DEBOUNCE,
         );
 
         expect(deployed, `Chart '${chartKey}' did not reach deployed state`).toBeTruthy();
@@ -104,7 +105,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
       test.beforeEach(async ({ rancherApi, chartGuard }) => {
         test.setTimeout(PROVISIONING);
         await chartGuard(chartRepo, chartKey);
-        await rancherApi.ensureChartInstalled(chartRepo, chartNamespace, chartKey, chartCrd, 40, 3000);
+        await rancherApi.ensureChartInstalled(chartRepo, chartNamespace, chartKey, chartCrd, 40, DEBOUNCE);
       });
 
       test('can edit chart successfully', async ({ page }) => {

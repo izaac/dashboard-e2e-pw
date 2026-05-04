@@ -114,7 +114,13 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
         try {
           await page.goto('./c/_/auth/management.cattle.io.user', { waitUntil: 'domcontentloaded', timeout: EXTENDED });
           break;
-        } catch {
+        } catch (gotoErr) {
+          // ERR_ABORTED on a racing navigation is expected; surface anything else so we can debug
+          if (!String((gotoErr as Error)?.message ?? '').includes('ERR_ABORTED')) {
+            console.warn(
+              `[user-retention] goto attempt ${attempt + 1} failed: ${(gotoErr as Error)?.message ?? gotoErr}`,
+            );
+          }
           await page.waitForLoadState('domcontentloaded').catch(() => {
             // Navigation may have already completed before waitForLoadState attached
           });

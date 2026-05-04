@@ -71,8 +71,9 @@ async function resetBannerSettings(rancherApi: RancherApi): Promise<void> {
         await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', setting, indResp.body);
       }
     }
-  } catch {
-    // ignore cleanup errors
+  } catch (err) {
+    // Cleanup is best-effort — log so failures surface in CI logs without aborting subsequent tests
+    console.warn(`[banners afterEach] resetBannerSettings failed: ${(err as Error)?.message ?? err}`);
   }
 }
 

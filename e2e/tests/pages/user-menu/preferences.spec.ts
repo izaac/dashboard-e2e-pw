@@ -11,6 +11,7 @@ import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG } from '@/support/timeouts';
 
 test.describe('User can update their preferences', () => {
+  // Serial: every test mutates the same admin user's userpreferences singleton; afterEach restores the snapshot taken in beforeEach.
   test.describe.configure({ mode: 'serial' });
   let savedPreferences: Record<string, any> | null = null;
 

@@ -6,6 +6,7 @@ import { ChartsPage } from '@/e2e/po/pages/explorer/charts/charts.po';
 import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
 import { PrometheusTab } from '@/e2e/po/pages/explorer/charts/tabs/prometheus-tab.po';
 import { GrafanaTab } from '@/e2e/po/pages/explorer/charts/tabs/grafana-tab.po';
+import { DEBOUNCE, LONG, VERY_LONG } from '@/support/timeouts';
 
 test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
   const CHART = {
@@ -33,7 +34,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await chartsPage.waitForPage();
 
         // Open terminal and apply provisioner
-        await terminal.openTerminal(60000);
+        await terminal.openTerminal(VERY_LONG);
 
         await terminal.executeCommand(
           `apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/${provisionerVersion}/deploy/local-path-storage.yaml`,
@@ -53,12 +54,13 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         const terminal = new KubectlPo(page);
 
         try {
-          await terminal.openTerminal(30000);
-          await terminal.executeCommand('delete pod volume-test --ignore-not-found=true', 3000);
-          await terminal.executeCommand('delete pvc local-path-pvc --ignore-not-found=true', 3000);
+          await terminal.openTerminal(LONG);
+          await terminal.executeCommand('delete pod volume-test --ignore-not-found=true', DEBOUNCE);
+          await terminal.executeCommand('delete pvc local-path-pvc --ignore-not-found=true', DEBOUNCE);
           await terminal.closeTerminal();
-        } catch {
-          // Best-effort cleanup
+        } catch (err) {
+          // Best-effort cleanup — log so genuine kubectl/terminal failures aren't swallowed
+          console.warn(`[monitoring-istio afterEach] kubectl cleanup failed: ${(err as Error)?.message ?? err}`);
         }
       });
 

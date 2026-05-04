@@ -17,13 +17,12 @@ import {
   mockSmallCollection,
   type SavedPrefs,
 } from './pagination.utils';
-import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
-import { LONG } from '@/support/timeouts';
+import { EXTRA_LONG, LONG, SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', { tag: ['@standardUser', '@adminUser'] }, () => {
     test('should be able to create a new deployment with basic options', async ({ page, login, rancherApi }) => {
-      test.setTimeout(120_000);
+      test.setTimeout(EXTRA_LONG);
       await login();
       const deploymentName = `e2e-deploy-${Date.now()}`;
       const namespace = 'default';
@@ -62,7 +61,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('Should be able to scale the number of pods', async ({ page, login, rancherApi }) => {
-      test.setTimeout(120000);
+      test.setTimeout(EXTRA_LONG);
       await login();
       const namespace = `e2e-scale-ns-${Date.now()}`;
       const deploymentName = `e2e-scale-deploy-${Date.now()}`;
@@ -244,7 +243,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     });
 
     test('should be able to add and remove container volume mounts', async ({ page, login, rancherApi }) => {
-      test.setTimeout(120_000);
+      test.setTimeout(EXTRA_LONG);
       await login();
       const namespace = `e2e-mount-ns-${Date.now()}`;
       const deploymentName = `e2e-mount-deploy-${Date.now()}`;

@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import V2MonitoringPagePo from '@/e2e/po/other-products/v2-monitoring.po';
 import PreferencesPagePo from '@/e2e/po/pages/preferences.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { LONG, PROVISIONING } from '@/support/timeouts';
+import { BRIEF, LONG, PROVISIONING } from '@/support/timeouts';
 
 const CLUSTER_ID = 'local';
 const CHART_REPO = 'rancher-charts';
@@ -44,6 +44,8 @@ async function waitForMonitoringPage(page: import('@playwright/test').Page, urlS
 }
 
 test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
+  // Serial: every test reuses a single rancher-monitoring install/uninstall cycle in cattle-monitoring-system;
+  // parallel runs would collide on the chart's ClusterScoped CRDs and finalizers.
   test.describe.configure({ mode: 'serial' });
   // Heavy form rendering on the rancher-monitoring product page (form-builder
   // mounts inputs after async catalog/CRD lookups settle). Default 10s action
@@ -59,12 +61,14 @@ test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
   test.afterAll(async ({ rancherApi }) => {
     try {
-      await rancherApi.ensureChartUninstalled(CHART_NAMESPACE, CHART_NAME, CHART_CRD_NAME, 60, 5000);
+      await rancherApi.ensureChartUninstalled(CHART_NAMESPACE, CHART_NAME, CHART_CRD_NAME, 60, BRIEF);
       // monitoring CRDs (prometheusrules, alertmanagerconfigs, …) hold finalizers
       // that block GC after uninstall — same pattern as elemental.
-      await rancherApi.forceCleanStuckCRDs('monitoring.coreos.com').catch(() => {
-        // best-effort
-      });
+      await rancherApi
+        .forceCleanStuckCRDs('monitoring.coreos.com')
+        .catch((err) =>
+          console.warn(`[v2-monitoring afterAll] forceCleanStuckCRDs failed: ${(err as Error)?.message ?? err}`),
+        );
     } finally {
       await rancherApi.updateNamespaceFilter(CLUSTER_ID, 'none', `{"${CLUSTER_ID}":["all://user"]}`);
       await rancherApi.waitForHealthy();

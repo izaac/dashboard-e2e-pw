@@ -6,6 +6,7 @@ const APP_CO_LINK = 'https://apps.rancher.io/';
 const APP_CO_LABEL = 'SUSE Application Collection';
 
 test.describe('SUSE Application page and link', { tag: ['@generic', '@adminUser'] }, () => {
+  // Serial: tests mutate the global `ui-custom-links` setting; parallel runs would race the snapshot/restore around link visibility toggles.
   test.describe.configure({ mode: 'serial' });
   test.describe('link can be hidden via settings', () => {
     test('should allow app co link to be hidden', async ({ page, login, rancherApi }) => {
