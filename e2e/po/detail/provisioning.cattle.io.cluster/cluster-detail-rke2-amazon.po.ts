@@ -38,7 +38,7 @@ export default class ClusterManagerDetailRke2AmazonEc2PagePo extends PagePo {
   }
 
   async selectTab(tabbedPo: TabbedPo, selector: string): Promise<void> {
-    await tabbedPo.clickTabWithSelector(selector);
+    await tabbedPo.tabBySelector(selector).click();
   }
 
   title(): Locator {

@@ -168,7 +168,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await editView.nameNsDescription().description().set(`${customWorkspace}-desc-edit`);
 
-        await editPage.resourceDetail().tabs().clickTabWithName('ociRegistries');
+        await editPage.resourceDetail().tabs().tab('ociRegistries').click();
 
         await editPage.defaultOciRegistry().toggle();
         await editPage.defaultOciRegistry().clickLabel(ociSecretName);

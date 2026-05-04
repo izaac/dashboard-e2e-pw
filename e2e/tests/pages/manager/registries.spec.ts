@@ -28,7 +28,7 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
     await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);
     await createPage.selectCustom(0);
 
-    await createPage.clusterConfigurationTabs().clickTabWithSelector('li#registry');
+    await createPage.clusterConfigurationTabs().tabBySelector('li#registry').click();
 
     const version = await rancherApi.getRancherVersion();
 
@@ -70,7 +70,7 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
 
     await createPage.nameNsDescription().name().set(clusterName);
 
-    await createPage.clusterConfigurationTabs().clickTabWithSelector('li#registry');
+    await createPage.clusterConfigurationTabs().tabBySelector('li#registry').click();
 
     const version = await rancherApi.getRancherVersion();
 
@@ -153,7 +153,7 @@ test.describe('Registries for RKE2', { tag: ['@manager', '@adminUser'] }, () => 
 
     await createPage.nameNsDescription().name().set(clusterName);
 
-    await createPage.clusterConfigurationTabs().clickTabWithSelector('li#registry');
+    await createPage.clusterConfigurationTabs().tabBySelector('li#registry').click();
 
     const version = await rancherApi.getRancherVersion();
 

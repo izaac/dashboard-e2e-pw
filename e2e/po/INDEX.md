@@ -46,8 +46,8 @@
 | ResourceYamlPo | resource-yaml.po.ts | ComponentPo | `.resource-yaml` | super, body, footer, codeMirror, cancel, saveOrCreate |
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, createBasicAuth, createSSHAuth, createRKEAuth, waitForNotLoading |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, bulkActionDropDownPopOver, bulkActionDropDownButton, groupByButtons (+53) |
-| TabbedPo | tabbed.po.ts | ComponentPo | — | super, clickNthTab, clickTabWithSelector, clickTabWithName, allTabs, assertTabIsActive, getTab, tabNames (+1) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, if, bulkActionDropDownPopOver, bulkActionDropDownButton (+53) |
+| TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, allTabs, assertTabIsActive, tabNames (+1) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, expect, get |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
 | VersionNumberPo | version-number.po.ts | ComponentPo | — | checkVersion, checkNormalText, checkSmallText |
