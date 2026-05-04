@@ -274,8 +274,6 @@ test.describe(
       await clusterList.goTo();
       await clusterList.waitForPage();
 
-      const rowCountBefore = await clusterList.sortableTable().rowCount();
-
       try {
         const deleteMenu = await clusterList.list().actionMenu(clusterName);
 
@@ -288,11 +286,14 @@ test.describe(
         // Verify cluster enters Removing state
         await expect(clusterList.list().state(clusterName)).toContainText('Removing');
 
-        // Row disappears and count decreases
+        // Row disappears. Drop the `toHaveCount(rowCountBefore - 1)` assertion that
+        // followed — async fleet-controller activity (cluster-registration-tokens, fleet
+        // bundle reconciliation) can shift the total cluster row count between the
+        // baseline read and this assertion, even on a single-worker run. The
+        // by-name `not.toBeAttached()` above is the actual delete condition.
         await expect(clusterList.sortableTable().rowElementWithName(clusterName)).not.toBeAttached({
           timeout: FULL_PROVISIONING,
         });
-        await expect(clusterList.sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
 
         // Poll API until both provisioning and management cluster objects are gone
         await rancherApi.waitForRancherResource(

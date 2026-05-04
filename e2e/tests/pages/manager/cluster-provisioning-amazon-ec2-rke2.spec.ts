@@ -194,7 +194,11 @@ test.describe(
 
       await clusterDetails.selectTab(tabbedPo, '[data-testid="btn-events"]');
       await clusterDetails.waitForPage(undefined, 'events');
-      await expect(clusterDetails.recentEventsList().emptyStateRow()).toBeVisible();
+      // A freshly-provisioned cluster generates registration / machine-pool / agent events,
+      // so the prior `emptyStateRow().toBeVisible()` assertion was wrong on real infra (it
+      // only ever passed on mocked/empty fixtures). Just verify the events sortable table
+      // rendered on the tab.
+      await expect(clusterDetails.recentEventsList().resourceTable().sortableTable().self()).toBeVisible();
     });
 
     test('can scale up a machine pool', async ({ login, page, rancherApi, envMeta }) => {
