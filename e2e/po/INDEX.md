@@ -25,7 +25,7 @@
 | CruResourcePo | cru-resource.po.ts | ComponentPo | — | super, saveOrCreate, cancel, findSubTypeByName, selectSubType, selectSubTypeByIndex, saveAndWaitForRequests |
 | DialogPo | dialog.po.ts | ComponentPo | — | super, getActionButton |
 | HeaderPo | header.po.ts | ComponentPo | `[data-testid=` | super, projectNamespaceFilter, selectNamespaceFilterOption, selectWorkspace, checkCurrentWorkspace, importYamlHeaderAction, importYaml, kubectlShell (+10) |
-| ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, importYamlSuccessTitleCheck, importYamlImportClick, importYamlCloseClick, importYamlCancelClick, importYamlSortableTable |
+| ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, successIndicator, importButton, closeButton, cancelButton, importYamlSortableTable |
 | KeyValuePo | key-value.po.ts | ComponentPo | — | addButton, setKeyValueAtIndex |
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, expectToBeDisabled, expectToBeEnabled, input, byLabel (+1) |
