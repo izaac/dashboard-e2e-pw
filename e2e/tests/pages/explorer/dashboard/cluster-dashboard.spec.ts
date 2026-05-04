@@ -2,8 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { eventsGetEmptyEventsSet } from '@/e2e/blueprints/explorer/cluster/events';
 import { HeaderPo } from '@/e2e/po/components/header.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
-import { STANDARD } from '@/support/timeouts';
+import { SHORT_TIMEOUT_OPT, STANDARD, timeoutOpt } from '@/support/timeouts';
 
 const configMapName = `e2e-test-${Date.now()}`;
 const configMapYaml = `apiVersion: v1
@@ -231,7 +230,7 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
         const newCount = await eventsTable.rowElements().count();
 
         expect(newCount).toBeGreaterThanOrEqual(initialCount);
-      }).toPass({ timeout: STANDARD });
+      }).toPass(timeoutOpt(STANDARD));
 
       await clusterDashboard.fullEventsLink().click();
       await expect(page).toHaveURL(/\/event$/);
