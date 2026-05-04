@@ -87,7 +87,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
           resp.request().method() === 'PUT',
       );
 
-      await editPage.resourceDetail().createEditView().save();
+      await editPage.resourceDetail().createEditView().saveButtonPo().click();
       const response = await responsePromise;
       const body = await response.json();
 
@@ -143,7 +143,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
         (resp) => resp.url().includes('v1/fleet.cattle.io.clustergroups') && resp.request().method() === 'POST',
       );
 
-      await clonePage.resourceDetail().createEditView().create();
+      await clonePage.resourceDetail().createEditView().createButton().click();
       const response = await responsePromise;
       const body = await response.json();
 
@@ -204,11 +204,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await deletePromise;
 
       await listPage.waitForPage();
-      await listPage
-        .list()
-        .resourceTable()
-        .sortableTable()
-        .checkRowCount(false, rowCountBefore - 1);
+      await expect(listPage.list().resourceTable().sortableTable().rowElements()).toHaveCount(rowCountBefore - 1);
 
       await expect(
         listPage.list().resourceTable().sortableTable().rowElementWithName(clusterGroupName),
@@ -233,8 +229,8 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
 
     const createPage = new FleetClusterGroupsCreateEditPo(page);
 
-    await createPage.resourceDetail().createEditView().editAsYaml();
-    await createPage.resourceDetail().resourceYaml().codeMirror().checkExists();
+    await createPage.resourceDetail().createEditView().editYamlButton().click();
+    await expect(createPage.resourceDetail().resourceYaml().codeMirror().self()).toBeAttached();
   });
 
   test(
@@ -248,7 +244,7 @@ test.describe('Cluster Groups', { tag: ['@fleet', '@adminUser'] }, () => {
       await listPage.goTo();
       await listPage.waitForPage();
       await headerPo.selectWorkspace(localWorkspace);
-      await listPage.list().rowWithName(groupName).checkVisible();
+      await expect(listPage.list().rowWithName(groupName).self()).toBeVisible();
 
       const expectedHeaders = ['State', 'Name', 'Clusters Ready', 'Resources', 'Age'];
       const actualHeaders = await listPage.list().resourceTable().sortableTable().headerNames();

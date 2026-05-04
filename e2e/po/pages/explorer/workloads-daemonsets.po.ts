@@ -63,7 +63,7 @@ export class WorkLoadsDaemonsetsEditPagePo extends PagePo {
   async clickTab(selector: string): Promise<void> {
     const tabbed = new TabbedPo(this.page);
 
-    await tabbed.clickTabWithSelector(selector);
+    await tabbed.tabBySelector(selector).click();
   }
 
   ScalingUpgradePolicyRadioBtn(): RadioGroupInputPo {

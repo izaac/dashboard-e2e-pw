@@ -2,6 +2,7 @@ services:
   rancher:
     image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
     privileged: true
+    restart: unless-stopped
     ports:
       - "8080:80"
       - "8443:443"

@@ -98,8 +98,8 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         const namespacePicker = new NamespaceFilterPo(page);
 
         await namespacePicker.toggle();
-        await namespacePicker.clickOptionByLabel('All Namespaces');
-        await namespacePicker.closeDropdown();
+        await namespacePicker.optionByLabel('All Namespaces').click();
+        await namespacePicker.closeChevron().click();
 
         // Wait for the apps list to be visible
         await expect(installedAppsPage.appsList().self()).toBeVisible({ timeout: 30000 });

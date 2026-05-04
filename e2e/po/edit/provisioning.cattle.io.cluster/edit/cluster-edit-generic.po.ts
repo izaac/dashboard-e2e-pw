@@ -19,7 +19,7 @@ export default class ClusterManagerEditGenericPagePo extends PagePo {
   async clickTab(selector: string): Promise<void> {
     const tabs = new TabbedPo(this.page);
 
-    await tabs.clickTabWithSelector(selector);
+    await tabs.tabBySelector(selector).click();
   }
 
   registryAuthenticationItems(): ArrayListPo {

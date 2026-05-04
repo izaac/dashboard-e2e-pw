@@ -294,7 +294,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
       const actionMenu = await detailPage.detail().openMastheadActionMenu();
 
-      await actionMenu.clickMenuItem(5);
+      await actionMenu.menuItem(5).click();
 
       const promptRemove = new PromptRemove(page);
 
@@ -358,9 +358,9 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
       await header.importYamlHeaderAction().click();
       await header.importYaml().importYamlEditor().set(globalRoleYaml);
-      await header.importYaml().importYamlImportClick();
-      await header.importYaml().importYamlSuccessTitleCheck();
-      await header.importYaml().importYamlCloseClick();
+      await header.importYaml().importButton().click();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
+      await header.importYaml().closeButton().click();
 
       try {
         // Clone role
@@ -479,9 +479,9 @@ rules:
 
       await header.importYamlHeaderAction().click();
       await header.importYaml().importYamlEditor().set(importYaml);
-      await header.importYaml().importYamlImportClick();
-      await header.importYaml().importYamlSuccessTitleCheck();
-      await header.importYaml().importYamlCloseClick();
+      await header.importYaml().importButton().click();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
+      await header.importYaml().closeButton().click();
 
       try {
         const roles = new RolesPo(page);
@@ -523,9 +523,9 @@ rules:
 
       await header.importYamlHeaderAction().click();
       await header.importYaml().importYamlEditor().set(importYaml);
-      await header.importYaml().importYamlImportClick();
-      await header.importYaml().importYamlSuccessTitleCheck();
-      await header.importYaml().importYamlCloseClick();
+      await header.importYaml().importButton().click();
+      await expect(header.importYaml().successIndicator()).toBeVisible();
+      await header.importYaml().closeButton().click();
 
       try {
         const roles = new RolesPo(page);

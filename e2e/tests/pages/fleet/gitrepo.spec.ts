@@ -6,6 +6,7 @@ import {
 } from '@/e2e/po/pages/fleet/fleet.cattle.io.application.po';
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
 import { HeaderPo } from '@/e2e/po/components/header.po';
+import { BRIEF, LONG } from '@/support/timeouts';
 
 /**
  * Git Repo spec — converted from upstream fleet/gitrepo.spec.ts.
@@ -151,10 +152,10 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
         cloneName = `clone-${editRepoName}`;
 
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().name().set(cloneName);
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().create();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().click();
 
         await listPage.waitForPage();
         await expect(listPage.sortableTable().rowElementWithName(cloneName)).toBeVisible();
@@ -256,8 +257,25 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await gitRepoEditPage.waitForPage('mode=edit');
         await gitRepoEditPage.resourceDetail().createEditView().nameNsDescription().description().set(description);
-        await gitRepoEditPage.resourceDetail().createEditView().nextPage();
-        await gitRepoEditPage.resourceDetail().createEditView().save();
+
+        // Wizard has 4 steps (Metadata → Repository details → Target details → Advanced).
+        // Click Next until the primary button changes label to "Save", then click once more.
+        const primary = gitRepoEditPage.resourceDetail().createEditView().saveButtonPo().self();
+
+        await expect
+          .poll(async () => (await primary.innerText()).trim().toLowerCase(), { timeout: LONG, intervals: [BRIEF] })
+          .toMatch(/next|save/);
+
+        for (let i = 0; i < 5; i++) {
+          const label = (await primary.innerText()).trim().toLowerCase();
+
+          if (label === 'save') {
+            break;
+          }
+          await primary.click();
+        }
+
+        await primary.click();
       } finally {
         await rancherApi.deleteRancherResource('v1', `fleet.cattle.io.gitrepos/${workspace}`, editRepoName, false);
       }

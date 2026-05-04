@@ -42,7 +42,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
     const ingressForm = new IngressCreateEditPo(page);
 
     await ingressForm.waitForPage(undefined, 'rules');
-    await ingressForm.createEditView().editAsYaml();
+    await ingressForm.createEditView().editYamlButton().click();
     await expect(ingressForm.createEditView().yamlEditor()).toBeVisible();
   });
 
@@ -89,9 +89,12 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
           (resp) => resp.url().includes(`/v1/secrets/${namespace}`) && resp.status() === 200,
         );
 
-        await ingressForm.createEditView().nameNsDescription().namespace().toggle();
+        await ingressForm.createEditView().nameNsDescription().namespace().dropdown().click();
         await ingressForm.createEditView().nameNsDescription().namespace().clickOptionWithLabel(namespace);
-        await ingressForm.createEditView().nameNsDescription().namespace().checkOptionSelected(namespace);
+        await expect(ingressForm.createEditView().nameNsDescription().namespace().selectedOption()).toHaveText(
+          namespace,
+          { useInnerText: true },
+        );
         await ingressForm.createEditView().nameNsDescription().description().set(`${ingressName} description`);
 
         // Wait for services/secrets to load (mirrors upstream cy.wait('@getsServices')/@getsSecrets)
@@ -111,7 +114,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         await ingressForm.setPortValue(1, '8080');
 
         // Certificates tab
-        await ingressForm.tabs().clickTabWithName('certificates');
+        await ingressForm.tabs().tab('certificates').click();
         await ingressForm.waitForPage(undefined, 'certificates');
         await ingressForm.certificatesList().clickAdd('Add Certificate');
         await ingressForm.setSecretNameValueByLabel(0, secretNames[0]);
@@ -126,7 +129,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         );
 
         await ingressForm.waitForRulePathDebounce();
-        await ingressForm.createEditView().save();
+        await ingressForm.createEditView().saveButtonPo().click();
         const resp = await responsePromise;
         const body = await resp.json();
 
@@ -225,7 +228,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         await ingressForm.setPortValue(3, '8080');
 
         // Add 2 more certificates
-        await ingressForm.tabs().clickTabWithName('certificates');
+        await ingressForm.tabs().tab('certificates').click();
         await ingressForm.waitForPage('mode=edit', 'certificates');
         await ingressForm.certificatesList().clickAdd('Add Certificate');
         await ingressForm.setSecretNameValueByLabel(2, secretNames[2]);
@@ -242,7 +245,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         );
 
         await ingressForm.waitForRulePathDebounce();
-        await ingressForm.createEditView().save();
+        await ingressForm.createEditView().saveButtonPo().click();
         const resp = await responsePromise;
         const body = await resp.json();
 
@@ -324,9 +327,12 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
         (resp) => resp.url().includes(`/v1/services/${namespace}`) && resp.status() === 200,
       );
 
-      await ingressForm.createEditView().nameNsDescription().namespace().toggle();
+      await ingressForm.createEditView().nameNsDescription().namespace().dropdown().click();
       await ingressForm.createEditView().nameNsDescription().namespace().clickOptionWithLabel(namespace);
-      await ingressForm.createEditView().nameNsDescription().namespace().checkOptionSelected(namespace);
+      await expect(ingressForm.createEditView().nameNsDescription().namespace().selectedOption()).toHaveText(
+        namespace,
+        { useInnerText: true },
+      );
 
       // Wait for services to load (mirrors upstream cy.wait('@getsServices'))
       await servicesLoaded;
@@ -342,7 +348,7 @@ test.describe('Ingresses', { tag: ['@explorer', '@adminUser'] }, () => {
       );
 
       await ingressForm.waitForRulePathDebounce();
-      await ingressForm.createEditView().save();
+      await ingressForm.createEditView().saveButtonPo().click();
       const resp = await createResponse;
 
       expect(resp.status()).toBe(201);

@@ -42,7 +42,7 @@ test.describe('PersistentVolumes', { tag: ['@explorer2', '@adminUser'] }, () => 
 
       const cruResource = pvPage.list().createEditView();
 
-      await cruResource.editAsYaml();
+      await cruResource.editYamlButton().click();
       await expect(cruResource.yamlEditor()).toBeVisible();
     });
   });

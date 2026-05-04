@@ -33,8 +33,8 @@ export default class PodSecurityAdmissionsCreateEditPo extends PagePo {
       this.self(),
     );
 
-    await selectMode.toggle();
-    await selectMode.clickOption(optionIndex);
+    await selectMode.dropdown().click();
+    await selectMode.optionByIndex(optionIndex).click();
   }
 
   async psaControlVersion(itemRow: number, text: string): Promise<void> {

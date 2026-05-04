@@ -33,7 +33,7 @@ export class InstallChartPage extends PagePo {
   }
 
   async editOptions(options: TabbedPo, selector: string): Promise<void> {
-    await options.clickTabWithSelector(selector);
+    await options.tabBySelector(selector).click();
   }
 
   async selectTab(options: TabbedPo, tabID: string): Promise<void> {
@@ -53,8 +53,8 @@ export class InstallChartPage extends PagePo {
   async selectNamespaceOption(name: string): Promise<void> {
     const nsSelect = this.nameNsDescription().namespace();
 
-    await nsSelect.toggle();
-    await nsSelect.filterByName(name);
+    await nsSelect.dropdown().click();
+    await nsSelect.searchInput().fill(name);
     await this.page.locator('.vs__dropdown-menu > li').getByText(name, { exact: true }).click();
   }
 

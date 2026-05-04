@@ -109,8 +109,11 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     await rancherSetupConfigurePage.waitForPage();
 
-    // Grace period to catch any unexpected extra settings requests
-    await page.waitForTimeout(1000); // eslint-disable-line playwright/no-wait-for-timeout
+    // networkidle gives a deterministic settle point after the configure page
+    // mounts — any late settings request lands before this resolves and is
+    // counted, replacing the previous fixed 1 s grace period.
+    // eslint-disable-next-line playwright/no-networkidle -- intentional: we are explicitly counting all settings requests, so we need to wait for network quiescence rather than a single response
+    await page.waitForLoadState('networkidle');
     expect(settingsResponses).toHaveLength(2);
 
     // Test 2 consumed the bootstrap login — invalidate cached state for subsequent tests

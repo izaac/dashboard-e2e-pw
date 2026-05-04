@@ -18,8 +18,8 @@ export class HeaderPo extends ComponentPo {
     const filter = this.projectNamespaceFilter();
 
     await filter.toggle();
-    await filter.clickOptionByLabel(singleOption);
-    await filter.isChecked(singleOption);
+    await filter.optionByLabel(singleOption).click();
+    await expect(filter.optionCheckmark(singleOption)).toBeAttached();
     await filter.toggle();
   }
 

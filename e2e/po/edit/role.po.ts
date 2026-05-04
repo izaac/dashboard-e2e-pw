@@ -51,8 +51,8 @@ export default abstract class RoleEditPo extends PagePo {
   async selectVerbs(itemRow: number, optionIndex: number): Promise<void> {
     const selectVerb = new LabeledSelectPo(this.page, `[data-testid="grant-resources-verbs${itemRow}"]`, this.self());
 
-    await selectVerb.toggle();
-    await selectVerb.clickOption(optionIndex);
+    await selectVerb.dropdown().click();
+    await selectVerb.optionByIndex(optionIndex).click();
   }
 
   async selectResourcesByLabelValue(itemRow: number, label: string): Promise<void> {
@@ -62,7 +62,7 @@ export default abstract class RoleEditPo extends PagePo {
       this.self(),
     );
 
-    await selectResources.toggle();
+    await selectResources.dropdown().click();
     await selectResources.clickOptionWithLabel(label);
   }
 

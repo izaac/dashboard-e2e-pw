@@ -542,7 +542,7 @@ test.describe('Settings', () => {
     // Select "System Store" from dropdown
     const select = settingsPage.unlabeledSelect();
 
-    await select.toggle();
+    await select.dropdown().click();
     await select.clickOptionWithLabel('System Store');
 
     resetSettings.push(settingName);

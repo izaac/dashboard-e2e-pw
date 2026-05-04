@@ -151,7 +151,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
     await driversPage.createDriver();
     await createDriverPage.waitForPage();
     await createDriverPage.downloadUrl().set(downloadUrl);
-    await createDriverPage.saveCreateForm().createEditView().create();
+    await createDriverPage.saveCreateForm().createEditView().createButton().click();
 
     const resp = await createResp;
 
@@ -505,7 +505,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
         (r) => r.url().includes('/v3/kontainerDrivers/') && r.request().method() === 'PUT',
       );
 
-      await createDriverPage.saveCreateForm().createEditView().save();
+      await createDriverPage.saveCreateForm().createEditView().saveButtonPo().click();
       const resp = await updateResp;
 
       expect(resp.status()).toBe(200);

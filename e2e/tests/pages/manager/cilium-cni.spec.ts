@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/utils/timeouts';
+import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const cloudCredentialsResponse = {
   type: 'collection',
@@ -16,7 +16,7 @@ const cloudCredentialsResponse = {
       digitaloceancredentialConfig: {},
       id: 'cattle-global-data:cc-zzz2l',
       labels: { 'cattle.io/creator': 'norman' },
-      name: 'cypress-do',
+      name: 'pw-do',
       type: 'cloudCredential',
       uuid: 'abc6bb3f-0876-4e0f-8057-04d2cc8bdd17',
     },
@@ -51,7 +51,7 @@ test.describe('RKE2 Cilium CNI', () => {
       const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
 
       await clusterList.goTo();
-      await clusterList.checkIsCurrentPage();
+      await clusterList.waitForPage();
       await clusterList.createCluster();
 
       await createPage.goToDigitalOceanCreation('_');
@@ -60,25 +60,25 @@ test.describe('RKE2 Cilium CNI', () => {
 
       const cniSelect = createPage.cniSelect();
 
-      await cniSelect.checkExists();
+      await expect(cniSelect.self()).toBeAttached();
       await cniSelect.self().scrollIntoViewIfNeeded();
-      await cniSelect.checkOptionSelected('calico');
+      await expect(cniSelect.selectedOption()).toHaveText('calico', { useInnerText: true });
 
       const bandwidthManager = createPage.ciliumBandwidthManagerCheckbox();
 
-      await bandwidthManager.checkNotExists();
+      await expect(bandwidthManager.self()).not.toBeAttached();
 
-      await cniSelect.toggle();
-      await cniSelect.clickLabel('cilium');
-      await cniSelect.checkOptionSelected('cilium');
+      await cniSelect.dropdown().click();
+      await cniSelect.optionByLabel('cilium').click();
+      await expect(cniSelect.selectedOption()).toHaveText('cilium', { useInnerText: true });
       await cniSelect.isClosed();
 
-      await bandwidthManager.checkExists();
+      await expect(bandwidthManager.self()).toBeAttached();
       await bandwidthManager.self().scrollIntoViewIfNeeded();
-      await bandwidthManager.isUnchecked();
+      await expect(bandwidthManager.checkboxCustom()).toHaveAttribute('aria-checked', 'false');
 
       await bandwidthManager.set();
-      await bandwidthManager.isChecked();
+      await expect(bandwidthManager.checkboxCustom()).toHaveAttribute('aria-checked', 'true');
 
       const clusterSavePromise = page.waitForResponse(
         (resp) => resp.url().includes('/v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',

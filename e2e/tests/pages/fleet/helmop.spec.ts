@@ -78,41 +78,41 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await helmOpCreatePage.waitForPage();
 
         await helmOpCreatePage.resourceDetail().createEditView().nameNsDescription().name().set(helmOpName);
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         await helmOpCreatePage.setChart('redis');
         await helmOpCreatePage.setRepository('https://charts.bitnami.com/bitnami');
         await helmOpCreatePage.setVersion('24.0.0');
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Values step
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Target step
         await helmOpCreatePage.setTargetNamespace('default');
         await helmOpCreatePage.targetClusterOptions().set(2);
-        await helmOpCreatePage.targetCluster().toggle();
-        await helmOpCreatePage.targetCluster().clickLabel(downstreamClusterName);
-        await helmOpCreatePage.resourceDetail().createEditView().nextPage();
+        await helmOpCreatePage.targetCluster().dropdown().click();
+        await helmOpCreatePage.targetCluster().optionByLabel(downstreamClusterName).click();
+        await helmOpCreatePage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Advanced step - wait for secrets/configmaps to load
         await page.waitForResponse((resp) => resp.url().includes('/v1/secrets') && resp.status() === 200);
 
-        await helmOpCreatePage.secretsSelector().checkExists();
-        await helmOpCreatePage.secretsSelector().toggle();
-        await helmOpCreatePage.secretsSelector().clickLabel(secret1Name);
+        await expect(helmOpCreatePage.secretsSelector().self()).toBeAttached();
+        await helmOpCreatePage.secretsSelector().dropdown().click();
+        await helmOpCreatePage.secretsSelector().optionByLabel(secret1Name).click();
         await helmOpCreatePage.secretsSelector().isClosed();
-        await helmOpCreatePage.secretsSelector().toggle();
-        await helmOpCreatePage.secretsSelector().clickLabel(secret2Name);
+        await helmOpCreatePage.secretsSelector().dropdown().click();
+        await helmOpCreatePage.secretsSelector().optionByLabel(secret2Name).click();
 
-        await helmOpCreatePage.configMapsSelector().checkExists();
-        await helmOpCreatePage.configMapsSelector().toggle();
-        await helmOpCreatePage.configMapsSelector().clickLabel(configMap1Name);
+        await expect(helmOpCreatePage.configMapsSelector().self()).toBeAttached();
+        await helmOpCreatePage.configMapsSelector().dropdown().click();
+        await helmOpCreatePage.configMapsSelector().optionByLabel(configMap1Name).click();
         await helmOpCreatePage.configMapsSelector().isClosed();
-        await helmOpCreatePage.configMapsSelector().toggle();
-        await helmOpCreatePage.configMapsSelector().clickLabel(configMap2Name);
+        await helmOpCreatePage.configMapsSelector().dropdown().click();
+        await helmOpCreatePage.configMapsSelector().optionByLabel(configMap2Name).click();
 
-        await helmOpCreatePage.resourceDetail().createEditView().create();
+        await helmOpCreatePage.resourceDetail().createEditView().createButton().click();
 
         const response = await createResponsePromise;
         const responseBody = await response.json();
@@ -227,31 +227,31 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
         await helmOpEditPage.waitForPage('mode=edit');
 
         // Navigate through steps to advanced
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
-        await helmOpEditPage.resourceDetail().createEditView().nextPage();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
 
         // Wait for secrets/configmaps to load
         await page.waitForResponse((resp) => resp.url().includes('/v1/secrets') && resp.status() === 200);
 
         // Remove old secrets
-        await helmOpEditPage.secretsSelector().checkExists();
-        await helmOpEditPage.secretsSelector().clickDeselectButton(oldSecret1);
-        await helmOpEditPage.secretsSelector().clickDeselectButton(oldSecret2);
+        await expect(helmOpEditPage.secretsSelector().self()).toBeAttached();
+        await helmOpEditPage.secretsSelector().deselectButton(oldSecret1).click();
+        await helmOpEditPage.secretsSelector().deselectButton(oldSecret2).click();
 
         // Add new secret
-        await helmOpEditPage.secretsSelector().toggle();
-        await helmOpEditPage.secretsSelector().clickLabel(newSecret);
+        await helmOpEditPage.secretsSelector().dropdown().click();
+        await helmOpEditPage.secretsSelector().optionByLabel(newSecret).click();
 
         // Remove old configmaps
-        await helmOpEditPage.configMapsSelector().checkExists();
-        await helmOpEditPage.configMapsSelector().clickDeselectButton(oldCm1);
-        await helmOpEditPage.configMapsSelector().clickDeselectButton(oldCm2);
+        await expect(helmOpEditPage.configMapsSelector().self()).toBeAttached();
+        await helmOpEditPage.configMapsSelector().deselectButton(oldCm1).click();
+        await helmOpEditPage.configMapsSelector().deselectButton(oldCm2).click();
 
         // Add new configmap
-        await helmOpEditPage.configMapsSelector().toggle();
-        await helmOpEditPage.configMapsSelector().clickLabel(newCm);
+        await helmOpEditPage.configMapsSelector().dropdown().click();
+        await helmOpEditPage.configMapsSelector().optionByLabel(newCm).click();
 
         const updateResponsePromise = page.waitForResponse(
           (resp) =>
@@ -260,7 +260,7 @@ test.describe('Fleet HelmOps', { tag: ['@fleet', '@adminUser'] }, () => {
             resp.status() === 200,
         );
 
-        await helmOpEditPage.resourceDetail().createEditView().save();
+        await helmOpEditPage.resourceDetail().createEditView().saveButtonPo().click();
 
         const response = await updateResponsePromise;
         const responseBody = await response.json();

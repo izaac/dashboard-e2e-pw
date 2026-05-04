@@ -160,7 +160,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await createRKE2ClusterPage.waitForPage();
         await createRKE2ClusterPage.nameNsDescription().name().set('abc');
 
-        await createRKE2ClusterPage.clusterConfigurationTabs().clickTabWithSelector('#rke2-calico');
+        await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('#rke2-calico').click();
 
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
 
@@ -331,9 +331,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.waitForPage();
       await clusterList.goToDetailsPage('local', '.cluster-link a');
 
-      await expect(clusterDetail.clusterNamespaceLink()).toContainText('fleet-local');
-      await clusterDetail.clusterNamespaceLink().click();
+      const nsLink = clusterDetail.clusterNamespaceLink();
 
+      await expect(nsLink).toContainText('fleet-local');
+      // The testid is on the wrapper; the actual <a> is inside. Click the
+      // anchor by role so SPA navigation actually fires.
+      await nsLink.getByRole('link', { name: 'fleet-local' }).click();
+
+      await page.waitForURL(/fleet-local/, { timeout: 15000 });
       await expect(page).toHaveURL(/Resources/);
     });
   });

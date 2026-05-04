@@ -57,6 +57,7 @@ export default class BaseResourceList extends ComponentPo {
   }
 
   bulkActionButton(name: string): Locator {
-    return this.resourceTable().sortableTable().bulkActionDropDownButton(name);
+    // v2.15+: bulk actions shown as direct buttons in the bar (not inside dropdown popover)
+    return this.resourceTable().sortableTable().bulkActionButton(name);
   }
 }

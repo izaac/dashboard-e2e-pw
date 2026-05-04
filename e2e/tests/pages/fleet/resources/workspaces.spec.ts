@@ -89,7 +89,7 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
           (resp) => resp.url().includes('/v3/fleetworkspaces') && resp.request().method() === 'POST',
         );
 
-        await createPage.resourceDetail().createEditView().create();
+        await createPage.resourceDetail().createEditView().createButton().click();
         const resp = await responsePromise;
 
         expect(resp.status()).toBe(201);
@@ -168,10 +168,10 @@ test.describe('Workspaces', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await editView.nameNsDescription().description().set(`${customWorkspace}-desc-edit`);
 
-        await editPage.resourceDetail().tabs().clickTabWithName('ociRegistries');
+        await editPage.resourceDetail().tabs().tab('ociRegistries').click();
 
-        await editPage.defaultOciRegistry().toggle();
-        await editPage.defaultOciRegistry().clickLabel(ociSecretName);
+        await editPage.defaultOciRegistry().dropdown().click();
+        await editPage.defaultOciRegistry().optionByLabel(ociSecretName).click();
 
         const responsePromise = page.waitForResponse(
           (resp) => resp.url().includes(`/v3/fleetWorkspaces/${customWorkspace}`) && resp.request().method() === 'PUT',

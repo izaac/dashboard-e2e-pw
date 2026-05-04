@@ -6,16 +6,24 @@ export default class TabbedPo extends ComponentPo {
     super(page, selector, parent);
   }
 
-  async clickNthTab(optionIndex: number): Promise<void> {
-    await this.self().locator(`li:nth-child(${optionIndex}) a`).click();
+  /** Tab Locator by 1-based DOM index (`li:nth-child(N) a`). */
+  tabByIndex(index: number): Locator {
+    return this.self().locator(`li:nth-child(${index}) a`);
   }
 
-  async clickTabWithSelector(selector: string): Promise<void> {
-    await this.self().locator(selector).click();
+  /** Tab Locator by CSS selector (relative to the tabbed container). */
+  tabBySelector(selector: string): Locator {
+    return this.self().locator(selector);
   }
 
-  async clickTabWithName(name: string): Promise<void> {
-    await this.page.getByTestId(`btn-${name}`).click();
+  /** Tab Locator by short name — resolves to `data-testid="btn-${name}"`. */
+  tab(name: string): Locator {
+    return this.page.getByTestId(`btn-${name}`);
+  }
+
+  /** Tab Locator by raw `data-testid` value (no `btn-` prefix). */
+  tabByTestId(testId: string): Locator {
+    return this.page.getByTestId(testId);
   }
 
   allTabs(componentTestId = 'tabbed'): Locator {
@@ -26,10 +34,6 @@ export default class TabbedPo extends ComponentPo {
     const { expect } = await import('@playwright/test');
 
     await expect(this.self().locator(selector)).toHaveClass(/active/);
-  }
-
-  getTab(name: string): Locator {
-    return this.page.getByTestId(name);
   }
 
   /** Get tab label text values */

@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import UserRetentionPo from '@/e2e/po/pages/users-and-auth/user.retention.po';
 import type { RancherApi } from '@/support/fixtures/rancher-api';
+import { BRIEF, LONG } from '@/support/timeouts';
 
 async function updateUserRetentionSetting(
   rancherApi: RancherApi,
@@ -93,26 +94,17 @@ test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUse
 
       await userRetentionPo.saveButton().expectToBeEnabled();
 
-      // The save fires multiple PUTs — collect them all before asserting
-      let resolveAll: () => void;
-      const allDone = new Promise<void>((r) => {
-        resolveAll = r;
-      });
+      // The save fires multiple PUTs — collect them all before asserting.
       let count = 0;
 
       page.on('response', (resp) => {
         if (resp.url().includes('/v1/management.cattle.io.settings/') && resp.request().method() === 'PUT') {
           count++;
-
-          if (count >= 5) {
-            resolveAll();
-          }
         }
       });
 
       await userRetentionPo.saveButton().click();
-
-      await Promise.race([allDone, new Promise((r) => setTimeout(r, 30000))]);
+      await expect.poll(() => count, { timeout: LONG, intervals: [BRIEF] }).toBeGreaterThanOrEqual(5);
 
       const usersPo = new UsersPo(page);
 

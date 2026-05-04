@@ -124,7 +124,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
       (resp) => resp.url().includes('/v1/management.cattle.io.oidcclients') && resp.request().method() === 'POST',
     );
 
-    await oidcClientCreatePage.saveCreateForm().createEditView().create();
+    await oidcClientCreatePage.saveCreateForm().createEditView().createButton().click();
 
     const resp = await createResponse;
     const body = await resp.json();
@@ -182,7 +182,7 @@ test.describe('Rancher as an OIDC Provider', { tag: ['@globalSettings', '@adminU
         resp.request().method() === 'PUT',
     );
 
-    await oidcClientEditPage.saveCreateForm().createEditView().save();
+    await oidcClientEditPage.saveCreateForm().createEditView().saveButtonPo().click();
 
     const resp = await editResponse;
     const body = await resp.json();

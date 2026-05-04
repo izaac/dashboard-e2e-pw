@@ -43,7 +43,7 @@ test.describe('StorageClasses', { tag: ['@explorer2', '@adminUser'] }, () => {
 
       const cruResource = storageClassesPage.list().createEditView();
 
-      await cruResource.editAsYaml();
+      await cruResource.editYamlButton().click();
       await expect(cruResource.yamlEditor()).toBeVisible();
     });
   });
