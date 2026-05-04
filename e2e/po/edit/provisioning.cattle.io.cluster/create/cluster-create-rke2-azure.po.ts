@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import BasicsRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import AzureCloudCredentialsCreateEditPo from '@/e2e/po/edit/cloud-credentials-azure.po';
 
 export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerCreatePagePo {
   constructor(page: Page, clusterId = '_') {
@@ -16,24 +17,16 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
     return new NameNsDescriptionPo(this.page, ':scope', this.self());
   }
 
-  azureEnvironmentSelect(): Locator {
-    return this.page.getByTestId('azure-cloud-credentials-environment');
+  /**
+   * Inline cloud-credentials form, rendered on the cluster-create page when
+   * no Azure credential exists yet. Mirrors the AKS provisioning flow.
+   */
+  cloudCredentialsForm(): AzureCloudCredentialsCreateEditPo {
+    return new AzureCloudCredentialsCreateEditPo(this.page);
   }
 
   azureDropdownOption(text: string): Locator {
     return this.page.locator('.vs__dropdown-option').filter({ hasText: text });
-  }
-
-  subscriptionIdInput(): Locator {
-    return this.page.getByTestId('azure-cloud-credentials-subscription-id');
-  }
-
-  clientIdInput(): Locator {
-    return this.page.getByTestId('azure-cloud-credentials-client-id');
-  }
-
-  clientSecretInput(): Locator {
-    return this.page.getByTestId('azure-cloud-credentials-client-secret');
   }
 
   poolNameInput(): Locator {

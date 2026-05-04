@@ -1,8 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
-import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
-import { DEBOUNCE } from '@/support/timeouts';
+import { DEBOUNCE, PROVISIONING, SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const namespace = 'fleet-default';
 
@@ -134,6 +133,8 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
   test.describe.configure({ mode: 'serial' });
   test('should show the JWT Authentication list page', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+    // Cluster create + JWT toggle exceeds the default 60 s test timeout.
+    test.setTimeout(PROVISIONING);
 
     await login();
 
@@ -180,6 +181,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
 
   test('should be able to enable JWT Authentication for a cluster', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+    test.setTimeout(PROVISIONING);
 
     await login();
 
@@ -229,6 +231,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
 
   test('should be able to disable JWT Authentication for a cluster', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+    test.setTimeout(PROVISIONING);
 
     await login();
 
@@ -320,6 +323,7 @@ test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInf
 
   test('should display JWT Authentication populated list page', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+    test.setTimeout(PROVISIONING);
 
     await login();
 
