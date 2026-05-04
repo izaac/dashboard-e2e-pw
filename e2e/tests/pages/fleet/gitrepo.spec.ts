@@ -281,14 +281,22 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
           .poll(async () => (await primary.innerText()).trim().toLowerCase(), { timeout: LONG, intervals: [BRIEF] })
           .toMatch(/next|save/);
 
+        let reachedSave = false;
+
         for (let i = 0; i < 5; i++) {
           const label = (await primary.innerText()).trim().toLowerCase();
 
           if (label === 'save') {
+            reachedSave = true;
             break;
           }
           await primary.click();
         }
+
+        // Surface a clear failure if the wizard never reaches the Save step rather
+        // than letting the trailing primary.click() fire on a Next button and the
+        // assertions further down silently miss the actual save POST.
+        expect(reachedSave, 'Wizard primary button never reached "Save" within 5 Next-click iterations').toBe(true);
 
         await primary.click();
 

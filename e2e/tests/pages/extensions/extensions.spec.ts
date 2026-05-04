@@ -321,7 +321,7 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
       await extensionsPo.repoBannerActionButton().click();
 
       // Wait for dialog to be ready (fetch complete, checkbox visible)
-      await extensionsPo.addReposModalPartnersCheckbox().waitFor({ state: 'visible', timeout: EXTENDED });
+      await expect(extensionsPo.addReposModalPartnersCheckbox()).toBeVisible({ timeout: EXTENDED });
 
       // Ensure partners checkbox is checked — the dialog's fetch() sets it via v-model
       // but a Vue reactivity race can leave it unchecked even when no partner repo exists

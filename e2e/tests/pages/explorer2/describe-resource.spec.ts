@@ -20,8 +20,12 @@ test.describe('Can describe resource', { tag: ['@explorer2', '@adminUser', '@sta
 
     await expect(slideIn.self()).toBeAttached();
     await expect(slideIn.self()).toBeVisible();
-    // v2.15: close button is positioned outside the viewport in the slide-in panel
-    await slideIn.closeButton().dispatchEvent('click');
+    // v2.15: close button is positioned outside the viewport in the slide-in panel —
+    // scroll into view, then click. dispatchEvent bypasses Playwright actionability
+    // entirely, which can mask future regressions where the button is genuinely
+    // unclickable (e.g. covered by an overlay).
+    await slideIn.closeButton().scrollIntoViewIfNeeded();
+    await slideIn.closeButton().click();
     await expect(slideIn.self()).not.toHaveClass(/slide-in-open/, SHORT_TIMEOUT_OPT);
   });
 });
