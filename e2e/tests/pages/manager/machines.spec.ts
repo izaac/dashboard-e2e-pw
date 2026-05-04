@@ -3,7 +3,7 @@ import MachinesPagePo from '@/e2e/po/pages/cluster-manager/machines.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 import * as path from 'path';
 
 const nsName = 'default';
@@ -227,7 +227,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machines-list.png'), {
         fullPage: true,
-        mask: mastheadMasks(page),
+        mask: chromeMasks(page),
       });
     } finally {
       await restoreTheme();

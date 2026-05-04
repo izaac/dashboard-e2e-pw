@@ -10,7 +10,7 @@ import {
 import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos';
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import { BRIEF, LONG, STANDARD } from '@/support/timeouts';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
  * Git Repo spec — converted from upstream fleet/gitrepo.spec.ts.
@@ -330,7 +330,7 @@ test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
 
         await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'gitrepo-list.png'), {
           fullPage: true,
-          mask: mastheadMasks(page),
+          mask: chromeMasks(page),
         });
       } finally {
         await restoreTheme();

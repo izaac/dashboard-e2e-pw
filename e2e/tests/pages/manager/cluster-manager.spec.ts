@@ -10,7 +10,7 @@ import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-provide
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -643,7 +643,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'cluster-manager-list.png'), {
         fullPage: true,
-        mask: [clusterList.sortableTable().ageColumn(), ...mastheadMasks(page)],
+        mask: [clusterList.sortableTable().ageColumn(), ...chromeMasks(page)],
       });
     } finally {
       await restoreTheme();

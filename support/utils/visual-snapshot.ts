@@ -44,6 +44,38 @@ export const mastheadMasks = (page: Page): Locator[] => [
   page.locator('[data-testid="notifications-center"]'),
 ];
 
+/**
+ * Side-nav volatile zones — the per-link `.count` badges (e.g. "Pod Security
+ * Admissions 1", "Repositories 3") render counts of resources currently in
+ * the cluster. Counts drift between baseline capture and run as peer specs
+ * create/delete resources, so mask them whenever the snapshot includes the
+ * product side nav.
+ */
+export const sideNavMasks = (page: Page): Locator[] => [page.locator('nav.side-nav .count')];
+
+/**
+ * Notification banners (prime promo, EULA reminders, version-update banners)
+ * appear non-deterministically and shift page layout. Mask them whenever
+ * the snapshot captures the dashboard root.
+ */
+export const bannerMasks = (page: Page): Locator[] => [
+  page.locator('.banner-graphic'),
+  page.locator('[data-testid="banner-graphic"]'),
+];
+
+/**
+ * Combined volatile-zone masks for full-page snapshots. Covers masthead
+ * (user avatar, notifications), side-nav badge counts, and dynamic banners.
+ * Prefer this over `mastheadMasks` alone when calling
+ * `toHaveScreenshot({ fullPage: true })` — those snapshots are the most
+ * exposed to drift.
+ */
+export const chromeMasks = (page: Page): Locator[] => [
+  ...mastheadMasks(page),
+  ...sideNavMasks(page),
+  ...bannerMasks(page),
+];
+
 export const ensureLightTheme = async (rancherApi: RancherApi): Promise<() => Promise<void>> => {
   const prefsResp = await rancherApi.getRancherResource('v1', 'userpreferences');
   const previousTheme: string = prefsResp.body?.data?.[0]?.data?.theme ?? '';

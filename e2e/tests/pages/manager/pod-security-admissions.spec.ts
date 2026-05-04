@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
 import PodSecurityAdmissionsPagePo from '@/e2e/po/pages/cluster-manager/pod-security-admissions.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 import {
   createPayloadData,
   updatePayloadData,
@@ -266,7 +266,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'pod-security-admissions-list.png'), {
         fullPage: true,
-        mask: [psaPage.list().resourceTable().sortableTable().ageColumn(), ...mastheadMasks(page)],
+        mask: [psaPage.list().resourceTable().sortableTable().ageColumn(), ...chromeMasks(page)],
       });
     } finally {
       await restoreTheme();

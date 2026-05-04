@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { EXTRA_LONG, VERY_LONG } from '@/support/timeouts';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const gitRepoUrl = 'https://github.com/rancher/charts';
 const CLUSTER_REPOS_BASE_URL = 'v1/catalog.cattle.io.clusterrepos';
@@ -477,7 +477,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'repositories-list.png'), {
         fullPage: true,
-        mask: [repositoriesPage.sortableTable().ageColumn(), ...mastheadMasks(page)],
+        mask: [repositoriesPage.sortableTable().ageColumn(), ...chromeMasks(page)],
       });
     } finally {
       await restoreTheme();

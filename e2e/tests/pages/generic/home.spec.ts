@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 test.describe('Home Page', () => {
   test(
@@ -501,7 +501,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@generic', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'home.png'), {
         fullPage: true,
-        mask: mastheadMasks(page),
+        mask: chromeMasks(page),
       });
     } finally {
       await restoreTheme();

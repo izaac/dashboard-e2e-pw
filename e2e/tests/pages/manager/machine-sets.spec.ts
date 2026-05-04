@@ -4,7 +4,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import * as jsyaml from 'js-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ensureLightTheme, mastheadMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
 const nsName = 'default';
 const blueprintPath = path.resolve('e2e/blueprints/cluster_management/machine-sets.yml');
@@ -279,7 +279,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'machine-sets-list.png'), {
         fullPage: true,
-        mask: mastheadMasks(page),
+        mask: chromeMasks(page),
       });
     } finally {
       await restoreTheme();
