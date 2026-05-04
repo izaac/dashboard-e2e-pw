@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import CardPo from '@/e2e/po/components/card.po';
+import { CONTROLLER_SETTLE, EXTENDED } from '@/support/timeouts';
 
 /**
  * Helper: get the current spec.value of a feature flag via API.
@@ -35,30 +36,6 @@ async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boo
 // afterAll resets them to default to prevent poisoning later specs.
 const DANGEROUS_FLAGS = ['oidc-provider', 'harvester', 'istio-virtual-service-ui'];
 
-/**
- * Wait for Rancher to stabilize after flag resets that trigger controller churn.
- * /v1/counts is the canary: it hangs when controllers are thrashing.
- */
-async function waitForCountsSettle(rancherApi: any, maxAttempts = 6, intervalMs = 15_000): Promise<void> {
-  for (let i = 1; i <= maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, intervalMs));
-
-    try {
-      const resp = await rancherApi.getRancherResource('v1', 'counts');
-
-      if (resp.status === 200) {
-        return;
-      }
-    } catch (err: unknown) {
-      console.warn(`waitForCountsSettle attempt ${i}/${maxAttempts} failed:`, err);
-    }
-  }
-
-  console.warn(
-    `Rancher did not stabilize after ${(maxAttempts * intervalMs) / 1000}s — subsequent specs may be affected`,
-  );
-}
-
 test.describe('Feature Flags', () => {
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ login }) => {
@@ -84,7 +61,10 @@ test.describe('Feature Flags', () => {
     }
 
     if (resetCount > 0) {
-      await waitForCountsSettle(rancherApi);
+      // Flag toggles trigger controller restarts — wait for /v1/counts to recover
+      // before the next spec runs. Throws if Rancher doesn't stabilize within the
+      // window, so subsequent specs don't run against a thrashing API.
+      await rancherApi.waitForHealthy(CONTROLLER_SETTLE / EXTENDED, EXTENDED);
     }
   });
 

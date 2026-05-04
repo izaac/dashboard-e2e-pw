@@ -112,19 +112,20 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     const body = await response.json();
     const userId = body.userId;
 
-    await usersPo.waitForPage();
-    await expect(usersPo.list().elementWithName(standardUsername)).toBeVisible();
+    try {
+      await usersPo.waitForPage();
+      await expect(usersPo.list().elementWithName(standardUsername)).toBeVisible();
 
-    // view user's details
-    await usersPo.list().detailLink(standardUsername, 2).click();
+      // view user's details
+      await usersPo.list().detailLink(standardUsername, 2).click();
 
-    const userDetails = usersPo.detail(userId);
+      const userDetails = usersPo.detail(userId);
 
-    await userDetails.waitForPage();
-    await expect(userDetails.mastheadTitle()).toContainText(standardUsername);
-
-    // Cleanup
-    await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
+      await userDetails.waitForPage();
+      await expect(userDetails.mastheadTitle()).toContainText(standardUsername);
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
+    }
   });
 
   test('shows global roles in specific order', async ({ page, login }) => {
@@ -691,6 +692,11 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
   });
 
   test.describe('List and Pagination', () => {
+    // 26 seed users + per-page preference are shared across the four tests via
+    // beforeAll/afterAll. Run serial so parallel workers don't race the shared
+    // setup (and so a per-test failure leaves the chain in a recoverable state).
+    test.describe.configure({ mode: 'serial' });
+
     // Tests share an API-created pool of users; each test navigates fresh to the
     // Users page so they remain atomic. afterAll resets prefs and deletes users
     // even if a test fails mid-run.
@@ -705,6 +711,21 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     let savedPerPage: string | undefined;
 
     test.beforeAll(async ({ rancherApi }) => {
+      // Pre-clean any leftover pagination-pool users from a prior run. Without
+      // this, orphaned `e2e-pgn-*` users inflate the list count and tests that
+      // rely on a stable filter-result count flake on dirty environments.
+      const allUsers = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
+
+      if (allUsers.body?.data) {
+        const orphanIds: string[] = allUsers.body.data
+          .filter((u: any) => typeof u?.username === 'string' && u.username.startsWith('e2e-pgn-'))
+          .map((u: any) => u.id as string);
+
+        await Promise.all(
+          orphanIds.map((id) => rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', id, false)),
+        );
+      }
+
       // Save per-page so afterAll can restore even if a test mutates it
       const prefsResp = await rancherApi.getRancherResource('v1', 'userpreferences');
 
@@ -716,29 +737,20 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
         uniqueUsername,
       ];
 
-      const chunkSize = 5;
+      const ids = await Promise.all(
+        usernames.map(async (name) => {
+          const resp = await rancherApi.createRancherResource('v1', 'management.cattle.io.users', {
+            type: 'user',
+            enabled: true,
+            mustChangePassword: false,
+            username: name,
+          });
 
-      for (let i = 0; i < usernames.length; i += chunkSize) {
-        const chunk = usernames.slice(i, i + chunkSize);
-        const ids = await Promise.all(
-          chunk.map(async (name) => {
-            const resp = await rancherApi.createRancherResource('v1', 'management.cattle.io.users', {
-              type: 'user',
-              enabled: true,
-              mustChangePassword: false,
-              username: name,
-            });
+          return resp.body.id as string;
+        }),
+      );
 
-            return resp.body.id as string;
-          }),
-        );
-
-        createdUserIds.push(...ids);
-
-        if (i + chunkSize < usernames.length) {
-          await new Promise((r) => setTimeout(r, 200));
-        }
-      }
+      createdUserIds.push(...ids);
 
       // Wait for etcd to settle: total user count must exceed 26 (our pool) before UI tests run
       const settled = await rancherApi.waitForRancherResources('v1', 'management.cattle.io.users', 26, true);
