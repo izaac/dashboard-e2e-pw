@@ -150,7 +150,7 @@ test.describe('Branding', () => {
       // catching regression https://github.com/rancher/dashboard/issues/10576
       await burgerMenu.checkIfClusterMenuLinkIsHighlighted('local', false);
 
-      const brandingNavItem = await sideNav.sideMenuEntryByLabel('Branding');
+      const brandingNavItem = sideNav.sideMenuEntryByLabel('Branding');
 
       await expect(brandingNavItem).toBeAttached();
       await brandingNavItem.click();

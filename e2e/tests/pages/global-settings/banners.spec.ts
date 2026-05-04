@@ -108,7 +108,7 @@ test.describe('Banners', () => {
 
       await settingsPage.waitForPageWithClusterId();
 
-      const bannersNavItem = await sideNav.sideMenuEntryByLabel('Banners');
+      const bannersNavItem = sideNav.sideMenuEntryByLabel('Banners');
 
       await expect(bannersNavItem).toBeAttached();
       await bannersNavItem.click();

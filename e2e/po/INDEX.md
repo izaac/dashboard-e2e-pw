@@ -7,7 +7,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ActionMenuPo | action-menu.po.ts | ComponentPo | `[dropdown-menu-collection]` | super, clickMenuItem, getMenuItem |
+| ActionMenuPo | action-menu.po.ts | ComponentPo | `[dropdown-menu-collection]` | super, menuItem, getMenuItem |
 | AddonConfigPo | addon-config.po.ts | ComponentPo | `.dashboard-root` | super, yamlEditor |
 | ArrayListPo | array-list.po.ts | ComponentPo | — | super, arrayListItem, if, closeArrayListItem, clickAdd, clearListItem, setValueAtIndex |
 | AsyncButtonPo | async-button.po.ts | ComponentPo | — | click, expectToBeDisabled, expectToBeEnabled, waitForDisabledAppearanceToDisappear, label, action, apply, computedBackground |
@@ -315,13 +315,13 @@
 | DeactivateDriverDialogPo | deactivateDriverDialog.po.ts | ComponentPo | `[data-testid=` | super, errorBannerContent, deactivate, cancel |
 | GenericDialog | genericDialog.po.ts | ComponentPo | — | super, labeledSelect, clickActionButton |
 | GenericPrompt | genericPrompt.po.ts | ComponentPo | — | super, getTitle, getBody, labeledSelect, checkbox, clickActionButton |
-| PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, deactivate, cancel, warning, checkbox |
+| PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, cancelButton, warning, checkbox |
 
 ## side-bars/
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, burgerMenuNavClusterKeyComboIconCheckByLabel, burgerMenuGetNavMenuByLabel, menuItemWrapper, burgerMenuGetNavClusterByLabel (+32) |
-| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+14) |
+| ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+13) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |
