@@ -15,6 +15,17 @@ test.describe('Users: Last Login sorting', { tag: ['@usersAndAuths', '@adminUser
   let userActiveName: string;
 
   test.beforeAll(async ({ rancherApi, envMeta }) => {
+    // Pre-clean any leftover llsort-* users from prior failed runs. Without
+    // this, orphans from earlier timestamped pools accumulate forever and a
+    // partial-create from a prior failure could pad the row count enough
+    // for `toHaveCount(2)` after filter to coincidentally pass.
+    const allUsers = await rancherApi.getRancherResource('v3', 'users');
+    const orphanIds: string[] = (allUsers.body?.data ?? [])
+      .filter((u: any) => typeof u?.username === 'string' && /^llsort-(null|active)-/.test(u.username))
+      .map((u: any) => u.id as string);
+
+    await Promise.all(orphanIds.map((id) => rancherApi.deleteRancherResource('v3', 'users', id, false)));
+
     const respNull = await rancherApi.createUser(
       {
         username: `llsort-null-${runTimestamp}`,

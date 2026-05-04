@@ -123,49 +123,49 @@ test.describe('Settings', () => {
           await route.fulfill({ response: fetchResp, json: body });
         });
 
-        try {
-          // Save the setting
-          const saveResponse = page.waitForResponse(
-            (resp) =>
-              resp.url().includes('management.cattle.io.settings') &&
-              resp.url().includes(sessionIdleSetting) &&
-              resp.request().method() === 'PUT',
-          );
+        // Save the setting
+        const saveResponse = page.waitForResponse(
+          (resp) =>
+            resp.url().includes('management.cattle.io.settings') &&
+            resp.url().includes(sessionIdleSetting) &&
+            resp.request().method() === 'PUT',
+        );
 
-          await settingsPage.saveButton().click();
-          const resp = await saveResponse;
+        await settingsPage.saveButton().click();
+        const resp = await saveResponse;
 
-          expect(resp.status()).toBe(200);
+        expect(resp.status()).toBe(200);
 
-          // Verify the saved value shows in the list
-          await expect(settingsPage.settingsValue(sessionIdleSetting)).toContainText(
-            settingsData[sessionIdleSetting].new,
-          );
+        // Verify the saved value shows in the list
+        await expect(settingsPage.settingsValue(sessionIdleSetting)).toContainText(
+          settingsData[sessionIdleSetting].new,
+        );
 
-          // Wait for the inactivity modal to appear (frontend shows it when expiresAt is near)
-          const modal = settingsPage.inactivityModalCard();
+        // Wait for the inactivity modal to appear (frontend shows it when expiresAt is near)
+        const modal = settingsPage.inactivityModalCard();
 
-          await expect(modal).toBeVisible({ timeout: VERY_LONG });
-          await expect(modal).toContainText('Session expiring');
-          await expect(modal).toContainText('Your session is about to expire due to inactivity');
-          await expect(modal).toContainText('Resume Session');
+        await expect(modal).toBeVisible({ timeout: VERY_LONG });
+        await expect(modal).toContainText('Session expiring');
+        await expect(modal).toContainText('Your session is about to expire due to inactivity');
+        await expect(modal).toContainText('Resume Session');
 
-          // Click "Resume Session" to dismiss — use force because modal overlay can intercept
-          await settingsPage.resumeSessionButton().click({ force: true });
-          await expect(modal).toBeHidden();
+        // Click "Resume Session" to dismiss — use force because modal overlay can intercept
+        await settingsPage.resumeSessionButton().click({ force: true });
+        await expect(modal).toBeHidden();
 
-          // Navigate away and let any in-flight idle-timer logic settle — the
-          // modal can flicker on SPA re-render before the resumed session
-          // re-arms. networkidle gives a deterministic settle point so the
-          // hidden assertion is a true snapshot rather than a polling race.
-          await page.goto('./home', { waitUntil: 'domcontentloaded' });
-          // eslint-disable-next-line playwright/no-networkidle -- intentional: deterministic settle for the post-resume modal-hidden assertion
-          await page.waitForLoadState('networkidle');
-          await expect(modal).toBeHidden();
-        } finally {
-          await page.unroute('**/v1/ext.cattle.io.useractivities/*');
-        }
+        // Navigate away and let any in-flight idle-timer logic settle — the
+        // modal can flicker on SPA re-render before the resumed session
+        // re-arms. networkidle gives a deterministic settle point so the
+        // hidden assertion is a true snapshot rather than a polling race.
+        await page.goto('./home', { waitUntil: 'domcontentloaded' });
+        // eslint-disable-next-line playwright/no-networkidle -- intentional: deterministic settle for the post-resume modal-hidden assertion
+        await page.waitForLoadState('networkidle');
+        await expect(modal).toBeHidden();
       } finally {
+        // Defensive unroute in the outer finally so the route is always cleaned up
+        // even if the test fails before the route was registered (no-op) or after
+        // the page-level test isolation would have cleaned it. Keeps intent explicit.
+        await page.unroute('**/v1/ext.cattle.io.useractivities/*');
         await Promise.allSettled([restoreIdle(), restoreTtl()]);
       }
     },

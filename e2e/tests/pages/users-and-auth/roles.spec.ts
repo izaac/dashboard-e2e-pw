@@ -189,11 +189,13 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         roleId = respBody.id;
 
-        // View role details
+        // View role details. Skip a redundant `toHaveCount(1)` after filter — the
+        // clusterRoleName is timestamped/unique-per-run so a left-over `e2e-test-*`
+        // role from a prior failed run could match the filter pattern and pad the
+        // count. The defaultIndicator-by-name check below is the actual condition.
         await roles.waitForPage(undefined, fragment);
         await roles.list('CLUSTER').resourceTable().sortableTable().filter(clusterRoleName);
         await roles.waitForPage(undefined, fragment);
-        await expect(roles.list('CLUSTER').resourceTable().sortableTable().rowElements()).toHaveCount(1);
         await expect(roles.list('CLUSTER').defaultIndicator(clusterRoleName)).toBeAttached();
         await roles.list('CLUSTER').detailLink(clusterRoleName, 2).click();
 

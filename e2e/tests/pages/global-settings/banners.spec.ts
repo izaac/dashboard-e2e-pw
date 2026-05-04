@@ -45,7 +45,12 @@ const bannerHtml =
 const acceptButtonText = 'Got it!';
 
 /**
- * Reset all banner settings to defaults via API.
+ * Reset all banner settings to defaults via API. Each individual setting
+ * reset is wrapped in its own try/catch so a failure on `ui-banners` (e.g.
+ * resourceVersion conflict from a racing controller) does not abort the
+ * subsequent `ui-banner-header` / `ui-banner-footer` / `ui-banner-login-consent`
+ * resets — that prior coarse single-try pattern would leak two banner
+ * settings into the next test.
  */
 async function resetBannerSettings(rancherApi: RancherApi): Promise<void> {
   try {
@@ -62,18 +67,21 @@ async function resetBannerSettings(rancherApi: RancherApi): Promise<void> {
     value.bannerConsent = {};
     banners.value = JSON.stringify(value);
     await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'ui-banners', banners);
+  } catch (err) {
+    console.warn(`[banners afterEach] reset ui-banners failed: ${(err as Error)?.message ?? err}`);
+  }
 
-    for (const setting of ['ui-banner-header', 'ui-banner-footer', 'ui-banner-login-consent']) {
+  for (const setting of ['ui-banner-header', 'ui-banner-footer', 'ui-banner-login-consent']) {
+    try {
       const indResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', setting);
 
       if (indResp.body.value) {
         indResp.body.value = '';
         await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', setting, indResp.body);
       }
+    } catch (err) {
+      console.warn(`[banners afterEach] reset ${setting} failed: ${(err as Error)?.message ?? err}`);
     }
-  } catch (err) {
-    // Cleanup is best-effort — log so failures surface in CI logs without aborting subsequent tests
-    console.warn(`[banners afterEach] resetBannerSettings failed: ${(err as Error)?.message ?? err}`);
   }
 }
 

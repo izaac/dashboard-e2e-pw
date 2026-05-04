@@ -29,8 +29,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     login,
     rancherApi,
   }) => {
-    let reenableAKS = false;
-
     await login();
 
     // Ensure AKS is Active before test — prior specs may have left it Inactive
@@ -68,7 +66,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       const deactivateResp = await updateResponse;
 
       expect(deactivateResp.status()).toBe(200);
-      reenableAKS = true;
 
       // Verify AKS card is hidden
       await clusterList.goTo();
@@ -90,7 +87,6 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       const reactivateResp = await reactivateResponse;
 
       expect(reactivateResp.status()).toBe(200);
-      reenableAKS = false;
 
       // Verify AKS card is back
       await clusterList.goTo();
@@ -98,19 +94,28 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.createCluster();
       await expect(clusterCreatePage.gridProviderByName('Azure AKS')).toBeAttached(MEDIUM_TIMEOUT_OPT);
     } finally {
-      if (reenableAKS) {
-        // Restore AKS to active state if test failed mid-way
+      // Always restore AKS to active in cleanup. The previous reenableAKS-flag
+      // approach skipped the restore on the happy path (which is fine) but also
+      // skipped it on certain mid-test failures where the deactivate had already
+      // succeeded and the flag never flipped back to false. Re-fetching state and
+      // setting `active = true` is idempotent — if AKS is already active the PUT
+      // is a no-op.
+      try {
         const setting = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators');
-        const operators: any[] = JSON.parse(setting.body.value || '[]');
-        const aks = operators.find((o: any) => o.name === 'aks');
+        const ops: any[] = JSON.parse(setting.body.value || '[]');
+        const aksOp = ops.find((o: any) => o.name === 'aks');
 
-        if (aks && !aks.active) {
-          aks.active = true;
+        if (aksOp && !aksOp.active) {
+          aksOp.active = true;
           await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', 'kev2-operators', {
             ...setting.body,
-            value: JSON.stringify(operators),
+            value: JSON.stringify(ops),
           });
+        } else if (!aksOp) {
+          console.warn('[cluster-manager AKS cleanup] aks operator not found in kev2-operators value');
         }
+      } catch (err) {
+        console.warn(`[cluster-manager AKS cleanup] restore failed: ${(err as Error)?.message ?? err}`);
       }
     }
   });

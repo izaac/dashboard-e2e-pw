@@ -203,7 +203,8 @@ test.describe('Branding', () => {
     await burgerMenu.home().click();
     await expect(page).toHaveTitle(new RegExp(`${settings.privateLabel.original} - Homepage`), { timeout: BRIEF });
 
-    // Also reset via API in case UI test failed partway
+    // Also reset via API in case UI test failed partway. Re-fetch to get a fresh
+    // resourceVersion so the PUT does not 409 against a racing controller mutation.
     try {
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'ui-pl');
       const resourceVersion = resp.body.metadata.resourceVersion;
@@ -212,8 +213,10 @@ test.describe('Branding', () => {
         value: settings.privateLabel.original.toLowerCase(),
         metadata: { name: 'ui-pl', resourceVersion },
       });
-    } catch {
-      // ignore cleanup errors
+    } catch (err) {
+      // Best-effort defensive reset — log so a genuine API failure surfaces in CI rather
+      // than silently leaking ui-pl state into the next test.
+      console.warn(`[branding] defensive ui-pl reset failed: ${(err as Error)?.message ?? err}`);
     }
   });
 

@@ -5,7 +5,7 @@ import {
   HarvesterClusterPagePo,
 } from '@/e2e/po/pages/virtualization-mgmt/harvester-clusters.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
-import { EXTENSION_OPS, LONG, VERY_LONG } from '@/support/timeouts';
+import { BRIEF, DEBOUNCE, EXTENSION_OPS, LONG, VERY_LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = '/v1/catalog.cattle.io.clusterrepos';
 const harvesterTitle = 'Harvester';
@@ -26,13 +26,17 @@ const HARVESTER_EXTENSION_CATALOG = {
 
 test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () => {
   test.beforeEach(async ({ login, rancherApi }) => {
-    // Clean up any leftover harvester state from previous runs
-    await rancherApi.createRancherResource(
-      'v1',
-      'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
-      {},
-      false,
-    );
+    // Clean up any leftover harvester state from previous runs. Each step is
+    // best-effort but logs failures so genuine API errors aren't silently
+    // swallowed and dirty state isn't carried into the test body.
+    await rancherApi
+      .createRancherResource(
+        'v1',
+        'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
+        {},
+        false,
+      )
+      .catch((err) => console.warn(`[harvester beforeEach] uninstall failed: ${(err as Error)?.message ?? err}`));
 
     // Clean up both possible extension repos to prevent collisions
     const extensionRepoUrls = ['rancher/ui-plugin-charts', 'harvester/harvester-ui-extension'];
@@ -41,14 +45,18 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     for (const repo of repos.body.data ?? []) {
       if (extensionRepoUrls.some((url) => repo?.spec?.gitRepo?.includes(url))) {
         await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', repo.id, false);
-        await rancherApi.waitForRancherResource(
+        const gone = await rancherApi.waitForRancherResource(
           'v1',
           'catalog.cattle.io.clusterrepos',
           repo.id,
           (resp) => resp.status === 404,
           10,
-          3000,
+          DEBOUNCE,
         );
+
+        if (!gone) {
+          console.warn(`[harvester beforeEach] clusterrepo ${repo.id} did not finalize within 30s`);
+        }
       }
     }
 
@@ -58,30 +66,42 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
   test.afterEach(async ({ rancherApi, isPrime }) => {
     const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
 
-    await rancherApi.createRancherResource(
-      'v1',
-      'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
-      {},
-      false,
-    );
+    await rancherApi
+      .createRancherResource(
+        'v1',
+        'catalog.cattle.io.apps/cattle-ui-plugin-system/harvester?action=uninstall',
+        {},
+        false,
+      )
+      .catch((err) => console.warn(`[harvester afterEach] uninstall failed: ${(err as Error)?.message ?? err}`));
     await rancherApi.deleteRancherResource('v1', 'catalog.cattle.io.clusterrepos', catalog.repo, false);
 
-    await rancherApi.waitForRancherResource(
+    const appGone = await rancherApi.waitForRancherResource(
       'v1',
       'catalog.cattle.io.apps',
       'cattle-ui-plugin-system/harvester',
       (resp) => resp.status === 404,
       30,
-      5000,
+      BRIEF,
     );
-    await rancherApi.waitForRancherResource(
+
+    if (!appGone) {
+      console.warn('[harvester afterEach] harvester app did not finalize within 150s');
+    }
+
+    const repoGone = await rancherApi.waitForRancherResource(
       'v1',
       'catalog.cattle.io.clusterrepos',
       catalog.repo,
       (resp) => resp.status === 404,
       20,
-      3000,
+      DEBOUNCE,
     );
+
+    if (!repoGone) {
+      console.warn(`[harvester afterEach] clusterrepo ${catalog.repo} did not finalize within 60s`);
+    }
+
     await rancherApi.waitForHealthy();
   });
 

@@ -20,11 +20,42 @@ async function updateUserRetentionSetting(
   await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', settingId, retentionSetting);
 }
 
+/**
+ * Reset all user-retention settings to null. Each individual PUT is wrapped in
+ * its own try/catch so a single failure (e.g. admission webhook rejection on
+ * one setting) does not abort the rest of the chain and leak state into the
+ * next test. After all writes, verify each setting actually landed at null —
+ * a successful PUT followed by a controller revert would otherwise look like
+ * a clean reset but leave the next test reading dirty values.
+ */
 async function resetRetentionSettings(rancherApi: RancherApi): Promise<void> {
-  await updateUserRetentionSetting(rancherApi, 'disable-inactive-user-after', null);
-  await updateUserRetentionSetting(rancherApi, 'user-retention-cron', null);
-  await updateUserRetentionSetting(rancherApi, 'delete-inactive-user-after', null);
-  await updateUserRetentionSetting(rancherApi, 'user-last-login-default', null);
+  const settings = [
+    'disable-inactive-user-after',
+    'user-retention-cron',
+    'delete-inactive-user-after',
+    'user-last-login-default',
+  ];
+
+  for (const settingId of settings) {
+    try {
+      await updateUserRetentionSetting(rancherApi, settingId, null);
+    } catch (err) {
+      console.warn(`[user-retention reset] PUT null on ${settingId} failed: ${(err as Error)?.message ?? err}`);
+    }
+  }
+
+  for (const settingId of settings) {
+    try {
+      const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings');
+      const setting = resp.body?.data?.find((s: any) => s.id === settingId);
+
+      if (setting && setting.value != null && setting.value !== '') {
+        console.warn(`[user-retention reset] ${settingId} did not persist null — value is "${setting.value}"`);
+      }
+    } catch (err) {
+      console.warn(`[user-retention reset] verify ${settingId} failed: ${(err as Error)?.message ?? err}`);
+    }
+  }
 }
 
 test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
