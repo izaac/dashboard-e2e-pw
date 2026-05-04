@@ -57,10 +57,13 @@ test.describe('Home Links', () => {
       await burgerMenu.burgerMenuNavToMenuByLabel('Global Settings');
       await sideNav.navToSideMenuEntryByLabel('Home Links');
 
-      // Hide all links
+      // Hide all default links. Derive the count from the locator so the loop
+      // adapts when Rancher adds/removes default links rather than silently
+      // missing late-added entries with a hardcoded `i < 5`.
       const checkboxes = homeLinksPage.defaultLinkCheckboxes();
+      const checkboxCount = await checkboxes.count();
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < checkboxCount; i++) {
         await checkboxes.nth(i).click();
       }
 

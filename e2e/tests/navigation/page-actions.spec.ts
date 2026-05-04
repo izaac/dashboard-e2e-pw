@@ -27,8 +27,10 @@ test.describe('Page Actions', { tag: ['@navigation', '@adminUser', '@standardUse
     await homePage.pageActionsButton().click();
     await expect(homePage.pageActionsMenuItem('Set as login page')).toBeVisible();
 
-    // Click away to close the menu
-    await homePage.self().click({ position: { x: 300, y: 300 } });
+    // Press Escape to close the menu — semantic and viewport-independent
+    // (the previous fixed-position click would land in different DOM regions
+    // depending on browser size, and could itself activate a different menu).
+    await page.keyboard.press('Escape');
     await expect(homePage.pageActionsMenuItem('Set as login page')).toBeHidden();
   });
 });

@@ -32,11 +32,17 @@ test.describe('Diagnostics Page', { tag: ['@generic', '@adminUser'] }, () => {
     const download = await downloadPromise;
     const downloadPath = await download.path();
 
-    expect(downloadPath).toBeTruthy();
+    if (!downloadPath) {
+      throw new Error('Diagnostic download did not produce a file path');
+    }
 
-    const fileContent = fs.readFileSync(downloadPath!, 'utf-8');
+    const fileContent = fs.readFileSync(downloadPath, 'utf-8');
     const jsonData = JSON.parse(fileContent);
 
+    // Upstream parity: the diagnostics bundle ships exactly 4 top-level keys
+    // today. Bumping this number is intentional — review the shape before
+    // adjusting (the keys themselves are not asserted here so a rename would
+    // also require touching this test).
     expect(Object.keys(jsonData).length).toBe(4);
   });
 });
