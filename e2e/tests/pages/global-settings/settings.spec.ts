@@ -149,7 +149,7 @@ test.describe('Settings', () => {
         await expect(modal).toContainText('Your session is about to expire due to inactivity');
         await expect(modal).toContainText('Resume Session');
 
-        // Click "Resume Session" to dismiss — use force because modal overlay can intercept
+        // eslint-disable-next-line playwright/no-force-option -- modal overlay can intercept the click as the inactivity timer animates the modal in
         await settingsPage.resumeSessionButton().click({ force: true });
         await expect(modal).toBeHidden();
 

@@ -36,6 +36,7 @@ test.describe('Prime Extension', { tag: ['@prime', '@generic', '@adminUser'] }, 
     await authProviderPo.selectProvider(AuthProvider.AZURE);
     await azureadPo.waitForPage();
 
+    // eslint-disable-next-line playwright/no-raw-locators -- chains an `a` selector to reach the first link inside the banner; the banner PO already exposes the banner element and a dedicated link sub-locator would be overkill for a single test
     const bannerLink = azureadPo.permissionsWarningBanner().locator('a').first();
 
     await expect(bannerLink).toHaveAttribute(

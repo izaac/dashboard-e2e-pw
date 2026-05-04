@@ -226,6 +226,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
         const link = productNavPo.visibleNavTypes().nth(linkIdx);
         const href = await link.getAttribute('href');
 
+        // eslint-disable-next-line playwright/no-force-option -- nav links can be partially obscured by sticky headers/overlay during scroll, force-click is the only reliable way to walk the full list
         await link.click({ force: true });
 
         if (href) {
@@ -249,6 +250,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     await clusterDashboard.waitForPage();
 
     // Go to the third item in the nav
+    // eslint-disable-next-line playwright/no-force-option -- nav link can be partially obscured by sticky header during scroll
     await productNavPo.visibleNavTypes().nth(2).click({ force: true });
 
     // Clicking the first tab header should take us back to cluster dashboard

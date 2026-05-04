@@ -405,6 +405,7 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     const downloadPromise = page.waitForEvent('download');
 
     await clusterList.list().openBulkActionDropdown();
+    // eslint-disable-next-line playwright/no-force-option -- bulk-action dropdown overlay can intercept the menu-item click on slower renders
     await clusterList.list().bulkActionButton('Download YAML').click({ force: true });
 
     const download = await downloadPromise;

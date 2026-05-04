@@ -196,9 +196,10 @@ test.describe(
       await clusterDetails.waitForPage(undefined, 'events');
       // A freshly-provisioned cluster generates registration / machine-pool / agent events,
       // so the prior `emptyStateRow().toBeVisible()` assertion was wrong on real infra (it
-      // only ever passed on mocked/empty fixtures). Just verify the events sortable table
-      // rendered on the tab.
-      await expect(clusterDetails.recentEventsList().resourceTable().sortableTable().self()).toBeVisible();
+      // only ever passed on mocked/empty fixtures). Just verify the events list itself
+      // rendered on the tab — `recentEventsList()` is constructed with a `.sortable-table`
+      // selector already, so chain through `.self()` directly.
+      await expect(clusterDetails.recentEventsList().self()).toBeVisible();
     });
 
     test('can scale up a machine pool', async ({ login, page, rancherApi, envMeta }) => {
@@ -281,6 +282,7 @@ test.describe(
         });
         await expect(clusterDetails.poolsList('machine').machineProgressBarError(poolName)).not.toBeAttached();
         await expect(
+          // eslint-disable-next-line playwright/no-raw-locators -- chains `.bg-success` onto the progress-bar locator; upstream Rancher does not expose a testid for the success-state segment and adding a PO method for a single chain isn't justified
           clusterDetails.poolsList('machine').machineProgressBar(poolName).locator('.bg-success'),
         ).toBeAttached();
 

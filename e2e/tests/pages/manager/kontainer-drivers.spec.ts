@@ -116,6 +116,7 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
       { timeout: LONG },
     );
 
+    // eslint-disable-next-line playwright/no-force-option -- refresh button is briefly covered by the loading-state overlay after page mount
     await driversPage.refreshKubMetadata().click({ force: true });
 
     const resp = await refreshResp;

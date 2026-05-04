@@ -108,15 +108,49 @@ export default [
       'playwright/no-skipped-test': 'off',
       'playwright/no-conditional-in-test': 'off',
 
-      // Documented debounce/transition waits — acceptable when annotated
-      'playwright/no-wait-for-timeout': 'off',
-
-      // Rancher menus require force clicks due to overlapping elements
-      'playwright/no-force-option': 'off',
+      // --- Guardrails (graduated to warn so existing intentional uses can be
+      //     annotated with eslint-disable-next-line + reason before promoting
+      //     to error). flat/recommended sets these to warn already; we keep
+      //     them explicit here so future contributors see the intent. ---
+      // Documented debounce/transition waits — acceptable when annotated.
+      'playwright/no-wait-for-timeout': 'warn',
+      // Rancher menus require force clicks due to overlapping elements;
+      // each site must annotate.
+      'playwright/no-force-option': 'warn',
+      // Specs should not contain raw `page.locator(...)` or chained
+      // `.locator(...)` selectors — POs own those. Setup/auth files override.
+      'playwright/no-raw-locators': 'warn',
 
       // --- Rules that MUST stay on ---
       'playwright/no-conditional-expect': 'warn',
       'playwright/expect-expect': 'warn',
+
+      // --- Spec import discipline ---
+      // `test` and `expect` must come from `@/support/fixtures` (which adds
+      // the project's custom fixtures). Direct imports from `@playwright/test`
+      // bypass them and cause `login`, `rancherApi`, `envMeta`, etc. to be
+      // missing on the test fixture argument.
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: '@playwright/test',
+              importNames: ['test', 'expect'],
+              message: "Import 'test' and 'expect' from '@/support/fixtures' instead — that file re-exports them with the project's custom fixtures.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Setup files exempt from spec-only rules (they bootstrap auth/state and
+  // are allowed to use raw locators + import directly from @playwright/test).
+  {
+    files: ['e2e/tests/auth.setup.ts', 'e2e/tests/*.setup.ts'],
+    rules: {
+      'playwright/no-raw-locators': 'off',
+      'no-restricted-imports': 'off',
     },
   },
   // Scripts — allow console.log (they are CLI tools)

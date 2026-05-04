@@ -496,6 +496,7 @@ test.describe('Visual snapshots', { tag: ['@visual', '@generic', '@adminUser'] }
 
       // Empty-state guard: snapshot baseline expects only the local cluster row.
       // If a peer provisioning test left an orphan, fail loudly.
+      // eslint-disable-next-line playwright/no-raw-locators -- chains a generic `tbody tr` selector for a row count; HomePagePo does not expose a row-count helper and adding one for a single visual-snapshot guard isn't worth the API surface
       await expect(homePage.list().locator('tbody tr')).toHaveCount(1);
       await expect(homePage.clusterRow('local')).toBeVisible();
 

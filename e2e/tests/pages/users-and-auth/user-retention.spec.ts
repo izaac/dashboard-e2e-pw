@@ -49,7 +49,7 @@ async function resetRetentionSettings(rancherApi: RancherApi): Promise<void> {
       const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings');
       const setting = resp.body?.data?.find((s: any) => s.id === settingId);
 
-      if (setting && setting.value != null && setting.value !== '') {
+      if (setting && setting.value !== null && setting.value !== '') {
         console.warn(`[user-retention reset] ${settingId} did not persist null — value is "${setting.value}"`);
       }
     } catch (err) {
