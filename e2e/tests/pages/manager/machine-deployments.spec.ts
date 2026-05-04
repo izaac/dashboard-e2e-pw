@@ -179,26 +179,29 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     json.metadata.namespace = nsName;
     await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
 
-    await mdPage.goTo();
-    await mdPage.waitForPage();
+    try {
+      await mdPage.goTo();
+      await mdPage.waitForPage();
 
-    const actionMenu = await mdPage.list().actionMenu(mdName);
+      const actionMenu = await mdPage.list().actionMenu(mdName);
 
-    await actionMenu.getMenuItem('Delete').click();
+      await actionMenu.getMenuItem('Delete').click();
 
-    const promptRemove = new PromptRemove(page);
-    const deleteResp = page.waitForResponse(
-      (r) =>
-        r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
-        r.request().method() === 'DELETE',
-    );
+      const promptRemove = new PromptRemove(page);
+      const deleteResp = page.waitForResponse(
+        (r) =>
+          r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
+          r.request().method() === 'DELETE',
+      );
 
-    await promptRemove.remove();
-    await deleteResp;
-    await mdPage.waitForPage();
+      await promptRemove.remove();
+      await deleteResp;
+      await mdPage.waitForPage();
 
-    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
+      await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
+    } finally {
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    }
   });
 
   test('can delete MachineDeployments via bulk actions', async ({ page, login, rancherApi }) => {
@@ -213,27 +216,30 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
     json.metadata.namespace = nsName;
     await rancherApi.createRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', json);
 
-    await mdPage.goTo();
-    await mdPage.waitForPage();
+    try {
+      await mdPage.goTo();
+      await mdPage.waitForPage();
 
-    await mdPage.list().resourceTable().sortableTable().rowSelectCtlWithName(mdName).set();
+      await mdPage.list().resourceTable().sortableTable().rowSelectCtlWithName(mdName).set();
 
-    const deleteResp = page.waitForResponse(
-      (r) =>
-        r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
-        r.request().method() === 'DELETE',
-    );
+      const deleteResp = page.waitForResponse(
+        (r) =>
+          r.url().includes(`cluster.x-k8s.io.machinedeployments/${nsName}/${mdName}`) &&
+          r.request().method() === 'DELETE',
+      );
 
-    await mdPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
+      await mdPage.list().resourceTable().sortableTable().bulkActionButton('Delete').click();
 
-    const promptRemove = new PromptRemove(page);
+      const promptRemove = new PromptRemove(page);
 
-    await promptRemove.remove();
-    await deleteResp;
-    await mdPage.waitForPage();
+      await promptRemove.remove();
+      await deleteResp;
+      await mdPage.waitForPage();
 
-    await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
-    await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
+      await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
+    } finally {
+      await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
+    }
   });
 
   test('can download YAML', async ({ page, login, rancherApi }) => {

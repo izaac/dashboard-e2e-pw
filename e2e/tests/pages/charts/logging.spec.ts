@@ -9,7 +9,7 @@ import CardPo from '@/e2e/po/components/card.po';
 import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { BRIEF, SHORT_TIMEOUT_OPT, LONG, STANDARD, VERY_LONG, PROVISIONING } from '@/support/timeouts';
+import { BRIEF, EXTENSION_OPS, SHORT_TIMEOUT_OPT, LONG, STANDARD, VERY_LONG, PROVISIONING } from '@/support/timeouts';
 
 const chartAppDisplayName = 'Logging';
 const chartApp = 'rancher-logging';
@@ -107,25 +107,25 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
       const loggingPo = new LoggingPo(page);
       const basePage = new PagePo(page, '/c/local/logging');
 
-      // Big charts like logging can take 2+ minutes for CRDs to register
-      let reachedPage = false;
+      // Big charts like logging can take 2+ minutes for CRDs to register. expect.poll
+      // re-navigates each iteration; the only condition we have to wait on is the
+      // fail-whale clearing — there is no `crd-ready` event to subscribe to.
+      await expect
+        .poll(
+          async () => {
+            await page.goto('./c/local/logging/logging.banzaicloud.io.clusteroutput', {
+              waitUntil: 'domcontentloaded',
+            });
 
-      for (let attempt = 0; attempt < 20; attempt++) {
-        await page.goto('./c/local/logging/logging.banzaicloud.io.clusteroutput', { waitUntil: 'domcontentloaded' });
-
-        const isFailWhale = await basePage.isFailWhaleVisible();
-
-        if (!isFailWhale) {
-          reachedPage = true;
-          break;
-        }
-
-        // Unavoidable: polling for CRD registration — no event to wait on
-
-        await page.waitForTimeout(STANDARD);
-      }
-
-      expect(reachedPage, 'Logging CRDs not registered after 200s — fail-whale persisted').toBeTruthy();
+            return basePage.isFailWhaleVisible();
+          },
+          {
+            timeout: EXTENSION_OPS,
+            intervals: [STANDARD],
+            message: 'Logging CRDs not registered — fail-whale persisted',
+          },
+        )
+        .toBe(false);
 
       try {
         await loggingPo.mastheadCreate().click();

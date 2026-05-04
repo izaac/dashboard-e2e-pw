@@ -20,27 +20,31 @@ const PROM_RULE_NAMESPACE = 'default';
 // noticeably longer to settle, so install/uninstall use generous retry counts.
 const INSTALL_RETRIES = 120;
 const INSTALL_DELAY_MS = 5000;
-const PAGE_LOAD_ATTEMPTS = 30;
-const PAGE_LOAD_INTERVAL_MS = 10000;
+// Page-load wait: 30 attempts × 10 s = 5 minutes total, sized to absorb CRD
+// registration + extension UI loading on min-resource Rancher.
+const PAGE_LOAD_TIMEOUT = 300_000;
+const PAGE_LOAD_INTERVAL_MS = 10_000;
 
 async function waitForMonitoringPage(page: import('@playwright/test').Page, urlSuffix: string): Promise<void> {
   // Big charts like rancher-monitoring can take 2+ minutes for CRDs to register and the
-  // monitoring extension UI to load. Mirrors the pattern in logging.spec.ts.
+  // monitoring extension UI to load. expect.poll re-navigates each iteration; the
+  // condition is the fail-whale clearing — there is no `crd-ready` event to subscribe to.
   const basePage = new PagePo(page, `/c/${CLUSTER_ID}/monitoring`);
-  let reached = false;
 
-  for (let attempt = 0; attempt < PAGE_LOAD_ATTEMPTS; attempt++) {
-    await page.goto(`./c/${CLUSTER_ID}/monitoring/${urlSuffix}`, { waitUntil: 'domcontentloaded' });
+  await expect
+    .poll(
+      async () => {
+        await page.goto(`./c/${CLUSTER_ID}/monitoring/${urlSuffix}`, { waitUntil: 'domcontentloaded' });
 
-    if (!(await basePage.isFailWhaleVisible())) {
-      reached = true;
-      break;
-    }
-
-    await page.waitForTimeout(PAGE_LOAD_INTERVAL_MS);
-  }
-
-  expect(reached, `Monitoring page '${urlSuffix}' did not load within polling window`).toBeTruthy();
+        return basePage.isFailWhaleVisible();
+      },
+      {
+        timeout: PAGE_LOAD_TIMEOUT,
+        intervals: [PAGE_LOAD_INTERVAL_MS],
+        message: `Monitoring page '${urlSuffix}' did not load within polling window`,
+      },
+    )
+    .toBe(false);
 }
 
 test.describe('V2 Monitoring Chart', { tag: ['@charts', '@adminUser'] }, () => {
