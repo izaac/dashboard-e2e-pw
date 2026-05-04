@@ -49,29 +49,27 @@ test.describe(
       await createPage.selectCreate(1);
       await expect(page).toHaveURL(/type=azure&rkeType=rke2/);
 
-      // Cloud credentials are filled via the inline form on the cluster-create page
-      // (rendered when no Azure credential exists). The previous direct `azure-cloud-credentials-*`
-      // testid lookups on the page object no longer match — Rancher routes credential
-      // creation through the AzureCloudCredentialsCreateEditPo component used by AKS.
-      const cloudCredForm = createPage.cloudCredentialsForm();
-
-      await cloudCredForm.nameNsDescription().name().set(credName);
-      await cloudCredForm.environment().dropdown().click();
-      await cloudCredForm.environment().clickOptionWithLabel('AzurePublicCloud');
-      await cloudCredForm.subscriptionId().set('bad');
-      await cloudCredForm.clientId().set('bad');
-      await cloudCredForm.clientSecret().set('bad');
+      // The cloud credentials form is rendered inline on the cluster-create page
+      // when no Azure credential exists yet. Use the existing Azure-specific testids
+      // — clicking the v-select wrapper directly does not open the dropdown, so
+      // target the inner `.vs__dropdown-toggle` via `azureEnvironmentDropdownToggle()`.
+      await createPage.nameNsDescription().name().set(credName);
+      await createPage.azureEnvironmentDropdownToggle().click();
+      await createPage.azureDropdownOption('AzurePublicCloud').click();
+      await createPage.subscriptionIdInput().fill('bad');
+      await createPage.clientIdInput().fill('bad');
+      await createPage.clientSecretInput().fill('bad');
 
       const credCheckResponse = page.waitForResponse(
         (resp) => resp.url().includes('/meta/aksCheckCredentials') && resp.request().method() === 'POST',
       );
 
-      await cloudCredForm.saveButton().self().click();
+      await createPage.saveButton().click();
       const resp = await credCheckResponse;
 
       expect(resp.status()).toBe(400);
 
-      await expect(cloudCredForm.errorBanner().self()).toBeAttached();
+      await expect(createPage.errorBanner()).toBeAttached();
     });
 
     test('can create a RKE2 cluster using Azure cloud provider', async ({ page, login, rancherApi, envMeta }) => {
