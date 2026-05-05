@@ -84,7 +84,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
 
     // Both scenarios land on /auth/setup — configure and submit
     await rancherSetupConfigurePage.waitForPage();
-    expect(await rancherSetupConfigurePage.canSubmit()).toBe(false);
+    await expect(rancherSetupConfigurePage.submitBtn()).toBeDisabled();
 
     // Scenario 2: CATTLE_BOOTSTRAP_PASSWORD flow skips login page, so the bootstrap password
     // field is shown on the configure page and must be filled before submit is enabled
@@ -138,7 +138,7 @@ test.describe('Rancher setup', { tag: ['@setup', '@adminUserSetup', '@standardUs
     }
 
     await rancherSetupConfigurePage.termsAgreement().set();
-    expect(await rancherSetupConfigurePage.canSubmit()).toBe(true);
+    await expect(rancherSetupConfigurePage.submitBtn()).toBeEnabled();
     await rancherSetupConfigurePage.submit();
 
     const prefsPromise = page.waitForResponse('**/v1/userpreferences/*', MEDIUM_TIMEOUT_OPT);

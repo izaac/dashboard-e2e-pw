@@ -58,8 +58,9 @@ export class RancherSetupConfigurePage extends PagePo {
     await this.termsAgreementCheckbox().locator('label, input[type="checkbox"]').first().click();
   }
 
-  async canSubmit(): Promise<boolean> {
-    return !(await this.submitButton().isDisabled());
+  /** Submit button locator — use `await expect(submitBtn()).toBeEnabled()` / `.toBeDisabled()` in specs. */
+  submitBtn(): Locator {
+    return this.submitButton().self();
   }
 
   async submit(): Promise<void> {

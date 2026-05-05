@@ -229,9 +229,10 @@ test.describe('Chart Details Page', { tag: ['@explorer', '@adminUser'] }, () => 
     // Verify at least some versions are shown regardless of truncation
     await expect(versionLinks).not.toHaveCount(0);
 
-    const showMoreVisible = await showMoreBtn.isVisible();
-
-    if (!showMoreVisible) {
+    // "Show More" is an optional UI branch — only renders when the chart has enough
+    // versions to truncate. Use `count() > 0` rather than `.isVisible()` so the
+    // optional-branch decision is explicit and Playwright still auto-retries the query.
+    if ((await showMoreBtn.count()) === 0) {
       return;
     }
 

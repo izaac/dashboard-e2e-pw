@@ -108,14 +108,15 @@ export default class ExtensionsPagePo extends PagePo {
     return this.extensionCard(extensionTitle).getByTestId(`item-card-header-status-${index}`);
   }
 
-  /**
-   * Hover over a status icon and return the tooltip locator.
-   */
-  async extensionCardHeaderStatusTooltipText(extensionTitle: string, index: number): Promise<Locator> {
+  /** Hover over a status icon to make its tooltip appear. */
+  async hoverExtensionCardHeaderStatus(extensionTitle: string, index: number): Promise<void> {
     const icon = this.extensionCardHeaderStatusIcon(extensionTitle, index);
 
     await icon.hover();
+  }
 
+  /** Tooltip body locator (for `await expect(...).toContainText(...)`). Pair with `hoverExtensionCardHeaderStatus(...)`. */
+  extensionCardHeaderStatusTooltip(): Locator {
     return this.page.locator('.v-popper__popper .v-popper__inner');
   }
 

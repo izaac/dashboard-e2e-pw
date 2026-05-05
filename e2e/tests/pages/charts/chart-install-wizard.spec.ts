@@ -82,15 +82,12 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       await chartPage.goToInstall();
       await installChartPage.chartName().fill('rancher-demo');
 
-      // Ensure the chart installs into the 'default' namespace so the configmap dropdown shows our test configmap
+      // Ensure the chart installs into the 'default' namespace so the configmap dropdown shows our test configmap.
+      // The namespace selector only renders when the install form is on the metadata step — short timeout +
+      // count check is the right shape for an optional UI branch (Playwright auto-retries `.count()` already).
       const nsSelect = installChartPage.nameNsDescription().namespace();
 
-      if (
-        await nsSelect
-          .self()
-          .isVisible()
-          .catch(() => false)
-      ) {
+      if ((await nsSelect.self().count()) > 0) {
         await installChartPage.selectNamespaceOption('default');
       }
 

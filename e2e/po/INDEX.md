@@ -175,7 +175,7 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+48) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+49) |
 | SupportPagePo | get-support.po.ts | PagePo | — | super, supportLinks, externalSupportLink, externalSupportLinks, sccLink, clickSupportLink, if, clickExternalSupportLinks (+1) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, filterInput, clusterDescriptions (+22) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
