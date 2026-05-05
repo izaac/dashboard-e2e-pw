@@ -43,9 +43,12 @@ export class RancherApi {
     const body = await resp.json().catch(() => ({}));
 
     if (!body.token) {
-      console.error(`[RancherApi] Login failed: status=${resp.status} body=${JSON.stringify(body).substring(0, 200)}`);
-
-      return;
+      // Throw rather than silently returning — every spec downstream of login()
+      // assumes auth succeeded. A silent return masks the real failure as a
+      // confusing 401 on the first API call later.
+      throw new Error(
+        `[RancherApi] Login failed: status=${resp.status} body=${JSON.stringify(body).substring(0, 200)}`,
+      );
     }
 
     this.csrfToken = body.token;
@@ -70,6 +73,15 @@ export class RancherApi {
    */
   async waitForReady(): Promise<void> {
     if (!this.credentials) {
+      // No credentials yet — the worker fixture calls waitForReady before
+      // every login attempt, so the first call legitimately has none. Make
+      // the no-op observable in CI logs so a *later* misuse (calling
+      // waitForReady on a long-running api with cleared creds) doesn't go
+      // silent.
+      console.warn(
+        '[RancherApi] waitForReady called before credentials were set — skipping (this is normal on first call only)',
+      );
+
       return;
     }
 
@@ -348,6 +360,8 @@ export class RancherApi {
     retries = 20,
     delayMs = 1500,
   ): Promise<boolean> {
+    let lastError: unknown;
+
     for (let i = 0; i < retries; i++) {
       try {
         const result = await this.getRancherResource(prefix, resourceType, resourceId, 0);
@@ -355,13 +369,66 @@ export class RancherApi {
         if (testFn(result)) {
           return true;
         }
-      } catch {
-        // ignore fetch errors during polling
+      } catch (err) {
+        // Polling tolerates transient fetch errors (Rancher restarts, network
+        // blips), but capture the *last* error so a never-recovering condition
+        // surfaces a useful diagnostic instead of dying as a silent `false`.
+        lastError = err;
       }
       await new Promise((r) => setTimeout(r, delayMs));
     }
 
+    if (lastError) {
+      console.warn(
+        `[RancherApi] waitForRancherResource(${prefix}/${resourceType}/${resourceId}) exhausted ${retries} retries; last error: ${(lastError as Error)?.message ?? lastError}`,
+      );
+    }
+
     return false;
+  }
+
+  /**
+   * Like {@link waitForRancherResource} but throws on timeout — preferred for
+   * test bodies that depend on the resource reaching a specific state. The
+   * thrown error includes the resource path and the polling window so the
+   * failure is self-explanatory in CI.
+   */
+  async expectResourceState(
+    prefix: string,
+    resourceType: string,
+    resourceId: string,
+    testFn: (resp: any) => boolean,
+    retries = 20,
+    delayMs = 1500,
+  ): Promise<void> {
+    const ok = await this.waitForRancherResource(prefix, resourceType, resourceId, testFn, retries, delayMs);
+
+    if (!ok) {
+      throw new Error(
+        `Resource ${prefix}/${resourceType}/${resourceId} did not reach the expected state within ${retries * delayMs}ms`,
+      );
+    }
+  }
+
+  /**
+   * Like {@link waitForResourceGone} but throws on timeout — preferred for
+   * test bodies that need to assert a delete actually finalised before
+   * proceeding (e.g. before re-creating a same-named resource).
+   */
+  async expectResourceGone(
+    prefix: string,
+    resourceType: string,
+    resourceId: string,
+    retries = 20,
+    delayMs = 1500,
+  ): Promise<void> {
+    const gone = await this.waitForResourceGone(prefix, resourceType, resourceId, retries, delayMs);
+
+    if (!gone) {
+      throw new Error(
+        `Resource ${prefix}/${resourceType}/${resourceId} did not finalise (expected 404) within ${retries * delayMs}ms`,
+      );
+    }
   }
 
   async waitForRancherResources(prefix: string, resourceType: string, expectedTotal: number, greaterThan = false) {
@@ -686,7 +753,14 @@ export class RancherApi {
   async deleteNamespace(namespaces: string[]) {
     for (const ns of namespaces) {
       await this.deleteRancherResource('v1', 'namespaces', ns);
-      await this.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 20, 1000);
+      const gone = await this.waitForRancherResource('v1', 'namespaces', ns, (resp) => resp.status === 404, 20, 1000);
+
+      if (!gone) {
+        // Namespace finalisation hangs on lingering resources / finalisers;
+        // surface the failure so the next test sees it rather than racing
+        // against a half-deleted namespace that returns intermittent 404/200.
+        console.warn(`[RancherApi] deleteNamespace: namespace "${ns}" did not finalise (expected 404) within 20s`);
+      }
     }
   }
 
