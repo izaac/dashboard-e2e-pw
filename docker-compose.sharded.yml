@@ -56,6 +56,9 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      # Enable Playwright's CI defaults: retries=2, fail on missing tests, etc.
+      # playwright.config.ts gates retry count on `process.env.CI`.
+      CI: "true"
     # Run as root so the named /blobs volume is writable; chown the bind-mounted
     # test-results back to the host user at the end. After the test run, copy
     # the blob with a shard-unique name into /blobs so the merge container has
@@ -87,6 +90,7 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      CI: "true"
     command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; cp /app/blob-report/*.zip /blobs/shard-2.zip 2>/dev/null; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
     volumes:
       - .:/app
@@ -104,6 +108,11 @@ services:
         condition: service_started
     networks:
       e2e:
+    environment:
+      # Without this, `merge-reports --reporter=html` starts an HTTP server at
+      # localhost:9323 after generating the report and never exits, wedging the
+      # merge container until externally stopped.
+      PLAYWRIGHT_HTML_OPEN: never
     entrypoint: ["sh", "-c"]
     # Merge writes the HTML report directly to /app/playwright-report (host's
     # ./playwright-report via the bind-mount), so no second cp step is needed.

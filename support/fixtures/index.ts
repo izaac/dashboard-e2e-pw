@@ -210,6 +210,14 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
   page: async ({ page }, use, testInfo) => {
     const consoleLogs: string[] = [];
     const networkLogs: string[] = [];
+    // Rolling buffer of all responses (any status) — used to reconstruct the
+    // last few API calls before a redirect-to-/auth/login event so we can see
+    // *what* triggered the SPA to nuke the session.
+    const recentResponses: string[] = [];
+    const RESPONSE_BUFFER = 25;
+    // Navigation event log + flagged unexpected redirects to /auth/login.
+    const navEvents: string[] = [];
+    let lastNonAuthUrl = '';
 
     page.on('console', (msg) => {
       consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
@@ -222,9 +230,46 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
     // Track API requests — log failures for debugging
     page.on('response', (response) => {
       const status = response.status();
+      const line = `[${status}] ${response.request().method()} ${response.url()}`;
 
       if (status >= 400) {
-        networkLogs.push(`[${status}] ${response.request().method()} ${response.url()}`);
+        networkLogs.push(line);
+      }
+
+      // Rolling buffer of *all* responses for redirect forensics
+      recentResponses.push(`[${new Date().toISOString()}] ${line}`);
+      if (recentResponses.length > RESPONSE_BUFFER) {
+        recentResponses.shift();
+      }
+    });
+
+    page.on('framenavigated', (frame) => {
+      if (frame !== page.mainFrame()) {
+        return;
+      }
+      const url = frame.url();
+      const ts = new Date().toISOString();
+
+      navEvents.push(`[${ts}] ${url}`);
+
+      // Suspect: SPA redirected to /auth/login from a non-login page.
+      // Capture the trigger context so the next run reveals what 401/socket
+      // event nuked the session.
+      const isAuthLogin = url.includes('/auth/login');
+      const wasAuthLogin = lastNonAuthUrl.includes('/auth/login');
+
+      if (isAuthLogin && lastNonAuthUrl && !wasAuthLogin) {
+        navEvents.push(`*** UNEXPECTED REDIRECT TO /auth/login`);
+        navEvents.push(`    from: ${lastNonAuthUrl}`);
+        navEvents.push(`    at:   ${ts}`);
+        navEvents.push(`    --- last ${Math.min(consoleLogs.length, 10)} console lines ---`);
+        consoleLogs.slice(-10).forEach((l) => navEvents.push(`    ${l}`));
+        navEvents.push(`    --- last ${Math.min(recentResponses.length, RESPONSE_BUFFER)} responses (any status) ---`);
+        recentResponses.forEach((l) => navEvents.push(`    ${l}`));
+      }
+
+      if (!isAuthLogin) {
+        lastNonAuthUrl = url;
       }
     });
 
@@ -248,6 +293,16 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
         fs.writeFileSync(netPath, networkLogs.join('\n'));
         await testInfo.attach('network-errors', { path: netPath, contentType: 'text/plain' });
+      }
+
+      // 2b. Navigation events — captures unexpected redirects to /auth/login
+      // with the last 10 console lines and 25 responses to identify what
+      // triggered the session loss.
+      if (navEvents.length > 0) {
+        const navPath = path.join(testInfo.outputDir, 'nav-events.txt');
+
+        fs.writeFileSync(navPath, navEvents.join('\n'));
+        await testInfo.attach('nav-events', { path: navPath, contentType: 'text/plain' });
       }
 
       // 3. DOM snapshot — truncated to 50KB
