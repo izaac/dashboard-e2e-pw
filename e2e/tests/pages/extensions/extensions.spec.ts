@@ -23,16 +23,16 @@ const UI_PLUGIN_NAMESPACE = 'cattle-ui-plugin-system';
 async function ensureRepoExists(api: RancherApi, repoName: string, gitRepo: string, gitBranch: string): Promise<void> {
   const existing = await api.getRancherResource('v1', 'catalog.cattle.io.clusterrepos', repoName, 0);
 
-  if (existing.status === 200) {
-    return; // already exists
+  if (existing.status !== 200) {
+    await api.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
+      type: 'catalog.cattle.io.clusterrepo',
+      metadata: { name: repoName },
+      spec: { clientSecret: null, gitRepo, gitBranch },
+    });
   }
 
-  await api.createRancherResource('v1', 'catalog.cattle.io.clusterrepos', {
-    type: 'catalog.cattle.io.clusterrepo',
-    metadata: { name: repoName },
-    spec: { clientSecret: null, gitRepo, gitBranch },
-  });
-
+  // Wait for Downloaded + active even if the repo already existed —
+  // a previous test may have created it without waiting for the GitHub clone.
   await api.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', repoName);
   await api.waitForResourceState('v1', 'catalog.cattle.io.clusterrepos', repoName);
 }
@@ -360,6 +360,11 @@ test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
   });
 
   test('add repository', async ({ page, rancherApi }) => {
+    // The end-to-end flow does a real GitHub clone via `waitForRepositoryDownload`
+    // (~40s polling) + `waitForResourceState` (~40s polling) on top of UI form-fill,
+    // which exceeds the global 60s test timeout under normal network conditions.
+    test.setTimeout(LONG);
+
     const repoName = 'rancher-plugin-examples';
 
     // Idempotent: remove repo if it already exists so the UI create flow runs clean
