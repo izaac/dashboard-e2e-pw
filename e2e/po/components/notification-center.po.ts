@@ -1,7 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import { NotificationPo } from '@/e2e/po/components/notification.po';
-import { waitForAnimationSettle } from '@/support/utils/debounce';
+import { waitForUiTransition } from '@/support/utils/debounce';
 
 export default class NotificationsCenterPo extends ComponentPo {
   constructor(page: Page) {
@@ -13,15 +13,15 @@ export default class NotificationsCenterPo extends ComponentPo {
   }
 
   /**
-   * Open/close the notification center. Waits for the slide-in panel's
-   * CSS transition to actually settle via the Web Animations API rather
-   * than an `aria-expanded` race (the attribute flip is debounced behind
-   * the animation on post-restart pages, where the prior `waitForTimeout(500)`
-   * sleep masked it).
+   * Open/close the notification center. The slide-in panel mounts at the
+   * start of the open transition, so the Web Animations API has nothing
+   * to attach a Promise to (the element doesn't exist until the
+   * transition starts). Use the documented UI-transition sleep helper
+   * instead — single eslint-disable lives in the util.
    */
   async toggle(): Promise<void> {
     await this.dropdownButton().click();
-    await waitForAnimationSettle(this.self(), 'notification-center toggle');
+    await waitForUiTransition(this.page);
   }
 
   /** Status indicator locator (read state) */

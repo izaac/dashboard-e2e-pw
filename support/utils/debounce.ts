@@ -70,12 +70,40 @@ export async function retryBackoff(page: Page, ms: number = RETRY_BACKOFF_MS): P
  *   detached before evaluate ran) so it surfaces in CI rather than being
  *   silently swallowed.
  *
+ * Caveat: only works when `target` is in the DOM at the moment the
+ * animation starts (e.g. fading an existing panel). If the animation
+ * MOUNTS the target (panel attached on open), use `waitForUiTransition`
+ * instead — there is nothing to attach a Promise to until the element
+ * appears.
+ *
  * Usage:
- *   await waitForAnimationSettle(this.panel());
- *   await waitForAnimationSettle(this.dropdown(), 'panel-toggle');
+ *   await waitForAnimationSettle(this.panel(), 'panel-fade');
  */
 export async function waitForAnimationSettle(target: Locator, label: string = 'animation'): Promise<void> {
   await target
     .evaluate((el) => Promise.allSettled(el.getAnimations({ subtree: true }).map((a) => a.finished)))
     .catch((err) => console.warn(`[${label} settle] skipped: ${(err as Error)?.message ?? err}`));
+}
+
+/**
+ * Standard CSS transition window for slide-in / drawer / fade-in components
+ * across the dashboard. The transitions resolve in 200–400 ms; 500 ms is
+ * the empirical safe ceiling that the original code used.
+ */
+export const UI_TRANSITION_MS = 500;
+
+/**
+ * Sleep through a UI transition that we cannot observe via the Web
+ * Animations API (because the target element mounts at the start of the
+ * transition rather than animating in place). Use sparingly — prefer a
+ * web-first locator wait whenever the post-transition state has an
+ * observable signal.
+ *
+ * Usage:
+ *   await this.dropdownButton().click();
+ *   await waitForUiTransition(this.page);
+ */
+export async function waitForUiTransition(page: Page, ms: number = UI_TRANSITION_MS): Promise<void> {
+  // eslint-disable-next-line playwright/no-wait-for-timeout -- target mounts at transition start; no observable signal until after settle
+  await page.waitForTimeout(ms);
 }
