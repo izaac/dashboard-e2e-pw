@@ -226,14 +226,14 @@ faster and more reliable than clicking through forms.
 test('create and verify a namespace', async ({ page, rancherApi }) => {
   const nsName = `test-ns-${Date.now()}`;
 
-  await rancherApi.createNamespace(nsName, 'default');
+  await rancherApi.createNamespace(nsName);
 
   try {
     // Navigate and verify the namespace shows up in the UI
     // ... your assertions here ...
   } finally {
-    // Always clean up what you created
-    await rancherApi.deleteNamespace(nsName);
+    // Always clean up what you created — deleteNamespace takes an array
+    await rancherApi.deleteNamespace([nsName]);
   }
 });
 ```
@@ -329,12 +329,12 @@ Each test must work independently — it can't depend on another test running fi
 ```typescript
 test('can view namespace details', async ({ page, rancherApi }) => {
   const ns = `test-ns-${Date.now()}`;
-  await rancherApi.createNamespace(ns, 'default');
+  await rancherApi.createNamespace(ns);
 
   try {
     // Navigate, verify, assert
   } finally {
-    await rancherApi.deleteNamespace(ns);
+    await rancherApi.deleteNamespace([ns]);
   }
 });
 ```
@@ -346,7 +346,7 @@ Your test must produce the same result no matter how many times you run it.
 **Don't do this** — a fixed name fails the second time because the resource already exists:
 
 ```typescript
-await rancherApi.createNamespace('my-namespace', 'default');
+await rancherApi.createNamespace('my-namespace');
 // Second run: "my-namespace already exists"
 ```
 
@@ -354,15 +354,18 @@ await rancherApi.createNamespace('my-namespace', 'default');
 
 ```typescript
 const ns = `my-ns-${Date.now()}`;
-await rancherApi.createNamespace(ns, 'default');
+await rancherApi.createNamespace(ns);
 ```
 
-**Also fine** — check if the resource exists first and clean it up:
+**Also fine** — pre-clean any leftover and re-create. `deleteRancherResource(...)`'s
+`failOnStatusCode = false` flag tolerates a missing resource (404) without throwing,
+so a no-op delete is safe — never use a silent `.catch(() => {})` (it swallows real
+auth/network errors and violates the project's no-silent-failure rule):
 
 ```typescript
-// Delete if leftover from a previous failed run
-await rancherApi.deleteNamespace('my-namespace').catch(() => {});
-await rancherApi.createNamespace('my-namespace', 'default');
+// Delete if leftover from a previous failed run; the `false` flag skips throw on 404
+await rancherApi.deleteRancherResource('v1', 'namespaces', 'my-namespace', false);
+await rancherApi.createNamespace('my-namespace');
 ```
 
 ### Rule 3: Always clean up
@@ -772,9 +775,36 @@ Run a second time without `--update-snapshots` to confirm stability before you p
 
 ### Tolerance
 
-Global default is `maxDiffPixelRatio: 0.01` (1%, set in `playwright.config.ts`). Prefer
-adding a mask helper to the relevant PO over loosening this — every fix that bumps the
-ratio makes future regressions easier to miss.
+Global defaults in `playwright.config.ts` are `maxDiffPixelRatio: 0.03` (3%) and
+`threshold: 0.3` (per-pixel YIQ tolerance). The 3% pixel ratio absorbs side-nav badge
+drift, transient banners, and minor padding shifts; the 0.3 YIQ threshold absorbs
+font-rendering churn between baseline-capture and run-time browsers. Real regressions
+still surface — a missing button or misrendered list typically hits double-digit
+pixel ratios.
+
+Prefer adding a mask helper to the relevant PO (or use the existing
+`chromeMasks(page)` from `@/support/utils/visual-snapshot`, which bundles masthead +
+side-nav badge + dynamic-banner masks for full-page snapshots) over loosening the
+ratio further — every fix that bumps the ratio makes future regressions easier to
+miss.
+
+```typescript
+import { visualSnapshot, chromeMasks, ensureLightTheme } from '@/support/utils/visual-snapshot';
+
+test('home page snapshot', async ({ page, rancherApi, isPrime }) => {
+  const restoreTheme = await ensureLightTheme(rancherApi);
+
+  try {
+    // ... navigate and stabilise ...
+    await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'home.png'), {
+      fullPage: true,
+      mask: chromeMasks(page),
+    });
+  } finally {
+    await restoreTheme();
+  }
+});
+```
 
 > Operating notes (running, regenerating, GREP filter) live in
 > [RUNNING-TESTS.md §7](./RUNNING-TESTS.md#7-visual-snapshot-tests). Rationale and
@@ -825,7 +855,8 @@ See also: [Debugging Failures](DEBUGGING-FAILURES.md) for how to use `summarize-
 | Assert not in DOM | `await expect(locator).not.toBeAttached()` |
 | Wait for API response | `const r = page.waitForResponse(...)` → action → `await r` |
 | Mock an API response | `page.route(url, route => route.fulfill({ json }))` |
-| Create via API | `await rancherApi.createNamespace(name, project)` |
+| Create via API | `await rancherApi.createNamespace(name)` (or `createNamespaceInProject(name, projectId)`) |
+| Delete via API | `await rancherApi.deleteNamespace([name])` (array) or `deleteRancherResource('v1', resourceType, id, false)` |
 | Skip if no creds | `test.skip(!envMeta.awsAccessKey, 'reason')` |
 | Run one test | `npx playwright test my.spec.ts --reporter=line` |
 | Debug visually | `npx playwright test my.spec.ts --debug` |
