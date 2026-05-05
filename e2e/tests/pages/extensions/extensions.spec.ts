@@ -6,6 +6,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import UiPluginsPagePo from '@/e2e/po/pages/explorer/uiplugins.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
+import { snapshotSetting, type Restore } from '@/support/utils/setting-snapshot';
 import { EXTENDED, EXTRA_LONG, LONG, STANDARD, VERY_LONG } from '@/support/timeouts';
 
 const cluster = 'local';
@@ -130,27 +131,14 @@ async function isExtensionInstalled(api: RancherApi, extensionName: string): Pro
 test.describe('Extensions page', { tag: ['@extensions', '@adminUser'] }, () => {
   // Serial: tests mutate the global `display-add-extension-repos-banner` setting and the extension repo set; parallel runs would race the snapshot/restore.
   test.describe.configure({ mode: 'serial' });
-  let originalBannerSetting: string | undefined;
+  let restoreBannerSetting: Restore;
 
   test.beforeAll(async ({ rancherApi }) => {
-    const resp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
-
-    if (resp.status !== 404) {
-      originalBannerSetting = resp.body?.value;
-    }
+    restoreBannerSetting = await snapshotSetting(rancherApi, 'display-add-extension-repos-banner', { prefix: 'v3' });
   });
 
-  test.afterAll(async ({ rancherApi }) => {
-    if (originalBannerSetting !== undefined) {
-      const resp = await rancherApi.getRancherResource('v3', 'setting', 'display-add-extension-repos-banner', 0);
-
-      if (resp.status !== 404) {
-        await rancherApi.setRancherResource('v3', 'setting', 'display-add-extension-repos-banner', {
-          ...resp.body,
-          value: originalBannerSetting,
-        });
-      }
-    }
+  test.afterAll(async () => {
+    await restoreBannerSetting();
   });
 
   test.beforeEach(async ({ login }) => {

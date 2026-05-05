@@ -2,6 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { SettingsPagePo } from '@/e2e/po/pages/global-settings/settings.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
+import { snapshotSetting } from '@/support/utils/setting-snapshot';
 import { VERY_LONG, EXTRA_LONG } from '@/support/timeouts';
 
 const BANNER_TEXT =
@@ -36,19 +37,6 @@ test.describe('Settings', () => {
     await login();
     settingsPage = new SettingsPagePo(page, settingsClusterId);
   });
-
-  /** Snapshot a setting and return a restore function (handles resourceVersion refresh) */
-  async function snapshotSetting(rancherApi: any, name: string) {
-    const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', name);
-    const original = structuredClone(resp.body);
-
-    return async () => {
-      const fresh = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', name);
-
-      original.metadata.resourceVersion = fresh.body.metadata.resourceVersion;
-      await rancherApi.setRancherResource('v1', 'management.cattle.io.settings', name, original);
-    };
-  }
 
   async function navToSettings(page: any) {
     const burgerMenu = new BurgerMenuPo(page);
