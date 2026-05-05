@@ -44,6 +44,9 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      # Enable Playwright's CI defaults: retries=2, fail on missing tests, etc.
+      # playwright.config.ts gates retry count on `process.env.CI`.
+      CI: "true"
     command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-1.exit"]
     volumes:
       - blob-reports:/blobs
@@ -61,6 +64,7 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      CI: "true"
     command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
     volumes:
       - blob-reports:/blobs
@@ -73,6 +77,11 @@ services:
         condition: service_started
       shard-2:
         condition: service_started
+    environment:
+      # Without this, `merge-reports --reporter=html` starts an HTTP server at
+      # localhost:9323 after generating the report and never exits, wedging the
+      # merge container until externally stopped.
+      PLAYWRIGHT_HTML_OPEN: never
     entrypoint: ["sh", "-c"]
     command:
       - |
