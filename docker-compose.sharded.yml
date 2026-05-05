@@ -56,8 +56,20 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-1.exit"]
+    # Run as root so the named /blobs volume is writable; chown the bind-mounted
+    # test-results back to the host user at the end. After the test run, copy
+    # the blob with a shard-unique name into /blobs so the merge container has
+    # both. The anonymous volume on /app/blob-report isolates shards from each
+    # other (otherwise both would race on the host-mounted ./blob-report and
+    # only the last-finishing shard's report would survive).
+    command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; rc=$$?; cp /app/blob-report/*.zip /blobs/shard-1.zip 2>/dev/null; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-1.exit"]
     volumes:
+      # Bind-mount source so test/PO updates apply without rebuilding the
+      # image. Anonymous volume on /app/node_modules keeps the image-installed
+      # deps (built via `RUN yarn install`) instead of shadowing with host's copy.
+      - .:/app
+      - /app/node_modules
+      - /app/blob-report
       - blob-reports:/blobs
       - ./test-results:/app/test-results
 
@@ -75,8 +87,11 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
-    command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
+    command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; cp /app/blob-report/*.zip /blobs/shard-2.zip 2>/dev/null; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
     volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/blob-report
       - blob-reports:/blobs
       - ./test-results:/app/test-results
 
@@ -90,24 +105,30 @@ services:
     networks:
       e2e:
     entrypoint: ["sh", "-c"]
+    # Merge writes the HTML report directly to /app/playwright-report (host's
+    # ./playwright-report via the bind-mount), so no second cp step is needed.
     command:
       - |
         echo "Waiting for all 2 shards to complete..."
         while [ $$(ls /blobs/shard-*.exit 2>/dev/null | wc -l) -lt 2 ]; do sleep 5; done
         echo "All shards done. Merging reports..."
-        mkdir -p /blobs/all
-        cp /blobs/*.zip /blobs/all/ 2>/dev/null || true
-        npx playwright merge-reports /blobs/all --reporter=html
-        cp -r playwright-report/* /report/
+        mkdir -p /blobs/zips
+        cp /blobs/shard-*.zip /blobs/zips/ 2>/dev/null || true
+        zip_count=$$(ls /blobs/zips/*.zip 2>/dev/null | wc -l)
+        if [ "$$zip_count" -lt 2 ]; then
+          echo "Expected 2 blob reports, found $$zip_count — merge skipped"
+        else
+          npx playwright merge-reports /blobs/zips --reporter=html
+          chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/playwright-report 2>/dev/null
+          echo "Report written to playwright-report/"
+        fi
         echo ""
         echo "=== Shard exit codes ==="
         for f in /blobs/shard-*.exit; do echo "$$(basename $$f .exit): exit $$(cat $$f)"; done
-        echo ""
-        echo "Report written to playwright-report/"
-        chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /report 2>/dev/null
     volumes:
+      - .:/app
+      - /app/node_modules
       - blob-reports:/blobs
-      - ./playwright-report:/report
 
 networks:
   e2e:

@@ -2,18 +2,21 @@ import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 import { DEBOUNCE, VERY_LONG } from '@/support/timeouts';
 
-// Unique auth file per Rancher instance — matches playwright.config.ts logic
-const authPort = (() => {
-  const baseUrl = process.env.TEST_BASE_URL || 'https://localhost:8005';
+// Unique auth file per Rancher instance — host+port keyed so sharded
+// runs (rancher-1 and rancher-2 both on 443) do not collide. Mirrors the
+// `authSlug` logic in playwright.config.ts; the two MUST stay in sync,
+// otherwise the auth project writes to one path and the chromium project
+// reads from another.
+const authSlug = (() => {
+  const rawBaseUrl = (process.env.TEST_BASE_URL || 'https://localhost:8005').replace(/\/+$/, '');
+  const u = new URL(rawBaseUrl);
+  const host = u.hostname.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const port = u.port || (u.protocol === 'https:' ? '443' : '80');
 
-  try {
-    return new URL(baseUrl).port || '443';
-  } catch {
-    return '8005';
-  }
+  return `${host}-${port}`;
 })();
 
-export const ADMIN_AUTH_FILE = path.join(__dirname, `../../.auth/admin-${authPort}.json`);
+export const ADMIN_AUTH_FILE = path.join(__dirname, `../../.auth/admin-${authSlug}.json`);
 
 const AUTH_MAX_ATTEMPTS = 3;
 const AUTH_FORM_TIMEOUT = 30_000;
