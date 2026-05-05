@@ -3,6 +3,7 @@ import type { RancherApi } from '@/support/fixtures/rancher-api';
 import UsersPo from '@/e2e/po/pages/users-and-auth/users.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import { cleanupOrphans } from '@/support/utils/cleanup-orphans';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG, STANDARD } from '@/support/timeouts';
 
@@ -712,20 +713,13 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     let savedPerPage: string | undefined;
 
     test.beforeAll(async ({ rancherApi }) => {
-      // Pre-clean any leftover pagination-pool users from a prior run. Without
-      // this, orphaned `e2e-pgn-*` users inflate the list count and tests that
-      // rely on a stable filter-result count flake on dirty environments.
-      const allUsers = await rancherApi.getRancherResource('v1', 'management.cattle.io.users');
-
-      if (allUsers.body?.data) {
-        const orphanIds: string[] = allUsers.body.data
-          .filter((u: any) => typeof u?.username === 'string' && u.username.startsWith('e2e-pgn-'))
-          .map((u: any) => u.id as string);
-
-        await Promise.all(
-          orphanIds.map((id) => rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', id, false)),
-        );
-      }
+      // Pre-clean leftover `e2e-pgn-*` pagination-pool users from prior runs;
+      // orphans inflate the list count and break filter-result count assertions.
+      await cleanupOrphans(rancherApi, {
+        prefix: 'v1',
+        resourceType: 'management.cattle.io.users',
+        match: (u) => typeof u?.username === 'string' && u.username.startsWith('e2e-pgn-'),
+      });
 
       // Save per-page so afterAll can restore even if a test mutates it
       const prefsResp = await rancherApi.getRancherResource('v1', 'userpreferences');

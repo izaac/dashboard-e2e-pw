@@ -10,20 +10,16 @@ import ClusterManagerEditGenericPagePo from '@/e2e/po/edit/provisioning.cattle.i
 import CloudCredentialsPagePo from '@/e2e/po/pages/cluster-manager/cloud-credentials.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
+import { cleanupOrphans } from '@/support/utils/cleanup-orphans';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
   test.beforeAll(async ({ rancherApi }) => {
-    // Clean up test-prefixed Amazon cloud credentials from previous runs
-    const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
-
-    if (result.body?.pagination?.total > 0) {
-      for (const item of result.body.data) {
-        if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
-          await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
-        }
-      }
-    }
+    // Pre-clean leftover test-prefixed Amazon cloud credentials from previous runs.
+    await cleanupOrphans(rancherApi, {
+      resourceType: 'cloudcredentials',
+      match: (c) => c.amazonec2credentialConfig && c.name?.startsWith('e2e-test-'),
+    });
   });
 
   test('Ensure we validate credentials and show an error when invalid', async ({ login, page, envMeta }) => {

@@ -85,6 +85,59 @@ export async function resetNamespaceFilter(rancherApi: RancherApi): Promise<void
   await rancherApi.setUserPreference({ 'ns-by-cluster': '{"local":["all://user"]}' });
 }
 
+export interface PaginationSeedOptions {
+  /** Slug used in `e2e-${slug}-list/-unique` namespace names. e.g. `pods`, `job`, `cj`. */
+  slug: string;
+  /** Steve resource type, e.g. `pods`, `batch.jobs`, `apps.deployments`. */
+  resourceType: string;
+  /** Resource body factory; called once per bulk item (with the bulk name) and once for the unique item. */
+  bodyFactory: (ns: string, name: string) => object;
+  /** API prefix; defaults to `v1`. */
+  prefix?: 'v1';
+}
+
+export interface PaginationSeed {
+  ns1: string;
+  ns2: string;
+  bulkNames: string[];
+  uniqueName: string;
+  savedPrefs: SavedPrefs;
+}
+
+/**
+ * Set up a paginated-list test fixture: two namespaces, 22 bulk resources in
+ * ns1, 1 uniquely-named resource in ns2, and table preferences pinned to
+ * 10 rows/page with the namespace filter scoped to ns1+ns2.
+ */
+export async function setupPaginationSeed(
+  rancherApi: RancherApi,
+  options: PaginationSeedOptions,
+): Promise<PaginationSeed> {
+  const prefix = options.prefix ?? 'v1';
+  const ts = Date.now();
+  const ns1 = `e2e-${options.slug}-list-${ts}`;
+  const ns2 = `e2e-${options.slug}-unique-${ts}`;
+  const uniqueName = `e2e-unique-${ts}`;
+
+  await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
+
+  const [bulkNames] = await Promise.all([
+    createBulkResources(rancherApi, prefix, options.resourceType, ns1, 22, options.bodyFactory),
+    rancherApi.createRancherResource(prefix, options.resourceType, options.bodyFactory(ns2, uniqueName)),
+  ]);
+
+  const savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+
+  return { ns1, ns2, bulkNames, uniqueName, savedPrefs };
+}
+
+/** Tear down a pagination seed: restore prefs and delete both namespaces. */
+export async function teardownPaginationSeed(rancherApi: RancherApi, seed: PaginationSeed): Promise<void> {
+  await restoreTablePreferences(rancherApi, seed.savedPrefs);
+  await rancherApi.deleteRancherResource('v1', 'namespaces', seed.ns1, false);
+  await rancherApi.deleteRancherResource('v1', 'namespaces', seed.ns2, false);
+}
+
 /**
  * Full pagination navigation test.
  * Verifies: pagination visible, button states, text, navigate right/left/end/beginning.

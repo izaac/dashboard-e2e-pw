@@ -7,15 +7,14 @@ import {
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import { createDeploymentBlueprint } from '@/e2e/blueprints/explorer/workloads/deployments/deployment-create';
 import {
-  createBulkResources,
-  setTablePreferences,
-  restoreTablePreferences,
+  setupPaginationSeed,
+  teardownPaginationSeed,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
   assertPaginationHidden,
   mockSmallCollection,
-  type SavedPrefs,
+  type PaginationSeed,
 } from './pagination.utils';
 import { EXTRA_LONG, LONG, SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
@@ -407,22 +406,13 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
     test.describe.configure({ mode: 'serial' });
     // Serial: tests share bulk resource setup (22 resources + user prefs)
 
-    let savedPrefs: SavedPrefs;
-    let ns1: string;
-    let ns2: string;
-    let bulkNames: string[];
-    let uniqueName: string;
+    let seed: PaginationSeed;
 
     test.beforeAll(async ({ rancherApi }) => {
-      ns1 = `e2e-deploy-list-${Date.now()}`;
-      ns2 = `e2e-deploy-unique-${Date.now()}`;
-
-      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
-
-      uniqueName = `e2e-unique-${Date.now()}`;
-
-      const [names] = await Promise.all([
-        createBulkResources(rancherApi, 'v1', 'apps.deployments', ns1, 22, (ns: string, name: string) => ({
+      seed = await setupPaginationSeed(rancherApi, {
+        slug: 'deploy',
+        resourceType: 'apps.deployments',
+        bodyFactory: (ns, name) => ({
           apiVersion: 'apps/v1',
           kind: 'Deployment',
           metadata: { name, namespace: ns },
@@ -434,30 +424,12 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
               spec: { containers: [SMALL_CONTAINER] },
             },
           },
-        })),
-        rancherApi.createRancherResource('v1', 'apps.deployments', {
-          apiVersion: 'apps/v1',
-          kind: 'Deployment',
-          metadata: { name: uniqueName, namespace: ns2 },
-          spec: {
-            replicas: 0,
-            selector: { matchLabels: { app: uniqueName } },
-            template: {
-              metadata: { labels: { app: uniqueName } },
-              spec: { containers: [SMALL_CONTAINER] },
-            },
-          },
         }),
-      ]);
-
-      bulkNames = names;
-      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+      });
     });
 
     test.afterAll(async ({ rancherApi }) => {
-      await restoreTablePreferences(rancherApi, savedPrefs);
-      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
-      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+      await teardownPaginationSeed(rancherApi, seed);
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationNavigation()
@@ -481,7 +453,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.waitForPage();
       const table = listPage.sortableTablePo();
 
-      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+      await assertPaginationSorting(table, seed.bulkNames[0], 'e2e-');
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationFilter()
@@ -493,7 +465,7 @@ test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.waitForPage();
       const table = listPage.sortableTablePo();
 
-      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+      await assertPaginationFilter(table, seed.bulkNames[0], seed.uniqueName, seed.ns2);
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationHidden()

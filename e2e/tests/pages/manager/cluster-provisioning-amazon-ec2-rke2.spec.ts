@@ -7,6 +7,7 @@ import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import describeSubnetsResponse from '@/e2e/blueprints/manager/describe-subnets-response';
 import describeVpcsResponse from '@/e2e/blueprints/manager/describe-vpcs-response';
+import { cleanupOrphans } from '@/support/utils/cleanup-orphans';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 import { LONG, EXTRA_LONG, CLUSTER_SETTLE, FULL_PROVISIONING } from '@/support/timeouts';
 
@@ -22,16 +23,11 @@ test.describe(
     // Serial: cred + cluster create/delete share the same e2e-test-prefixed cloud credential pool; parallel runs would orphan creds and clusters.
     test.describe.configure({ mode: 'serial' });
     test.beforeAll(async ({ rancherApi }) => {
-      // Clean up only test-prefixed Amazon cloud credentials from previous runs
-      const result = await rancherApi.getRancherResource('v3', 'cloudcredentials', undefined, 0);
-
-      if (result.body?.pagination?.total > 0) {
-        for (const item of result.body.data) {
-          if (item.amazonec2credentialConfig && item.name?.startsWith('e2e-test-')) {
-            await rancherApi.deleteRancherResource('v3', 'cloudcredentials', item.id, false);
-          }
-        }
-      }
+      // Pre-clean leftover test-prefixed Amazon cloud credentials from previous runs.
+      await cleanupOrphans(rancherApi, {
+        resourceType: 'cloudcredentials',
+        match: (c) => c.amazonec2credentialConfig && c.name?.startsWith('e2e-test-'),
+      });
     });
 
     test('can create an RKE2 cluster using Amazon cloud provider', async ({ login, page, rancherApi, envMeta }) => {

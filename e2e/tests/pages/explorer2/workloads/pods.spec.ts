@@ -4,15 +4,14 @@ import { WorkloadsCreatePageBasePo } from '@/e2e/po/pages/explorer/workloads/wor
 import ShellPo from '@/e2e/po/components/shell.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
-  createBulkResources,
-  setTablePreferences,
-  restoreTablePreferences,
+  setupPaginationSeed,
+  teardownPaginationSeed,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
   assertPaginationHidden,
   mockSmallCollection,
-  type SavedPrefs,
+  type PaginationSeed,
 } from './pagination.utils';
 
 test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -20,43 +19,23 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
     test.describe.configure({ mode: 'serial' });
     // Serial: tests share bulk resource setup (22 resources + user prefs)
 
-    let savedPrefs: SavedPrefs;
-    let ns1: string;
-    let ns2: string;
-    let bulkNames: string[];
-    let uniqueName: string;
+    let seed: PaginationSeed;
 
     test.beforeAll(async ({ rancherApi }) => {
-      ns1 = `e2e-pods-list-${Date.now()}`;
-      ns2 = `e2e-pods-unique-${Date.now()}`;
-
-      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
-
-      uniqueName = `e2e-unique-${Date.now()}`;
-
-      const [names] = await Promise.all([
-        createBulkResources(rancherApi, 'v1', 'pods', ns1, 22, (ns: string, name: string) => ({
+      seed = await setupPaginationSeed(rancherApi, {
+        slug: 'pods',
+        resourceType: 'pods',
+        bodyFactory: (ns, name) => ({
           apiVersion: 'v1',
           kind: 'Pod',
           metadata: { name, namespace: ns },
           spec: { containers: [{ name: 'test', image: SMALL_CONTAINER.image }] },
-        })),
-        rancherApi.createRancherResource('v1', 'pods', {
-          apiVersion: 'v1',
-          kind: 'Pod',
-          metadata: { name: uniqueName, namespace: ns2 },
-          spec: { containers: [{ name: 'test', image: SMALL_CONTAINER.image }] },
         }),
-      ]);
-
-      bulkNames = names;
-      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+      });
     });
 
     test.afterAll(async ({ rancherApi }) => {
-      await restoreTablePreferences(rancherApi, savedPrefs);
-      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
-      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+      await teardownPaginationSeed(rancherApi, seed);
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationNavigation()
@@ -80,7 +59,7 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.waitForPage();
       const table = listPage.sortableTable();
 
-      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+      await assertPaginationSorting(table, seed.bulkNames[0], 'e2e-');
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationFilter()
@@ -92,7 +71,7 @@ test.describe('Pods', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.waitForPage();
       const table = listPage.sortableTable();
 
-      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+      await assertPaginationFilter(table, seed.bulkNames[0], seed.uniqueName, seed.ns2);
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationHidden()

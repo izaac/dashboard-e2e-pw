@@ -2,15 +2,14 @@ import { test, expect } from '@/support/fixtures';
 import { WorkloadsJobsListPagePo, WorkLoadsJobDetailsPagePo } from '@/e2e/po/pages/explorer/workloads-jobs.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 import {
-  createBulkResources,
-  setTablePreferences,
-  restoreTablePreferences,
+  setupPaginationSeed,
+  teardownPaginationSeed,
   assertPaginationNavigation,
   assertPaginationSorting,
   assertPaginationFilter,
   assertPaginationHidden,
   mockSmallCollection,
-  type SavedPrefs,
+  type PaginationSeed,
 } from './pagination.utils';
 
 test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
@@ -112,22 +111,13 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
     test.describe.configure({ mode: 'serial' });
     // Serial: tests share bulk resource setup (22 resources + user prefs)
 
-    let savedPrefs: SavedPrefs;
-    let ns1: string;
-    let ns2: string;
-    let bulkNames: string[];
-    let uniqueName: string;
+    let seed: PaginationSeed;
 
     test.beforeAll(async ({ rancherApi }) => {
-      ns1 = `e2e-job-list-${Date.now()}`;
-      ns2 = `e2e-job-unique-${Date.now()}`;
-
-      await Promise.all([rancherApi.createNamespace(ns1), rancherApi.createNamespace(ns2)]);
-
-      uniqueName = `e2e-unique-${Date.now()}`;
-
-      const [names] = await Promise.all([
-        createBulkResources(rancherApi, 'v1', 'batch.jobs', ns1, 22, (ns: string, name: string) => ({
+      seed = await setupPaginationSeed(rancherApi, {
+        slug: 'job',
+        resourceType: 'batch.jobs',
+        bodyFactory: (ns, name) => ({
           apiVersion: 'batch/v1',
           kind: 'Job',
           metadata: { name, namespace: ns },
@@ -140,31 +130,12 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
             },
             backoffLimit: 0,
           },
-        })),
-        rancherApi.createRancherResource('v1', 'batch.jobs', {
-          apiVersion: 'batch/v1',
-          kind: 'Job',
-          metadata: { name: uniqueName, namespace: ns2 },
-          spec: {
-            template: {
-              spec: {
-                containers: [{ name: 'test', image: SMALL_CONTAINER.image, command: ['sh', '-c', 'exit 0'] }],
-                restartPolicy: 'Never',
-              },
-            },
-            backoffLimit: 0,
-          },
         }),
-      ]);
-
-      bulkNames = names;
-      savedPrefs = await setTablePreferences(rancherApi, [ns1, ns2]);
+      });
     });
 
     test.afterAll(async ({ rancherApi }) => {
-      await restoreTablePreferences(rancherApi, savedPrefs);
-      await rancherApi.deleteRancherResource('v1', 'namespaces', ns1, false);
-      await rancherApi.deleteRancherResource('v1', 'namespaces', ns2, false);
+      await teardownPaginationSeed(rancherApi, seed);
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationNavigation()
@@ -188,7 +159,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.waitForPage();
       const table = listPage.baseResourceList().resourceTable().sortableTable();
 
-      await assertPaginationSorting(table, bulkNames[0], 'e2e-');
+      await assertPaginationSorting(table, seed.bulkNames[0], 'e2e-');
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationFilter()
@@ -200,7 +171,7 @@ test.describe('Jobs', { tag: ['@explorer2', '@adminUser'] }, () => {
       await listPage.waitForPage();
       const table = listPage.baseResourceList().resourceTable().sortableTable();
 
-      await assertPaginationFilter(table, bulkNames[0], uniqueName, ns2);
+      await assertPaginationFilter(table, seed.bulkNames[0], seed.uniqueName, seed.ns2);
     });
 
     // eslint-disable-next-line playwright/expect-expect -- assertion via assertPaginationHidden()

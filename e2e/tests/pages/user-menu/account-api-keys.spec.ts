@@ -3,6 +3,7 @@ import HomePagePo from '@/e2e/po/pages/home.po';
 import UserMenuPo from '@/e2e/po/side-bars/user-menu.po';
 import AccountPagePo from '@/e2e/po/pages/account-api-keys.po';
 import CreateKeyPagePo from '@/e2e/po/pages/account-api-keys-create_key.po';
+import { cleanupOrphans } from '@/support/utils/cleanup-orphans';
 
 /**
  * Upstream cypress account-api-keys.spec is fully commented out behind
@@ -101,18 +102,12 @@ test.describe('Account and API Keys', { tag: ['@userMenu', '@adminUser', '@stand
     let savedPerPage: string | undefined;
 
     test.beforeAll(async ({ rancherApi }) => {
-      // Pre-clean any leftover pagination-pool tokens from a prior run. Without
-      // this, orphaned `e2e-pgn-*` tokens inflate the list count and the
-      // pagination assertions flake on dirty environments.
-      const allTokens = await rancherApi.getRancherResource('v3', 'tokens');
-
-      if (allTokens.body?.data) {
-        const orphanIds: string[] = allTokens.body.data
-          .filter((t: any) => typeof t?.description === 'string' && t.description.startsWith('e2e-pgn-'))
-          .map((t: any) => t.id as string);
-
-        await Promise.all(orphanIds.map((id) => rancherApi.deleteRancherResource('v3', 'tokens', id, false)));
-      }
+      // Pre-clean leftover `e2e-pgn-*` pagination-pool tokens from prior runs;
+      // orphans inflate the list count and break the pagination assertions.
+      await cleanupOrphans(rancherApi, {
+        resourceType: 'tokens',
+        match: (t) => typeof t?.description === 'string' && t.description.startsWith('e2e-pgn-'),
+      });
 
       // Save per-page so afterAll can restore even if a test mutates it
       const prefsResp = await rancherApi.getRancherResource('v1', 'userpreferences');
