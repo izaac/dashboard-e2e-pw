@@ -1,5 +1,4 @@
 import type { Page } from '@playwright/test';
-import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
@@ -21,19 +20,8 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     return new ResourceTablePo(this.page, '[data-testid="installed-app-catalog-list"]');
   }
 
-  /**
-   * Wait for chart install POST response, close terminal, verify apps are Deployed.
-   * The per-row `Deployed` waitFor below handles the install propagation
-   * window — no separate buffer sleep is needed before/after the loop.
-   */
-  async waitForInstallCloseTerminal(
-    installResponse: Promise<import('@playwright/test').Response>,
-    installableParts: string[],
-  ): Promise<void> {
-    const response = await installResponse;
-
-    expect([200, 201]).toContain(response.status());
-
+  /** Close the kubectl terminal and wait for each installable part to reach `Deployed`. */
+  async closeTerminalAndWaitDeployed(installableParts: string[]): Promise<void> {
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {

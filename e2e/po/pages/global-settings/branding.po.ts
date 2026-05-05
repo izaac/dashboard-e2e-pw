@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import RootClusterPage from '@/e2e/po/pages/root-cluster-page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
@@ -86,17 +85,14 @@ export class BrandingPagePo extends RootClusterPage {
     return this.applyButton();
   }
 
-  /** Click Apply and wait for a specific PUT endpoint to respond */
-  async applyAndWait(endpoint: string, statusCode?: number): Promise<void> {
+  /** Click Apply; returns the PUT `Response` so callers can assert. */
+  async applyAndWait(endpoint: string): Promise<import('@playwright/test').Response> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(endpoint) && resp.request().method() === 'PUT',
     );
 
     await this.applyButton().click();
-    const response = await responsePromise;
 
-    if (statusCode) {
-      expect(response.status()).toBe(statusCode);
-    }
+    return responsePromise;
   }
 }

@@ -178,7 +178,7 @@ test.describe('Branding', () => {
     await brandingPage.privateLabel().set(settings.privateLabel.new);
 
     // Apply
-    await brandingPage.applyAndWait('ui-pl', 200);
+    expect((await brandingPage.applyAndWait('ui-pl')).status()).toBe(200);
 
     // Visit the Home Page
     await burgerMenu.toggle();
@@ -197,7 +197,7 @@ test.describe('Branding', () => {
 
     // Reset
     await brandingPage.privateLabel().set(settings.privateLabel.original);
-    await brandingPage.applyAndWait('ui-pl', 200);
+    expect((await brandingPage.applyAndWait('ui-pl')).status()).toBe(200);
 
     await burgerMenu.toggle();
     await burgerMenu.home().click();
@@ -242,7 +242,7 @@ test.describe('Branding', () => {
       .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/logos/rancher-white.svg'));
 
     // Apply
-    await brandingPage.applyAndWait('ui-logo-light', 200);
+    expect((await brandingPage.applyAndWait('ui-logo-light')).status()).toBe(200);
 
     // Logo Preview
     await brandingPage.logoPreview('dark').scrollIntoViewIfNeeded();
@@ -284,7 +284,7 @@ test.describe('Branding', () => {
     // Reset
     await navToBranding(page);
     await brandingPage.customLogoCheckbox().set();
-    await brandingPage.applyAndWait('ui-logo-light', 200);
+    expect((await brandingPage.applyAndWait('ui-logo-light')).status()).toBe(200);
 
     const homePage = new HomePagePo(page);
 
@@ -320,7 +320,7 @@ test.describe('Branding', () => {
       .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/banners/banner-dark.svg'));
 
     // Apply
-    await brandingPage.applyAndWait('ui-banner-light', 200);
+    expect((await brandingPage.applyAndWait('ui-banner-light')).status()).toBe(200);
 
     // Banner Preview
     await brandingPage.bannerPreview('dark').scrollIntoViewIfNeeded();
@@ -355,7 +355,7 @@ test.describe('Branding', () => {
     // Reset
     await navToBranding(page);
     await brandingPage.customBannerCheckbox().set();
-    await brandingPage.applyAndWait('ui-banner-light', 200);
+    expect((await brandingPage.applyAndWait('ui-banner-light')).status()).toBe(200);
 
     await homePage.goTo();
     await expect(homePage.getBrandBannerImage()).toBeVisible();
@@ -380,7 +380,7 @@ test.describe('Branding', () => {
       .uploadButton('Upload Dark Background')
       .setInputFiles(path.resolve(__dirname, '../../../blueprints/branding/backgrounds/login-landscape-dark.svg'));
 
-    await brandingPage.applyAndWait('ui-login-background-light', 200);
+    expect((await brandingPage.applyAndWait('ui-login-background-light')).status()).toBe(200);
 
     await brandingPage.loginBackgroundPreview('dark').scrollIntoViewIfNeeded();
     await expect(brandingPage.loginBackgroundPreview('dark')).toBeVisible();
@@ -418,7 +418,7 @@ test.describe('Branding', () => {
     // Reset
     await navToBranding(page);
     await brandingPage.customLoginBackgroundCheckbox().set();
-    await brandingPage.applyAndWait('ui-login-background-light', 200);
+    expect((await brandingPage.applyAndWait('ui-login-background-light')).status()).toBe(200);
   });
 
   test('Favicon', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, isPrime }) => {
@@ -461,7 +461,7 @@ test.describe('Branding', () => {
 
     // Reset — prime builds restore to SUSE brand favicon (base64), community to /favicon.png
     await brandingPage.customFaviconCheckbox().set();
-    await brandingPage.applyAndWait('ui-favicon', 200);
+    expect((await brandingPage.applyAndWait('ui-favicon')).status()).toBe(200);
 
     const expectedFaviconHref: string | RegExp = isPrime
       ? `data:image/png;base64,${fixtureBase64('global/favicons/prime-favicon.png')}`
@@ -482,7 +482,7 @@ test.describe('Branding', () => {
     expect(currentValue).not.toBe(settings.primaryColor.new);
 
     await brandingPage.primaryColorPicker().set(settings.primaryColor.new);
-    await brandingPage.applyAndWait('ui-primary-color', 200);
+    expect((await brandingPage.applyAndWait('ui-primary-color')).status()).toBe(200);
     await expect(brandingPage.applyButton().self()).toBeEnabled();
 
     // Check in session
@@ -521,7 +521,7 @@ test.describe('Branding', () => {
 
     await brandingPage.primaryColorPicker().set(settings.primaryColor.original);
     await brandingPage.primaryColorCheckbox().set();
-    await brandingPage.applyAndWait('ui-primary-color', 200);
+    expect((await brandingPage.applyAndWait('ui-primary-color')).status()).toBe(200);
   });
 
   test('Link Color', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, login }) => {
@@ -537,7 +537,7 @@ test.describe('Branding', () => {
     expect(currentValue).not.toBe(settings.linkColor.new);
 
     await brandingPage.linkColorPicker().set(settings.linkColor.new);
-    await brandingPage.applyAndWait('ui-link-color', 200);
+    expect((await brandingPage.applyAndWait('ui-link-color')).status()).toBe(200);
 
     // Check in session
     const setValue = await brandingPage.linkColorPicker().value();
@@ -576,7 +576,7 @@ test.describe('Branding', () => {
 
     await brandingPage.linkColorPicker().set(settings.linkColor.original);
     await brandingPage.linkColorCheckbox().set();
-    await brandingPage.applyAndWait('ui-link-color', 200);
+    expect((await brandingPage.applyAndWait('ui-link-color')).status()).toBe(200);
   });
 });
 

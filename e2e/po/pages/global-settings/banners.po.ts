@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import RootClusterPage from '@/e2e/po/pages/root-cluster-page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
@@ -163,17 +162,15 @@ export class BannersPagePo extends RootClusterPage {
     return new AsyncButtonPo(this.page, '[data-testid="action-button-async-button"]');
   }
 
-  async applyAndWait(urlMatch: string, statusCode?: number): Promise<void> {
+  /** Click save; returns the PUT `Response` so callers can assert. */
+  async applyAndWait(urlMatch: string): Promise<import('@playwright/test').Response> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes(urlMatch) && resp.request().method() === 'PUT',
     );
 
     await this.saveButton().apply();
-    const response = await responsePromise;
 
-    if (statusCode !== undefined) {
-      expect(response.status()).toBe(statusCode);
-    }
+    return responsePromise;
   }
 
   // --- Banner elements (displayed across the app) ---

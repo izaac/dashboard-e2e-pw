@@ -61,17 +61,14 @@ export class FeatureFlagsPagePo extends RootClusterPage {
     return card.getBody().locator(':scope', { hasText: label });
   }
 
-  /**
-   * Click the card action button (Activate/Deactivate) and optionally wait for the API request and modal to close.
-   */
+  /** Click Activate/Deactivate; returns the PUT response so callers can assert. */
   async clickCardActionButtonAndWait(
     label: 'Activate' | 'Deactivate',
     endpoint: string,
-    value: boolean,
     config: { waitForModal?: boolean; waitForRequest?: boolean } = { waitForModal: false, waitForRequest: true },
-  ): Promise<void> {
+  ): Promise<import('@playwright/test').Response | undefined> {
     // Set up response listener BEFORE the click
-    let responsePromise: Promise<any> | undefined;
+    let responsePromise: Promise<import('@playwright/test').Response> | undefined;
 
     if (config.waitForRequest) {
       responsePromise = this.page.waitForResponse(
@@ -83,25 +80,44 @@ export class FeatureFlagsPagePo extends RootClusterPage {
 
     await this.cardActionButton(label).click();
 
-    if (responsePromise) {
-      const resp = await responsePromise;
-
-      expect(resp.status()).toBe(200);
-
-      const reqBody = resp.request().postDataJSON();
-
-      expect(reqBody.spec).toHaveProperty('value', value);
-
-      const respBody = await resp.json();
-
-      expect(respBody.spec).toHaveProperty('value', value);
-    }
+    const resp = responsePromise ? await responsePromise : undefined;
 
     if (config.waitForModal) {
       const card = new CardPo(this.page);
 
       await card.self().waitFor({ state: 'detached', timeout: RESTART_TIMEOUT });
     }
+
+    return resp;
+  }
+
+  /** Click Activate/Deactivate and assert PUT 200 + `spec.value === value` on both bodies. */
+  async clickCardActionButtonAndExpectFlagSet(
+    label: 'Activate' | 'Deactivate',
+    endpoint: string,
+    value: boolean,
+    config: { waitForModal?: boolean } = { waitForModal: false },
+  ): Promise<void> {
+    const resp = await this.clickCardActionButtonAndWait(label, endpoint, {
+      waitForRequest: true,
+      waitForModal: config.waitForModal,
+    });
+
+    if (!resp) {
+      throw new Error(
+        '[FeatureFlagsPagePo] clickCardActionButtonAndExpectFlagSet expected a PUT response — clickCardActionButtonAndWait returned undefined',
+      );
+    }
+
+    expect(resp.status()).toBe(200);
+
+    const reqBody = resp.request().postDataJSON();
+
+    expect(reqBody.spec).toHaveProperty('value', value);
+
+    const respBody = await resp.json();
+
+    expect(respBody.spec).toHaveProperty('value', value);
   }
 
   cardActionError(error: string): Locator {

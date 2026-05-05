@@ -171,7 +171,7 @@
 | AboutPagePo | about.po.ts | PagePo | — | super, diagnosticsBtn, links, linksContaining, getLinkDestination, return, versionLink, getCliDownloadLinkByLabel (+4) |
 | CreateKeyPagePo | account-api-keys-create_key.po.ts | PagePo | — | super, title, description, expiryOptions, createButton, cancelButton, doneButton, apiAccessKey (+3) |
 | AccountPagePo | account-api-keys.po.ts | PagePo | — | super, waitForRequests, titleLocator, createApiKeyButton, changePasswordButton, create, changePassword, changePasswordModal (+8) |
-| ChartInstalledAppsListPagePo | chart-installed-apps.po.ts | PagePo | `/c/${clusterId}/${product}/catalog.cattle.io.app` | super, filter, appsList, waitForInstallCloseTerminal, expect, for |
+| ChartInstalledAppsListPagePo | chart-installed-apps.po.ts | PagePo | `/c/${clusterId}/${product}/catalog.cattle.io.app` | super, filter, appsList, closeTerminalAndWaitDeployed, for |
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
@@ -289,9 +289,9 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, checkboxCustom, checkVisible, isDisabled, hasAppropriateWidth (+35) |
-| BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+13) |
-| FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+5) |
+| BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, checkboxCustom, checkVisible, isDisabled, hasAppropriateWidth (+34) |
+| BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+11) |
+| FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+6) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+11) |
 | PerformancePagePo | performance.po.ts | RootClusterPage | — | super, saveButton, inactivityCheckbox, inactivityInput, garbageCollectionResourceCount, namespaceFilteringCheckbox, websocketWebWorkerCheckbox, serverSidePaginationCheckbox (+11) |
 | SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+13) |

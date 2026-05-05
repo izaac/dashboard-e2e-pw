@@ -40,13 +40,14 @@ async function ensureFeatureFlagState(
   }
 
   const action = target === 'Active' ? 'Activate' : 'Deactivate';
-  const desiredValue = target === 'Active';
 
   await featureFlagsPage.list().clickRowActionMenuItem(ffId, action);
 
   // Click confirm in the prompt-update modal. waitForModal is false — the modal
   // will not auto-detach because the connection drops as Rancher restarts.
-  await featureFlagsPage.clickCardActionButtonAndWait(action, ffId, desiredValue, {
+  // We don't assert the PUT body here (Rancher restarts mid-response) — just
+  // wait for the request to fire so the restart cycle starts.
+  await featureFlagsPage.clickCardActionButtonAndWait(action, ffId, {
     waitForModal: false,
     waitForRequest: true,
   });

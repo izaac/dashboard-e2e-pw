@@ -151,7 +151,7 @@ test.describe('Banners', () => {
       expect(bgColor1).not.toBe(settings.bannerBackgroundColor.new.toLowerCase());
       await bannersPage.textColorPicker(1).set(settings.bannerBackgroundColor.new);
 
-      await bannersPage.applyAndWait('ui-banners', 200);
+      expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
       // Check banner in session
       const banner = bannersPage.fixedBanner();
@@ -198,7 +198,7 @@ test.describe('Banners', () => {
 
       // Hide banner
       await bannersPage.headerBannerCheckbox().set();
-      await bannersPage.applyAndWait('ui-banners', 200);
+      expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
       await expect(bannersPage.fixedBanner()).not.toBeAttached();
     });
 
@@ -225,7 +225,7 @@ test.describe('Banners', () => {
       expect(bgColor3).not.toBe(settings.bannerBackgroundColor.new.toLowerCase());
       await bannersPage.textColorPicker(3).set(settings.bannerBackgroundColor.new);
 
-      await bannersPage.applyAndWait('ui-banners', 200);
+      expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
       // Check banner in session
       const banner = bannersPage.fixedBanner();
@@ -272,7 +272,7 @@ test.describe('Banners', () => {
 
       // Hide banner
       await bannersPage.footerBannerCheckbox().set();
-      await bannersPage.applyAndWait('ui-banners', 200);
+      expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
       await expect(bannersPage.fixedBanner()).not.toBeAttached();
     });
 
@@ -303,7 +303,7 @@ test.describe('Banners', () => {
         expect(bgColor5).not.toBe(settings.bannerBackgroundColor.new.toLowerCase());
         await bannersPage.textColorPicker(5).set(settings.bannerBackgroundColor.new);
 
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Logout and check login screen
         const userMenu = new UserMenuPo(page);
@@ -341,7 +341,7 @@ test.describe('Banners', () => {
 
         // Hide banner
         await bannersPage.loginScreenBannerCheckbox().set();
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Logout and verify no banner
         await userMenu.clickMenuItem('Log Out');
@@ -362,7 +362,7 @@ test.describe('Banners', () => {
         await expect(bannersPage.loginErrorCheckbox().self()).toBeVisible();
         await bannersPage.loginErrorCheckbox().set();
         await bannersPage.loginErrorInput().set(settings.bannerLabel);
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Logout and attempt a failed login
         const userMenu = new UserMenuPo(page);
@@ -382,7 +382,7 @@ test.describe('Banners', () => {
 
         await expect(bannersPage.loginErrorCheckbox().self()).toBeVisible();
         await bannersPage.loginErrorCheckbox().set();
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Logout and verify no custom error
         await userMenu.clickMenuItem('Log Out');
@@ -405,7 +405,7 @@ test.describe('Banners', () => {
         await bannersPage.htmlTextArea('bannerHeader').fill(bannerHtml);
         await bannersPage.textColorPicker(0).set(settings.bannerTextColor.new);
         await bannersPage.textColorPicker(1).set(settings.bannerBackgroundColor.new);
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Check banner colors
         const banner = bannersPage.fixedBanner();
@@ -435,7 +435,7 @@ test.describe('Banners', () => {
 
         // Hide banner
         await bannersPage.headerBannerCheckbox().set();
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
         await expect(bannersPage.fixedBanner()).not.toBeAttached();
       });
 
@@ -453,7 +453,7 @@ test.describe('Banners', () => {
         await bannersPage.acceptButtonInput('bannerConsent').fill(acceptButtonText);
         await bannersPage.textColorPicker(4).set(settings.bannerTextColor.new);
         await bannersPage.textColorPicker(5).set(settings.bannerBackgroundColor.new);
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Logout and check login screen
         const userMenu = new UserMenuPo(page);
@@ -500,7 +500,7 @@ test.describe('Banners', () => {
 
         // Hide banner
         await bannersPage.loginScreenBannerCheckbox().set();
-        await bannersPage.applyAndWait('ui-banners', 200);
+        expect((await bannersPage.applyAndWait('ui-banners')).status()).toBe(200);
 
         // Logout and verify no banner
         await userMenu.clickMenuItem('Log Out');

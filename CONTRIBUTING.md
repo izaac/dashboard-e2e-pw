@@ -51,6 +51,12 @@ These are non-negotiable. See [`docs/WRITING-TESTS.md`](docs/WRITING-TESTS.md) f
 5. **Web-first assertions** — use `await expect(loc).toBeVisible()`, never
    `expect(await loc.isVisible()).toBe(true)`. Web-first assertions auto-retry.
 6. **Import from fixtures** — always `import { test, expect } from '@/support/fixtures'`, not from `@playwright/test`.
+7. **No empty `catch` blocks** — never `} catch {}` / `.catch(() => {})`, even with a comment. Silent swallows hide
+   auth/network failures. Use `console.warn` with context, or rely on `failOnStatusCode = false` for idempotent
+   cleanup (no catch needed).
+8. **No `page.waitForTimeout(N)` in specs** — use a web-first wait. Page Objects with a documented Vue debounce or
+   mount-on-open transition delegate to `@/support/utils/debounce` (`waitForVueDebounce`, `waitForUiTransition`,
+   `retryBackoff`) so the single `eslint-disable` lives in the util.
 
 ## Page Object Conventions
 
@@ -59,8 +65,10 @@ These are non-negotiable. See [`docs/WRITING-TESTS.md`](docs/WRITING-TESTS.md) f
 - `self()` returns the root `Locator`
 - Methods that find elements return `Locator`; methods that perform actions are `async`
 - **POs never assert** — no `expect()` inside Page Objects. POs expose Locators and perform
-  actions; specs own all assertions. Exception: `waitFor*` helpers that check visibility as a
-  precondition (not a test assertion)
+  actions; specs own all assertions. Exceptions: (a) `waitFor*` helpers that check visibility as a
+  precondition (not a test assertion); (b) action helpers that need to verify an API response
+  return the `Response` so the spec asserts; (c) when a helper genuinely needs to bundle action +
+  assertion, name it `xAndExpectStatus(...)` / `xAndExpectFlagSet(...)` so the assertion is visible
 - Check [`e2e/po/INDEX.md`](e2e/po/INDEX.md) before creating a new PO — it lists every existing PO
 - Run `yarn po-diff` to compare your POs against upstream Cypress
 

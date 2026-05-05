@@ -468,6 +468,71 @@ The only exception is `waitFor*` helpers inside POs that check element state as 
 (e.g., waiting for a page to load, a spinner to disappear, a debounce to settle). These are
 navigation/timing helpers, not test assertions.
 
+If you have a PO action that needs to verify an API response (e.g. "click save and check the
+PUT returned 200"), return the `Response` from the action method and let the spec assert:
+
+```typescript
+// PO
+async applyAndWait(endpoint: string): Promise<Response> {
+  const responsePromise = this.page.waitForResponse(/* ... */);
+  await this.applyButton().click();
+  return responsePromise;
+}
+
+// Spec
+expect((await myPage.applyAndWait('ui-banners')).status()).toBe(200);
+```
+
+If a helper genuinely needs to bundle the action + assertion (e.g. for a multi-step flow that
+should fast-fail on a bad status), name it explicitly: `applyAndExpectOk(...)`,
+`saveAndExpectStatus(...)`. The `AndExpect…` suffix telegraphs the hidden assertion to readers.
+
+### Rule 7: No empty `catch` blocks
+
+Never write `} catch {}`, `} catch { /* comment */ }`, or `.catch(() => {})` — even with a
+comment. Silent swallows hide auth failures, network errors, and genuine test bugs that
+otherwise look like UI flakes. Runtime helpers (e.g. cleanup helpers, polling catches) must
+`console.warn` with context instead:
+
+```typescript
+// BAD — swallows everything, even auth/network failures
+try {
+  await api.deleteRancherResource('v1', 'configmaps', name, false);
+} catch {}
+
+// GOOD — `false` flag tolerates 404 without throwing; no catch needed
+await api.deleteRancherResource('v1', 'configmaps', name, false);
+
+// GOOD — when a catch IS needed, log so failures surface in CI
+} catch (err) {
+  console.warn(`[my-test cleanup] failed: ${(err as Error)?.message ?? err}`);
+}
+```
+
+### Rule 8: No `page.waitForTimeout(N)` in specs; use named utils in POs
+
+Specs should not contain fixed sleeps — `playwright/no-wait-for-timeout` is on at warn level.
+Page Objects can have documented sleeps as a last resort (Vue debounce window, xterm canvas
+output, mount-on-open transitions), but they MUST go through a named helper from
+`@/support/utils/debounce` so the eslint-disable lives in one place and the intent is explicit:
+
+```typescript
+// PO debounce helper
+import { waitForVueDebounce, waitForUiTransition, retryBackoff } from '@/support/utils/debounce';
+
+async waitForKeyValueDebounce(): Promise<void> {
+  await waitForVueDebounce(this.page);  // documented Vue 500ms debounce
+}
+
+async toggle(): Promise<void> {
+  await this.dropdownButton().click();
+  await waitForUiTransition(this.page);  // slide-in panel mounts at transition start
+}
+```
+
+Never call `page.waitForTimeout(N)` directly from a PO method — add a util if a new pattern is
+needed.
+
 ---
 
 ## 5. Writing a Test Step by Step
@@ -819,7 +884,9 @@ Run through this before pushing:
 - [ ] Test passes when run alone: `npx playwright test my-test.spec.ts --reporter=line`
 - [ ] Test passes on a second run (idempotent — no leftover resources)
 - [ ] No raw CSS selectors in the spec file — all selectors live in POs
-- [ ] No `expect()` calls inside Page Objects — POs expose Locators, specs assert
+- [ ] No `expect()` calls inside Page Objects — POs expose Locators (or return `Response` from action helpers), specs assert
+- [ ] No empty `catch` blocks anywhere (`} catch {}`, `.catch(() => {})`) — log + continue with `console.warn`, or rely on `failOnStatusCode = false` on idempotent cleanup
+- [ ] No `page.waitForTimeout(N)` in specs; PO sleeps go through `@/support/utils/debounce` helpers
 - [ ] Every resource created is cleaned up (`try/finally` or `afterEach`)
 - [ ] All assertions use `await expect(...)` (web-first, auto-retrying)
 - [ ] Tags match the feature area (`@generic`, `@explorer`, `@fleet`, etc.)

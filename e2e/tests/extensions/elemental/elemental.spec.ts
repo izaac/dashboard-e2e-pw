@@ -144,9 +144,12 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
       await elementalPo.chartInstallPage().nextPage();
       await elementalPo.chartInstallPage().installChart();
-      await elementalPo
-        .appsPage()
-        .waitForInstallCloseTerminal(installResponsePromise, [OPERATOR_CRD_RELEASE, OPERATOR_RELEASE]);
+
+      const installResponse = await installResponsePromise;
+
+      expect([200, 201]).toContain(installResponse.status());
+
+      await elementalPo.appsPage().closeTerminalAndWaitDeployed([OPERATOR_CRD_RELEASE, OPERATOR_RELEASE]);
 
       await elementalPo.dashboard().goTo();
       await expect(elementalPo.dashboard().mainTitle()).toContainText('OS Management Dashboard');

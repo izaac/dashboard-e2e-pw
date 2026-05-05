@@ -87,7 +87,7 @@ test.describe('Feature Flags', () => {
 
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem('harvester', 'Deactivate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', 'harvester', false);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', 'harvester', false);
 
         await expect(featureFlagsPage.list().details('harvester', 0)).toContainText('Disabled');
 
@@ -98,7 +98,7 @@ test.describe('Feature Flags', () => {
         // Activate
         await burgerMenu.toggle();
         await featureFlagsPage.list().clickRowActionMenuItem('harvester', 'Activate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Activate', 'harvester', true);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', 'harvester', true);
 
         await expect(featureFlagsPage.list().details('harvester', 0)).toContainText('Active');
 
@@ -129,7 +129,7 @@ test.describe('Feature Flags', () => {
 
         // Activate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
 
@@ -138,7 +138,7 @@ test.describe('Feature Flags', () => {
 
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', flagName, false);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
       } finally {
@@ -164,7 +164,7 @@ test.describe('Feature Flags', () => {
 
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', flagName, false);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
 
@@ -173,7 +173,7 @@ test.describe('Feature Flags', () => {
 
         // Activate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
       } finally {
@@ -199,7 +199,7 @@ test.describe('Feature Flags', () => {
 
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', flagName, false);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
 
@@ -208,7 +208,7 @@ test.describe('Feature Flags', () => {
 
         // Activate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
       } finally {
@@ -230,7 +230,7 @@ test.describe('Feature Flags', () => {
 
     // Activate
     await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-    await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
+    await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
 
     // Check Updated State: should be active
     await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
@@ -264,7 +264,7 @@ test.describe('Feature Flags', () => {
           .self()
           .scrollIntoViewIfNeeded();
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Activate', flagName, true);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
 
@@ -278,7 +278,7 @@ test.describe('Feature Flags', () => {
           .self()
           .scrollIntoViewIfNeeded();
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
-        await featureFlagsPage.clickCardActionButtonAndWait('Deactivate', flagName, false);
+        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', flagName, false);
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
       } finally {
