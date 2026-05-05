@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
+import { waitForAnimationSettle } from '@/support/utils/debounce';
 
 /**
  * Page object for the burger/side menu.
@@ -17,17 +18,7 @@ export default class BurgerMenuPo extends ComponentPo {
   async toggle(): Promise<void> {
     // eslint-disable-next-line playwright/no-force-option -- hamburger icon can be briefly covered by SPA route-transition overlay
     await this.page.getByTestId('top-level-menu').click({ force: true });
-    // Wait for the fade transition to actually finish instead of guessing 500 ms.
-    // The Animations API resolves once any in-flight CSS transition on .side-menu
-    // (or descendants) completes. `Promise.allSettled` absorbs per-animation
-    // cancellations (Vue <transition> replaces nodes mid-flight); the outer
-    // .catch logs an evaluate-level failure (element detached pre-evaluate) so
-    // it surfaces in CI rather than being silently swallowed.
-    await this.sideMenu()
-      .evaluate((el) => Promise.allSettled(el.getAnimations({ subtree: true }).map((a) => a.finished)))
-      .catch((err) =>
-        console.warn(`[burger-side-menu toggle] animation settle skipped: ${(err as Error)?.message ?? err}`),
-      );
+    await waitForAnimationSettle(this.sideMenu(), 'burger-side-menu toggle');
   }
 
   /** Navigate to a top-level side menu entry by label (non-cluster) */

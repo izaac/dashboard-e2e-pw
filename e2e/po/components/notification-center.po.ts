@@ -1,7 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import { NotificationPo } from '@/e2e/po/components/notification.po';
+import { waitForAnimationSettle } from '@/support/utils/debounce';
 
 export default class NotificationsCenterPo extends ComponentPo {
   constructor(page: Page) {
@@ -12,15 +12,16 @@ export default class NotificationsCenterPo extends ComponentPo {
     return this.page.getByTestId('notifications-center');
   }
 
-  /** Open/close the notification center. Waits for the panel's aria-expanded
-   *  attribute to flip to the opposite of its pre-click value, replacing the
-   *  prior fixed 500 ms sleep with a web-first attribute assertion. */
+  /**
+   * Open/close the notification center. Waits for the slide-in panel's
+   * CSS transition to actually settle via the Web Animations API rather
+   * than an `aria-expanded` race (the attribute flip is debounced behind
+   * the animation on post-restart pages, where the prior `waitForTimeout(500)`
+   * sleep masked it).
+   */
   async toggle(): Promise<void> {
-    const before = (await this.dropdownButton().getAttribute('aria-expanded')) ?? 'false';
-    const expected = before === 'true' ? 'false' : 'true';
-
     await this.dropdownButton().click();
-    await expect(this.dropdownButton()).toHaveAttribute('aria-expanded', expected);
+    await waitForAnimationSettle(this.self(), 'notification-center toggle');
   }
 
   /** Status indicator locator (read state) */

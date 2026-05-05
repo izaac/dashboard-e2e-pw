@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /**
  * Standard Vue debounce window used across the dashboard form components
@@ -55,4 +55,27 @@ export async function waitForVueDebounce(page: Page, ms: number = VUE_DEBOUNCE_M
 export async function retryBackoff(page: Page, ms: number = RETRY_BACKOFF_MS): Promise<void> {
   // eslint-disable-next-line playwright/no-wait-for-timeout -- intentional spacer between API retries; the next retry's response is the actual signal
   await page.waitForTimeout(ms);
+}
+
+/**
+ * Wait for any in-flight CSS animation/transition on `target` (and its
+ * descendants) to finish, replacing fixed `waitForTimeout(N)` sleeps that
+ * guess at slide-in / fade durations. Uses the Web Animations API's
+ * `Animation.finished` promise so the wait is exactly as long as needed.
+ *
+ * - `Promise.allSettled` absorbs per-animation cancellations (Vue
+ *   <transition> can swap nodes mid-animation, which rejects the promise);
+ *   no inner catch needed.
+ * - The outer `.catch` logs an `evaluate`-level failure (e.g. element
+ *   detached before evaluate ran) so it surfaces in CI rather than being
+ *   silently swallowed.
+ *
+ * Usage:
+ *   await waitForAnimationSettle(this.panel());
+ *   await waitForAnimationSettle(this.dropdown(), 'panel-toggle');
+ */
+export async function waitForAnimationSettle(target: Locator, label: string = 'animation'): Promise<void> {
+  await target
+    .evaluate((el) => Promise.allSettled(el.getAnimations({ subtree: true }).map((a) => a.finished)))
+    .catch((err) => console.warn(`[${label} settle] skipped: ${(err as Error)?.message ?? err}`));
 }
