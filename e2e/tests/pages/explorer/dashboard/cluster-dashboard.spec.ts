@@ -235,15 +235,16 @@ test.describe('Cluster Dashboard', { tag: ['@explorer', '@adminUser'] }, () => {
       await clusterDashboard.fullEventsLink().click();
       await expect(page).toHaveURL(/\/event$/);
     } finally {
-      // Restore events count to default (10) for idempotency
-      try {
+      // Restore events count to default (10) for idempotency. The page may have navigated
+      // (the test clicks fullEventsLink which redirects to /event), so wrap each step.
+      await (async () => {
         await clusterDashboard.goTo();
         await clusterDashboard.waitForPage(undefined, 'cluster-events');
         await clusterDashboard.eventsRowCountMenuToggle();
         await clusterDashboard.eventsRowCountOption(10).click();
-      } catch {
-        // Cleanup is best-effort — events count restore may fail if page navigated away
-      }
+      })().catch((err: Error) => {
+        console.warn(`[cluster-dashboard afterEach] events count restore failed: ${err?.message ?? err}`);
+      });
 
       await rancherApi.deleteRancherResource('v1', 'namespaces', namespace, false);
     }

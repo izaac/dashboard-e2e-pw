@@ -155,18 +155,16 @@ setup('authenticate as admin', async ({ page }) => {
     if (attempt > 0) {
       await new Promise((r) => setTimeout(r, AUTH_BACKOFF_MS * attempt));
       await page.context().clearCookies();
-      await page.evaluate(() => {
-        try {
+      // Skip storage clear if page is on a restricted origin (about:blank, chrome-error://)
+      // where localStorage/sessionStorage access throws — nothing to clear there anyway.
+      const url = page.url();
+
+      if (!url.startsWith('about:') && !url.startsWith('chrome-error://')) {
+        await page.evaluate(() => {
           localStorage.clear();
-        } catch {
-          // Throws in restricted contexts (about:blank, sandboxed iframes)
-        }
-        try {
           sessionStorage.clear();
-        } catch {
-          // Throws in restricted contexts (about:blank, sandboxed iframes)
-        }
-      });
+        });
+      }
     }
 
     await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });

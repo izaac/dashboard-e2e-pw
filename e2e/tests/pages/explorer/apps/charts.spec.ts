@@ -164,11 +164,15 @@ test.describe('Apps/Charts', { tag: ['@explorer', '@adminUser'] }, () => {
       }
 
       await chartsPage.scrollContainer().evaluate((el) => el.scrollTo(0, el.scrollHeight));
-      // Poll until virtual-scroll renders new items after programmatic scroll
+      // Poll until virtual-scroll renders new items after programmatic scroll. A single
+      // iteration may not produce new items (already at bottom of a chunk); the outer
+      // loop's `currentCount >= totalCharts` break + final toHaveCount() catches real progress gaps.
       try {
         await expect.poll(() => chartsPage.chartCards().count(), POLL_ITERATION_TIMEOUT).toBeGreaterThan(currentCount);
-      } catch {
-        // Scroll may not produce new items on every iteration — continue
+      } catch (err) {
+        console.warn(
+          `[charts scroll] iteration ${i}: count did not grow past ${currentCount}: ${(err as Error)?.message ?? err}`,
+        );
       }
     }
 

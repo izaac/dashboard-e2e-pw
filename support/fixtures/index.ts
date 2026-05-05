@@ -29,18 +29,16 @@ const BANNER_CHECK_MS = 1_000; // Quick check for consent banner
 /** Clear all browser state — cookies, localStorage, sessionStorage */
 async function resetBrowserState(page: Page): Promise<void> {
   await page.context().clearCookies();
-  await page.evaluate(() => {
-    try {
+  // localStorage/sessionStorage access throws on restricted origins (about:blank,
+  // chrome-error://) — there's nothing to clear there, so guard instead of catching.
+  const url = page.url();
+
+  if (!url.startsWith('about:') && !url.startsWith('chrome-error://')) {
+    await page.evaluate(() => {
       localStorage.clear();
-    } catch {
-      // Throws in restricted contexts (about:blank, sandboxed iframes)
-    }
-    try {
       sessionStorage.clear();
-    } catch {
-      // Throws in restricted contexts (about:blank, sandboxed iframes)
-    }
-  });
+    });
+  }
 }
 
 /** Dismiss consent banner if visible — branding tests may leave one behind */
@@ -195,8 +193,10 @@ async function performLogin(page: Page, username: string, password: string, atte
         await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: FORM_READY_TIMEOUT });
 
         return; // Successfully recovered
-      } catch {
-        // Manual navigation also failed — fall through to retry
+      } catch (err) {
+        console.warn(
+          `[login] manual navigation away from /auth/login failed; falling through to retry: ${(err as Error)?.message ?? err}`,
+        );
       }
     }
 
@@ -257,8 +257,10 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
         fs.writeFileSync(domPath, html);
         await testInfo.attach('dom-snapshot', { path: domPath, contentType: 'text/html' });
-      } catch {
-        // Page may have crashed — DOM snapshot is optional diagnostic
+      } catch (err) {
+        console.warn(
+          `[afterTest] DOM snapshot capture failed (page may have crashed): ${(err as Error)?.message ?? err}`,
+        );
       }
 
       // 4. Error context summary — single text file with everything agents need
@@ -287,8 +289,10 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
 
         fs.writeFileSync(contextPath, contextLines.join('\n'));
         await testInfo.attach('error-context', { path: contextPath, contentType: 'text/plain' });
-      } catch {
-        // Error context is optional diagnostic — don't fail the test teardown
+      } catch (err) {
+        console.warn(
+          `[afterTest] error-context summary write failed (optional diagnostic): ${(err as Error)?.message ?? err}`,
+        );
       }
     }
   },

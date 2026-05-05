@@ -40,8 +40,10 @@ export default class ProductNavPo extends ComponentPo {
         await this.page.waitForURL((url) => url.href !== urlBefore, { timeout: 5000 });
 
         return;
-      } catch {
-        // URL didn't change — retry
+      } catch (err) {
+        console.warn(
+          `[product-nav] navToSideMenuEntryByLabel('${label}') click ${i + 1}/3 did not change URL: ${(err as Error)?.message ?? err}`,
+        );
       }
     }
 

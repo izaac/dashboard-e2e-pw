@@ -395,18 +395,18 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
       } finally {
         // Cleanup both the original and cloned roles
         await rancherApi.deleteRancherResource('v3', 'globalRoles', globalRoleNameYaml, false);
-        // Attempt to clean up cloned role by listing and finding it
-        try {
-          const allRoles = await rancherApi.getRancherResource('v3', 'globalRoles');
-          const clonedRole = allRoles.body.data?.find(
-            (r: any) => r.displayName === clonedRoleName || r.name === clonedRoleName,
-          );
+        // Cloned role's id isn't known up-front (UI generates it), so list + match by displayName/name
+        const allRoles = await rancherApi.getRancherResource('v3', 'globalRoles').catch((err: Error) => {
+          console.warn(`[roles afterEach] list globalRoles for cloned cleanup failed: ${err?.message ?? err}`);
 
-          if (clonedRole) {
-            await rancherApi.deleteRancherResource('v3', 'globalRoles', clonedRole.id, false);
-          }
-        } catch {
-          // best effort cleanup
+          return null;
+        });
+        const clonedRole = allRoles?.body.data?.find(
+          (r: any) => r.displayName === clonedRoleName || r.name === clonedRoleName,
+        );
+
+        if (clonedRole) {
+          await rancherApi.deleteRancherResource('v3', 'globalRoles', clonedRole.id, false);
         }
       }
     });
