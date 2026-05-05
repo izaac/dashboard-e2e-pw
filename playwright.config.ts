@@ -45,15 +45,20 @@ const username = process.env.TEST_USERNAME || 'admin';
 const apiUrl =
   process.env.API || (rawBaseUrl.endsWith('/dashboard') ? rawBaseUrl.split('/').slice(0, -1).join('/') : rawBaseUrl);
 
-// Unique auth file per Rancher instance — prevents storageState collisions when sharding
-const authPort = (() => {
-  try {
-    return new URL(rawBaseUrl).port || '443';
-  } catch {
-    return '8005';
-  }
+// Unique auth file per Rancher instance — prevents storageState collisions
+// when sharding. Uses both hostname AND port: sharded compose runs two
+// Rancher containers (rancher-1 / rancher-2) both on port 443, so a port-only
+// key would collide. We refuse to invent a fallback if `TEST_BASE_URL` is
+// unparseable — better to fail config-load loudly than route two shards to the
+// same auth file.
+const authSlug = (() => {
+  const u = new URL(rawBaseUrl);
+  const host = u.hostname.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const port = u.port || (u.protocol === 'https:' ? '443' : '80');
+
+  return `${host}-${port}`;
 })();
-const adminAuthFile = `.auth/admin-${authPort}.json`;
+const adminAuthFile = `.auth/admin-${authSlug}.json`;
 
 /**
  * Test directories - mirrors Cypress specPattern
