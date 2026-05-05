@@ -6,6 +6,7 @@ import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-man
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
 import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
+import ClusterManagerEditImportedPagePo from '@/e2e/po/extensions/imported/cluster-edit.po';
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
@@ -389,6 +390,29 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.list().explore('local').click();
 
       await expect(page).toHaveURL(/\/c\/local\/explorer/);
+    });
+
+    test('hides Networking accordion and ACE on local cluster edit', async ({ page, login }) => {
+      await login();
+
+      const clusterList = new ClusterManagerListPagePo(page);
+      // Edit Config navigates under the manager context (/c/_/manager/...), local cluster lives in fleet-local ns
+      const editLocalCluster = new ClusterManagerEditImportedPagePo(page, '_', 'fleet-local', 'local');
+
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      const editMenu = await clusterList.list().actionMenu('local');
+
+      await editMenu.getMenuItem('Edit Config').click();
+      await editLocalCluster.waitForPage('mode=edit');
+
+      // Upstream PR #17293: Networking accordion + ACE widget hidden on local cluster
+      await expect(editLocalCluster.networkingAccordion()).not.toBeAttached();
+      await expect(editLocalCluster.aceEnabledRadio()).not.toBeAttached();
+
+      // Regression guard: Registries + Advanced still render
+      await expect(editLocalCluster.registriesAccordion()).toBeVisible();
+      await expect(editLocalCluster.accordionByLabel('Advanced')).toBeVisible();
     });
   });
 

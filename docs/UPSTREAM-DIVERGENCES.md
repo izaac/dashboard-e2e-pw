@@ -19,6 +19,7 @@ handled differently.
 4. [Vue Debounce Handling](#4-vue-debounce-handling)
 5. [Vue v-model and fill()](#5-vue-v-model-and-fill)
 6. [Visual Snapshots (Percy → Playwright)](#6-visual-snapshots-percy--playwright)
+7. [Elemental Extension Coverage](#7-elemental-extension-coverage)
 
 ---
 
@@ -217,6 +218,32 @@ can be re-added on top — the snapshot tests themselves stay valid.
   waits for the table header so the screenshot captures real content, not the spinner.
 
 **Upstream pattern this replaces:** any `cy.percySnapshot('Page Name')` call.
+
+---
+
+## 7. Elemental Extension Coverage
+
+**Upstream (Cypress):** Removed in [`55da6031`](https://github.com/rancher/dashboard/commit/55da603163)
+(May 2026) — `cypress/e2e/tests/extensions/elemental/elemental.spec.ts` plus
+`elemental.utils.ts` and `extensions-compatibility.utils.ts` deleted with the rationale
+"deprecated for a long time." Upstream is moving extension coverage to an AI-backed
+automatic harness rather than per-extension Cypress specs.
+
+**Ours:** Kept and hardened. `e2e/tests/extensions/elemental/elemental.spec.ts` (gold-shape
+rewrite, API-seeded preconditions, throw-on-timeout helpers, API truth-source for the
+chart-installed-apps "Deployed" wait) plus the same PO chain (`elemental.utils.ts` →
+`extensions-compatibility.utils.ts` parent class). The `extensions-compatibility.utils.ts`
+class itself is generic — a base class with helpers for navigating to pages, lists, name
+fields, and code-mirror — so the name is historical, not a sign that the file owns
+deprecated functionality.
+
+**Why diverge:** Until the AI-backed extension harness lands and proves out, our spec is
+the only end-to-end coverage of the extension install flow against a real Rancher (repo
+add → operator install → CRD finalizer cleanup → extension UI). Dropping it now would
+leave a gap.
+
+**When to revisit:** When upstream's replacement harness exists and covers the same
+flows, port to that pattern and drop the local copy.
 
 ---
 

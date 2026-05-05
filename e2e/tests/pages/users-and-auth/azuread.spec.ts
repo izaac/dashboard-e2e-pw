@@ -13,7 +13,7 @@ const authEndpoint = 'https://login.test.com/564b6f53-ebf4-43c3-8077-44c56a44990
 const tokenEndpoint = 'https://login.test.com/564b6f53-ebf4-43c3-8077-44c56a44990a/oauth2/v2.0/token';
 const graphEndpoint = 'https://graph.test.com';
 
-test.describe('AzureAD', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
+test.describe('Microsoft Entra ID', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
   test.beforeEach(async ({ page, login }) => {
     await login();
 
@@ -28,13 +28,13 @@ test.describe('AzureAD', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
     await azureadPo.waitForUrlPathWithoutContext();
   });
 
-  test('can navigate Auth Provider and select AzureAD', async ({ page }) => {
+  test('can navigate Auth Provider and select Microsoft Entra ID', async ({ page }) => {
     const azureadPo = new AzureadPo(page, authClusterId);
 
     await expect(azureadPo.mastheadTitle()).toContainText('Microsoft Entra ID');
   });
 
-  test('sends correct request to create custom Azure AD', async ({ page }) => {
+  test('sends correct request to create custom Microsoft Entra ID', async ({ page }) => {
     const azureadPo = new AzureadPo(page, authClusterId);
 
     const requestPromise = page.waitForRequest(
