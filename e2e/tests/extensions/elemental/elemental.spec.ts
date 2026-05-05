@@ -105,7 +105,7 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
       await page.reload();
     });
 
-    test('can install elemental operator via UI', async ({ page }) => {
+    test('can install elemental operator via UI', async ({ page, rancherApi }) => {
       test.setTimeout(PROVISIONING);
 
       const elementalPo = new ElementalPo(page);
@@ -149,7 +149,9 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
       expect([200, 201]).toContain(installResponse.status());
 
-      await elementalPo.appsPage().closeTerminalAndWaitDeployed([OPERATOR_CRD_RELEASE, OPERATOR_RELEASE]);
+      await elementalPo
+        .appsPage()
+        .closeTerminalAndWaitDeployed(rancherApi, OPERATOR_NAMESPACE, [OPERATOR_CRD_RELEASE, OPERATOR_RELEASE]);
 
       await elementalPo.dashboard().goTo();
       await expect(elementalPo.dashboard().mainTitle()).toContainText('OS Management Dashboard');

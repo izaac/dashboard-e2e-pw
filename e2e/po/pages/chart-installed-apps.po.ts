@@ -1,8 +1,10 @@
 import type { Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
-import { VERY_LONG } from '@/support/timeouts';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
+import { LONG, PROVISIONING } from '@/support/timeouts';
 
 export default class ChartInstalledAppsListPagePo extends PagePo {
   private terminal: KubectlPo;
@@ -20,18 +22,35 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
     return new ResourceTablePo(this.page, '[data-testid="installed-app-catalog-list"]');
   }
 
-  /** Close the kubectl terminal and wait for each installable part to reach `Deployed`. */
-  async closeTerminalAndWaitDeployed(installableParts: string[]): Promise<void> {
+  /**
+   * Wait for each helm release to reach `deployed` via the Rancher API (the
+   * source of truth — no Steve-aggregator/Vue-list lag), then close the
+   * kubectl terminal and verify the UI row reflects the same state.
+   *
+   * The API wait uses `PROVISIONING` budget per release because cold ranchers
+   * (fresh data volume + first-time chart clone) can need several minutes for
+   * Helm to finalise. The UI sanity check after that uses `LONG` (30s) since
+   * the resource is already `deployed` server-side; we are only verifying the
+   * front-end caught up, not waiting on the install itself.
+   */
+  async closeTerminalAndWaitDeployed(api: RancherApi, namespace: string, installableParts: string[]): Promise<void> {
+    for (const item of installableParts) {
+      await api.expectResourceState(
+        'v1',
+        'catalog.cattle.io.apps',
+        `${namespace}/${item}`,
+        (resp) => resp.status === 200 && resp.body?.metadata?.state?.name === 'deployed',
+        Math.floor(PROVISIONING / 5000),
+        5000,
+      );
+    }
+
     await this.terminal.closeTerminal();
 
     for (const item of installableParts) {
-      // VERY_LONG (60s) instead of 30s — multi-chart installs (CRD + main app)
-      // can take ~45s for all rows to reflect Deployed state in the SPA after
-      // helm finishes (steve aggregator + Vue list re-render lag).
-      await this.appsList()
-        .resourceTableDetails(item, 1)
-        .filter({ hasText: 'Deployed' })
-        .waitFor({ timeout: VERY_LONG });
+      await expect(this.appsList().resourceTableDetails(item, 1).filter({ hasText: 'Deployed' })).toBeVisible({
+        timeout: LONG,
+      });
     }
   }
 }

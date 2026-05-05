@@ -152,7 +152,10 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
 
       expect([200, 201]).toContain(installResponse.status());
 
-      await installedAppsPage.closeTerminalAndWaitDeployed(['rancher-backup', 'rancher-backup-crd']);
+      await installedAppsPage.closeTerminalAndWaitDeployed(rancherApi, chartNamespace, [
+        'rancher-backup',
+        'rancher-backup-crd',
+      ]);
 
       // Navigate back to chart
       await chartPage.navTo(chartName);
