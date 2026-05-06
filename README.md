@@ -98,6 +98,9 @@ yarn po-index            # List all POs with class, selector, and methods
 yarn po-diff             # Compare POs against upstream Cypress
 yarn gap-map             # Generate assertion gap map (upstream vs ours)
 yarn summarize-failures  # Classify test failures after a run
+
+scripts/sharded-runs.sh -h           # Run the sharded suite N times back-to-back
+                                     # with a full nuke between each — flake hunting
 ```
 
 ## License
