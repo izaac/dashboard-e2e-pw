@@ -2,7 +2,8 @@ import { test, expect } from '@/support/fixtures';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import CardPo from '@/e2e/po/components/card.po';
-import { CONTROLLER_SETTLE, EXTENDED } from '@/support/timeouts';
+import { isDangerousFlag, waitForRancherRestartCycle } from '@/support/utils/feature-flag';
+import { CONTROLLER_SETTLE, EXTENDED, PROVISIONING } from '@/support/timeouts';
 
 /**
  * Helper: get the current spec.value of a feature flag via API.
@@ -23,14 +24,28 @@ async function getFeatureFlagValue(rancherApi: any, flagName: string): Promise<b
 /**
  * Helper: set a feature flag to a specific value via API.
  * Pass null to clear the explicit override and inherit default.
+ *
+ * For flags in DANGEROUS_FLAGS, the call blocks on `waitForRancherRestartCycle`
+ * after the PUT — toggling them triggers a controller restart and any later
+ * call would race the still-up pre-restart Rancher otherwise.
  */
 async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boolean | null): Promise<void> {
+  const before = await getFeatureFlagValue(rancherApi, flagName);
+
+  if (before === value) {
+    return; // No-op; no restart to wait on.
+  }
+
   const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
   const body = resp.body;
 
   body.spec = body.spec || {};
   body.spec.value = value;
   await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flagName, body);
+
+  if (isDangerousFlag(flagName)) {
+    await waitForRancherRestartCycle(rancherApi);
+  }
 }
 
 // Flags that trigger helm operations or controller restarts when toggled.
@@ -45,35 +60,31 @@ test.describe('Feature Flags', () => {
   });
 
   test.afterAll(async ({ rancherApi }) => {
-    let resetCount = 0;
-
+    // setFeatureFlagValue is no-op when the flag already matches; for dangerous
+    // flags that did change, it blocks on waitForRancherRestartCycle so each
+    // restart settles before the next reset starts.
     for (const flag of DANGEROUS_FLAGS) {
       try {
-        const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flag);
-        const body = resp.body;
-
-        if (body.spec?.value !== undefined && body.spec.value !== null) {
-          body.spec.value = null;
-          await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flag, body);
-          resetCount++;
-        }
+        await setFeatureFlagValue(rancherApi, flag, null);
       } catch (err) {
         console.warn(`Failed to reset feature flag '${flag}':`, err);
       }
     }
 
-    if (resetCount > 0) {
-      // Flag toggles trigger controller restarts — wait for /v1/counts to recover
-      // before the next spec runs. Throws if Rancher doesn't stabilize within the
-      // window, so subsequent specs don't run against a thrashing API.
-      await rancherApi.waitForHealthy(CONTROLLER_SETTLE / EXTENDED, EXTENDED);
-    }
+    // Final settle — covers any non-dangerous flag fallout (e.g. a fixture in
+    // the suite mutated a non-restart-triggering flag whose effects ripple to
+    // shared state); cheap when nothing's outstanding.
+    await rancherApi.waitForHealthy(CONTROLLER_SETTLE / EXTENDED, EXTENDED);
   });
 
   test(
     'can toggle harvester feature flag',
     { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page, rancherApi }) => {
+    async ({ page, login, rancherApi }) => {
+      // Each UI toggle of a dangerous flag triggers a Rancher restart (~60s).
+      // 2 UI toggles + up-to-2 API resets = ~5 min worst case.
+      test.setTimeout(PROVISIONING);
+
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const burgerMenu = new BurgerMenuPo(page);
 
@@ -88,6 +99,12 @@ test.describe('Feature Flags', () => {
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem('harvester', 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', 'harvester', false);
+        // Dangerous flag: wait for the controller to actually bounce + come back,
+        // reload + re-login so the SPA reconnects to the restarted Rancher.
+        await waitForRancherRestartCycle(rancherApi);
+        await page.reload();
+        await login();
+        await featureFlagsPage.navTo();
 
         await expect(featureFlagsPage.list().details('harvester', 0)).toContainText('Disabled');
 
@@ -99,10 +116,12 @@ test.describe('Feature Flags', () => {
         await burgerMenu.toggle();
         await featureFlagsPage.list().clickRowActionMenuItem('harvester', 'Activate');
         await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', 'harvester', true);
+        await waitForRancherRestartCycle(rancherApi);
+        await page.reload();
+        await login();
+        await featureFlagsPage.navTo();
 
         await expect(featureFlagsPage.list().details('harvester', 0)).toContainText('Active');
-
-        await page.reload();
 
         await burgerMenu.toggle();
         await expect(burgerMenu.links().filter({ hasText: 'Virtualization Management' })).toBeVisible();
@@ -150,7 +169,10 @@ test.describe('Feature Flags', () => {
   test(
     'can toggle istio-virtual-service-ui feature flag',
     { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page, rancherApi }) => {
+    async ({ page, login, rancherApi }) => {
+      // istio-virtual-service-ui is a dangerous flag — each UI toggle triggers a restart.
+      test.setTimeout(PROVISIONING);
+
       const featureFlagsPage = new FeatureFlagsPagePo(page);
       const flagName = 'istio-virtual-service-ui';
 
@@ -165,15 +187,20 @@ test.describe('Feature Flags', () => {
         // Deactivate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
         await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', flagName, false);
+        await waitForRancherRestartCycle(rancherApi);
+        await page.reload();
+        await login();
+        await featureFlagsPage.navTo();
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
-
-        // Reload to stabilize DOM — store update re-renders table and detaches action menus
-        await featureFlagsPage.navTo();
 
         // Activate
         await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
         await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
+        await waitForRancherRestartCycle(rancherApi);
+        await page.reload();
+        await login();
+        await featureFlagsPage.navTo();
 
         await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
       } finally {

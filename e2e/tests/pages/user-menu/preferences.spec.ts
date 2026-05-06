@@ -138,8 +138,11 @@ test.describe('User can update their preferences', () => {
     await expect(themeContainer).toBeVisible();
 
     for (const [key, value] of Object.entries(themeOptions)) {
+      // Wait for the first 200 PUT — userpreferences can 409 if a concurrent
+      // store update raced this click. Predicate skips 409s, catches success.
       const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+        (resp) =>
+          resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT' && resp.status() === 200,
       );
 
       await prefPage.themeButtons().set(key);
@@ -182,8 +185,11 @@ test.describe('User can update their preferences', () => {
       await dateFormatSelect.click();
       await expect(prefPage.dropdownOptions()).toHaveCount(5);
 
+      // Wait for the first 200 PUT — userpreferences can 409 if a concurrent
+      // store update raced this click. Predicate skips 409s, catches success.
       const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+        (resp) =>
+          resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT' && resp.status() === 200,
       );
 
       // Click option by index
@@ -222,8 +228,11 @@ test.describe('User can update their preferences', () => {
       await timeFormatSelect.click();
       await expect(prefPage.dropdownOptions()).toHaveCount(2);
 
+      // Wait for the first 200 PUT — userpreferences can 409 if a concurrent
+      // store update raced this click. Predicate skips 409s, catches success.
       const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+        (resp) =>
+          resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT' && resp.status() === 200,
       );
 
       await prefPage.dropdownOptionByIndex(value).click();
@@ -719,8 +728,11 @@ test.describe('User can update their preferences', () => {
 
       await expect(radioGroup.self()).toBeVisible();
 
+      // Wait for the first 200 PUT — userpreferences can 409 if a concurrent
+      // store update raced this click. Predicate skips 409s, catches success.
       const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+        (resp) =>
+          resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT' && resp.status() === 200,
       );
 
       // Select "Last visited" (index 1)
@@ -770,8 +782,11 @@ test.describe('User can update their preferences', () => {
       // Ensure the cluster dropdown contains 'local' before selecting the radio
       await expect(prefPage.customPageOptions()).toContainText('local');
 
+      // Wait for the first 200 PUT — userpreferences can 409 if a concurrent
+      // store update raced this click. Predicate skips 409s, catches success.
       const prefUpdatePromise = page.waitForResponse(
-        (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
+        (resp) =>
+          resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT' && resp.status() === 200,
       );
 
       // Select "Specific cluster" (index 2)

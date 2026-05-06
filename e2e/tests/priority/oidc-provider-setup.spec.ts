@@ -2,7 +2,8 @@ import type { Page } from '@playwright/test';
 import { test, expect } from '@/support/fixtures';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { FeatureFlagsPagePo } from '@/e2e/po/pages/global-settings/feature-flags.po';
-import { BRIEF, EXTENSION_OPS, LONG, PROVISIONING } from '@/support/timeouts';
+import { recoverFromRancherRestart } from '@/support/utils/feature-flag';
+import { PROVISIONING } from '@/support/timeouts';
 
 /**
  * OIDC Provider Setup Test
@@ -52,26 +53,8 @@ async function ensureFeatureFlagState(
     waitForRequest: true,
   });
 
-  // Step 1: wait for Rancher to actually go down. Without this, waitForHealthy
-  // would pass against the still-up pre-restart Rancher and race the restart.
-  await expect
-    .poll(
-      async () => {
-        const resp = await rancherApi.getRancherResource('v1', 'counts', undefined, 0).catch(() => ({ status: 0 }));
-
-        return resp.status;
-      },
-      { timeout: LONG, intervals: [BRIEF] },
-    )
-    .not.toBe(200);
-
-  // Step 2: wait for Rancher to come back. Embedded k3s typically restarts in 30–90 s;
-  // give it up to EXTENSION_OPS (3 min) of BRIEF-spaced probes to be safe.
-  await rancherApi.waitForHealthy(EXTENSION_OPS / BRIEF, BRIEF);
-
-  // Step 3: reload the SPA so it reconnects to the restarted Rancher, then verify.
-  await page.reload();
-  await login();
+  // Wait for Rancher to bounce + come back, reload the SPA, re-login.
+  await recoverFromRancherRestart(page, rancherApi, login);
   await featureFlagsPage.navTo();
   await featureFlagsPage.waitForPage();
 

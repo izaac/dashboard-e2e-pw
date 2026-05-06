@@ -142,10 +142,14 @@ test.describe('StatefulSets', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         await expect(dialog.self()).toBeVisible();
 
+        // Wait for the first 200 PUT — the dashboard auto-retries on 409 (the
+        // statefulset controller bumps resourceVersion right after create), so
+        // the first PUT can be 409. Predicate skips 409s; we catch the success.
         const responsePromise = page.waitForResponse(
           (resp) =>
             resp.url().includes(`/v1/apps.statefulsets/${namespace}/${statefulSetName}`) &&
-            resp.request().method() === 'PUT',
+            resp.request().method() === 'PUT' &&
+            resp.status() === 200,
         );
 
         await dialog.confirmRedeploy();

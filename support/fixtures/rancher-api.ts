@@ -224,13 +224,21 @@ export class RancherApi {
    * Worker-scoped tokens can expire mid-suite; this transparently refreshes once.
    */
   private async fetchWithReauth(fn: () => Promise<import('@playwright/test').APIResponse>) {
-    const resp = await fn();
+    let resp = await fn();
 
     if (resp.status() === 401 && this.credentials) {
       console.warn('[RancherApi] 401 received — re-authenticating...');
       await this.login(this.credentials.username, this.credentials.password);
+      resp = await fn();
+    }
 
-      return fn();
+    // Retry transient 5xx — common when the Rancher controller is bouncing
+    // mid-restart (feature-flag toggle, settings PUT). Caps at 2 retries to
+    // avoid masking real server-side bugs.
+    for (let attempt = 0; resp.status() >= 500 && resp.status() < 600 && attempt < 2; attempt++) {
+      console.warn(`[RancherApi] ${resp.status()} received — retrying in 3s (attempt ${attempt + 1}/2)`);
+      await new Promise((r) => setTimeout(r, 3_000));
+      resp = await fn();
     }
 
     return resp;

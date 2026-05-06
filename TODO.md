@@ -55,3 +55,24 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] Qase IDs — to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
+
+## Gold-standard audit (Phase 4 + long tail) — revisit after a full sharded suite run
+
+Phase 1, 2, 3 and the documentation parts of Phase 5 are closed (see
+`docs/AUDIT-PLAYWRIGHT-GOLDEN-STANDARD-2026-05-04.md`). Remaining items
+intentionally deferred until we have results from a fresh sharded full-suite
+run — that surfaces which serial groups are actually expensive and which
+specs would benefit most from per-worker isolation:
+
+- [ ] **Phase 4 — Parallel-safe lane foundation**
+  - [ ] Generate `PARALLELISM.md` from a script (gap-map / po-index style); fail CI on unclassified specs (audit finding #6).
+  - [ ] Split serial-global vs parallel-safe Playwright projects.
+  - [ ] Per-worker users / storage state for `fullyParallel: true` lanes (F7 unblocked the auth-slug side; user creation is still open).
+  - [ ] Namescope created resources by worker/test to avoid server-side collisions.
+- [ ] **Long tail (touch as helpers are touched)**
+  - [ ] 284 raw class/id locators in POs — track selector type in the PO index, push for upstream `data-testid` attributes on high-value sites.
+  - [ ] One remaining raw chained `.bg-success` selector in `cluster-provisioning-amazon-ec2-rke2.spec.ts:280` — move behind a PO method.
+  - [ ] 214 `any` usages across `e2e/` + `support/` — start with `support/fixtures/rancher-api.ts`, narrow types as helpers are touched.
+- [ ] **Phase 5 — docs as executable policy**
+  - [ ] Snippet type-check step for `WRITING-TESTS.md` examples (would need a docs lint that compiles TS snippets against real types).
+  - [ ] Diff `AGENTS.md` against `WRITING-TESTS.md` + `CONTRIBUTING.md` + lint rules to confirm they say the same thing.
