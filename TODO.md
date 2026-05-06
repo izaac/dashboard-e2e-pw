@@ -56,6 +56,22 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] Qase IDs — to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
 
+## Known chronic flakes — needs deeper investigation
+
+- [ ] **`harvester.spec.ts:108 can auto install harvester`** — fails 3/5 even with the
+  current install-flow hardening (page reload after API deployed → navigate to
+  /uiplugins#installed → click `extension-reload-banner` if shown → 3-reload
+  retry loop with LONG waits). The harvester extension's masthead action
+  ("Import Existing") is provided by Vue components registered when the
+  extension JS bundle loads; on some Rancher instances the SPA never
+  re-registers the plugin after install, so the action button never appears
+  no matter how many reloads. Likely a Rancher dashboard plugin-loader race
+  we cannot fix without changing the SPA. Options:
+  - Accept the flake (current state — retries mask it most of the time);
+  - Convert to `test.skip(buttonNotVisible, 'env-level plugin loader race')`;
+  - Refactor to test only the API path + extension card visibility, drop
+    the cluster-import UI portion.
+
 ## Gold-standard audit (Phase 4 + long tail) — revisit after a full sharded suite run
 
 Phase 1, 2, 3 and the documentation parts of Phase 5 are closed (see

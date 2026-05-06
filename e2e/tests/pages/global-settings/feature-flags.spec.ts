@@ -25,19 +25,18 @@ async function getFeatureFlagValue(rancherApi: any, flagName: string): Promise<b
  * Helper: set a feature flag to a specific value via API.
  * Pass null to clear the explicit override and inherit default.
  *
- * For flags in DANGEROUS_FLAGS, the call blocks on `waitForRancherRestartCycle`
- * after the PUT — toggling them triggers a controller restart and any later
- * call would race the still-up pre-restart Rancher otherwise.
+ * For DANGEROUS_FLAGS, the call follows the PUT with `waitForRancherRestartCycle`,
+ * which self-terminates if no actual restart is observed (no-op toggles like
+ * `null → default` don't fire a restart and we can't predict that from the
+ * resource alone — the helper observes /v1/counts to decide whether to wait).
  */
 async function setFeatureFlagValue(rancherApi: any, flagName: string, value: boolean | null): Promise<void> {
-  const before = await getFeatureFlagValue(rancherApi, flagName);
-
-  if (before === value) {
-    return; // No-op; no restart to wait on.
-  }
-
   const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
   const body = resp.body;
+
+  if (body.spec?.value === value) {
+    return; // Identical override already set; no PUT, no restart.
+  }
 
   body.spec = body.spec || {};
   body.spec.value = value;

@@ -156,11 +156,27 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await harvesterPo.waitForPage();
     await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: LONG });
 
-    // verify harvester extension added to extensions page
-    await extensionsPo.goTo();
+    // Verify harvester extension added to extensions page. Land directly on the
+    // Installed tab via URL fragment — the SPA's auto-tab-select is racy when
+    // the install just completed (it may render #available first while the
+    // store catches up that an extension is now installed).
+    await page.goto('./c/local/uiplugins#installed', { waitUntil: 'domcontentloaded' });
     await extensionsPo.waitForPage(undefined, 'installed');
     await expect(extensionsPo.loading()).not.toBeAttached();
-    await expect(extensionsPo.extensionCard(harvesterTitle)).toBeVisible();
+    await expect(extensionsPo.extensionCard(harvesterTitle)).toBeVisible({ timeout: LONG });
+
+    // Rancher's UI extensions register at SPA boot via /v1/uiplugins; the SPA
+    // does not dynamically pick up newly installed plugins and prompts the
+    // user to reload via a banner. Without clicking it, the harvester
+    // extension's masthead actions ("Import Existing") never register on
+    // later navs. Mirrors `installExtensionFromCatalog`'s VERY_LONG wait —
+    // the banner can take 30-60s to appear on a freshly-installed extension.
+    const reloadBanner = extensionsPo.extensionReloadBanner();
+
+    if (await reloadBanner.isVisible({ timeout: VERY_LONG }).catch(() => false)) {
+      await extensionsPo.extensionReloadClick();
+      await extensionsPo.waitForPage();
+    }
 
     // verify harvester repo is added to repos list page
     await appRepoList.goTo();
@@ -168,16 +184,24 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(appRepoList.list().resourceTable().sortableTable().rowElementWithName(chartRepo)).toBeVisible();
     await expect(appRepoList.list().state(chartRepo)).toContainText('Active', { timeout: VERY_LONG });
 
-    // begin process of importing harvester cluster
-    await harvesterPo.goTo();
-    await harvesterPo.waitForPage();
+    // Begin process of importing harvester cluster. The masthead action
+    // ("Import Existing") is provided by the harvester extension's Vue
+    // components, which load asynchronously after the SPA fetches the new
+    // plugin manifest. Empirical observation from DOM snapshots: the button
+    // does appear, but on slow systems can take >60s after navigation. Each
+    // page.goto() resets the SPA and restarts the load, so retrying with
+    // fresh navs is counterproductive — give the SPA one uninterrupted
+    // EXTENSION_OPS (3 min) to render the button.
+    const importBtn = harvesterPo.importHarvesterClusterButton();
+
+    await importBtn.waitFor({ state: 'visible', timeout: EXTENSION_OPS });
 
     const createClusterPromise = page.waitForResponse(
       (resp) => resp.url().includes('/v3/clusters') && resp.request().method() === 'POST',
       { timeout: LONG },
     );
 
-    await harvesterPo.importHarvesterClusterButton().click();
+    await importBtn.click();
 
     const createEditForm = harvesterPo.createHarvesterClusterForm();
 
