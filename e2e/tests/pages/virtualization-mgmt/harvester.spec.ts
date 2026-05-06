@@ -149,6 +149,11 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     );
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo, 30);
 
+    // Page loaded pre-install; the warning banner is cached in the Vue store and
+    // doesn't reactively re-evaluate when the chart flips to `deployed`. Reload
+    // to pick up the post-install state.
+    await harvesterPo.goTo();
+    await harvesterPo.waitForPage();
     await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: LONG });
 
     // verify harvester extension added to extensions page
@@ -262,8 +267,10 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       },
     });
 
-    // Wait for repository to be downloaded and ready
+    // Wait for repository to be downloaded AND for Steve to flip metadata.state.name
+    // to "active" — the UI badge reads metadata.state.name, not the conditions array.
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo);
+    await rancherApi.waitForResourceState('v1', 'catalog.cattle.io.clusterrepos', chartRepo, 'active', 30);
 
     await appRepoList.goTo();
     await appRepoList.waitForPage();
@@ -347,8 +354,10 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       },
     });
 
-    // Wait for repository to be downloaded and ready
+    // Wait for repository to be downloaded AND for Steve to flip metadata.state.name
+    // to "active" — the UI badge reads metadata.state.name, not the conditions array.
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo);
+    await rancherApi.waitForResourceState('v1', 'catalog.cattle.io.clusterrepos', chartRepo, 'active', 30);
 
     await appRepoList.goTo();
     await appRepoList.waitForPage();

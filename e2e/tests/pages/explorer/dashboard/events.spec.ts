@@ -3,6 +3,7 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import { EventsPageListPo } from '@/e2e/po/pages/explorer/events.po';
 import { eventsGetResponseSmallSet, eventsLargeResponse } from '@/e2e/blueprints/explorer/cluster/events';
 import { setTablePreferences, restoreTablePreferences } from '@/e2e/tests/pages/explorer2/workloads/pagination.utils';
+import { STANDARD } from '@/support/timeouts';
 
 const MOCK_COUNT = 25;
 const UNIQUE_NAME = 'aaaa-unique-test-event';
@@ -35,9 +36,10 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
       await expect(clusterDashboard.eventsList().sortableTable().self()).toBeVisible();
       await clusterDashboard.eventsList().sortableTable().checkLoadingIndicatorNotVisible();
 
-      const rowCount = await clusterDashboard.eventsList().sortableTable().rowCount();
-
-      expect(rowCount).toBeGreaterThan(0);
+      // Web-first: events stream populates a beat after the loading indicator drops.
+      await expect(clusterDashboard.eventsList().sortableTable().rowElements().first()).toBeVisible({
+        timeout: STANDARD,
+      });
     });
   });
 
@@ -52,9 +54,10 @@ test.describe('Events', { tag: ['@explorer', '@adminUser'] }, () => {
       await expect(events.list().resourceTable().sortableTable().self()).toBeVisible();
       await events.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
-      const rowCount = await events.list().resourceTable().sortableTable().rowCount();
-
-      expect(rowCount).toBeGreaterThan(0);
+      // Web-first: same guard as the dashboard test above.
+      await expect(events.list().resourceTable().sortableTable().rowElements().first()).toBeVisible({
+        timeout: STANDARD,
+      });
     });
 
     test('pagination is hidden with small dataset', async ({ page, login }) => {
