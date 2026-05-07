@@ -85,8 +85,19 @@ for i in $(seq 1 "$N"); do
     docker compose "${COMPOSE_FLAGS[@]}" pull rancher-1 rancher-2 2>/dev/null || \
       docker compose "${COMPOSE_FLAGS[@]}" pull 2>/dev/null || true
 
-    echo "--- Bring up (build with --pull to force fresh FROM layer) ---"
+    echo "--- Build (with --pull to force fresh FROM layer) ---"
     GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" build --pull
+
+    echo "--- Bring up rancher-1 and rancher-2 (wait healthy) ---"
+    # Two-phase up: bring rancher-1+2 first and let `restart: unless-stopped`
+    # recover any startup FATALs (multiclustermanager-start race) before
+    # shard depends_on triggers. Without this, compose's first-pass
+    # dependency check sees the FATAL exit and aborts the whole run.
+    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d rancher-1 rancher-2
+    sh "$(dirname "$0")/wait-rancher-healthy.sh" dashboard-e2e-pw-rancher-1-1
+    sh "$(dirname "$0")/wait-rancher-healthy.sh" dashboard-e2e-pw-rancher-2-1
+
+    echo "--- Bring up shards + merge ---"
     GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d
 
     echo "--- Wait for merge ---"
