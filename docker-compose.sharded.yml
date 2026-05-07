@@ -16,17 +16,15 @@ services:
     networks:
       e2e:
         ipv4_address: 172.28.0.10
-    # Real admin login + SPA home page — gates on backend (bootstrap user,
-    # local auth provider, mgmt API) AND frontend (SPA assets) both ready.
-    # Either alone returns 200 before the other is steady, leaving early
-    # tests racing 503s on /dashboard/home or auth-provider 401s.
+    # Backend auth + SPA frontend both ready, GET-only so we don't pile up
+    # admin sessions. /v3-public/authProviders/local returns 200 once the
+    # local auth provider is registered (deeper signal than the static
+    # /dashboard/auth/login). /dashboard/home gates on the SPA assets path.
     healthcheck:
       test:
         - CMD-SHELL
         - >-
-          curl -fsk --max-time 3 -X POST -H 'Content-Type: application/json'
-          -d '{"username":"admin","password":"'"$$CATTLE_BOOTSTRAP_PASSWORD"'","responseType":"cookie"}'
-          -o /dev/null https://localhost/v3-public/localProviders/local?action=login
+          curl -fsk --max-time 3 -o /dev/null https://localhost/v3-public/authProviders/local
           && curl -fsk --max-time 3 -o /dev/null https://localhost/dashboard/home
       interval: 15s
       timeout: 10s
@@ -53,17 +51,15 @@ services:
     networks:
       e2e:
         ipv4_address: 172.28.0.11
-    # Real admin login + SPA home page — gates on backend (bootstrap user,
-    # local auth provider, mgmt API) AND frontend (SPA assets) both ready.
-    # Either alone returns 200 before the other is steady, leaving early
-    # tests racing 503s on /dashboard/home or auth-provider 401s.
+    # Backend auth + SPA frontend both ready, GET-only so we don't pile up
+    # admin sessions. /v3-public/authProviders/local returns 200 once the
+    # local auth provider is registered (deeper signal than the static
+    # /dashboard/auth/login). /dashboard/home gates on the SPA assets path.
     healthcheck:
       test:
         - CMD-SHELL
         - >-
-          curl -fsk --max-time 3 -X POST -H 'Content-Type: application/json'
-          -d '{"username":"admin","password":"'"$$CATTLE_BOOTSTRAP_PASSWORD"'","responseType":"cookie"}'
-          -o /dev/null https://localhost/v3-public/localProviders/local?action=login
+          curl -fsk --max-time 3 -o /dev/null https://localhost/v3-public/authProviders/local
           && curl -fsk --max-time 3 -o /dev/null https://localhost/dashboard/home
       interval: 15s
       timeout: 10s
