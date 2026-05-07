@@ -75,14 +75,19 @@ for i in $(seq 1 "$N"); do
     echo "--- Tear down ---"
     docker compose "${COMPOSE_FLAGS[@]}" down -v
 
-    echo "--- Remove cached images ---"
-    docker rmi rancher-nft:local rancher/rancher:v2.14-head 2>/dev/null || true
+    echo "--- Remove cached images (incl. upstream base) ---"
+    docker rmi rancher-nft:local rancher/rancher:v2.14-head rancher/rancher:head docker.io/rancher/rancher:head 2>/dev/null || true
 
     echo "--- Clear test-results + blob-report ---"
     rm -rf test-results blob-report
 
-    echo "--- Bring up (fresh build + pull) ---"
-    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up --build -d
+    echo "--- Pull fresh upstream rancher head image ---"
+    docker compose "${COMPOSE_FLAGS[@]}" pull rancher-1 rancher-2 2>/dev/null || \
+      docker compose "${COMPOSE_FLAGS[@]}" pull 2>/dev/null || true
+
+    echo "--- Bring up (build with --pull to force fresh FROM layer) ---"
+    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" build --pull
+    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d
 
     echo "--- Wait for merge ---"
     start_ts=$(date +%s)

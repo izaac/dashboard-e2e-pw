@@ -5,7 +5,7 @@ import {
   HarvesterClusterPagePo,
 } from '@/e2e/po/pages/virtualization-mgmt/harvester-clusters.po';
 import ChartRepositoriesPagePo from '@/e2e/po/pages/chart-repositories.po';
-import { BRIEF, DEBOUNCE, EXTENSION_OPS, LONG, VERY_LONG } from '@/support/timeouts';
+import { BRIEF, DEBOUNCE, EXTENSION_OPS, LONG, PROVISIONING, VERY_LONG } from '@/support/timeouts';
 
 const CLUSTER_REPOS_BASE_URL = '/v1/catalog.cattle.io.clusterrepos';
 const harvesterTitle = 'Harvester';
@@ -110,7 +110,8 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     rancherApi,
     isPrime,
   }, testInfo) => {
-    testInfo.setTimeout(EXTENSION_OPS);
+    // 5min budget — covers retry flow when upstream rancher/dashboard#13093 fires.
+    testInfo.setTimeout(PROVISIONING);
     const catalog = isPrime ? HARVESTER_EXTENSION_CATALOG.prime : HARVESTER_EXTENSION_CATALOG.community;
     const chartRepo = catalog.repo;
     const harvesterPo = new HarvesterClusterPagePo(page);
@@ -149,28 +150,53 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     );
     await rancherApi.waitForRepositoryDownload('v1', 'catalog.cattle.io.clusterrepos', chartRepo, 30);
 
-    // Page loaded pre-install; the warning banner is cached in the Vue store and
-    // doesn't reactively re-evaluate when the chart flips to `deployed`. Reload
-    // to pick up the post-install state.
-    await harvesterPo.goTo();
-    await harvesterPo.waitForPage();
-    await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: LONG });
+    // The SPA reads /v1/catalog.cattle.io.uiplugin; without waiting for the
+    // CR to exist, the reload below races a boot that hasn't seen the plugin.
+    await rancherApi.waitForRancherResource(
+      'v1',
+      'catalog.cattle.io.uiplugin',
+      'cattle-ui-plugin-system/harvester',
+      (resp) => resp.status === 200,
+      30,
+      DEBOUNCE,
+    );
 
-    // Verify harvester extension added to extensions page. Land directly on the
-    // Installed tab via URL fragment — the SPA's auto-tab-select is racy when
-    // the install just completed (it may render #available first while the
-    // store catches up that an extension is now installed).
+    // Reload (not goTo — same-URL goTo here aborts via vue-router) so the
+    // Vue store re-reads post-install state.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await harvesterPo.waitForPage();
+
+    // Conditional retry for upstream rancher/dashboard#13093 (install JS
+    // throws on `.conditions`, leaving the page on stale pre-install state).
+    if (
+      await harvesterPo
+        .extensionWarning()
+        .isVisible({ timeout: BRIEF })
+        .catch(() => false)
+    ) {
+      await harvesterPo.updateOrInstallButton().click();
+      await rancherApi.waitForResourceState(
+        'v1',
+        'catalog.cattle.io.apps',
+        'cattle-ui-plugin-system/harvester',
+        'deployed',
+        40,
+      );
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await harvesterPo.waitForPage();
+    }
+
+    await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: VERY_LONG });
+
+    // Land on Installed tab via URL fragment — SPA's auto-tab-select races
+    // post-install and can render #available first.
     await page.goto('./c/local/uiplugins#installed', { waitUntil: 'domcontentloaded' });
     await extensionsPo.waitForPage(undefined, 'installed');
     await expect(extensionsPo.loading()).not.toBeAttached();
     await expect(extensionsPo.extensionCard(harvesterTitle)).toBeVisible({ timeout: LONG });
 
-    // Rancher's UI extensions register at SPA boot via /v1/uiplugins; the SPA
-    // does not dynamically pick up newly installed plugins and prompts the
-    // user to reload via a banner. Without clicking it, the harvester
-    // extension's masthead actions ("Import Existing") never register on
-    // later navs. Mirrors `installExtensionFromCatalog`'s VERY_LONG wait —
-    // the banner can take 30-60s to appear on a freshly-installed extension.
+    // SPA registers extensions at boot; a banner prompts reload to pick up
+    // the new plugin. Without it, masthead actions never register.
     const reloadBanner = extensionsPo.extensionReloadBanner();
 
     if (await reloadBanner.isVisible({ timeout: VERY_LONG }).catch(() => false)) {
@@ -184,17 +210,17 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
     await expect(appRepoList.list().resourceTable().sortableTable().rowElementWithName(chartRepo)).toBeVisible();
     await expect(appRepoList.list().state(chartRepo)).toContainText('Active', { timeout: VERY_LONG });
 
-    // Begin process of importing harvester cluster. The masthead action
-    // ("Import Existing") is provided by the harvester extension's Vue
-    // components, which load asynchronously after the SPA fetches the new
-    // plugin manifest. Empirical observation from DOM snapshots: the button
-    // does appear, but on slow systems can take >60s after navigation. Each
-    // page.goto() resets the SPA and restarts the load, so retrying with
-    // fresh navs is counterproductive — give the SPA one uninterrupted
-    // EXTENSION_OPS (3 min) to render the button.
+    // Re-nav to harvester (otherwise importBtn resolves against chart-repos
+    // masthead) + reload to flush stale SPA snapshot from the multi-page
+    // tour above; the warning going away is the gating signal.
+    await harvesterPo.goTo();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await harvesterPo.waitForPage();
+    await expect(harvesterPo.extensionWarning()).not.toBeAttached({ timeout: VERY_LONG });
+
     const importBtn = harvesterPo.importHarvesterClusterButton();
 
-    await importBtn.waitFor({ state: 'visible', timeout: EXTENSION_OPS });
+    await importBtn.waitFor({ state: 'visible', timeout: LONG });
 
     const createClusterPromise = page.waitForResponse(
       (resp) => resp.url().includes('/v3/clusters') && resp.request().method() === 'POST',
