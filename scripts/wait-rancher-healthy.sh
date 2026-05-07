@@ -1,5 +1,7 @@
 #!/bin/sh
-# Poll the rancher docker container health, exit when healthy or after 240s.
+# Poll the rancher docker container health, exit when healthy or after 360s.
+# Covers the multiclustermanager-start FATAL + auto-restart cycle plus the
+# healthcheck start_period (180s) plus a margin.
 #
 # Usage:
 #   sh scripts/wait-rancher-healthy.sh [container-name]
@@ -13,7 +15,7 @@
 set -eu
 
 CONTAINER="${1:-dashboard-e2e-pw-rancher-1}"
-MAX_ATTEMPTS=24
+MAX_ATTEMPTS=36
 INTERVAL=10
 
 n=0

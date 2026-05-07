@@ -17,7 +17,10 @@ export class InstallChartPage extends PagePo {
   }
 
   async nextPage(): Promise<void> {
-    const btn = new AsyncButtonPo(this.page, '.controls-steps .btn.role-primary');
+    // Wizard footer Next button. Recent rancher dashboard switched the
+    // primary button class from `role-primary` to `variant-primary`
+    // (rc-button refactor); accept both so we work across versions.
+    const btn = new AsyncButtonPo(this.page, '.controls-steps .btn.role-primary, .controls-steps .btn.variant-primary');
 
     await btn.click(true);
   }
