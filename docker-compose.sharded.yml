@@ -11,26 +11,57 @@ services:
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    # Real admin login + SPA home page — gates on backend (bootstrap user,
+    # local auth provider, mgmt API) AND frontend (SPA assets) both ready.
+    # Either alone returns 200 before the other is steady, leaving early
+    # tests racing 503s on /dashboard/home or auth-provider 401s.
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsk --max-time 3 -X POST -H 'Content-Type: application/json'
+          -d '{"username":"admin","password":"'"$$CATTLE_BOOTSTRAP_PASSWORD"'","responseType":"cookie"}'
+          -o /dev/null https://localhost/v3-public/localProviders/local?action=login
+          && curl -fsk --max-time 3 -o /dev/null https://localhost/dashboard/home
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 40
-      start_period: 60s
+      # 180s covers rancher's known multiclustermanager-start FATAL +
+      # auto-restart cycle (race on `proxyendpoints/rancher-aws-endpoints`)
+      # before docker marks the container unhealthy.
+      start_period: 180s
 
   rancher-2:
     image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
     privileged: true
     restart: unless-stopped
+    # Stagger after rancher-1 is healthy — booting both in parallel on a
+    # single host pressures the multiclustermanager-start leader-func race.
+    depends_on:
+      rancher-1:
+        condition: service_healthy
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    # Real admin login + SPA home page — gates on backend (bootstrap user,
+    # local auth provider, mgmt API) AND frontend (SPA assets) both ready.
+    # Either alone returns 200 before the other is steady, leaving early
+    # tests racing 503s on /dashboard/home or auth-provider 401s.
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsk --max-time 3 -X POST -H 'Content-Type: application/json'
+          -d '{"username":"admin","password":"'"$$CATTLE_BOOTSTRAP_PASSWORD"'","responseType":"cookie"}'
+          -o /dev/null https://localhost/v3-public/localProviders/local?action=login
+          && curl -fsk --max-time 3 -o /dev/null https://localhost/dashboard/home
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 40
-      start_period: 60s
+      # 180s covers rancher's known multiclustermanager-start FATAL +
+      # auto-restart cycle (race on `proxyendpoints/rancher-aws-endpoints`)
+      # before docker marks the container unhealthy.
+      start_period: 180s
 
   shard-1:
     build: .
