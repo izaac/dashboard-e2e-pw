@@ -56,6 +56,13 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] Qase IDs — to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
 
+## Upstream advocacy
+
+- [ ] Push upstream rancher/dashboard to migrate
+  `shell/components/SortableTable/paging.js` (and its `debug.js` sibling) to
+  TypeScript. Last legacy `.js` files in an otherwise mostly-TS component
+  tree; surfaced while debugging the CRD pagination test.
+
 ## Known chronic flakes — needs deeper investigation
 
 - [ ] **`harvester.spec.ts:108 can auto install harvester`** — fails 3/5 even with the
