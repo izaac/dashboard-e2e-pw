@@ -94,7 +94,6 @@ specs would benefit most from per-worker isolation:
   - [ ] Namescope created resources by worker/test to avoid server-side collisions.
 - [ ] **Long tail (touch as helpers are touched)**
   - [ ] 284 raw class/id locators in POs — track selector type in the PO index, push for upstream `data-testid` attributes on high-value sites.
-  - [ ] One remaining raw chained `.bg-success` selector in `cluster-provisioning-amazon-ec2-rke2.spec.ts:280` — move behind a PO method.
   - [ ] 214 `any` usages across `e2e/` + `support/` — start with `support/fixtures/rancher-api.ts`, narrow types as helpers are touched.
 - [ ] **Phase 5 — docs as executable policy**
   - [ ] Snippet type-check step for `WRITING-TESTS.md` examples (would need a docs lint that compiles TS snippets against real types).
