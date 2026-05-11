@@ -27,6 +27,12 @@ test.describe('Side Menu: main', () => {
       await homePage.goTo();
     });
 
+    test.afterEach(async ({ page }) => {
+      // Drain in-flight route handlers so route.fetch() doesn't throw against
+      // a closing page during teardown.
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
+    });
+
     test(
       'Pressing keyboard combo should display appropriate icon on cluster menu icon box',
       {

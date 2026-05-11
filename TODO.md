@@ -183,3 +183,10 @@
 - [ ] Qase IDs — to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
 - [x] GitHub Actions workflow for PR validation (lint + typecheck)
+
+## Upstream advocacy
+
+- [ ] Push upstream rancher/dashboard to migrate
+  `shell/components/SortableTable/paging.js` (and its `debug.js` sibling) to
+  TypeScript. Last legacy `.js` files in an otherwise mostly-TS component
+  tree; surfaced while debugging the CRD pagination test.
