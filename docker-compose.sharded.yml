@@ -11,26 +11,53 @@ services:
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    # Backend auth + SPA frontend both ready, GET-only so we don't pile up
+    # admin sessions. /v3-public/authProviders/local returns 200 once the
+    # local auth provider is registered (deeper signal than the static
+    # /dashboard/auth/login). /dashboard/home gates on the SPA assets path.
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsk --max-time 3 -o /dev/null https://localhost/v3-public/authProviders/local
+          && curl -fsk --max-time 3 -o /dev/null https://localhost/dashboard/home
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 40
-      start_period: 60s
+      # 180s covers rancher's known multiclustermanager-start FATAL +
+      # auto-restart cycle (race on `proxyendpoints/rancher-aws-endpoints`)
+      # before docker marks the container unhealthy.
+      start_period: 180s
 
   rancher-2:
     image: ${RANCHER_IMAGE:-docker.io/rancher/rancher:head}
     privileged: true
     restart: unless-stopped
+    # Stagger after rancher-1 is healthy — booting both in parallel on a
+    # single host pressures the multiclustermanager-start leader-func race.
+    depends_on:
+      rancher-1:
+        condition: service_healthy
     environment:
       CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
       CATTLE_AGENT_IMAGE: docker.io/rancher/rancher-agent:head
+    # Backend auth + SPA frontend both ready, GET-only so we don't pile up
+    # admin sessions. /v3-public/authProviders/local returns 200 once the
+    # local auth provider is registered (deeper signal than the static
+    # /dashboard/auth/login). /dashboard/home gates on the SPA assets path.
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "https://localhost/dashboard/auth/login", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "3"]
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsk --max-time 3 -o /dev/null https://localhost/v3-public/authProviders/local
+          && curl -fsk --max-time 3 -o /dev/null https://localhost/dashboard/home
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 40
-      start_period: 60s
+      # 180s covers rancher's known multiclustermanager-start FATAL +
+      # auto-restart cycle (race on `proxyendpoints/rancher-aws-endpoints`)
+      # before docker marks the container unhealthy.
+      start_period: 180s
 
   shard-1:
     build: .
@@ -44,6 +71,9 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      # Enable Playwright's CI defaults: retries=2, fail on missing tests, etc.
+      # playwright.config.ts gates retry count on `process.env.CI`.
+      CI: "true"
     command: ["sh", "-c", "npx playwright test --shard=1/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-1.exit"]
     volumes:
       - blob-reports:/blobs
@@ -61,6 +91,7 @@ services:
       TEST_USERNAME: admin
       GREP_TAGS: ${GREP_TAGS:-}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      CI: "true"
     command: ["sh", "-c", "npx playwright test --shard=2/2 --reporter=blob; rc=$$?; chown -R ${HOST_UID:-1000}:${HOST_GID:-100} /app/test-results 2>/dev/null; echo $$rc > /blobs/shard-2.exit"]
     volumes:
       - blob-reports:/blobs
@@ -73,6 +104,11 @@ services:
         condition: service_started
       shard-2:
         condition: service_started
+    environment:
+      # Without this, `merge-reports --reporter=html` starts an HTTP server at
+      # localhost:9323 after generating the report and never exits, wedging the
+      # merge container until externally stopped.
+      PLAYWRIGHT_HTML_OPEN: never
     entrypoint: ["sh", "-c"]
     command:
       - |
