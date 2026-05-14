@@ -216,7 +216,7 @@
 | ClusterRoleBindingsPagePo | cluster-role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterRolesPagePo | cluster-roles.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterToolsPagePo | cluster-tools.po.ts | PagePo | — | super, featureChartCards, getCardByName, deleteChart, goToInstall, editChart, getChartVersion |
-| ConfigMapsPagePo | configmaps.po.ts | PagePo | — | super, list |
+| ConfigMapsPagePo | configmaps.po.ts | PagePo | — | super, list, resourceName, badgeState |
 | ContentsPagePo | contents.po.ts | PagePo | — | super, list, clickCreate |
 | CustomResourceDefinitionsPagePo | custom-resource-definitions.po.ts | PagePo | — | super, create, crdCreateEditPo, list, sortableTable, yamlEditor, saveYamlButton |
 | EventsPageListPo | events.po.ts | PagePo | — | super, list, baseResourceList, resourceDetail |
