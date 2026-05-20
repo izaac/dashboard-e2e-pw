@@ -1,5 +1,28 @@
 # TODO
 
+> Last upstream sync check: 2026-05-20
+
+## Upstream Sync Status
+
+**Local repo synced up to:** upstream commit `f5e49a55` (Apr 30, 2026) via local
+commit `b07a64e` ("Sync upstream: Microsoft Entra ID rebrand + local cluster edit
+accordion check").
+
+### Upstream commits since last sync (May 1 – May 19) — reviewed, none need porting
+
+| Date | Commit | Author | Verdict |
+|------|--------|--------|---------|
+| May 15 | `3737f3f8` | richard-cox | PO adds `mockListRequests`/`supplementListRequests` — unmerged `mgmt-to-prov` feature branch, not on master yet |
+| May 13 | `94d65b5c` | richard-cox | 1-line fix in `v2prov-capi.spec` — same unmerged branch |
+| May 12 | `82361f03` | richard-cox | Blueprint mock tweak + cluster-list state text — same unmerged branch |
+| May 6 | `2faefe0c` | yonasberhe23 | Cluster tools: resource polling refactor — Cypress-specific hardening, we already handle via `rancherApi` + `waitForResponse` |
+| May 5 | `55da6031` | aalves08 | Remove extensions compatibility tests — just deletions, nothing to port |
+| May 4 | `3c1e37a7` | IsaSih | Flexibilize release notes assertions for prime — test hardening only |
+
+### Watch list
+
+- [ ] **`mgmt-to-prov` branch** (richard-cox) — will have real locator/selector changes when merged to master. Monitor `rancher/dashboard` PR #17228.
+
 ## Gap-map false positives (covered, just renamed)
 
 `docs/ASSERTION-GAP-MAP.md` matches by exact upstream test name. The following
