@@ -1,6 +1,6 @@
 # TODO
 
-> Last upstream sync check: 2026-05-20
+> Last upstream sync check: 2026-05-22
 
 ## Upstream Sync Status
 
@@ -21,7 +21,13 @@ accordion check").
 
 ### Watch list
 
-- [ ] **`mgmt-to-prov` branch** (richard-cox) — will have real locator/selector changes when merged to master. Monitor `rancher/dashboard` PR #17228.
+- [x] **`mgmt-to-prov` branch** (richard-cox) — merged to master as `rancher/dashboard`
+  PR #17228. Ported the coverage: `clusterMgmtDigitalOceanSingleResponse` blueprint +
+  mgmt-cluster mock in `cloud-credential.spec.ts`; `cluster-prov-select-credential`
+  testid in the cluster create/edit POs. Note for future cluster-mock ports: the
+  dashboard now loads clusters by id via server-side-pagination
+  `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be
+  RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
 
 ## Gap-map false positives (covered, just renamed)
 

@@ -44,7 +44,7 @@ export default class ClusterManagerEditGenericPagePo extends PagePo {
   }
 
   cloudCredentialSelect(): Locator {
-    return this.page.getByTestId('cloud-credentials-select');
+    return this.page.getByTestId('cluster-prov-select-credential');
   }
 
   dropdownOption(text: string): Locator {

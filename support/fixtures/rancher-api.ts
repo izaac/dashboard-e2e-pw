@@ -1232,8 +1232,12 @@ export class RancherApi {
   }
 
   /**
-   * Delete a provisioning cluster and poll until Rancher fully removes it (404).
-   * Use in afterAll hooks to ensure clean teardown before credential deletion.
+   * Delete a provisioning cluster and poll until Rancher fully removes both the
+   * v1 provisioning.cattle.io.cluster AND the linked v3 management.cattle.io.cluster.
+   * Waiting only on the v1 object leaves the mgmt object in a delete-pending state
+   * the controller cascade may not finish before the next test starts — orphan
+   * mgmt clusters then stream into the dashboard via the steve WebSocket
+   * subscription and pollute the cluster list of subsequent tests.
    */
   async deleteClusterAndWait(
     clusterName: string,
@@ -1242,6 +1246,9 @@ export class RancherApi {
     intervalMs = 15_000,
   ): Promise<void> {
     const resourceId = `${namespace}/${clusterName}`;
+
+    const provResp = await this.getRancherResource('v1', 'provisioning.cattle.io.clusters', resourceId, 0);
+    const mgmtClusterId: string | undefined = provResp.body?.status?.clusterName;
 
     await this.deleteRancherResource('v1', 'provisioning.cattle.io.clusters', resourceId, false);
     await this.waitForRancherResource(
@@ -1252,6 +1259,17 @@ export class RancherApi {
       maxRetries,
       intervalMs,
     );
+
+    if (mgmtClusterId) {
+      await this.waitForRancherResource(
+        'v3',
+        'clusters',
+        mgmtClusterId,
+        (resp) => resp.status === 404,
+        maxRetries,
+        intervalMs,
+      );
+    }
   }
 
   /**

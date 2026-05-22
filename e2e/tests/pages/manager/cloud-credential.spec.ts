@@ -3,7 +3,10 @@ import {
   cloudCredentialCreatePayloadDO,
   cloudCredentialCreatePayloadAzure,
 } from '@/e2e/blueprints/manager/cloud-credential-create-payload';
-import { clusterProvDigitalOceanSingleResponse } from '@/e2e/blueprints/manager/digital-ocean-cluster-provisioning-response';
+import {
+  clusterMgmtDigitalOceanSingleResponse,
+  clusterProvDigitalOceanSingleResponse,
+} from '@/e2e/blueprints/manager/digital-ocean-cluster-provisioning-response';
 import { machinePoolConfigResponse } from '@/e2e/blueprints/manager/machine-pool-config-response';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerEditGenericPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/edit/cluster-edit-generic.po';
@@ -92,17 +95,64 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
     page,
     rancherApi,
   }) => {
-    test.fixme(
-      true,
-      'Mocked cluster edit page does not render cloud-credentials-select — needs real provisioning infrastructure',
-    );
-
-    await login();
-
     const credsName = `do-creds-${Date.now()}`;
     const clusterName = `test-cluster-do-${Date.now()}`;
     const machinePoolId = 'dummy-id';
     const doCreatedCloudCredsIds: string[] = [];
+    const mgmtCollection = clusterMgmtDigitalOceanSingleResponse(clusterName) as { data: object[] };
+    // Built per-request via closure: the cloud-credential id isn't known until
+    // the API-create loop runs below, after login.
+    const provCollection = () =>
+      clusterProvDigitalOceanSingleResponse(
+        clusterName,
+        doCreatedCloudCredsIds[doCreatedCloudCredsIds.length - 1] ?? '',
+        machinePoolId,
+      ) as { data: object[] };
+
+    // Routes set up BEFORE login so they're active when the dashboard pre-fetches
+    // cluster data during the home-page render — otherwise the real backend's
+    // mgmt-cluster list caches into the store and the fake cluster never displays
+    // a complete action menu. The provisioning routes are RegExps, not globs: a
+    // glob `*` stops at `/`, but the dashboard addresses this cluster by its
+    // namespaced id `fleet-default/<name>` — both as a path segment and inside a
+    // `?filter=id IN (...)` query value — so a glob misses it and the request
+    // escapes to the live backend. RegExps are also host-agnostic, which the
+    // save PUT needs (the blueprint's links.update points at localhost:8005).
+    await page.route(/\/v1\/rke-machine-config\.cattle\.io\.digitaloceanconfigs\/fleet-default\//, (route) => {
+      if (route.request().method() === 'PUT') {
+        route.fulfill({ json: {} });
+      } else {
+        route.fulfill({ json: machinePoolConfigResponse(clusterName, machinePoolId) });
+      }
+    });
+
+    // Specific cluster by path: the edit page loads it here and the save PUTs
+    // here. Without the GET mock the edit form 404s and never renders.
+    await page.route(
+      new RegExp(`/v1/provisioning\\.cattle\\.io\\.clusters/fleet-default/${clusterName}(\\?|$)`),
+      (route) => {
+        if (route.request().method() === 'PUT') {
+          route.fulfill({ json: {} });
+        } else {
+          route.fulfill({ json: provCollection().data[0] });
+        }
+      },
+    );
+
+    // Collection + by-id filter query (see note above on RegExp vs glob).
+    await page.route(/\/v1\/provisioning\.cattle\.io\.clusters(\?|$)/, (route) => {
+      route.fulfill({ json: provCollection() });
+    });
+
+    await page.route('**/v1/management.cattle.io.clusters?*', (route) => {
+      route.fulfill({ json: mgmtCollection });
+    });
+
+    await page.route(`**/v1/management.cattle.io.clusters/${clusterName}?*`, (route) => {
+      route.fulfill({ json: mgmtCollection.data[0] });
+    });
+
+    await login();
 
     try {
       const cloudCredsToCreate = [
@@ -123,48 +173,10 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
 
       const clusterList = new ClusterManagerListPagePo(page);
 
-      await page.route(`/v1/rke-machine-config.cattle.io.digitaloceanconfigs/fleet-default/*`, (route) => {
-        route.fulfill({
-          status: 200,
-          body: JSON.stringify(machinePoolConfigResponse(clusterName, machinePoolId)),
-        });
-      });
-
-      await page.route(
-        `/v1/rke-machine-config.cattle.io.digitaloceanconfigs/fleet-default/nc-${clusterName}-pool1-${machinePoolId}`,
-        (route) => {
-          if (route.request().method() === 'PUT') {
-            route.fulfill({ status: 200, body: JSON.stringify({}) });
-          } else {
-            route.continue();
-          }
-        },
-      );
-
-      await page.route(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`, (route) => {
-        if (route.request().method() === 'PUT') {
-          route.fulfill({ status: 200, body: JSON.stringify({}) });
-        } else {
-          route.continue();
-        }
-      });
-
       await clusterList.goTo();
-
-      await page.route('/v1/provisioning.cattle.io.clusters?*', (route) => {
-        route.fulfill({
-          status: 200,
-          body: JSON.stringify(
-            clusterProvDigitalOceanSingleResponse(
-              clusterName,
-              doCreatedCloudCredsIds[doCreatedCloudCredsIds.length - 1],
-              machinePoolId,
-            ),
-          ),
-        });
-      });
-
       await clusterList.waitForPage();
+      await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
+
       await clusterList.editCluster(clusterName);
 
       const editClusterPage = new ClusterManagerEditGenericPagePo(page, '_', clusterName);
@@ -174,18 +186,18 @@ test.describe('Cloud Credential', { tag: ['@manager', '@adminUser', '@needsInfra
       await editClusterPage.cloudCredentialSelect().click();
       await editClusterPage.dropdownOption(selectOptLabel).click();
 
-      const putResponsePromise = page.waitForResponse(
-        (resp) =>
-          resp.url().includes(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`) &&
-          resp.request().method() === 'PUT',
+      const putRequestPromise = page.waitForRequest(
+        (req) =>
+          req.url().includes(`/v1/provisioning.cattle.io.clusters/fleet-default/${clusterName}`) &&
+          req.method() === 'PUT',
         SHORT_TIMEOUT_OPT,
       );
 
       await editClusterPage.resourceDetail().createEditView().saveButtonPo().click();
-      const putResp = await putResponsePromise;
-      const putBody = await putResp.json().catch(() => ({}));
+      const putReq = await putRequestPromise;
+      const putBody = putReq.postDataJSON();
 
-      expect(putBody?.spec?.cloudCredentialSecretName ?? '').toContain(doCreatedCloudCredsIds[1]);
+      expect(putBody.spec.cloudCredentialSecretName).toContain(doCreatedCloudCredsIds[1]);
     } finally {
       for (const id of doCreatedCloudCredsIds) {
         await rancherApi.deleteRancherResource('v3', 'cloudcredentials', id, false);

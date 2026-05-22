@@ -1,5 +1,77 @@
 import { SAFE_RESOURCE_REVISION } from '../blueprint.utils';
 
+export function clusterMgmtDigitalOceanSingleResponse(clusterName: string): object {
+  return {
+    type: 'collection',
+    links: { self: 'https://localhost:8005/v1/management.cattle.io.clusters' },
+    actions: {},
+    resourceType: 'management.cattle.io.cluster',
+    revision: SAFE_RESOURCE_REVISION,
+    count: 1,
+    data: [
+      {
+        id: `${clusterName}`,
+        type: 'management.cattle.io.cluster',
+        links: {
+          log: `https://localhost:8005/v1/management.cattle.io.clusters/${clusterName}?link=log`,
+          patch: 'blocked',
+          projects: `https://localhost:8005/v1/management.cattle.io.clusters/${clusterName}?link=projects`,
+          remove: 'blocked',
+          schemas: `https://localhost:8005/v1/management.cattle.io.clusters/${clusterName}?link=schemas`,
+          self: `https://localhost:8005/v1/management.cattle.io.clusters/${clusterName}`,
+          shell: `wss://localhost/v3/clusters/${clusterName}?shell=true`,
+          subscribe: `https://localhost:8005/v1/management.cattle.io.clusters/${clusterName}?link=subscribe`,
+          update: 'blocked',
+          view: `https://localhost:8005/v1/management.cattle.io.clusters/${clusterName}`,
+        },
+        action: {},
+        apiVersion: 'management.cattle.io/v3',
+        kind: 'Cluster',
+        metadata: {
+          annotations: {},
+          creationTimestamp: '2024-01-05T14:44:50Z',
+          name: `${clusterName}`,
+          labels: {},
+          relationships: [
+            {
+              toId: `fleet-default/${clusterName}`,
+              toType: 'provisioning.cattle.io.cluster',
+              rel: 'applies',
+              state: 'active',
+              message: 'Resource is current',
+            },
+          ],
+          resourceVersion: SAFE_RESOURCE_REVISION,
+          state: {
+            error: false,
+            message: '',
+            name: 'Active',
+            transitioning: false,
+          },
+          uid: '7623f2b5-1003-49c9-a21d-6cae3622a3bc',
+        },
+        spec: { displayName: `${clusterName}` },
+        status: {
+          driver: 'digitalocean',
+          info: {
+            arch: 'amd64',
+            kubernetesVersion: 'v1.35.3+rke2r3',
+            machineProvider: 'Digitalocean',
+            nodeCount: 2,
+            provisioningClusterRef: {
+              apiVersion: 'provisioning.cattle.io/v1',
+              kind: 'Cluster',
+              name: `${clusterName}`,
+              namespace: 'fleet-default',
+            },
+          },
+          provider: 'rke2',
+        },
+      },
+    ],
+  };
+}
+
 export function clusterProvDigitalOceanSingleResponse(
   clusterName: string,
   cloudCredName: string,
@@ -113,7 +185,7 @@ export function clusterProvDigitalOceanSingleResponse(
               state: 'waitcheckin',
             },
             {
-              toId: 'c-m-fbr46mrq',
+              toId: `${clusterName}`,
               toType: 'management.cattle.io.cluster',
               rel: 'applies',
               state: 'active',
@@ -227,7 +299,7 @@ export function clusterProvDigitalOceanSingleResponse(
         status: {
           agentDeployed: true,
           clientSecretName: `${clusterName}-kubeconfig`,
-          clusterName: 'c-m-fbr46mrq',
+          clusterName: `${clusterName}`,
           conditions: [
             {
               error: false,

@@ -267,6 +267,14 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
           20,
           3000,
         );
+        await rancherApi.waitForRancherResource(
+          'v3',
+          'clusters',
+          harvesterClusterId,
+          (resp) => resp.status === 404,
+          20,
+          3000,
+        );
       }
     },
   );

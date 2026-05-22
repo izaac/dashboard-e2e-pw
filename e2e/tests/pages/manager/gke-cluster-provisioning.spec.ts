@@ -145,6 +145,10 @@ test.describe(
       } finally {
         if (clusterId) {
           await rancherApi.deleteRancherResource('v3', 'clusters', clusterId, false);
+          // Wait for the management cluster object to actually go away before
+          // releasing the cloud credential — otherwise the cascade-delete leaves
+          // an orphan visible to later tests via the WebSocket subscription.
+          await rancherApi.waitForRancherResource('v3', 'clusters', clusterId, (resp) => resp.status === 404, 20, 3000);
         }
         if (cloudCredId) {
           await rancherApi.deleteRancherResource('v3', 'cloudcredentials', cloudCredId, false);
