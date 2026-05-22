@@ -64,6 +64,30 @@ cd "$REPO_ROOT"
 
 echo "Sharded runs: N=$N, GREP_TAGS='$GREP_TAGS_ARG', OUT_DIR=$OUT_DIR"
 
+# A rancher startup FATAL (multiclustermanager-start race) can crash mid
+# chart-catalog git clone, leaving `.git/index.lock` files that poison the
+# volume: every `restart: unless-stopped` reboot then fails identically
+# (`configmaps "" not found` loop) and never goes healthy. `restart` cannot
+# heal a poisoned volume — only a nuke can. Wait for healthy; on timeout,
+# nuke just that rancher's volume, recreate, and retry.
+ensure_rancher_healthy() {
+  local svc="$1"
+  local container="dashboard-e2e-pw-${svc}-1"
+  local volume="dashboard-e2e-pw_${svc}-data"
+  local attempt
+  for attempt in 1 2 3; do
+    if sh "$(dirname "$0")/wait-rancher-healthy.sh" "$container"; then
+      return 0
+    fi
+    echo "--- $svc not healthy (attempt $attempt/3) — nuking $volume + recreating ---"
+    docker compose "${COMPOSE_FLAGS[@]}" rm -sf "$svc"
+    docker volume rm "$volume" 2>/dev/null || true
+    docker compose "${COMPOSE_FLAGS[@]}" up -d "$svc"
+  done
+  echo "FATAL: $svc never reached healthy after 3 attempts"
+  return 1
+}
+
 for i in $(seq 1 "$N"); do
   RUN_DIR="$OUT_DIR/run-$i"
   mkdir -p "$RUN_DIR"
@@ -89,13 +113,13 @@ for i in $(seq 1 "$N"); do
     GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" build --pull
 
     echo "--- Bring up rancher-1 and rancher-2 (wait healthy) ---"
-    # Two-phase up: bring rancher-1+2 first and let `restart: unless-stopped`
-    # recover any startup FATALs (multiclustermanager-start race) before
-    # shard depends_on triggers. Without this, compose's first-pass
-    # dependency check sees the FATAL exit and aborts the whole run.
+    # Two-phase up: bring the ranchers up before the shards so compose's
+    # first-pass dependency check doesn't see a transient startup FATAL and
+    # abort the whole run. ensure_rancher_healthy then heals the poisoned-
+    # volume crash loop that `restart: unless-stopped` cannot recover from.
     GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d rancher-1 rancher-2
-    sh "$(dirname "$0")/wait-rancher-healthy.sh" dashboard-e2e-pw-rancher-1-1
-    sh "$(dirname "$0")/wait-rancher-healthy.sh" dashboard-e2e-pw-rancher-2-1
+    ensure_rancher_healthy rancher-1
+    ensure_rancher_healthy rancher-2
 
     echo "--- Bring up shards + merge ---"
     GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d
