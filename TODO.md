@@ -8,13 +8,16 @@
 commit `b07a64e` ("Sync upstream: Microsoft Entra ID rebrand + local cluster edit
 accordion check").
 
-### Upstream commits since last sync (May 1 – May 19) — reviewed, none need porting
+### Upstream commits since last sync (May 1 – May 19) — reviewed
+
+The `mgmt-to-prov` commits below merged to master as PR #17228 and have been
+ported (see Watch list); the rest need no porting.
 
 | Date | Commit | Author | Verdict |
 |------|--------|--------|---------|
-| May 15 | `3737f3f8` | richard-cox | PO adds `mockListRequests`/`supplementListRequests` — unmerged `mgmt-to-prov` feature branch, not on master yet |
-| May 13 | `94d65b5c` | richard-cox | 1-line fix in `v2prov-capi.spec` — same unmerged branch |
-| May 12 | `82361f03` | richard-cox | Blueprint mock tweak + cluster-list state text — same unmerged branch |
+| May 15 | `3737f3f8` | richard-cox | `mgmt-to-prov` PO helpers — merged as #17228, ported |
+| May 13 | `94d65b5c` | richard-cox | `mgmt-to-prov` `v2prov-capi.spec` fix — merged as #17228, ported |
+| May 12 | `82361f03` | richard-cox | `mgmt-to-prov` blueprint + cluster-list text — merged as #17228, ported |
 | May 6 | `2faefe0c` | yonasberhe23 | Cluster tools: resource polling refactor — Cypress-specific hardening, we already handle via `rancherApi` + `waitForResponse` |
 | May 5 | `55da6031` | aalves08 | Remove extensions compatibility tests — just deletions, nothing to port |
 | May 4 | `3c1e37a7` | IsaSih | Flexibilize release notes assertions for prime — test hardening only |
@@ -108,13 +111,25 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
   - Refactor to test only the API path + extension card visibility, drop
     the cluster-import UI portion.
 
-## Gold-standard audit (Phase 4 + long tail) — revisit after a full sharded suite run
+- [ ] **Sharded-run timeout failures (`rancher:head` instability)** — a stable-subset
+  sharded run (`@adminUser` minus `@prime`/`@noVai`/`@needsInfra`/`@provisioning`)
+  surfaced ~9 `timeout`/`api-error` failures: `home.spec.ts` (×2), `cluster-list.spec.ts`
+  (group by namespace), `cluster-manager.spec.ts` (navigate to Machines Page),
+  `edit-fake-cluster.spec.ts` (×2), `v2prov-capi.spec.ts`, `preferences.spec.ts`
+  (login landing page), `roles.spec.ts` (delete role template). Failure consoles show
+  dashboard-side SPA crashes — `TypeError: Cannot read properties of undefined
+  (reading 'replace')`, `this.$el.querySelector is not a function`, `Error parsing
+  server pref theme: Unexpected end of JSON input` — i.e. bugs in the `rancher:head`
+  build, not test code. The suite pulls a fresh `head` each run so the set drifts.
+  Triage: re-check against a pinned upstream tag to separate genuine head regressions
+  from flakes, then harden or quarantine the consistently-failing specs.
+
+## Gold-standard audit (Phase 4 + long tail)
 
 Phase 1, 2, 3 and the documentation parts of Phase 5 are closed (see
-`docs/AUDIT-PLAYWRIGHT-GOLDEN-STANDARD-2026-05-04.md`). Remaining items
-intentionally deferred until we have results from a fresh sharded full-suite
-run — that surfaces which serial groups are actually expensive and which
-specs would benefit most from per-worker isolation:
+`docs/AUDIT-PLAYWRIGHT-GOLDEN-STANDARD-2026-05-04.md`). Sharded full-suite runs
+have now been done — see "Known chronic flakes" above for the timeout findings.
+Remaining Phase 4 items below are the follow-up work:
 
 - [ ] **Phase 4 — Parallel-safe lane foundation**
   - [ ] Generate `PARALLELISM.md` from a script (gap-map / po-index style); fail CI on unclassified specs (audit finding #6).
