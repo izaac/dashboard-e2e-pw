@@ -73,10 +73,11 @@ test.describe('Home Page', () => {
 
       const cmRow = provClusterList.list().rowWithName(clusterName);
 
+      // Cluster Management list has a leading checkbox cell — home col N maps to column(N+1).
       await expect(cmRow.column(1)).toContainText(homeState);
       await expect(cmRow.column(2)).toContainText(homeName);
-      await expect(cmRow.column(3)).toContainText(homeVersion);
-      await expect(cmRow.column(4)).toContainText(homeProvider);
+      await expect(cmRow.column(3)).toContainText(homeProvider);
+      await expect(cmRow.column(4)).toContainText(homeVersion);
     });
 
     test('Can filter rows in the cluster list', async ({ page, login }) => {
@@ -103,12 +104,13 @@ test.describe('Home Page', () => {
 
       const longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description';
 
-      // Intercept cluster list and inject a description on the local cluster
-      await page.route('**/v1/provisioning.cattle.io.clusters?*', async (route) => {
+      // Inject a description annotation on the local mgmt cluster — the home
+      // page table renders management.cattle.io.cluster rows, not provisioning.
+      await page.route(/\/v1\/management\.cattle\.io\.clusters(\?|$)/, async (route) => {
         const response = await route.fetch();
         const json = await response.json();
 
-        const localIndex = json.data.findIndex((item: any) => item.id.includes('/local'));
+        const localIndex = json.data.findIndex((item: any) => item.id === 'local');
 
         if (localIndex >= 0) {
           json.data[localIndex].metadata.annotations['field.cattle.io/description'] = longClusterDescription;
