@@ -71,17 +71,10 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 - [ ] `jwt-authentication.spec.ts` (2) — bulk enable/disable JWT (websocket bug, `test.fixme`)
 - [ ] `agent-configuration-rke2.spec.ts` (1) — placeholder, Vue3 skip upstream
 - [ ] `node-drivers.spec.ts` (1) — placeholder (upstream rancher/dashboard#10275)
-- [ ] `pod-security-policy-templates.spec.ts` (1) — placeholder (upstream rancher/dashboard#10187)
 
 ### Form blocked by upstream bug
 
-- [ ] `project-secrets.spec.ts` — `creates a project-scoped secret` is `test.fixme`. Save stays disabled because v2.15-head projects no longer expose `status.backingNamespace` (read by `shell/edit/secret/index.vue`). Title test passes. See `DEBUGGING-FAILURES.md`.
-
-## Assertion Parity Gaps
-
-### Systemic patterns
-
-- [ ] `custom-resource-definitions.spec.ts` — sequential run causes API server stress
+- [ ] `project-secrets.spec.ts` — `creates a project-scoped secret` is `test.fixme`. Save stays disabled because v2.15-head projects no longer expose `status.backingNamespace` (read by `shell/edit/secret/index.vue`). Title test passes. See `docs/DEBUGGING-FAILURES.md`.
 
 ## CI / Infra
 
