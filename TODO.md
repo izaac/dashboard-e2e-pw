@@ -111,18 +111,33 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
   - Refactor to test only the API path + extension card visibility, drop
     the cluster-import UI portion.
 
-- [ ] **Sharded-run timeout failures (`rancher:head` instability)** — a stable-subset
-  sharded run (`@adminUser` minus `@prime`/`@noVai`/`@needsInfra`/`@provisioning`)
-  surfaced ~9 `timeout`/`api-error` failures: `home.spec.ts` (×2), `cluster-list.spec.ts`
-  (group by namespace), `cluster-manager.spec.ts` (navigate to Machines Page),
-  `edit-fake-cluster.spec.ts` (×2), `v2prov-capi.spec.ts`, `preferences.spec.ts`
-  (login landing page), `roles.spec.ts` (delete role template). Failure consoles show
-  dashboard-side SPA crashes — `TypeError: Cannot read properties of undefined
-  (reading 'replace')`, `this.$el.querySelector is not a function`, `Error parsing
-  server pref theme: Unexpected end of JSON input` — i.e. bugs in the `rancher:head`
-  build, not test code. The suite pulls a fresh `head` each run so the set drifts.
-  Triage: re-check against a pinned upstream tag to separate genuine head regressions
-  from flakes, then harden or quarantine the consistently-failing specs.
+- [ ] **Sharded-run timeout failures** — a stable-subset sharded run (`@adminUser`
+  minus `@prime`/`@noVai`/`@needsInfra`/`@provisioning`) surfaced 9 failures
+  alongside dashboard-side SPA crashes in the browser console (`TypeError:
+  Cannot read properties of undefined (reading 'replace')`, `this.$el.querySelector
+  is not a function`, etc.). The suite pulls a fresh `rancher:head` each run so
+  the set drifts. Triage: re-check each against a pinned upstream tag to separate
+  genuine head regressions from flakes, then harden or quarantine. The two
+  `home.spec.ts` cases were fixed in `b026592` (checkbox column-offset on the
+  Cluster Management list; mgmt-side route for the description mock). Remaining:
+  - [ ] `cluster-manager.spec.ts:302 navigate to Cluster Machines Page` — Vue
+    `TypeError ... 'replace'` + `this.$el.querySelector is not a function`,
+    machine table empty; likely a `head` Vue component crash to file upstream.
+  - [ ] `cluster-list.spec.ts:9 can group clusters by namespace` — namespace
+    group-row never renders. VAI/server-side-pagination grouping behavior change.
+  - [ ] `edit-fake-cluster.spec.ts:19 registry auth retain ID` — action menu on
+    `some-fake-cluster-id` lacks `Edit Config` (same locator pattern as the
+    cloud-credential bug, but `fake-cluster.ts` already links prov→mgmt; needs
+    DOM-snapshot triage).
+  - [ ] `edit-fake-cluster.spec.ts:37 doc link new tab` — same `Edit Config`
+    menu-missing pattern as above.
+  - [ ] `v2prov-capi.spec.ts:67 no machine provider for CAPI clusters` — TBD,
+    artifact not yet triaged.
+  - [ ] `preferences.spec.ts:674 login landing page – home page` — PAGE-STILL-LOADING
+    at landing-page selection; user-pref-related, may be related to the
+    `Error parsing server pref theme SyntaxError` console error.
+  - [ ] `roles.spec.ts:282 delete a role template from the detail page` — EMPTY-STATE,
+    401 on `ext.cattle.io.selfuser`.
 
 ## Gold-standard audit (Phase 4 + long tail)
 
