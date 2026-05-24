@@ -55,6 +55,21 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 ### Need provisioning infrastructure (downstream / RKE2 / imported clusters)
 
 - [ ] `cluster-manager.spec.ts` (11) — create/edit/copy/yaml/kubeconfig/download/delete on RKE2 custom + imported clusters; one display test
+  - **Imported Generic** — `can create new cluster` is wired up end-to-end (registers via `applyImportedKubectlCommand`, cleans up via `rancherApi` in `afterEach`, retries:0). Remaining `test.fixme`s reference `SHARED_IMPORT_GENERIC_NAME` static constant rather than the cluster the create test actually provisions:
+    - [ ] `can edit imported cluster and see changes afterwards` — needs shared-state refactor (beforeAll fixture creates one cluster, all 3 tests reuse it, afterAll deletes)
+    - [ ] `can delete cluster by bulk actions` — same shared-state refactor
+  - **RKE2 Custom** — `can create new cluster` is wired up end-to-end (registers via `registerCustomNode` SSH, cleans up via v1 `provisioning.cattle.io.clusters/fleet-default/<name>` in `afterEach`, retries:0). Remaining `test.fixme`s reference `SHARED_RKE2_CUSTOM_NAME`:
+    - [ ] `can copy config to clipboard` — shared cluster + clipboard stub
+    - [ ] `can edit cluster and see changes afterwards`
+    - [ ] `can view cluster YAML editor`
+    - [ ] `can download KubeConfig`
+    - [ ] `can download YAML`
+    - [ ] `preserves custom addon config values after saving cluster config`
+    - [ ] `can delete cluster`
+  - Shared blocker: lifecycle model. Pick one of:
+    - `beforeAll` per describe block creates cluster, exposes name via closure, `afterAll` deletes. Tests run `mode: 'serial'`.
+    - Worker-scoped fixture (`test.extend`) creates cluster once per worker, returns name. Cleaner but adds fixture infra to track.
+  - Once that lands, replace `SHARED_*_NAME` constants with the fixture-returned name and drop `test.fixme` on each remaining body.
 - [ ] `fleet-clusters.spec.ts` (10) — list/details, bundle add/remove, pause/unpause, edit, download, workspace assign, delete
 - [ ] `gitrepo.spec.ts` (1) — `Can create a GitRepo` (needs real fleet multi-cluster)
 
