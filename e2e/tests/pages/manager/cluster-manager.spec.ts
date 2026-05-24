@@ -467,6 +467,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       // the create test actually provisions).
 
       test('can create new cluster', async ({ page, login, rancherApi }) => {
+        // 4 min headroom: import POST → registration page render → kubectl apply on the import
+        // cluster → agent download/start → Rancher polls + marks Active. Default 60s is not enough.
+        test.setTimeout(240_000);
         await login();
 
         const importGenericName = `e2e-test-${Date.now()}-create-import-generic`;
@@ -540,12 +543,11 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterList.goTo();
         await clusterList.waitForPage();
 
-        // PR #17795: accept Pending as a transient state alongside Provisioning / Waiting
+        // Wait for the row to appear and reach Active. The earlier transitional-state
+        // snapshot from upstream Cypress (Pending|Provisioning|Waiting) is racy when the
+        // cluster transitions faster than the poll cadence, and Playwright's auto-wait
+        // already handles the "row visible, eventually Active" pattern cleanly.
         await expect(clusterList.list().state(importGenericName)).toBeVisible(EXTRA_LONG_TIMEOUT_OPT);
-        await expect(clusterList.list().state(importGenericName)).toHaveText(
-          /^(Pending|Provisioning|Waiting)$/,
-          EXTRA_LONG_TIMEOUT_OPT,
-        );
         await expect(clusterList.list().state(importGenericName)).toContainText('Active', EXTRA_LONG_TIMEOUT_OPT);
 
         // Issue #6836: Imported provider column reads "Imported" with K3s subtype
