@@ -436,11 +436,12 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
   test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning', '@needsInfra'] }, () => {
     test.describe('Generic', () => {
       // Bodies below are ported from upstream rancher/dashboard PR #17795 and rely on a live
-      // imported cluster. Declared with `test.fixme(...)` so they are collected by Playwright
-      // but never executed; bodies still type-check against the new PW POs (Import wizard,
-      // Detail Imported Generic, extended Edit Imported, PromptRemove).
+      // imported cluster. The create test is wired up end-to-end (registers the agent via
+      // `applyImportedKubectlCommand`); edit + delete remain `test.fixme` until shared-state
+      // wiring lands (they reference the static SHARED_IMPORT_GENERIC_NAME, not the cluster
+      // the create test actually provisions).
 
-      test.fixme('can create new cluster', async ({ page, login }) => {
+      test('can create new cluster', async ({ page, login }) => {
         await login();
 
         const importGenericName = `e2e-test-${Date.now()}-create-import-generic`;
