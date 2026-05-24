@@ -257,17 +257,15 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
         const registrationCmd = (await createRKE2ClusterPage.commandFromCustomClusterUI().textContent()) ?? '';
 
-        console.warn(
-          `[can create new cluster - custom] registration command (truncated): ${registrationCmd.slice(0, 200)}`,
-        );
+        await test.info().attach('registration-command', { body: registrationCmd, contentType: 'text/plain' });
 
         // SSH to the custom node + run the rke2 registration command. Requires CUSTOM_NODE_KEY/IP/USER
         // env (set by the dashboard-e2e-pw Ansible playbook from the customnode tofu workspace).
         const exec = await registerCustomNode(registrationCmd);
 
-        console.warn(`[can create new cluster - custom] ssh stdout:\n${exec.stdout || '(empty)'}`);
+        await test.info().attach('ssh-stdout', { body: exec.stdout, contentType: 'text/plain' });
         if (exec.stderr) {
-          console.warn(`[can create new cluster - custom] ssh stderr:\n${exec.stderr}`);
+          await test.info().attach('ssh-stderr', { body: exec.stderr, contentType: 'text/plain' });
         }
 
         // Wait for the row to appear and reach Active. The upstream "Updating" snapshot is
@@ -583,16 +581,14 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         const kubectlCommand =
           (await detailPage.kubectlCommandForImported().filter({ hasText: '--insecure' }).first().textContent()) ?? '';
 
-        console.warn(
-          `[can create new cluster] kubectl registration command (truncated): ${kubectlCommand.slice(0, 200)}`,
-        );
+        await test.info().attach('registration-command', { body: kubectlCommand, contentType: 'text/plain' });
 
         // Apply the kubectl-apply registration command on the host running the spec.
         const exec = await applyImportedKubectlCommand(kubectlCommand);
 
-        console.warn(`[can create new cluster] kubectl stdout:\n${exec.stdout || '(empty)'}`);
+        await test.info().attach('kubectl-stdout', { body: exec.stdout, contentType: 'text/plain' });
         if (exec.stderr) {
-          console.warn(`[can create new cluster] kubectl stderr:\n${exec.stderr}`);
+          await test.info().attach('kubectl-stderr', { body: exec.stderr, contentType: 'text/plain' });
         }
 
         await clusterList.goTo();
