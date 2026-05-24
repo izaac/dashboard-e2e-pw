@@ -5,13 +5,31 @@ import { nodeDriveResponse } from '@/e2e/tests/pages/manager/mock-responses';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
+import ClusterManagerEditRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/edit/cluster-edit-rke2-custom.po';
 import ClusterManagerDetailRke2AmazonEc2PagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-amazon.po';
+import ClusterManagerDetailRke2CustomPagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-custom.po';
+import ClusterManagerImportGenericPagePo from '@/e2e/po/extensions/imported/cluster-import-generic.po';
+import ClusterManagerDetailImportedGenericPagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-import-generic.po';
 import ClusterManagerEditImportedPagePo from '@/e2e/po/extensions/imported/cluster-edit.po';
+import NetworkRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/networking-tab-rke2.po';
+import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import Growl from '@/e2e/po/components/growl.po';
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
+import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT, EXTRA_LONG_TIMEOUT_OPT } from '@/support/timeouts';
 import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { registerCustomNode, applyImportedKubectlCommand } from '@/support/utils/custom-node-ssh';
+
+/**
+ * Cluster names shared across the `test.fixme` chain in this spec — these tests assume
+ * a sibling test (`can create new cluster`) has already provisioned the cluster.
+ * When wiring up real infra, replace these with state passed through a `beforeAll` or
+ * a fixture. They are intentionally readable constants rather than literals so the
+ * boundary between "created here" and "expected to exist" is obvious.
+ */
+const SHARED_RKE2_CUSTOM_NAME = 'e2e-test-existing-rke2-custom';
+const SHARED_IMPORT_GENERIC_NAME = 'e2e-test-import-generic';
 
 /**
  * Cluster Manager spec — converted from upstream Cypress cluster-manager.spec.ts.
@@ -141,19 +159,124 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
   test.describe('Created', () => {
     test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning', '@needsInfra'] }, () => {
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can create new cluster', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (custom node SSH access)');
+      // Bodies below are ported from upstream rancher/dashboard cluster-manager.spec.ts (master + PR #17795).
+      // All tests except the addon-config one require a real custom node + SSH, so they are declared with
+      // `test.fixme(...)` — Playwright collects them but never executes them. Bodies still type-check, so
+      // they will fail loudly if the POs they use drift away from upstream.
+
+      test.fixme('can create new cluster', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = `e2e-test-${Date.now()}-create-rke2-custom`;
+        const clusterList = new ClusterManagerListPagePo(page);
+        const createRKE2ClusterPage = new ClusterManagerCreateRke2CustomPagePo(page);
+        const detailRKE2ClusterPage = new ClusterManagerDetailRke2CustomPagePo(page, '_', rke2CustomName);
+
+        const createRequest = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/provisioning.cattle.io.clusters') && resp.request().method() === 'POST',
+        );
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        await clusterList.createCluster();
+        await createRKE2ClusterPage.waitForPage();
+
+        await createRKE2ClusterPage.selectCustom(0);
+        await createRKE2ClusterPage.nameNsDescription().name().set(rke2CustomName);
+
+        // #10338 — selecting 'none' CNI surfaces a warning banner; switch back to calico to proceed
+        const networks = createRKE2ClusterPage.basicsTab().networks();
+
+        await networks.dropdown().click();
+        await networks.optionByLabel('none').click();
+        await expect(createRKE2ClusterPage.basicsTab().networkNoneSelectedForCni()).toBeVisible();
+
+        await networks.dropdown().click();
+        await networks.optionByLabel('calico').click();
+
+        // #10159 — truncate-hostname checkbox on the Networking tab
+        await createRKE2ClusterPage.clusterConfigurationTabs().tabBySelector('[data-testid="btn-networking"]').click();
+        await new NetworkRke2(page).truncateHostnameCheckbox().set();
+
+        await createRKE2ClusterPage.create();
+        const created = await createRequest;
+
+        expect(created.status()).toBeGreaterThanOrEqual(200);
+        expect(created.status()).toBeLessThan(300);
+
+        await detailRKE2ClusterPage.waitForPage(undefined, 'registration');
+
+        // Insecure-registration toggle + kubectl-apply registration command live on the
+        // create-cluster PO; the selectors continue to work once the detail page renders them.
+        await createRKE2ClusterPage.activateInsecureRegistrationCommandFromUI().click();
+        await expect(createRKE2ClusterPage.commandFromCustomClusterUI()).toContainText('--insecure');
+
+        const registrationCmd = (await createRKE2ClusterPage.commandFromCustomClusterUI().textContent()) ?? '';
+
+        // Provision the custom node over SSH — requires CUSTOM_NODE_KEY/IP/USER env.
+        // Stays inside `test.fixme` so it never executes without infra configured.
+        await registerCustomNode(registrationCmd);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        await expect(clusterList.list().state(rke2CustomName)).toContainText('Updating');
+        // Upstream uses VERY_LONG_TIMEOUT_OPT (~15 min) here — PW has no exact analogue, EXTRA_LONG_TIMEOUT_OPT used as best effort.
+        await expect(clusterList.list().state(rke2CustomName)).toContainText('Active', EXTRA_LONG_TIMEOUT_OPT);
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can copy config to clipboard', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
+      test.fixme('can copy config to clipboard', async ({ page, login }) => {
+        await login();
+
+        // Stub navigator.clipboard.writeText so the browser does not prompt for clipboard permission
+        await page.addInitScript(() => {
+          (navigator as any).clipboard = (navigator as any).clipboard || {};
+          (navigator as any).clipboard.writeText = async () => undefined;
+        });
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+        const growl = new Growl(page);
+
+        const copyKubeConfig = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/ext.cattle.io.kubeconfigs') && resp.request().method() === 'POST',
+        );
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const actionMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await actionMenu.getMenuItem('Copy KubeConfig to Clipboard').click();
+        await copyKubeConfig;
+
+        // Growl appears then auto-dismisses after ~3s
+        await expect(growl.byText('Copied KubeConfig to Clipboard')).toBeVisible();
+        await expect(growl.byText('Copied KubeConfig to Clipboard')).toHaveCount(0, { timeout: 4_000 });
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can edit cluster and see changes afterwards', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
+      test.fixme('can edit cluster and see changes afterwards', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+        const editCreatedClusterPage = new ClusterManagerEditRke2CustomPagePo(page, '_', rke2CustomName);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const editMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await editMenu.getMenuItem('Edit Config').click();
+        await editCreatedClusterPage.waitForPage('mode=edit', 'basic');
+
+        await editCreatedClusterPage.nameNsDescription().description().set(rke2CustomName);
+        await editCreatedClusterPage.save();
+        await clusterList.waitForPage();
+
+        const editMenu2 = await clusterList.list().actionMenu(rke2CustomName);
+
+        await editMenu2.getMenuItem('Edit Config').click();
+        await editCreatedClusterPage.waitForPage('mode=edit', 'basic');
+
+        await expect(editCreatedClusterPage.nameNsDescription().description().input()).toHaveValue(rke2CustomName);
       });
 
       test('will disable saving if an addon config has invalid data', async ({ page, login }) => {
@@ -182,46 +305,297 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await expect(createRKE2ClusterPage.resourceDetail().createEditView().saveButtonPo().self()).toBeEnabled();
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can view cluster YAML editor', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
+      test.fixme('can view cluster YAML editor', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+        const editCreatedClusterPage = new ClusterManagerEditRke2CustomPagePo(page, '_', rke2CustomName);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const editMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await editMenu.getMenuItem('Edit YAML').click();
+        await editCreatedClusterPage.waitForPage('mode=edit&as=yaml');
+        await expect(editCreatedClusterPage.resourceDetail().resourceYaml().self()).toBeVisible();
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can download KubeConfig', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
+      test.fixme('can download KubeConfig', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+
+        const kubeConfigResponse = page.waitForResponse(
+          (resp) => resp.url().includes('/v1/ext.cattle.io.kubeconfigs') && resp.request().method() === 'POST',
+        );
+        const downloadPromise = page.waitForEvent('download');
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const actionMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await actionMenu.getMenuItem('Download KubeConfig').click();
+        expect((await kubeConfigResponse).status()).toBeGreaterThanOrEqual(200);
+
+        const download = await downloadPromise;
+        const content = (await (await download.createReadStream()).toArray()).join('');
+        const obj = jsyaml.load(content) as Record<string, any>;
+
+        expect(obj.apiVersion).toBe('v1');
+        expect(obj.kind).toBe('Config');
+        expect(obj.clusters.some((c: { name: string }) => c.name === rke2CustomName)).toBe(true);
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can download YAML', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
+      test.fixme('can download YAML', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+
+        const downloadPromise = page.waitForEvent('download');
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const actionMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await actionMenu.getMenuItem('Download YAML').click();
+
+        const download = await downloadPromise;
+        const content = (await (await download.createReadStream()).toArray()).join('');
+        const obj = jsyaml.load(content) as Record<string, any>;
+
+        expect(obj.apiVersion).toBe('provisioning.cattle.io/v1');
+        expect(obj.metadata.annotations['field.cattle.io/description']).toBe(rke2CustomName);
+        expect(obj.kind).toBe('Cluster');
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can delete cluster', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (depends on live RKE2 custom cluster)');
+      test.fixme('preserves custom addon config values after saving cluster config', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const customAddonConfig = `goodvalue: yay\nnested:\n  enabled: true`;
+        const updatedDescription = `${rke2CustomName}-addon-persist-check`;
+
+        const clusterList = new ClusterManagerListPagePo(page);
+        const editCreatedClusterPage = new ClusterManagerEditRke2CustomPagePo(page, '_', rke2CustomName);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const editMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await editMenu.getMenuItem('Edit Config').click();
+        await editCreatedClusterPage.waitForPage('mode=edit', 'basic');
+        await editCreatedClusterPage.clusterConfigurationTabs().tabBySelector('li#rke2-calico').click();
+        await editCreatedClusterPage.calicoAddonConfig().yamlEditor().set(customAddonConfig);
+        await editCreatedClusterPage.save();
+        await clusterList.waitForPage();
+
+        const editMenu2 = await clusterList.list().actionMenu(rke2CustomName);
+
+        await editMenu2.getMenuItem('Edit Config').click();
+        await editCreatedClusterPage.waitForPage('mode=edit', 'basic');
+        await editCreatedClusterPage.nameNsDescription().description().set(updatedDescription);
+        await editCreatedClusterPage.save();
+        await clusterList.waitForPage();
+
+        const editMenu3 = await clusterList.list().actionMenu(rke2CustomName);
+
+        await editMenu3.getMenuItem('Edit Config').click();
+        await editCreatedClusterPage.waitForPage('mode=edit', 'basic');
+        await editCreatedClusterPage.clusterConfigurationTabs().tabBySelector('li#rke2-calico').click();
+        await expect(editCreatedClusterPage.calicoAddonConfig().yamlEditor().self()).toBeVisible();
+        expect(await editCreatedClusterPage.calicoAddonConfig().yamlEditor().value()).toBe(customAddonConfig);
+      });
+
+      test.fixme('can delete cluster', async ({ page, login }) => {
+        await login();
+
+        const rke2CustomName = SHARED_RKE2_CUSTOM_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        await expect(clusterList.sortableTable().rowElementWithName(rke2CustomName)).toBeAttached(MEDIUM_TIMEOUT_OPT);
+        const actionMenu = await clusterList.list().actionMenu(rke2CustomName);
+
+        await actionMenu.getMenuItem('Delete').click();
+
+        const promptRemove = new PromptRemove(page);
+
+        await promptRemove.confirm(rke2CustomName);
+        await promptRemove.remove();
+
+        await clusterList.waitForPage();
+        await expect(clusterList.sortableTable().rowElementWithName(rke2CustomName)).not.toBeAttached();
       });
     });
   });
 
   test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning', '@needsInfra'] }, () => {
     test.describe('Generic', () => {
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can create new cluster', async () => {
-        test.skip(
-          true,
-          'Requires feature flags and provisioning infrastructure (real cluster registration via kubectl)',
+      // Bodies below are ported from upstream rancher/dashboard PR #17795 and rely on a live
+      // imported cluster. Declared with `test.fixme(...)` so they are collected by Playwright
+      // but never executed; bodies still type-check against the new PW POs (Import wizard,
+      // Detail Imported Generic, extended Edit Imported, PromptRemove).
+
+      test.fixme('can create new cluster', async ({ page, login }) => {
+        await login();
+
+        const importGenericName = `e2e-test-${Date.now()}-create-import-generic`;
+        const clusterList = new ClusterManagerListPagePo(page);
+        const importPage = new ClusterManagerImportGenericPagePo(page);
+
+        const importRequest = page.waitForResponse(
+          (resp) => resp.url().includes('/v3/clusters') && resp.request().method() === 'POST',
         );
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+
+        // PR #17795: wait for list visibility before masthead interactions (avoids masthead races)
+        await expect(clusterList.list().self()).toBeVisible(MEDIUM_TIMEOUT_OPT);
+        await clusterList.importCluster();
+
+        await importPage.waitForPage('mode=import');
+        await importPage.selectGeneric(0).click();
+        await importPage.waitForPage('mode=import&type=import&rkeType=rke2');
+
+        // Accordion sanity check — upstream verifies Basics / Member Roles / Labels / Registries / Advanced
+        await expect(importPage.accordion(2, 'Basics')).toBeVisible();
+        await expect(importPage.accordion(3, 'Member Roles')).toBeVisible();
+        await expect(importPage.accordion(4, 'Labels and Annotations')).toBeVisible();
+        await expect(importPage.registriesAccordion()).toBeVisible();
+        await expect(importPage.networkingAccordion()).not.toBeAttached();
+
+        await importPage.nameNsDescription().name().set(importGenericName);
+        // Issue #13614: version-management banner visible on create
+        await expect(importPage.versionManagementBanner()).toBeVisible();
+
+        await importPage.create();
+
+        const created = await importRequest;
+
+        expect(created.status()).toBe(201);
+
+        const { id: clusterId } = await clusterList.goToClusterListAndGetClusterDetails(importGenericName);
+        const detailPage = new ClusterManagerDetailImportedGenericPagePo(page, '_', clusterId);
+
+        // PR #17795: extended timeout on registration page (slow render under load)
+        await detailPage.goTo(undefined, 'registration');
+        await detailPage.waitForPage(undefined, 'registration', MEDIUM_TIMEOUT_OPT);
+
+        await expect(detailPage.kubectlCommandForImported().filter({ hasText: '--insecure' }).first()).toContainText(
+          '--insecure',
+        );
+
+        const kubectlCommand =
+          (await detailPage.kubectlCommandForImported().filter({ hasText: '--insecure' }).first().textContent()) ?? '';
+
+        // Apply the kubectl-apply registration command on the host running the spec.
+        // Stays inside `test.fixme` so it never executes without kubeconfig configured.
+        await applyImportedKubectlCommand(kubectlCommand);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+
+        // PR #17795: accept Pending as a transient state alongside Provisioning / Waiting
+        await expect(clusterList.list().state(importGenericName)).toBeVisible(EXTRA_LONG_TIMEOUT_OPT);
+        await expect(clusterList.list().state(importGenericName)).toHaveText(
+          /^(Pending|Provisioning|Waiting)$/,
+          EXTRA_LONG_TIMEOUT_OPT,
+        );
+        await expect(clusterList.list().state(importGenericName)).toContainText('Active', EXTRA_LONG_TIMEOUT_OPT);
+
+        // Issue #6836: Imported provider column reads "Imported" with K3s subtype
+        await expect(clusterList.list().provider(importGenericName)).toContainText('Imported');
+        await expect(clusterList.list().providerSubType(importGenericName)).toContainText('K3s');
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can edit imported cluster and see changes afterwards', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (imported cluster must exist)');
+      test.fixme('can edit imported cluster and see changes afterwards', async ({ page, login }) => {
+        await login();
+
+        const fqdn = 'fqdn';
+        const cacert = 'cacert';
+        const privateRegistry = 'registry.io';
+
+        // Caller must guarantee the imported cluster created by the prior fixme exists.
+        const importGenericName = SHARED_IMPORT_GENERIC_NAME;
+
+        const clusterList = new ClusterManagerListPagePo(page);
+        const { id: clusterId } = await clusterList.goToClusterListAndGetClusterDetails(importGenericName);
+        const editImported = new ClusterManagerEditImportedPagePo(page, '_', 'fleet-default', clusterId);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+        const editMenu = await clusterList.list().actionMenu(importGenericName);
+
+        await editMenu.getMenuItem('Edit Config').click();
+        await editImported.waitForPage('mode=edit');
+
+        // Issue #10432: name field is read-only on imported clusters
+        await expect(editImported.nameNsDescription().name().input()).toBeDisabled();
+
+        // Issue #13614: banner hidden when version-mgmt unchanged
+        await expect(editImported.versionManagementBanner()).not.toBeAttached();
+
+        await editImported.enableVersionManagement();
+        await expect(editImported.versionManagementBanner()).toBeVisible();
+        await editImported.defaultVersionManagement();
+
+        // Networking accordion → enable ACE + cacert
+        await editImported.toggleAccordion(5, 'Networking');
+        await editImported.ace().enable();
+        await editImported.ace().enterFdqn(fqdn);
+        await editImported.ace().enterCaCerts(cacert);
+
+        // Registries accordion → enable private registry
+        await editImported.toggleAccordion(6, 'Registries');
+        await editImported.enablePrivateRegistryCheckbox();
+        await editImported.privateRegistry().set(privateRegistry);
+
+        await editImported.save();
+        await clusterList.waitForPage();
+
+        // Re-open and verify persistence
+        const editMenu2 = await clusterList.list().actionMenu(importGenericName);
+
+        await editMenu2.getMenuItem('Edit Config').click();
+        await editImported.waitForPage('mode=edit');
+
+        await expect(editImported.ace().fqdn().input()).toHaveValue(fqdn);
+        await expect(editImported.ace().caCerts().input()).toHaveValue(cacert);
+        await expect(editImported.privateRegistryCheckbox().checkboxCustom()).toHaveAttribute('aria-checked', 'true');
+        await expect(editImported.privateRegistry().input()).toHaveValue(privateRegistry);
       });
 
-      // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-      test('can delete cluster by bulk actions', async () => {
-        test.skip(true, 'Requires feature flags and provisioning infrastructure (imported cluster must exist)');
+      test.fixme('can delete cluster by bulk actions', async ({ page, login }) => {
+        await login();
+
+        const importGenericName = SHARED_IMPORT_GENERIC_NAME;
+        const clusterList = new ClusterManagerListPagePo(page);
+
+        await clusterList.goTo();
+        await clusterList.waitForPage();
+
+        // PR #17795: wait for list visibility before bulk interactions
+        await expect(clusterList.list().self()).toBeVisible(MEDIUM_TIMEOUT_OPT);
+        await expect(clusterList.sortableTable().rowElementWithName(importGenericName)).toBeAttached(
+          MEDIUM_TIMEOUT_OPT,
+        );
+
+        await clusterList.sortableTable().rowSelectCtlWithName(importGenericName).set();
+        await clusterList.sortableTable().bulkActionDropDownOpen();
+        await clusterList.sortableTable().bulkActionDropDownButton('Delete').click();
+
+        const promptRemove = new PromptRemove(page);
+
+        await promptRemove.confirm(importGenericName);
+        await promptRemove.remove();
+
+        await clusterList.waitForPage();
+        await expect(clusterList.sortableTable().rowElementWithName(importGenericName)).not.toBeAttached();
       });
     });
   });

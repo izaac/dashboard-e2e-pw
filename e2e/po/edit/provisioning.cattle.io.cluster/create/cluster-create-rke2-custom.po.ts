@@ -7,6 +7,7 @@ import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import AddonConfigPo from '@/e2e/po/components/addon-config.po';
+import BasicsRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po';
 
 export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManagerCreatePagePo {
   static url(clusterId: string): string {
@@ -63,5 +64,9 @@ export default class ClusterManagerCreateRke2CustomPagePo extends ClusterManager
 
   calicoAddonConfig(): AddonConfigPo {
     return new AddonConfigPo(this.page);
+  }
+
+  basicsTab(): BasicsRke2 {
+    return new BasicsRke2(this.page);
   }
 }

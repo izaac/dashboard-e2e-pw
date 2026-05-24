@@ -24,4 +24,9 @@ export default class NetworkRke2 extends ComponentPo {
   flannelMasq(): CheckboxInputPo {
     return new CheckboxInputPo(this.page, '[data-testid="cluster-rke2-flannel-masq-checkbox"]');
   }
+
+  /** "Truncate hostname to 15 chars" — addresses dashboard #10159. */
+  truncateHostnameCheckbox(): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, '[data-testid="network-tab-truncate-hostname"]');
+  }
 }

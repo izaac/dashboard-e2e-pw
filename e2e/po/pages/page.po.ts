@@ -36,10 +36,10 @@ export default class PagePo extends ComponentPo {
     await this.page.goto(relativePath, { waitUntil: 'domcontentloaded' });
   }
 
-  async waitForPage(params?: string, fragment?: string): Promise<void> {
+  async waitForPage(params?: string, fragment?: string, opts?: { timeout?: number }): Promise<void> {
     const expected = this.fullUrl(params, fragment);
 
-    await expect(this.page).toHaveURL(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    await expect(this.page).toHaveURL(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), opts);
   }
 
   async waitForPageWithExactUrl(params?: string, fragment?: string): Promise<void> {

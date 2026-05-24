@@ -22,11 +22,11 @@ export default class ProvClusterListPo extends BaseResourceList {
   }
 
   provider(clusterName: string): Locator {
-    return this.resourceTable().sortableTable().rowWithName(clusterName).column(4);
+    return this.resourceTable().sortableTable().rowWithName(clusterName).get('.col-cluster-provider');
   }
 
   providerSubType(clusterName: string): Locator {
-    return this.resourceTable().sortableTable().rowWithName(clusterName).column(4).locator('.text-muted');
+    return this.resourceTable().sortableTable().rowWithName(clusterName).get('.col-cluster-provider .text-muted');
   }
 
   machines(clusterName: string): Locator {

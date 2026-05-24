@@ -14,4 +14,9 @@ export default class BasicsRke2 extends ComponentPo {
   networks(): LabeledSelectPo {
     return new LabeledSelectPo(this.page, '[data-testid="cluster-rke2-cni-select"]');
   }
+
+  /** Banner that appears when CNI 'none' is selected — warns that manual intervention is needed. */
+  networkNoneSelectedForCni(): Locator {
+    return this.page.locator('[data-testid="clusterBasics__noneOptionSelectedForCni"]');
+  }
 }
