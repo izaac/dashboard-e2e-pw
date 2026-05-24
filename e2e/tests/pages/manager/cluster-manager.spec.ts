@@ -217,7 +217,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await clusterList.goTo();
         await clusterList.waitForPage();
         await clusterList.createCluster();
-        await createRKE2ClusterPage.waitForPage();
+        // v2.15 doesn't add ?type=custom#basic until after selectCustom, so wait on the
+        // permissive /create path here and let the PO-level waitForPage land after selection.
+        await expect(page).toHaveURL(/provisioning\.cattle\.io\.cluster\/create/);
 
         await createRKE2ClusterPage.selectCustom(0);
         await createRKE2ClusterPage.nameNsDescription().name().set(rke2CustomName);
