@@ -435,13 +435,38 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
   test.describe('Imported', { tag: ['@jenkins', '@importedCluster', '@provisioning', '@needsInfra'] }, () => {
     test.describe('Generic', () => {
+      // Cluster-create tests must not retry — a retry would create a second cluster on top of
+      // the first, the original one would be orphaned, and the import command from the new
+      // detail page would race the agent already running for the previous attempt.
+      test.describe.configure({ retries: 0 });
+
+      // Names of clusters created in this describe block. afterEach drains the list and deletes
+      // each one via the Rancher API, even on test failure — so a partially-completed run never
+      // leaves stale imported clusters in Rancher.
+      const createdImportedClusters: string[] = [];
+
+      test.afterEach(async ({ rancherApi }) => {
+        while (createdImportedClusters.length > 0) {
+          const name = createdImportedClusters.shift()!;
+
+          try {
+            const id = await rancherApi.getClusterIdByName(name);
+
+            await rancherApi.deleteRancherResource('v3', 'clusters', id, false);
+            console.warn(`[afterEach] deleted imported cluster ${name} (${id})`);
+          } catch (err) {
+            console.warn(`[afterEach] cleanup failed for ${name}: ${(err as Error).message}`);
+          }
+        }
+      });
+
       // Bodies below are ported from upstream rancher/dashboard PR #17795 and rely on a live
       // imported cluster. The create test is wired up end-to-end (registers the agent via
       // `applyImportedKubectlCommand`); edit + delete remain `test.fixme` until shared-state
       // wiring lands (they reference the static SHARED_IMPORT_GENERIC_NAME, not the cluster
       // the create test actually provisions).
 
-      test('can create new cluster', async ({ page, login }) => {
+      test('can create new cluster', async ({ page, login, rancherApi }) => {
         await login();
 
         const importGenericName = `e2e-test-${Date.now()}-create-import-generic`;
@@ -480,7 +505,13 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
         expect(created.status()).toBe(201);
 
-        const { id: clusterId } = await clusterList.goToClusterListAndGetClusterDetails(importGenericName);
+        // Track for afterEach cleanup as soon as the create POST returns 201 — any later
+        // failure must still result in the cluster being deleted.
+        createdImportedClusters.push(importGenericName);
+
+        // Look up the cluster ID via Rancher API directly — using the dashboard's
+        // request-interception path races the auto-navigation triggered by create().
+        const clusterId = await rancherApi.getClusterIdByName(importGenericName);
         const detailPage = new ClusterManagerDetailImportedGenericPagePo(page, '_', clusterId);
 
         // PR #17795: extended timeout on registration page (slow render under load)
@@ -494,9 +525,17 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         const kubectlCommand =
           (await detailPage.kubectlCommandForImported().filter({ hasText: '--insecure' }).first().textContent()) ?? '';
 
+        console.warn(
+          `[can create new cluster] kubectl registration command (truncated): ${kubectlCommand.slice(0, 200)}`,
+        );
+
         // Apply the kubectl-apply registration command on the host running the spec.
-        // Stays inside `test.fixme` so it never executes without kubeconfig configured.
-        await applyImportedKubectlCommand(kubectlCommand);
+        const exec = await applyImportedKubectlCommand(kubectlCommand);
+
+        console.warn(`[can create new cluster] kubectl stdout:\n${exec.stdout || '(empty)'}`);
+        if (exec.stderr) {
+          console.warn(`[can create new cluster] kubectl stderr:\n${exec.stderr}`);
+        }
 
         await clusterList.goTo();
         await clusterList.waitForPage();
