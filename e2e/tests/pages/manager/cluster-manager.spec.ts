@@ -17,7 +17,15 @@ import Growl from '@/e2e/po/components/growl.po';
 import HostedProvidersPagePo from '@/e2e/po/pages/cluster-manager/hosted-providers.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
-import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT, EXTRA_LONG_TIMEOUT_OPT } from '@/support/timeouts';
+import {
+  SHORT_TIMEOUT_OPT,
+  MEDIUM_TIMEOUT_OPT,
+  EXTRA_LONG_TIMEOUT_OPT,
+  timeoutOpt,
+  PROVISIONING,
+  FULL_PROVISIONING,
+  VERY_LONG,
+} from '@/support/timeouts';
 import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 import { registerCustomNode, applyImportedKubectlCommand } from '@/support/utils/custom-node-ssh';
 
@@ -159,12 +167,42 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
 
   test.describe('Created', () => {
     test.describe('RKE2 Custom', { tag: ['@jenkins', '@customCluster', '@provisioning', '@needsInfra'] }, () => {
-      // Bodies below are ported from upstream rancher/dashboard cluster-manager.spec.ts (master + PR #17795).
-      // All tests except the addon-config one require a real custom node + SSH, so they are declared with
-      // `test.fixme(...)` — Playwright collects them but never executes them. Bodies still type-check, so
-      // they will fail loudly if the POs they use drift away from upstream.
+      // Cluster-create tests must not retry — a retry would create a second cluster on top of
+      // the first and the second SSH registration would race the first's RKE2 install on the
+      // same node.
+      test.describe.configure({ retries: 0 });
 
-      test.fixme('can create new cluster', async ({ page, login }) => {
+      // Names of clusters created in this describe block. afterEach drains the list and deletes
+      // each one via the Rancher v1 API (namespace/name), even on test failure.
+      const createdCustomClusters: string[] = [];
+
+      test.afterEach(async ({ rancherApi }) => {
+        while (createdCustomClusters.length > 0) {
+          const name = createdCustomClusters.shift()!;
+
+          try {
+            await rancherApi.deleteRancherResource(
+              'v1',
+              'provisioning.cattle.io.clusters',
+              `fleet-default/${name}`,
+              false,
+            );
+            console.warn(`[afterEach] deleted custom RKE2 cluster fleet-default/${name}`);
+          } catch (err) {
+            console.warn(`[afterEach] cleanup failed for ${name}: ${(err as Error).message}`);
+          }
+        }
+      });
+
+      // Bodies below are ported from upstream rancher/dashboard cluster-manager.spec.ts (master + PR #17795).
+      // The create test is wired up end-to-end (registers a custom node via SSH); the remaining
+      // RKE2 Custom tests stay `test.fixme` until they share the cluster name provisioned here.
+
+      test('can create new cluster', async ({ page, login }) => {
+        // Budget = node provisioning ceiling + UI overhead buffer.
+        // RKE2 install on a freshly provisioned node can take up to FULL_PROVISIONING (15 min);
+        // VERY_LONG (1 min) is enough for nav + form fill + create POST + registration render.
+        test.setTimeout(FULL_PROVISIONING + VERY_LONG);
         await login();
 
         const rke2CustomName = `e2e-test-${Date.now()}-create-rke2-custom`;
@@ -201,27 +239,42 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await createRKE2ClusterPage.create();
         const created = await createRequest;
 
-        expect(created.status()).toBeGreaterThanOrEqual(200);
-        expect(created.status()).toBeLessThan(300);
+        expect(created.status()).toBe(201);
 
-        await detailRKE2ClusterPage.waitForPage(undefined, 'registration');
+        // Track for afterEach cleanup as soon as the create POST returns — any later failure
+        // (SSH, agent install, Active timeout) must still result in the cluster being deleted.
+        createdCustomClusters.push(rke2CustomName);
 
-        // Insecure-registration toggle + kubectl-apply registration command live on the
-        // create-cluster PO; the selectors continue to work once the detail page renders them.
+        // Registration page render is slow under load — same MEDIUM timeout as imported.
+        await detailRKE2ClusterPage.waitForPage(undefined, 'registration', MEDIUM_TIMEOUT_OPT);
+
+        // Insecure-registration toggle + node-registration command live on the create-cluster
+        // PO; the selectors continue to work once the detail page renders them.
         await createRKE2ClusterPage.activateInsecureRegistrationCommandFromUI().click();
         await expect(createRKE2ClusterPage.commandFromCustomClusterUI()).toContainText('--insecure');
 
         const registrationCmd = (await createRKE2ClusterPage.commandFromCustomClusterUI().textContent()) ?? '';
 
-        // Provision the custom node over SSH — requires CUSTOM_NODE_KEY/IP/USER env.
-        // Stays inside `test.fixme` so it never executes without infra configured.
-        await registerCustomNode(registrationCmd);
+        console.warn(
+          `[can create new cluster - custom] registration command (truncated): ${registrationCmd.slice(0, 200)}`,
+        );
 
+        // SSH to the custom node + run the rke2 registration command. Requires CUSTOM_NODE_KEY/IP/USER
+        // env (set by the dashboard-e2e-pw Ansible playbook from the customnode tofu workspace).
+        const exec = await registerCustomNode(registrationCmd);
+
+        console.warn(`[can create new cluster - custom] ssh stdout:\n${exec.stdout || '(empty)'}`);
+        if (exec.stderr) {
+          console.warn(`[can create new cluster - custom] ssh stderr:\n${exec.stderr}`);
+        }
+
+        // Wait for the row to appear and reach Active. The upstream "Updating" snapshot is
+        // racy when the cluster transitions faster than the poll cadence; the auto-wait on
+        // Active is the reliable signal.
         await clusterList.goTo();
         await clusterList.waitForPage();
-        await expect(clusterList.list().state(rke2CustomName)).toContainText('Updating');
-        // Upstream uses VERY_LONG_TIMEOUT_OPT (~15 min) here — PW has no exact analogue, EXTRA_LONG_TIMEOUT_OPT used as best effort.
-        await expect(clusterList.list().state(rke2CustomName)).toContainText('Active', EXTRA_LONG_TIMEOUT_OPT);
+        await expect(clusterList.list().state(rke2CustomName)).toBeVisible(EXTRA_LONG_TIMEOUT_OPT);
+        await expect(clusterList.list().state(rke2CustomName)).toContainText('Active', timeoutOpt(FULL_PROVISIONING));
       });
 
       test.fixme('can copy config to clipboard', async ({ page, login }) => {
@@ -467,9 +520,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
       // the create test actually provisions).
 
       test('can create new cluster', async ({ page, login, rancherApi }) => {
-        // 4 min headroom: import POST → registration page render → kubectl apply on the import
-        // cluster → agent download/start → Rancher polls + marks Active. Default 60s is not enough.
-        test.setTimeout(240_000);
+        // Budget = provisioning ceiling (5 min). Covers import POST → registration page render
+        // → kubectl apply on the import cluster → agent download/start → Rancher marks Active.
+        test.setTimeout(PROVISIONING);
         await login();
 
         const importGenericName = `e2e-test-${Date.now()}-create-import-generic`;
