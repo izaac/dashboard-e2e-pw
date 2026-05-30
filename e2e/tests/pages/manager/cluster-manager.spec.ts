@@ -25,6 +25,7 @@ import {
   PROVISIONING,
   FULL_PROVISIONING,
   VERY_LONG,
+  BRIEF,
 } from '@/support/timeouts';
 import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 import { registerCustomNode, applyImportedKubectlCommand } from '@/support/utils/custom-node-ssh';
@@ -301,9 +302,9 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
         await actionMenu.getMenuItem('Copy KubeConfig to Clipboard').click();
         await copyKubeConfig;
 
-        // Growl appears then auto-dismisses after ~3s
+        // Growl appears then auto-dismisses after ~3s — BRIEF (5s) leaves headroom for the dismiss animation
         await expect(growl.byText('Copied KubeConfig to Clipboard')).toBeVisible();
-        await expect(growl.byText('Copied KubeConfig to Clipboard')).toHaveCount(0, { timeout: 4_000 });
+        await expect(growl.byText('Copied KubeConfig to Clipboard')).toHaveCount(0, timeoutOpt(BRIEF));
       });
 
       test.fixme('can edit cluster and see changes afterwards', async ({ page, login }) => {
