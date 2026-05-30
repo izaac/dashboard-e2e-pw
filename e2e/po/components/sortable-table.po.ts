@@ -85,6 +85,27 @@ export default class SortableTablePo extends ComponentPo {
     return this.groupRows().filter({ hasText: name });
   }
 
+  /**
+   * Number of rows belonging to a group — the sibling rows after the group
+   * header up to (but excluding) the next group header. Port of upstream's
+   * `groupElementWithName(name).nextUntil('tr.group-row').length`.
+   */
+  async groupRowCount(groupName: string): Promise<number> {
+    return this.groupElementWithName(groupName)
+      .first()
+      .evaluate((groupRow) => {
+        let count = 0;
+        let el = groupRow.nextElementSibling;
+
+        while (el && !el.classList.contains('group-row')) {
+          count++;
+          el = el.nextElementSibling;
+        }
+
+        return count;
+      });
+  }
+
   rowElements(): Locator {
     return this.self().locator('tbody tr:not(.sub-row):not(.group-row):not(.additional-sub-row)');
   }
