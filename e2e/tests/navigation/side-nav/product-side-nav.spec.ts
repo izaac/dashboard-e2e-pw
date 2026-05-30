@@ -4,6 +4,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { WorkloadsDeploymentsListPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
+import { captureNavErrors, clickNavLinkAndAssertLanding } from '@/support/utils/nav-walk';
 import { LONG } from '@/support/timeouts';
 
 const workloadName = `test-deployment-kubectl-${Date.now()}`;
@@ -197,6 +198,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
     page,
   }) => {
     const productNavPo = new ProductNavPo(page);
+    const navErrors = captureNavErrors(page);
 
     const groupCount = await productNavPo.groups().count();
 
@@ -219,20 +221,13 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
       // Ensure group is expanded with items (use .first() — nested sub-groups may have multiple ul)
       await expect(productNavPo.groupChildList(group).first()).toBeAttached();
 
-      // Visit each link and confirm navigation
+      // Visit each link and assert it lands on a real, rendered page.
       const linkCount = await productNavPo.visibleNavTypes().count();
 
       for (let linkIdx = 0; linkIdx < linkCount; linkIdx++) {
         const link = productNavPo.visibleNavTypes().nth(linkIdx);
-        const href = await link.getAttribute('href');
 
-        // eslint-disable-next-line playwright/no-force-option -- nav links can be partially obscured by sticky headers/overlay during scroll, force-click is the only reliable way to walk the full list
-        await link.click({ force: true });
-
-        if (href) {
-          // eslint-disable-next-line playwright/no-conditional-expect -- href may be null for JS-driven nav links
-          await expect(page).toHaveURL(new RegExp(href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-        }
+        await clickNavLinkAndAssertLanding(page, link, navErrors);
       }
     }
   });

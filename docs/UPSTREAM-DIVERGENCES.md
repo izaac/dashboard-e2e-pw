@@ -20,6 +20,7 @@ handled differently.
 5. [Vue v-model and fill()](#5-vue-v-model-and-fill)
 6. [Visual Snapshots (Percy → Playwright)](#6-visual-snapshots-percy--playwright)
 7. [Elemental Extension Coverage](#7-elemental-extension-coverage)
+8. [Navigation: goTo() for Setup vs. Dedicated Walks](#8-navigation-goto-for-setup-vs-dedicated-walks)
 
 ---
 
@@ -244,6 +245,59 @@ leave a gap.
 
 **When to revisit:** When upstream's replacement harness exists and covers the same
 flows, port to that pattern and drop the local copy.
+
+---
+
+## 8. Navigation: goTo() for Setup vs. Dedicated Walks
+
+**Upstream (Cypress):** Tests reach the page under test by clicking through the UI — burger menu,
+then the product side-nav (`ProductNavPo`) — even when navigation is only a precondition. Combined
+with `testIsolation: 'off'`, nearly every test walks the menu, so the side-nav gets incidental
+regression coverage for free across the whole suite.
+
+**Our approach (Playwright):**
+
+- **Setup navigation → `goTo()`** (`PagePo.goTo()`, i.e. a direct `page.goto()`). Idiomatic
+  Playwright: faster, less flaky, and it does not couple every unrelated test to the side-menu
+  rendering first.
+- **Navigation-under-test → UI nav** (`BurgerMenuPo` / `ProductNavPo`). Reserved for tests whose
+  subject *is* the menu or routing.
+- When upstream used `navTo` purely as setup, we use `goTo()` and leave an inline
+  `// TODO(upstream-parity): upstream uses navTo here` so the divergence stays auditable in a 1:1 diff.
+
+```typescript
+// Setup nav: get to the page directly, then test something else.
+const deployments = new WorkloadsDeploymentsListPagePo(page, 'local');
+await deployments.goTo(); // not burgerMenu.goToCluster() + productNav clicks
+```
+
+**Compensating coverage (critical):** `goTo()`-for-setup drops the incidental menu coverage Cypress
+got for free, so the dedicated specs under `e2e/tests/navigation/side-nav/` must explicitly walk
+**every** side-nav path or a broken link slips through silently. Two properties make this non-trivial:
+
+- **The nav is server-driven and dynamic.** The product side-nav is assembled at runtime, and
+  **installed Rancher extensions inject their own entries** into it. So the walk reads whatever the
+  server renders (`ProductNavPo.groups()` / `visibleNavTypes()`, including nested sub-accordions) and
+  walks all of it — it never asserts against a hardcoded menu, which would rot the moment an extension
+  or an upstream resource registration changes the tree.
+- **Landing must be asserted, not assumed.** Each hop is checked by `support/utils/nav-walk.ts`
+  (`clickNavLinkAndAssertLanding`): the URL matches the link's destination, the destination actually
+  rendered, the fail-whale error page is absent, and no uncaught JS error fired during the hop. The
+  "rendered" signal must stay generic — an extension page (or a non-list page like the Apps chart
+  catalog) will not necessarily show the standard resource masthead.
+
+A matching walk of the top-level/global burger entries is the remaining gap.
+
+**Why diverge:** `navTo`-for-every-setup is a classic Cypress idiom that becomes an anti-pattern in
+Playwright — slower, and it makes unrelated tests fail when the menu render hiccups. Playwright best
+practice (official docs) is `goTo()` for setup and UI-driven nav only when navigation is the thing
+under test. Port auditability (1:1 vs upstream) is real but secondary, and is satisfied by the TODO
+breadcrumb plus the dedicated walks — not by mirroring every nav verb.
+
+**Impact on upstream review:** Port `navTo`-style setup navigation as `goTo()` (+ TODO breadcrumb).
+When upstream adds a *new* nav target, extend `BurgerMenuPo` / `ProductNavPo` (don't inline selectors
+in specs) and confirm the dedicated walk still covers the new path. Do not convert the nav walk into a
+fixed expected-entries list — extension-injected entries mean the set is intentionally open-ended.
 
 ---
 

@@ -39,7 +39,10 @@ export default class ProductNavPo extends ComponentPo {
 
   /** Get nested sub-accordions within a group */
   subAccordions(group: Locator): Locator {
-    return group.locator('.accordion .accordion');
+    // Nested sub-groups (e.g. More Resources → Admission, API, Core…) are direct
+    // `.accordion.has-children` descendants. `.accordion .accordion` requires
+    // grandchild depth and so matched nothing, silently skipping the nested walk.
+    return group.locator('.accordion.has-children');
   }
 
   /** Get child list (ul) within a group */
