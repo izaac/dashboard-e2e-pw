@@ -681,6 +681,42 @@ test('shows workload list', async ({ page, login }) => {
 
 ## 7. Common Patterns
 
+### Navigation: `goTo()` for setup, walkers for coverage
+
+**Use `goTo()` for setup navigation** — a direct `page.goto()` via the Page Object. It's faster and
+less flaky than clicking through the menu, and it doesn't couple an unrelated test to the side-menu
+rendering first.
+
+```typescript
+// Getting to a page so you can test something else → goTo()
+const deployments = new WorkloadsDeploymentsListPagePo(page, 'local');
+await deployments.goTo();
+```
+
+Click through the menu (`BurgerMenuPo` / `ProductNavPo`) **only when navigation itself is the
+subject** — you're testing that the menu routes correctly. When upstream clicked through the menu
+purely as setup, port it as `goTo()` and leave a `// TODO(upstream-parity): upstream uses navTo here`
+breadcrumb so the divergence stays auditable.
+
+**Do I add a nav test when I add a page? Usually no.** The dedicated walks in
+`e2e/tests/navigation/side-nav/` are *data-driven*: they iterate whatever the server renders
+(`ProductNavPo.groups()` for the product side-nav, `BurgerMenuPo.globalApps()` for the global burger
+sections) and assert each link lands via `clickNavLinkAndAssertLanding`. A new page reachable from the
+menu is picked up **automatically** — there's no per-page nav test to write. What you owe instead:
+
+- Put the new nav selector in `BurgerMenuPo` / `ProductNavPo`, never inline in a spec (Rule 4).
+- Never convert a walk into a hardcoded expected-entries list — extension-injected entries make the
+  set intentionally open-ended, and a fixed list rots the moment the tree changes.
+
+**The one case that needs a deliberate test:** a nav entry that only renders behind a feature flag, an
+installed extension, or a permission. The walk only sees what its environment renders, so a gated
+entry is silently skipped (the walk still passes). Either make the walk's environment render it, or
+add a targeted check. (Pages not in the side-nav at all — detail, tab, and deep-link routes — are out
+of scope for a *nav* walk by design; the spec that tests the feature covers them.)
+
+See [UPSTREAM-DIVERGENCES.md §8](UPSTREAM-DIVERGENCES.md#8-navigation-goto-for-setup-vs-dedicated-walks)
+for the full rationale.
+
 ### Waiting for an API response after a button click
 
 If your test clicks a Save button and you need to wait for the API call to finish:

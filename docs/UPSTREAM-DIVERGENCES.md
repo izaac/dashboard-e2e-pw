@@ -286,7 +286,12 @@ got for free, so the dedicated specs under `e2e/tests/navigation/side-nav/` must
   "rendered" signal must stay generic — an extension page (or a non-list page like the Apps chart
   catalog) will not necessarily show the standard resource masthead.
 
-A matching walk of the top-level/global burger entries is the remaining gap.
+The top-level/global burger entries are walked the same way by `main-side-menu.spec.ts`
+("Should access every global menu link provided, without errors"): it re-opens the menu and
+re-resolves the links fresh on each hop, so navigation closing the menu can't stale out the next
+click. Those landings are heterogeneous (resource lists, the Fleet dashboard, tabbed pages) and
+don't all expose an accessible page `<h1>`, so the walk passes `requireHeading: false` — asserting
+routing + no fail-whale + no crash rather than a rendered masthead.
 
 **Why diverge:** `navTo`-for-every-setup is a classic Cypress idiom that becomes an anti-pattern in
 Playwright — slower, and it makes unrelated tests fail when the menu render hiccups. Playwright best
