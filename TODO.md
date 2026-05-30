@@ -1,36 +1,61 @@
 # TODO
 
-> Last upstream sync check: 2026-05-22
+> Last upstream sync check: 2026-05-29
 
 ## Upstream Sync Status
 
-**Local repo synced up to:** upstream commit `f5e49a55` (Apr 30, 2026) via local
-commit `b07a64e` ("Sync upstream: Microsoft Entra ID rebrand + local cluster edit
-accordion check").
+**Synced up to:** upstream `6119bf9` (May 22, 2026 — "Stabilize imported generic
+cluster e2e spec", PR #17795) plus PR #17228 (mgmt-to-prov). Ported via e2e-pw
+`55baf2d` (#17795) and `9ddf09c` (#17228).
 
-### Upstream commits since last sync (May 1 – May 19) — reviewed
+**Reviewed through:** `upstream/master` `8eed0d0b` (May 29, 2026).
 
-The `mgmt-to-prov` commits below merged to master as PR #17228 and have been
-ported (see Watch list); the rest need no porting.
+### Upstream e2e commits since sync — reviewed 2026-05-29
 
-| Date | Commit | Author | Verdict |
-|------|--------|--------|---------|
-| May 15 | `3737f3f8` | richard-cox | `mgmt-to-prov` PO helpers — merged as #17228, ported |
-| May 13 | `94d65b5c` | richard-cox | `mgmt-to-prov` `v2prov-capi.spec` fix — merged as #17228, ported |
-| May 12 | `82361f03` | richard-cox | `mgmt-to-prov` blueprint + cluster-list text — merged as #17228, ported |
-| May 6 | `2faefe0c` | yonasberhe23 | Cluster tools: resource polling refactor — Cypress-specific hardening, we already handle via `rancherApi` + `waitForResponse` |
-| May 5 | `55da6031` | aalves08 | Remove extensions compatibility tests — just deletions, nothing to port |
-| May 4 | `3c1e37a7` | IsaSih | Flexibilize release notes assertions for prime — test hardening only |
+5 commits touch `cypress/e2e` since the sync point:
 
-### Watch list
+| Date | Commit | Verdict |
+|------|--------|---------|
+| May 29 | `0d4c73d` #16797 hosted provider details | **ACTION** — moved provisioning-log test local→RKE2 custom; new `hosted-cluster-details.spec` + mock (see Action items) |
+| May 27 | `fe4ea50` #16092 node scheduling | **NEW COVERAGE** — node-scheduling regression test in `workloads.spec` (see Action items) |
+| May 28 | `79b5f33` get-support | No action — upstream commented out a flaky cross-origin pricing test (#17869); our PW version only asserts the `href`, so it is not subject to that flake |
+| May 26 | `d0b5072` harvester | No port — plain re-enable of auto-install (no new hardening); our `harvester.spec.ts:108` is already active and more hardened |
+| May 20 | `db1dd2e` edit-fake-cluster flaky fix | No port — its "expand intercepts" is a Cypress pagesize-split so `cy.wait` can target each; our single regex route + `checkLoadingIndicatorNotVisible()` + Playwright auto-wait already cover it |
 
-- [x] **`mgmt-to-prov` branch** (richard-cox) — merged to master as `rancher/dashboard`
-  PR #17228. Ported the coverage: `clusterMgmtDigitalOceanSingleResponse` blueprint +
-  mgmt-cluster mock in `cloud-credential.spec.ts`; `cluster-prov-select-credential`
-  testid in the cluster create/edit POs. Note for future cluster-mock ports: the
-  dashboard now loads clusters by id via server-side-pagination
-  `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be
-  RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
+### Gap-map note
+
+`docs/ASSERTION-GAP-MAP.md` was stale (generated May 2). Regenerating against master
+(2026-05-30) surfaced two older upstream specs previously assumed "no porting needed"
+that DO need porting — `configmap-detail-title-bar.spec.ts` (#17645) and
+`users-and-auth/last-login-sort.spec.ts`. Both are in Action items below.
+
+### Action items from 2026-05-29 sync review
+
+- [ ] **#16797 (hosted provider details)** — relocate `cluster-manager.spec.ts`
+  qase 3227 `can navigate to Cluster Provisioning Log Page` out of the local-cluster
+  block (upstream moved it to the RKE2 custom detail context). Re-check detail-tab
+  assertions for the broader change (node-pool tabs on eks/aks/gke; autoscaler tab
+  hidden; logs tab removed from imported; "show configuration" added to mgmt-node
+  allowed actions).
+- [ ] **Port `hosted-cluster-details.spec.ts`** (5 tests: node-pool tab on AKS/EKS/GKE,
+  no autoscaler tab, no provisioning-log tab on imported) + `cluster-detail-hosted.po`
+  - `hosted-cluster-mocks` blueprint (2101 ln — large mock).
+- [ ] **Port node-scheduling regression test** (#16092) in `workloads.spec`
+  (`should clear nodeName when switching node scheduling back to any node`, qase 48753)
+  - `node-scheduling.po`.
+- [ ] **Port `configmap-detail-title-bar.spec.ts`** (2 tests: state badge stays adjacent
+  to a short / long resource name; #17645).
+- [ ] **Port `users-and-auth/last-login-sort.spec.ts`** (1 test: null Last Login sorts
+  to bottom descending / top ascending).
+- [ ] *Optional:* adopt upstream action-menu PO robustness from `db1dd2e`
+  (`getMenuItem` → `contains('[dropdown-menu-item]', name)` + `waitForMenuItem`).
+
+### Durable note (cluster-mock ports)
+
+The dashboard loads clusters by id via server-side-pagination
+`?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be RegExps,
+not globs, since a glob `*` cannot cross the `/` in a namespaced id. (From the PR #17228
+mgmt-to-prov port, now merged and ported.)
 
 ## Gap-map false positives (covered, just renamed)
 
@@ -139,6 +164,10 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
     DOM-snapshot triage).
   - [ ] `edit-fake-cluster.spec.ts:37 doc link new tab` — same `Edit Config`
     menu-missing pattern as above.
+  - Note (2026-05-29): upstream `db1dd2e` root-caused this flake as a load race, fixed
+    Cypress-side via pagesize-split intercepts + `loadingPo.checkNotExists()`. Our PW
+    blueprint already mocks all pagesizes (single regex route) and we wait on the loading
+    indicator, so these are likely sharded-run drift, not the mock race — triage as such.
   - [ ] `v2prov-capi.spec.ts:67 no machine provider for CAPI clusters` — TBD,
     artifact not yet triaged.
   - [ ] `preferences.spec.ts:674 login landing page – home page` — PAGE-STILL-LOADING
