@@ -21,6 +21,20 @@ export default class BurgerMenuPo extends ComponentPo {
     await waitForAnimationSettle(this.sideMenu(), 'burger-side-menu toggle');
   }
 
+  /** Whether the slide-out menu is currently open */
+  async isOpen(): Promise<boolean> {
+    const cls = await this.sideMenu().getAttribute('class');
+
+    return cls?.includes('menu-open') ?? false;
+  }
+
+  /** Open the slide-out menu only if it is currently closed (navigation auto-closes it) */
+  async open(): Promise<void> {
+    if (!(await this.isOpen())) {
+      await this.toggle();
+    }
+  }
+
   /** Navigate to a top-level side menu entry by label (non-cluster) */
   async burgerMenuNavToMenuByLabel(label: string): Promise<void> {
     await this.sideMenu().waitFor({ state: 'attached' });
@@ -105,6 +119,16 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Get all the links in the side navigation */
   links(): Locator {
     return this.self().locator('.body .option');
+  }
+
+  /**
+   * Global application section links only (Cluster Management, Continuous
+   * Delivery, etc.). Anchor `.option`s without `.cluster` — excludes the Home
+   * anchor (`.option.cluster.home`) and the cluster buttons
+   * (`button.cluster.selector.option`).
+   */
+  globalApps(): Locator {
+    return this.self().locator('.body a.option:not(.cluster)');
   }
 
   /** Get all clusters (pinned, filtered, or not) */

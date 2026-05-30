@@ -354,7 +354,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon, burgerMenuGetNavMenuByLabel, burgerMenuGetNavClusterByLabel, clusterOptionWrapper (+26) |
+| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, isOpen, open, if, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon (+29) |
 | ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+13) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |

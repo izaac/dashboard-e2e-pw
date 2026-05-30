@@ -34,22 +34,48 @@ export function captureNavErrors(page: Page): string[] {
 const labelOf = async (link: Locator): Promise<string> => (await link.innerText()).trim().replace(/\s+\d+$/, '');
 
 /**
- * Click a side-nav link and assert it actually landed on a real, rendered page.
+ * Options for {@link clickNavLinkAndAssertLanding}.
+ */
+export interface AssertLandingOptions {
+  /**
+   * Require a visible, non-empty page `<h1>` as proof that real content (not
+   * just chrome) rendered. True (default) for resource pages — the product-nav
+   * walk, where every page renders an `<h1>` masthead inside `main`.
+   *
+   * Set false for product *landing* pages whose title heading is not reliably
+   * exposed in the accessibility tree: the Fleet "Continuous Delivery" dashboard
+   * renders its `<h1>` outside the `main` landmark and absent from the a11y tree,
+   * and the global sections are heterogeneous (resource lists, dashboards,
+   * tabbed pages). For those, correct routing + no error page + no uncaught
+   * crash is the meaningful "this section loaded" signal.
+   */
+  requireHeading?: boolean;
+}
+
+/**
+ * Click a side-nav link and assert it actually landed on a real page — not just
+ * that the router fired.
  *
  * `toHaveURL(href)` on its own is circular: href is read from the very link we
- * click, so matching the URL back to it only proves the router fired — not that
- * the destination rendered. So we keep the URL check (now meaningful, paired
- * with a real render) and add the non-circular signals: the destination's own
- * page `<h1>` renders with text, and the fail-whale error page is absent. A
- * per-hop crash gate flags any uncaught JS error as a supplement.
+ * click, so matching the URL back to it only proves the router fired. We pair it
+ * with non-circular health signals: the fail-whale error page is absent, and no
+ * uncaught JS error was raised during the hop. When `requireHeading` is set
+ * (default), we also assert the destination's own page `<h1>` rendered with text
+ * — positive proof that content mounted.
  *
- * The "rendered" signal is the role-based main heading rather than the
- * resource-masthead CSS class, because the class is not universal: the Apps
- * chart catalog (and extension-injected pages) render an `<h1>` outside
- * `.title` / `.primaryheader` / `.title-bar`. Every page renders one `<h1>`;
- * not every page uses the masthead component.
+ * That heading check is scoped to the `main` landmark and asserted by count (≥1
+ * visible, non-empty), not via `.first()`: a count can't latch onto a single
+ * stale heading during the route transition, and it won't trip strict-mode when
+ * the outgoing and incoming pages briefly both render an `<h1>`. We settle on
+ * the destination URL first, so the check only runs once we are on the new
+ * route.
  */
-export async function clickNavLinkAndAssertLanding(page: Page, link: Locator, errors: string[]): Promise<void> {
+export async function clickNavLinkAndAssertLanding(
+  page: Page,
+  link: Locator,
+  errors: string[],
+  { requireHeading = true }: AssertLandingOptions = {},
+): Promise<void> {
   const label = await labelOf(link);
   const href = await link.getAttribute('href');
   const errorsBefore = errors.length;
@@ -57,16 +83,18 @@ export async function clickNavLinkAndAssertLanding(page: Page, link: Locator, er
   // eslint-disable-next-line playwright/no-force-option -- nav links can be partially obscured by sticky headers/overlay during scroll; force-click is the only reliable way to walk the full list
   await link.click({ force: true });
 
-  // A real page rendered (not just a URL change): the main content region shows
-  // its page title heading, with text.
-  const heading = page.getByRole('main').getByRole('heading', { level: 1 }).first();
-
-  await expect(heading, `No page <h1> rendered after navigating to "${label}"`).toBeVisible();
-  await expect(heading, `Empty page <h1> after navigating to "${label}"`).toHaveText(/\S/);
-
-  // URL matches the link's declared destination — meaningful now we know a page rendered.
+  // Settle on the declared destination first, so the render check below cannot
+  // latch onto the outgoing page's heading mid-transition.
   if (href) {
     await expect(page).toHaveURL(new RegExp(href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+
+  // A real page rendered (not just a URL change): at least one visible,
+  // non-empty `<h1>` is present in the main content region.
+  if (requireHeading) {
+    const headings = page.getByRole('main').getByRole('heading', { level: 1 }).filter({ hasText: /\S/ });
+
+    await expect(headings, `No non-empty page <h1> rendered after navigating to "${label}"`).not.toHaveCount(0);
   }
 
   // Not the error page (toBeHidden passes when absent or hidden).

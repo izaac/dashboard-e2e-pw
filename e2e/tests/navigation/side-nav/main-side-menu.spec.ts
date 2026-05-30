@@ -4,6 +4,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
 import { generateFakeClusterDataAndIntercepts } from '@/e2e/blueprints/nav/fake-cluster';
+import { captureNavErrors, clickNavLinkAndAssertLanding } from '@/support/utils/nav-walk';
 import { LONG } from '@/support/timeouts';
 
 const longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description';
@@ -207,6 +208,38 @@ test.describe('Side Menu: main', () => {
         const firstOptionLink = burgerMenu.firstOptionLinkInCategorySection('Global Apps');
 
         await expect(firstOptionLink).toContainText('Cluster Management');
+      },
+    );
+
+    // Un-skips upstream's "Contains valid links" (skipped under #5966): each hop
+    // asserts the destination actually rendered via the shared helper, which also
+    // sidesteps the Cypress DOM-rebind race that forced the skip — the menu is
+    // re-opened and the links re-resolved fresh on every iteration.
+    test(
+      'Should access every global menu link provided, without errors',
+      {
+        tag: ['@navigation', '@adminUser'],
+      },
+      async ({ page }) => {
+        const burgerMenu = new BurgerMenuPo(page);
+        const navErrors = captureNavErrors(page);
+
+        // Set is stable across the walk, so count once (menu already open from beforeEach).
+        const count = await burgerMenu.globalApps().count();
+
+        expect(count).toBeGreaterThan(0);
+
+        for (let i = 0; i < count; i++) {
+          // Navigating closes the menu (@click="hide()"); re-open before each hop.
+          await burgerMenu.open();
+
+          // Global sections are heterogeneous (resource lists, dashboards like
+          // Fleet, tabbed pages) and don't all expose an accessible page <h1>,
+          // so assert correct routing + no error page + no crash rather than an h1.
+          await clickNavLinkAndAssertLanding(page, burgerMenu.globalApps().nth(i), navErrors, {
+            requireHeading: false,
+          });
+        }
       },
     );
   });
