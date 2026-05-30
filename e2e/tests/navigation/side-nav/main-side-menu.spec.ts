@@ -227,7 +227,11 @@ test.describe('Side Menu: main', () => {
         // Set is stable across the walk, so count once (menu already open from beforeEach).
         const count = await burgerMenu.globalApps().count();
 
-        expect(count).toBeGreaterThan(0);
+        // Floor, not an exact count: Cluster Management, Users & Authentication, Extensions, and
+        // Global Settings are always present for an admin, so a half-rendered menu trips here
+        // instead of silently passing on a single link. Kept a floor (not `toBe`) so
+        // extension-injected and feature-gated entries can only add to the set, never break it.
+        expect(count).toBeGreaterThanOrEqual(4);
 
         for (let i = 0; i < count; i++) {
           // Navigating closes the menu (@click="hide()"); re-open before each hop.
