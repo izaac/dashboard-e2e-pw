@@ -17,7 +17,7 @@
 | ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, button |
 | CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
-| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, byLabel |
+| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, isInputChecked (+2) |
 | CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
@@ -322,7 +322,7 @@
 | FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+6) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+11) |
 | PerformancePagePo | performance.po.ts | RootClusterPage | — | super, saveButton, inactivityCheckbox, inactivityInput, garbageCollectionResourceCount, namespaceFilteringCheckbox, websocketWebWorkerCheckbox, serverSidePaginationCheckbox (+11) |
-| SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+13) |
+| SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+14) |
 
 ## pages/users-and-auth/
 

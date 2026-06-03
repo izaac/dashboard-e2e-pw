@@ -134,7 +134,7 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
         await userCreate.waitForPage();
 
-        await expect(userCreate.globalRoleBindings().roleCheckbox(globalRoleId)).toBeVisible();
+        await expect(userCreate.globalRoleBindings().roleCheckbox(globalRoleId).self()).toBeVisible();
 
         await sideNav.navToSideMenuEntryByLabel('Role Templates');
 

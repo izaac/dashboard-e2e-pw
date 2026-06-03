@@ -42,6 +42,10 @@ export class SettingsPagePo extends RootClusterPage {
     return this.advancedSettingRow(label).locator(':text("Modified")');
   }
 
+  environmentLabel(label: string): Locator {
+    return this.page.getByTestId(`advanced-setting-env-label-${label}`);
+  }
+
   settingsValue(label: string): Locator {
     return this.advancedSettingRow(label).locator('.settings-value');
   }

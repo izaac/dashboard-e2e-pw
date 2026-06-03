@@ -89,6 +89,66 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
     }
   });
 
+  test('can un-assign a global role from a user', async ({ page, login, rancherApi }) => {
+    const uniqueName = `${runPrefix}-un-assign-global-${Date.now()}`;
+
+    const userResp = await rancherApi.createUser({
+      username: uniqueName,
+      globalRole: { role: 'user' },
+      password: 'TestPassword1234',
+    });
+    const userId = userResp.body.id;
+    const actualUsername = userResp.body.username;
+
+    await rancherApi.setGlobalRoleBinding(userId, 'user-base');
+
+    await login();
+
+    const usersPo = new UsersPo(page);
+
+    try {
+      await usersPo.goTo();
+      await usersPo.waitForPage();
+      await usersPo.list().clickRowActionMenuItem(actualUsername, 'Edit Config');
+
+      const userEdit = usersPo.createEdit(userId);
+
+      await userEdit.waitForPage();
+
+      // Reload — critical to reproduce the bug
+      await page.reload();
+      await userEdit.waitForPage();
+
+      await userEdit.globalRoleBindings().self().scrollIntoViewIfNeeded();
+
+      // Verify both roles are checked via real input state (aria-checked is unreliable for array v-models)
+      await userEdit.globalRoleBindings().roleCheckbox('user').isInputChecked();
+      await userEdit.globalRoleBindings().roleCheckbox('user-base').isInputChecked();
+
+      // Uncheck User-Base
+      await userEdit.globalRoleBindings().roleCheckbox('user-base').set();
+      await userEdit.globalRoleBindings().roleCheckbox('user-base').isInputNotChecked();
+
+      const deleteResponsePromise = page.waitForResponse(
+        (resp) => /globalrolebinding/i.test(resp.url()) && resp.request().method() === 'DELETE',
+      );
+
+      await userEdit.resourceDetail().cruResource().saveOrCreate().click();
+      const deleteResp = await deleteResponsePromise;
+
+      expect([200, 204]).toContain(deleteResp.status());
+
+      // No error banner should appear
+      await expect(userEdit.errorBanner()).not.toBeAttached();
+
+      // Should navigate back to users list
+      await usersPo.waitForPage();
+      await expect(usersPo.list().elementWithName(actualUsername)).toBeVisible();
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
+    }
+  });
+
   test('can create Standard User and view their details', async ({ page, login, rancherApi }) => {
     const standardUsername = `${runPrefix}-standard-${Date.now()}`;
     const standardPassword = 'standardUser-password';

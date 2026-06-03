@@ -291,6 +291,14 @@ RANCHER_PASSWORD=mysecretpassword docker compose up
 docker compose down
 ```
 
+To **fully nuke** all stacks (default, sharded, nix) and remove all named
+volumes in one shot — including `rancher-1-data`/`rancher-2-data` from
+previous sharded runs:
+
+```bash
+sh scripts/nuke.sh
+```
+
 ### Wait for Rancher to be healthy from a script
 
 Bring Rancher up detached and block until its docker healthcheck flips green:

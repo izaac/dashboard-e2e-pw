@@ -12,8 +12,8 @@ class GlobalRoleBindingsPo extends ComponentPo {
     super(page, '.global-permissions');
   }
 
-  roleCheckbox(roleId: string): Locator {
-    return this.self().getByTestId(`grb-checkbox-${roleId}`);
+  roleCheckbox(roleId: string): CheckboxInputPo {
+    return new CheckboxInputPo(this.page, `[data-testid="grb-checkbox-${roleId}"]`);
   }
 
   globalOptionsLocator(): Locator {
