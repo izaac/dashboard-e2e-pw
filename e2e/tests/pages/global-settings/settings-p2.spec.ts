@@ -69,7 +69,7 @@ test.describe('Settings (Part 2)', () => {
       // When CATTLE_SERVER_URL is set the setting is read-only
       const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'server-url', 0);
 
-      if (settingResp.body?.source === 'env') {
+      if (settingResp.body.source === 'env') {
         await expect(settingsPage.environmentLabel('server-url')).toBeVisible();
         await expect(settingsPage.actionButtonByLabel('server-url')).not.toBeAttached();
 
@@ -113,7 +113,7 @@ test.describe('Settings (Part 2)', () => {
     // When CATTLE_SERVER_URL is set the setting is read-only
     const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'server-url', 0);
 
-    if (settingResp.body?.source === 'env') {
+    if (settingResp.body.source === 'env') {
       await expect(settingsPage.environmentLabel('server-url')).toBeVisible();
       await expect(settingsPage.actionButtonByLabel('server-url')).not.toBeAttached();
 
@@ -260,7 +260,7 @@ test.describe('Settings (Part 2)', () => {
       // When CATTLE_UI_OFFLINE_PREFERRED is set the setting is read-only
       const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
 
-      if (settingResp.body?.source === 'env') {
+      if (settingResp.body.source === 'env') {
         await expect(settingsPage.environmentLabel(settingName)).toBeVisible();
         await expect(settingsPage.actionButtonByLabel(settingName)).not.toBeAttached();
 

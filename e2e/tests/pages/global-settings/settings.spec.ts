@@ -259,7 +259,7 @@ test.describe('Settings', () => {
       // When CATTLE_PASSWORD_MIN_LENGTH is set the setting is read-only
       const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
 
-      if (settingResp.body?.source === 'env') {
+      if (settingResp.body.source === 'env') {
         await expect(settingsPage.environmentLabel(settingName)).toBeVisible();
         await expect(settingsPage.actionButtonByLabel(settingName)).not.toBeAttached();
 

@@ -125,7 +125,6 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userEdit.globalRoleBindings().roleCheckbox('user').isInputChecked();
       await userEdit.globalRoleBindings().roleCheckbox('user-base').isInputChecked();
 
-      // Uncheck User-Base
       await userEdit.globalRoleBindings().roleCheckbox('user-base').set();
       await userEdit.globalRoleBindings().roleCheckbox('user-base').isInputNotChecked();
 
@@ -138,10 +137,9 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
 
       expect([200, 204]).toContain(deleteResp.status());
 
-      // No error banner should appear
+      // Bug: before the fix, the save would submit without the binding change and show a CRU error
       await expect(userEdit.errorBanner()).not.toBeAttached();
 
-      // Should navigate back to users list
       await usersPo.waitForPage();
       await expect(usersPo.list().elementWithName(actualUsername)).toBeVisible();
     } finally {
