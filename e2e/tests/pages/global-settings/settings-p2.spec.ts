@@ -61,20 +61,28 @@ test.describe('Settings (Part 2)', () => {
   }
 
   test(
+    'server-url is read-only when set by environment variable',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'server-url', 0);
+
+      test.skip(settingResp.body.source !== 'env', 'Only runs when CATTLE_SERVER_URL is set');
+
+      await navToSettings(page);
+      await expect(settingsPage.environmentLabel('server-url')).toBeVisible();
+      await expect(settingsPage.actionButtonByLabel('server-url')).not.toBeAttached();
+    },
+  );
+
+  test(
     'can update but not reset server-url',
     { tag: ['@globalSettings', '@adminUser'] },
     async ({ page, rancherApi }) => {
-      await navToSettings(page);
-
-      // When CATTLE_SERVER_URL is set the setting is read-only
       const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'server-url', 0);
 
-      if (settingResp.body.source === 'env') {
-        await expect(settingsPage.environmentLabel('server-url')).toBeVisible();
-        await expect(settingsPage.actionButtonByLabel('server-url')).not.toBeAttached();
+      test.skip(settingResp.body.source === 'env', 'server-url is locked by CATTLE_SERVER_URL');
 
-        return;
-      }
+      await navToSettings(page);
 
       const serverUrlLocator = settingsPage.settingsValue('server-url');
 
@@ -108,18 +116,11 @@ test.describe('Settings (Part 2)', () => {
   );
 
   test('can validate server-url', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-    await navToSettings(page);
-
-    // When CATTLE_SERVER_URL is set the setting is read-only
     const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'server-url', 0);
 
-    if (settingResp.body.source === 'env') {
-      await expect(settingsPage.environmentLabel('server-url')).toBeVisible();
-      await expect(settingsPage.actionButtonByLabel('server-url')).not.toBeAttached();
+    test.skip(settingResp.body.source === 'env', 'server-url is locked by CATTLE_SERVER_URL');
 
-      return;
-    }
-
+    await navToSettings(page);
     await editSetting(page, 'server-url');
 
     await expect(settingsPage.settingTitle()).toContainText('Setting: server-url');
@@ -250,24 +251,32 @@ test.describe('Settings (Part 2)', () => {
     }
   });
 
+  test(
+    'ui-offline-preferred is read-only when set by environment variable',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'ui-offline-preferred';
+      const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
+
+      test.skip(settingResp.body.source !== 'env', 'Only runs when CATTLE_UI_OFFLINE_PREFERRED is set');
+
+      await navToSettings(page);
+      await expect(settingsPage.environmentLabel(settingName)).toBeVisible();
+      await expect(settingsPage.actionButtonByLabel(settingName)).not.toBeAttached();
+    },
+  );
+
   test('can update ui-offline-preferred', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'ui-offline-preferred';
+    const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
+
+    test.skip(settingResp.body.source === 'env', 'ui-offline-preferred is locked by CATTLE_UI_OFFLINE_PREFERRED');
+
     const restore = await snapshotSetting(rancherApi, settingName);
 
     try {
       await navToSettings(page);
 
-      // When CATTLE_UI_OFFLINE_PREFERRED is set the setting is read-only
-      const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
-
-      if (settingResp.body.source === 'env') {
-        await expect(settingsPage.environmentLabel(settingName)).toBeVisible();
-        await expect(settingsPage.actionButtonByLabel(settingName)).not.toBeAttached();
-
-        return;
-      }
-
-      // Update setting: Local
       await editSetting(page, settingName);
 
       await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);

@@ -259,6 +259,31 @@ Tests must produce the **same result** regardless of how many times they run or 
    shared variable. Use sparingly.
 4. **Never: no cleanup** — every resource created must be cleaned up. "The next test will reset it" is not acceptable.
 
+### Playwright Idioms
+
+When a test needs to behave differently based on runtime state (missing infra, feature flags,
+env-locked settings), use `test.skip(condition, reason)`. Never put `expect()` calls inside an
+`if` branch to conditionally guard behavior — the `playwright/no-conditional-expect` rule flags
+this because it can silently skip assertions when the condition has a bug.
+
+The correct pattern is two focused tests with opposing `test.skip` guards:
+
+```typescript
+// Runs only when env-locked. Asserts the read-only UI state.
+test('my-setting is read-only when set by environment variable', async ({ rancherApi }) => {
+  const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'my-setting', 0);
+  test.skip(resp.body.source !== 'env', 'Only relevant when env var is set');
+  // assert the locked UI
+});
+
+// Runs only when not env-locked. Does the full interaction.
+test('can update my-setting', async ({ rancherApi }) => {
+  const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'my-setting', 0);
+  test.skip(resp.body.source === 'env', 'my-setting is locked by environment variable');
+  // full edit test
+});
+```
+
 ### Assertions
 
 - **Web-first assertions only** — `await expect(loc).toBeVisible()`, never `expect(await loc.isVisible()).toBe(true)`.

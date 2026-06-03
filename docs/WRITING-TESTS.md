@@ -535,6 +535,55 @@ needed.
 
 ---
 
+### Rule 9: Use Playwright idioms, not workarounds
+
+When a test needs to behave differently depending on runtime state (missing infrastructure,
+feature flags, env-locked settings), use `test.skip(condition, reason)`. Never put `expect()`
+calls inside an `if` branch to work around the condition.
+
+**Don't do this** — conditional expects can silently skip assertions when the condition has a bug,
+and the linter flags it:
+
+```typescript
+if (someRuntimeCondition) {
+  await expect(element).toBeVisible(); // playwright/no-conditional-expect
+  return;
+}
+// ... rest of test
+```
+
+**Do this instead** — split into two focused tests, each with a `test.skip` guard:
+
+```typescript
+// Runs only when the condition is true. Asserts the alternative UI state.
+test('shows read-only label when locked by environment variable', async ({ rancherApi }) => {
+  const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'my-setting', 0);
+  test.skip(resp.body.source !== 'env', 'Only relevant when env var is set');
+
+  await expect(settingsPage.environmentLabel('my-setting')).toBeVisible();
+  await expect(settingsPage.actionButtonByLabel('my-setting')).not.toBeAttached();
+});
+
+// Runs only when the condition is false. Does the full interaction.
+test('can update my-setting', async ({ rancherApi }) => {
+  const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', 'my-setting', 0);
+  test.skip(resp.body.source === 'env', 'my-setting is locked by environment variable');
+
+  // ... full edit test
+});
+```
+
+Each test has a single clear purpose. The skip reason tells the reader exactly why it was
+skipped. If the alternative UI breaks, the first test catches it cleanly.
+
+The same pattern applies to infrastructure guards:
+
+```typescript
+test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
+```
+
+---
+
 ## 5. Writing a Test Step by Step
 
 Let's walk through creating a brand-new test from scratch.

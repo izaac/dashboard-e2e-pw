@@ -249,23 +249,31 @@ test.describe('Settings', () => {
     }
   });
 
+  test(
+    'password-min-length is read-only when set by environment variable',
+    { tag: ['@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi }) => {
+      const settingName = 'password-min-length';
+      const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
+
+      test.skip(settingResp.body.source !== 'env', 'Only runs when CATTLE_PASSWORD_MIN_LENGTH is set');
+
+      await navToSettings(page);
+      await expect(settingsPage.environmentLabel(settingName)).toBeVisible();
+      await expect(settingsPage.actionButtonByLabel(settingName)).not.toBeAttached();
+    },
+  );
+
   test('can update password-min-length', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'password-min-length';
+    const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
+
+    test.skip(settingResp.body.source === 'env', 'password-min-length is locked by CATTLE_PASSWORD_MIN_LENGTH');
+
     const restore = await snapshotSetting(rancherApi, settingName);
 
     try {
       await navToSettings(page);
-
-      // When CATTLE_PASSWORD_MIN_LENGTH is set the setting is read-only
-      const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
-
-      if (settingResp.body.source === 'env') {
-        await expect(settingsPage.environmentLabel(settingName)).toBeVisible();
-        await expect(settingsPage.actionButtonByLabel(settingName)).not.toBeAttached();
-
-        return;
-      }
-
       await editSetting(page, settingName);
 
       await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
