@@ -8,16 +8,16 @@ Everything you need to run the Playwright test suite for Rancher Dashboard, whet
 
 ### What you need installed
 
-- **Git** — check with `git --version`
-- **Node.js 22+** — check with `node --version` ([download](https://nodejs.org/))
-- **Yarn** — check with `yarn --version`. If you have Node 24+ with Corepack: `corepack enable`
+- **Git**: check with `git --version`
+- **Node.js 22+**: check with `node --version` ([download](https://nodejs.org/))
+- **Yarn**: check with `yarn --version`. If you have Node 24+ with Corepack: `corepack enable`
   then `corepack prepare yarn@stable --activate`
-- **Docker** — only if you want Docker mode (see sections 4–5). Needs at least 6 GB RAM allocated.
+- **Docker**, only if you want Docker mode (see sections 4–5). Needs at least 6 GB RAM allocated.
 
 ### Set up the project
 
 ```bash
-# Clone the repo (HTTPS — no SSH key needed)
+# Clone the repo (HTTPS, no SSH key needed)
 git clone https://github.com/izaac/dashboard-e2e-pw.git
 cd dashboard-e2e-pw
 
@@ -43,7 +43,7 @@ TEST_PASSWORD=your-rancher-password
 ```
 
 > **Important:** These tests run against a real, live Rancher instance. They click buttons, create
-> resources, and verify real UI behavior. You need a running Rancher somewhere — either your own
+> resources, and verify real UI behavior. You need a running Rancher somewhere, either your own
 > instance or one started via Docker (section 4).
 
 ---
@@ -70,7 +70,7 @@ npx playwright test e2e/tests/pages/generic/login.spec.ts
 npx playwright test -g "Log in with valid"
 ```
 
-This matches any test whose title contains that string — handy for running just one test.
+This matches any test whose title contains that string, which is handy for running just one test.
 
 ### Run a whole folder
 
@@ -92,7 +92,7 @@ The browser window pops up so you can watch the test interact with the page. Gre
 npx playwright test --debug
 ```
 
-Opens the Playwright Inspector — you can step through each action one at a time.
+Opens the Playwright Inspector, so you can step through each action one at a time.
 
 ### Run with UI mode (interactive)
 
@@ -108,7 +108,7 @@ Opens a visual interface where you can pick tests, watch them run, see traces, a
 npx playwright test --list
 ```
 
-Shows every test that *would* run — useful for checking your filters before committing to a full run.
+Shows every test that *would* run. Useful for checking your filters before committing to a full run.
 
 ### Yarn shortcuts
 
@@ -185,7 +185,7 @@ The `+` is the separator between filter tokens. `-@tag` means exclude.
 | ------------------ | ----------------------------------------------------- |
 | `@adminUser`       | Tests that need admin login                           |
 | `@standardUser`    | Tests for non-admin users                             |
-| `@generic`         | Basic UI tests (login, home, version) — fast          |
+| `@generic`         | Basic UI tests (login, home, version), fast           |
 | `@globalSettings`  | Settings page tests                                   |
 | `@manager`         | Cluster manager tests                                 |
 | `@explorer`        | Cluster explorer tests (part 1)                       |
@@ -201,7 +201,7 @@ The `+` is the separator between filter tokens. `-@tag` means exclude.
 | `@noVai`           | Tests requiring VAI disabled (ui-sql-cache off)       |
 | `@needsInfra`      | Needs cloud creds or external infrastructure          |
 | `@elemental`       | Elemental extension tests                             |
-| `@visual`          | Visual snapshot tests — excluded from default GREP    |
+| `@visual`          | Visual snapshot tests, excluded from default GREP     |
 
 ---
 
@@ -220,11 +220,11 @@ docker compose up
 
 This starts two containers:
 
-1. **Rancher** — boots with a bootstrap password, waits until healthy
-2. **Tests** — runs the full suite against that Rancher instance
+1. **Rancher**: boots with a bootstrap password, waits until healthy
+2. **Tests**: runs the full suite against that Rancher instance
 
 The test container waits for Rancher's healthcheck to pass before starting. You don't need to
-do anything — just wait.
+do anything. Just wait.
 
 ### Running specific tests via Docker
 
@@ -283,7 +283,7 @@ RANCHER_PASSWORD=mysecretpassword docker compose up
 ```
 
 > **Rancher 2.13+ requires passwords ≥12 characters.** The default `RANCHER_PASSWORD` is
-> `password1234`. Do not use short passwords like `admin` — the setup page rejects them.
+> `password1234`. Do not use short passwords like `admin`, because the setup page rejects them.
 
 ### Stop everything
 
@@ -292,7 +292,7 @@ docker compose down
 ```
 
 To **fully nuke** all stacks (default, sharded, nix) and remove all named
-volumes in one shot — including `rancher-1-data`/`rancher-2-data` from
+volumes in one shot, including `rancher-1-data`/`rancher-2-data` from
 previous sharded runs:
 
 ```bash
@@ -316,7 +316,7 @@ Rancher) until the API is reachable. Override the container name with
 
 ### Re-running `e2e/tests/setup/rancher-setup.spec.ts` against a fresh Rancher
 
-`rancher-setup.spec.ts` is the bootstrap shim — it covers four backend states
+`rancher-setup.spec.ts` is the bootstrap shim. It covers four backend states
 detected at runtime by `detectBootstrapState`:
 
 | State | Trigger | Tests that run |
@@ -363,7 +363,7 @@ docker compose -f docker-compose.sharded.yml -f docker-compose.sharded.nix.yml u
 ```
 
 This builds a patched Rancher image that replaces iptables-legacy with iptables-nft.
-Only needed on NixOS — other distros work with the stock image.
+Only needed on NixOS; other distros work with the stock image.
 
 ### Prime mode
 
@@ -396,7 +396,7 @@ snapshots to the matching `prime/` or `community/` subdirectory automatically.
 
 ## 5. Docker Gotchas
 
-### Source is bind-mounted — no rebuild on edit
+### Source is bind-mounted, no rebuild on edit
 
 The `tests` service bind-mounts the repo into `/app`. Editing specs, POs, or blueprints
 takes effect on the next run with no `--build` step needed. Branch switches (e.g.
@@ -421,7 +421,7 @@ bloating builds. The repo includes a `.dockerignore` that excludes `node_modules
 ### Artifact ownership
 
 The tests container runs as `${HOST_UID}:${HOST_GID}` (defaults `1000:100`) so files
-written through the bind-mount — `test-results/`, `playwright-report/`, `.auth/` — are
+written through the bind-mount (`test-results/`, `playwright-report/`, `.auth/`) are
 owned by the host user, not root. If your host user differs from the defaults, set them
 before running:
 
@@ -448,7 +448,7 @@ Or persist them in `.env`.
 
 | Variable    | Required | Default | What it does                                                         |
 | ----------- | -------- | ------- | -------------------------------------------------------------------- |
-| `GREP_TAGS` | No       | —       | Tag filter — see [section 3](#3-filtering-by-tags) for full syntax   |
+| `GREP_TAGS` | No       | —       | Tag filter; see [section 3](#3-filtering-by-tags) for full syntax    |
 | `TEST_SKIP` | No       | —       | Comma-separated test directories to skip (e.g., `setup,priority`)    |
 | `TEST_ONLY` | No       | —       | Comma-separated test directories to run exclusively                  |
 
@@ -486,8 +486,8 @@ don't pay the pixel-diff cost.
 Baselines live under `snapshots/` at the repo root, keyed by Prime vs Community
 edition (e.g. `snapshots/<spec-path>/community/<name>.png`).
 
-> **For the rationale (why no Percy) and the conventions** — Prime/Community keying,
-> theme pinning, content waits — see [UPSTREAM-DIVERGENCES.md §6](./UPSTREAM-DIVERGENCES.md#6-visual-snapshots-percy--playwright).
+> **For the rationale (why no Percy) and the conventions** (Prime/Community keying,
+> theme pinning, content waits), see [UPSTREAM-DIVERGENCES.md §6](./UPSTREAM-DIVERGENCES.md#6-visual-snapshots-percy--playwright).
 >
 > **For how to add a new visual test**, see the "Visual snapshots" section in
 > [WRITING-TESTS.md](./WRITING-TESTS.md).
@@ -508,7 +508,7 @@ GREP_TAGS="@visual+-@prime+-@noVai+-@needsInfra" \
 ```
 
 Review the diff and commit the updated PNGs. Baselines are tied to the Rancher
-image — bumping `RANCHER_IMAGE` usually requires a regen.
+image, so bumping `RANCHER_IMAGE` usually requires a regen.
 
 ### Tolerance
 
@@ -522,8 +522,8 @@ global ratio.
 
 After tests finish, results end up in two places:
 
-- **`test-results/`** — per-test artifacts: screenshots, videos, and traces (only for failed tests)
-- **`playwright-report/`** — a nice HTML report with everything in one place
+- **`test-results/`** holds per-test artifacts: screenshots, videos, and traces (only for failed tests)
+- **`playwright-report/`** is a nice HTML report with everything in one place
 
 ### Open the HTML report
 
@@ -546,8 +546,8 @@ cat test-results/FAILURE-SUMMARY.md
 This classifies each failure (timeout, selector not found, API error, assertion mismatch, etc.)
 and flags common issues like login page showing up or loading spinners still visible.
 
-For a detailed walkthrough of how to investigate failures — understanding artifacts, diagnosing
-failure types, and reproducing issues — see [Debugging Failures](DEBUGGING-FAILURES.md).
+For a detailed walkthrough of how to investigate failures (understanding artifacts, diagnosing
+failure types, and reproducing issues), see [Debugging Failures](DEBUGGING-FAILURES.md).
 
 ---
 
@@ -555,12 +555,12 @@ failure types, and reproducing issues — see [Debugging Failures](DEBUGGING-FAI
 
 ### "Rancher takes forever to start"
 
-Rancher is a full Kubernetes distribution — it genuinely needs a few minutes to start. The
+Rancher is a full Kubernetes distribution, so it genuinely needs a few minutes to start. The
 healthcheck retries up to 40 times (every 15 seconds) before giving up.
 
 - Make sure Docker has at least 6 GB of RAM allocated
 - Check `docker logs <rancher-container>` for errors
-- On slower machines, Rancher might need more time — this is normal
+- On slower machines, Rancher might need more time; this is normal
 
 ### "Tests fail with login error"
 
@@ -587,7 +587,7 @@ This usually means the browser ran out of shared memory.
 
 ### "Tests work locally but fail in Docker"
 
-- Check that `PLAYWRIGHT_CHROMIUM_PATH` is **not** set in your `.env` — that variable is for
+- Check that `PLAYWRIGHT_CHROMIUM_PATH` is **not** set in your `.env`, because that variable is for
   NixOS native runs only, and it breaks the Docker container
 - Make sure your `.env` isn't overriding Docker Compose's environment variables
 
@@ -599,4 +599,4 @@ environment is overriding this.
 
 ### "Stale Docker images running old code"
 
-See [Docker Gotchas](#5-docker-gotchas) — delete old images after editing source files.
+See [Docker Gotchas](#5-docker-gotchas); delete old images after editing source files.

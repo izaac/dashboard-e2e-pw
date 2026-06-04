@@ -1,7 +1,7 @@
 # Writing E2E Tests
 
 How to write Playwright tests for this project. If you know basic TypeScript, you have everything
-you need — this guide covers the rest.
+you need, and this guide covers the rest.
 
 ---
 
@@ -22,7 +22,7 @@ you need — this guide covers the rest.
 
 ## 1. How a Test File Looks
 
-Here's a complete, simple test. Read through it — then we'll break down each piece.
+Here's a complete, simple test. Read through it, then we'll break down each piece.
 
 ```typescript
 import { test, expect } from '@/support/fixtures';
@@ -52,7 +52,7 @@ Let's walk through each piece:
 import { test, expect } from '@/support/fixtures';
 ```
 
-**Always** import `test` and `expect` from `@/support/fixtures` — never from `@playwright/test`
+**Always** import `test` and `expect` from `@/support/fixtures`, never from `@playwright/test`
 directly. Our custom fixtures (login, API helpers, environment config) are wired into that import.
 
 ### Tags
@@ -73,7 +73,7 @@ test.beforeEach(async ({ login }) => {
 });
 ```
 
-The `login()` fixture handles authentication — it logs into Rancher via the UI. Call it in
+The `login()` fixture handles authentication by logging into Rancher via the UI. Call it in
 `beforeEach` so every test starts with a fresh logged-in session.
 
 ### Page Objects
@@ -84,7 +84,7 @@ await homePage.goTo();
 ```
 
 Page Objects handle all the selectors and UI interactions. Your spec file reads like plain
-English — "go to the home page", "check the title". No CSS selectors in sight.
+English: "go to the home page", "check the title". No CSS selectors in sight.
 
 ### Assertions
 
@@ -92,7 +92,7 @@ English — "go to the home page", "check the title". No CSS selectors in sight.
 await expect(homePage.title()).toContainText('Welcome');
 ```
 
-All assertions use `await expect(...)`. These are "web-first" assertions — they automatically
+All assertions use `await expect(...)`. These are "web-first" assertions that automatically
 retry until the condition is true (or timeout). This means you don't need manual waits or
 sleep calls.
 
@@ -160,11 +160,11 @@ export default class HomePagePo extends PagePo {
 ### Key rules
 
 - Component POs extend `ComponentPo`, page POs extend `PagePo`
-- `self()` returns the root Locator for this PO — think of it as "the element this PO wraps"
+- `self()` returns the root Locator for this PO. Think of it as "the element this PO wraps"
 - Methods that **find** an element return a `Locator`
 - Methods that **do** something (click, fill, navigate) are `async` and return `Promise<void>`
-- Match the upstream Cypress PO class names, method names, and selectors — we keep them in sync
-- **POs never assert** — no `expect()` inside Page Objects. POs expose Locators and perform
+- Match the upstream Cypress PO class names, method names, and selectors, since we keep them in sync
+- **POs never assert**: no `expect()` inside Page Objects. POs expose Locators and perform
   actions; specs own all assertions. The only exception is `waitFor*` helpers that check element
   visibility as a precondition (e.g., `waitForPage()`, `waitForDebounce()`), not as a test assertion
 
@@ -201,7 +201,7 @@ cat e2e/po/UPSTREAM-DIFF.md
 Fixtures are values that Playwright passes into your test functions automatically. We have
 custom ones that you'll use in nearly every test.
 
-### `login()` — Authenticate before your test
+### `login()`: Authenticate before your test
 
 Logs into Rancher through the UI. Call it in `beforeEach`:
 
@@ -217,9 +217,9 @@ Need to log in as a specific user? Pass options:
 await login({ username: 'testuser', password: 'testpass' });
 ```
 
-### `rancherApi` — Talk to Rancher's API directly
+### `rancherApi`: Talk to Rancher's API directly
 
-Use this to create resources, change settings, or clean up — all without touching the UI. It's
+Use this to create resources, change settings, or clean up, all without touching the UI. It's
 faster and more reliable than clicking through forms.
 
 ```typescript
@@ -232,13 +232,13 @@ test('create and verify a namespace', async ({ page, rancherApi }) => {
     // Navigate and verify the namespace shows up in the UI
     // ... your assertions here ...
   } finally {
-    // Always clean up what you created — deleteNamespace takes an array
+    // Always clean up what you created. deleteNamespace takes an array
     await rancherApi.deleteNamespace([nsName]);
   }
 });
 ```
 
-### `envMeta` — Environment configuration
+### `envMeta`: Environment configuration
 
 Access environment variables like cloud credentials, the Rancher URL, or the login username.
 Useful for skipping tests that need infrastructure you don't have:
@@ -254,7 +254,7 @@ Available properties include: `username`, `password`, `baseUrl`, `awsAccessKey`,
 `azureClientId`, `azureClientSecret`, `gkeServiceAccount`, `customNodeIp`, and more
 (see `globals.d.ts` for the full list).
 
-### `isPrime` — Detect Rancher Prime vs Community
+### `isPrime`: Detect Rancher Prime vs Community
 
 A worker-scoped boolean that queries `/rancherversion` once per worker and caches the result.
 Use it to branch assertions or skip tests based on the Rancher edition:
@@ -275,11 +275,11 @@ test('shows prime support panel', async ({ isPrime }) => {
 });
 ```
 
-This replaces upstream's `cy.getRancherVersion().then(...)` pattern — no async call in every
+This replaces upstream's `cy.getRancherVersion().then(...)` pattern, with no async call in every
 test, no callback nesting. Tags (`@prime` / `@noPrime`) control which tests **run** at CI level;
 `isPrime` controls what to **expect** inside tests that run on both editions.
 
-### `chartGuard` — Skip tests when charts are filtered
+### `chartGuard`: Skip tests when charts are filtered
 
 A test-scoped fixture that checks whether a Helm chart is available in the catalog. Call it
 at the start of any chart test:
@@ -287,7 +287,7 @@ at the start of any chart test:
 ```typescript
 test('install monitoring', async ({ chartGuard, page }) => {
   await chartGuard('rancher-charts', 'rancher-monitoring');
-  // ... test body — only runs if the chart is in the catalog ...
+  // ... test body, which only runs if the chart is in the catalog ...
 });
 ```
 
@@ -302,7 +302,7 @@ index once. The fixture also enables the `show-pre-release` preference during th
 restores it on teardown.
 
 This replaces upstream's `runTestWhenChartAvailable()` + `CYPRESS_ALLOW_FILTERED_CATALOG_SKIP`
-env var — no environment variable needed, no callback wrapping, no Mocha context threading.
+env var, so no environment variable is needed, no callback wrapping, no Mocha context threading.
 See `docs/UPSTREAM-DIVERGENCES.md` for details.
 
 ---
@@ -314,9 +314,9 @@ leads to flaky tests that fail randomly and waste everyone's time.
 
 ### Rule 1: Every test stands alone (Atomicity)
 
-Each test must work independently — it can't depend on another test running first.
+Each test must work independently. It can't depend on another test running first.
 
-**Don't do this** — Test B assumes Test A already created a namespace:
+**Don't do this** (Test B assumes Test A already created a namespace):
 
 ```typescript
 // Test A creates "my-namespace"
@@ -324,7 +324,7 @@ Each test must work independently — it can't depend on another test running fi
 // If Test A is skipped or fails, Test B breaks too
 ```
 
-**Do this instead** — Test B creates its own namespace, tests it, deletes it:
+**Do this instead** (Test B creates its own namespace, tests it, deletes it):
 
 ```typescript
 test('can view namespace details', async ({ page, rancherApi }) => {
@@ -343,23 +343,23 @@ test('can view namespace details', async ({ page, rancherApi }) => {
 
 Your test must produce the same result no matter how many times you run it.
 
-**Don't do this** — a fixed name fails the second time because the resource already exists:
+**Don't do this**, because a fixed name fails the second time when the resource already exists:
 
 ```typescript
 await rancherApi.createNamespace('my-namespace');
 // Second run: "my-namespace already exists"
 ```
 
-**Do this instead** — use a unique name with a timestamp:
+**Do this instead**: use a unique name with a timestamp:
 
 ```typescript
 const ns = `my-ns-${Date.now()}`;
 await rancherApi.createNamespace(ns);
 ```
 
-**Also fine** — pre-clean any leftover and re-create. `deleteRancherResource(...)`'s
+**Also fine**: pre-clean any leftover and re-create. `deleteRancherResource(...)`'s
 `failOnStatusCode = false` flag tolerates a missing resource (404) without throwing,
-so a no-op delete is safe — never use a silent `.catch(() => {})` (it swallows real
+so a no-op delete is safe. Never use a silent `.catch(() => {})` (it swallows real
 auth/network errors and violates the project's no-silent-failure rule):
 
 ```typescript
@@ -389,13 +389,13 @@ test('modify a setting', async ({ rancherApi }) => {
 
 **Cleanup priority** (use whichever fits):
 
-1. **`try/finally` inside the test** — best for most cases, especially one-off resources
-2. **`afterEach`/`afterAll`** — acceptable when multiple tests in the same `describe` share a resource
-3. **Playwright fixtures with `use()`** — best for reusable patterns (advanced, see Playwright docs)
+1. **`try/finally` inside the test**: best for most cases, especially one-off resources
+2. **`afterEach`/`afterAll`**: acceptable when multiple tests in the same `describe` share a resource
+3. **Playwright fixtures with `use()`**: best for reusable patterns (advanced, see Playwright docs)
 
 ### Rule 4: No raw selectors in spec files
 
-Selectors belong in Page Objects — never in your test file.
+Selectors belong in Page Objects, never in your test file.
 
 **Don't do this:**
 
@@ -413,16 +413,16 @@ await myPage.title().innerText();
 
 ### Rule 5: Web-first assertions
 
-Use `await expect(...)` — these retry automatically until the condition is true or the timeout
+Use `await expect(...)`, which retries automatically until the condition is true or the timeout
 expires. Never check once with a manual boolean.
 
-**Don't do this** — it checks the DOM once and moves on, which is a race condition:
+**Don't do this**, because it checks the DOM once and moves on, which is a race condition:
 
 ```typescript
 expect(await element.isVisible()).toBe(true);
 ```
 
-**Do this instead** — it retries automatically until the element is visible (or times out):
+**Do this instead**, since it retries automatically until the element is visible (or times out):
 
 ```typescript
 await expect(element).toBeVisible();
@@ -446,13 +446,13 @@ reusable across tests that assert different things about the same element.
 **Don't do this** in a PO:
 
 ```typescript
-// BAD — PO is making a test assertion
+// BAD: PO is making a test assertion
 async verifyTitle(expected: string): Promise<void> {
   await expect(this.title()).toContainText(expected);
 }
 ```
 
-**Do this instead** — PO returns the Locator, spec asserts:
+**Do this instead**: PO returns the Locator, spec asserts:
 
 ```typescript
 // PO
@@ -489,21 +489,21 @@ should fast-fail on a bad status), name it explicitly: `applyAndExpectOk(...)`,
 
 ### Rule 7: No empty `catch` blocks
 
-Never write `} catch {}`, `} catch { /* comment */ }`, or `.catch(() => {})` — even with a
+Never write `} catch {}`, `} catch { /* comment */ }`, or `.catch(() => {})`, even with a
 comment. Silent swallows hide auth failures, network errors, and genuine test bugs that
 otherwise look like UI flakes. Runtime helpers (e.g. cleanup helpers, polling catches) must
 `console.warn` with context instead:
 
 ```typescript
-// BAD — swallows everything, even auth/network failures
+// BAD: swallows everything, even auth/network failures
 try {
   await api.deleteRancherResource('v1', 'configmaps', name, false);
 } catch {}
 
-// GOOD — `false` flag tolerates 404 without throwing; no catch needed
+// GOOD: `false` flag tolerates 404 without throwing; no catch needed
 await api.deleteRancherResource('v1', 'configmaps', name, false);
 
-// GOOD — when a catch IS needed, log so failures surface in CI
+// GOOD: when a catch IS needed, log so failures surface in CI
 } catch (err) {
   console.warn(`[my-test cleanup] failed: ${(err as Error)?.message ?? err}`);
 }
@@ -511,7 +511,7 @@ await api.deleteRancherResource('v1', 'configmaps', name, false);
 
 ### Rule 8: No `page.waitForTimeout(N)` in specs; use named utils in POs
 
-Specs should not contain fixed sleeps — `playwright/no-wait-for-timeout` is on at warn level.
+Specs should not contain fixed sleeps. `playwright/no-wait-for-timeout` is on at warn level.
 Page Objects can have documented sleeps as a last resort (Vue debounce window, xterm canvas
 output, mount-on-open transitions), but they MUST go through a named helper from
 `@/support/utils/debounce` so the eslint-disable lives in one place and the intent is explicit:
@@ -530,7 +530,7 @@ async toggle(): Promise<void> {
 }
 ```
 
-Never call `page.waitForTimeout(N)` directly from a PO method — add a util if a new pattern is
+Never call `page.waitForTimeout(N)` directly from a PO method. Add a util if a new pattern is
 needed.
 
 ---
@@ -541,7 +541,7 @@ When a test needs to behave differently depending on runtime state (missing infr
 feature flags, env-locked settings), use `test.skip(condition, reason)`. Never put `expect()`
 calls inside an `if` branch to work around the condition.
 
-**Don't do this** — conditional expects can silently skip assertions when the condition has a bug,
+**Don't do this**, since conditional expects can silently skip assertions when the condition has a bug,
 and the linter flags it:
 
 ```typescript
@@ -552,7 +552,7 @@ if (someRuntimeCondition) {
 // ... rest of test
 ```
 
-**Do this instead** — split into two focused tests, each with a `test.skip` guard:
+**Do this instead**: split into two focused tests, each with a `test.skip` guard:
 
 ```typescript
 // Runs only when the condition is true. Asserts the alternative UI state.
@@ -596,7 +596,7 @@ Check if a PO already exists for the page you're testing:
 cat e2e/po/INDEX.md
 ```
 
-If you find it, great — just import it. If not, create one following the patterns in [Section 2](#2-page-objects-pos).
+If you find it, great: just import it. If not, create one following the patterns in [Section 2](#2-page-objects-pos).
 
 ### Step 2: Create the spec file
 
@@ -663,7 +663,7 @@ npx playwright test e2e/tests/pages/my-feature/my-test.spec.ts --debug
 ## 6. Blueprints (Mock Data)
 
 Sometimes you want to test the UI without creating real resources on the server. Blueprints are
-factory functions that return fake API responses — you feed them to the browser so the UI renders
+factory functions that return fake API responses. You feed them to the browser so the UI renders
 data without any backend round-trips.
 
 ### When to use blueprints
@@ -708,7 +708,7 @@ import { test, expect } from '@/support/fixtures';
 import { smallCollectionResponse } from '@/e2e/blueprints/explorer/workloads/small-collection';
 
 test('shows workload list', async ({ page, login }) => {
-  // Set up the route BEFORE login — the mock must be active when the page loads
+  // Set up the route BEFORE login, since the mock must be active when the page loads
   await page.route('**/v1/apps.deployments*', (route) =>
     route.fulfill({ json: smallCollectionResponse('apps.deployment') })
   );
@@ -722,9 +722,9 @@ test('shows workload list', async ({ page, login }) => {
 
 ### Key points
 
-- Blueprints are **factory functions**, not raw JSON blobs — this makes them reusable with different parameters
-- `page.route()` **must** be set up **before** `await login()` — the route needs to be active when the page loads
-- Use `route.fulfill({ json })` — Playwright handles serialization and Content-Type automatically
+- Blueprints are **factory functions**, not raw JSON blobs, which makes them reusable with different parameters
+- `page.route()` **must** be set up **before** `await login()`, because the route needs to be active when the page loads
+- Use `route.fulfill({ json })`: Playwright handles serialization and Content-Type automatically
 
 ---
 
@@ -732,7 +732,7 @@ test('shows workload list', async ({ page, login }) => {
 
 ### Navigation: `goTo()` for setup, walkers for coverage
 
-**Use `goTo()` for setup navigation** — a direct `page.goto()` via the Page Object. It's faster and
+**Use `goTo()` for setup navigation**: a direct `page.goto()` via the Page Object. It's faster and
 less flaky than clicking through the menu, and it doesn't couple an unrelated test to the side-menu
 rendering first.
 
@@ -743,7 +743,7 @@ await deployments.goTo();
 ```
 
 Click through the menu (`BurgerMenuPo` / `ProductNavPo`) **only when navigation itself is the
-subject** — you're testing that the menu routes correctly. When upstream clicked through the menu
+subject**, meaning you're testing that the menu routes correctly. When upstream clicked through the menu
 purely as setup, port it as `goTo()` and leave a `// TODO(upstream-parity): upstream uses navTo here`
 breadcrumb so the divergence stays auditable.
 
@@ -751,16 +751,16 @@ breadcrumb so the divergence stays auditable.
 `e2e/tests/navigation/side-nav/` are *data-driven*: they iterate whatever the server renders
 (`ProductNavPo.groups()` for the product side-nav, `BurgerMenuPo.globalApps()` for the global burger
 sections) and assert each link lands via `clickNavLinkAndAssertLanding`. A new page reachable from the
-menu is picked up **automatically** — there's no per-page nav test to write. What you owe instead:
+menu is picked up **automatically**, so there's no per-page nav test to write. What you owe instead:
 
 - Put the new nav selector in `BurgerMenuPo` / `ProductNavPo`, never inline in a spec (Rule 4).
-- Never convert a walk into a hardcoded expected-entries list — extension-injected entries make the
+- Never convert a walk into a hardcoded expected-entries list, because extension-injected entries make the
   set intentionally open-ended, and a fixed list rots the moment the tree changes.
 
 **The one case that needs a deliberate test:** a nav entry that only renders behind a feature flag, an
 installed extension, or a permission. The walk only sees what its environment renders, so a gated
 entry is silently skipped (the walk still passes). Either make the walk's environment render it, or
-add a targeted check. (Pages not in the side-nav at all — detail, tab, and deep-link routes — are out
+add a targeted check. (Pages not in the side-nav at all, such as detail, tab, and deep-link routes, are out
 of scope for a *nav* walk by design; the spec that tests the feature covers them.)
 
 See [UPSTREAM-DIVERGENCES.md §8](UPSTREAM-DIVERGENCES.md#8-navigation-goto-for-setup-vs-dedicated-walks)
@@ -846,14 +846,14 @@ is called debouncing). Playwright is fast enough to click Save before that delay
 means the value shows up correctly in the UI but never makes it into the API request.
 
 If your test fills a form field and the value seems to "disappear" on save, this might be why.
-Page Objects for known debounced components provide `waitFor*Debounce()` methods — call them
+Page Objects for known debounced components provide `waitFor*Debounce()` methods. Call them
 before saving.
 
 ---
 
 ## 8. Visual Snapshots
 
-Visual tests use Playwright's built-in `expect(page).toHaveScreenshot()` — no Percy.
+Visual tests use Playwright's built-in `expect(page).toHaveScreenshot()`, with no Percy.
 Add one when you want to catch unintentional rendering regressions on a stable UI
 surface (list pages, settings forms, empty states). Don't use them as a substitute
 for behavioral assertions.
@@ -890,23 +890,23 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
 
 ### What each piece does
 
-- **`@visual` tag** — keeps the test out of the default `GREP_TAGS` so normal runs
+- **`@visual` tag**: keeps the test out of the default `GREP_TAGS` so normal runs
   don't pay the pixel-diff cost.
-- **`ensureLightTheme(rancherApi)`** — pins the admin user to `ui-light` and returns a
+- **`ensureLightTheme(rancherApi)`**: pins the admin user to `ui-light` and returns a
   `restoreTheme` function. Required because `preferences.spec.ts` cycles Light → Dark
   → Auto without reverting; without the pin, suite ordering can break the baseline.
   Always call `restoreTheme()` in `finally`.
-- **`waitForReady()`** — `waitForPage` only matches the URL. The dashboard shell can
+- **`waitForReady()`**: `waitForPage` only matches the URL. The dashboard shell can
   still be showing its loading spinner. `SortableTablePo.waitForReady()` waits for
   the table header so the screenshot captures real content. For pages without a
   sortable table, use a page-specific anchor (`mastheadTitle()` or a known testid).
-- **`visualSnapshot(isPrime, name)`** — produces a path-segment array so the snapshot
+- **`visualSnapshot(isPrime, name)`**: produces a path-segment array so the snapshot
   lands under `snapshots/<spec>/{prime,community}/<name>.png`. Prime ships a
   SUSE-themed brand palette, so the two editions need separate baselines.
-- **`mask: [...ageColumn()]`** — masks the volatile Age column so "3 minutes ago" vs
+- **`mask: [...ageColumn()]`**: masks the volatile Age column so "3 minutes ago" vs
   "4 minutes ago" doesn't fail the diff. Add a PO helper (like `ageColumn()`) for any
   other volatile content rather than inlining a raw selector in the spec.
-- **`fullPage: true`** — captures the full scrollable page. Drop it for component-level
+- **`fullPage: true`**: captures the full scrollable page. Drop it for component-level
   snapshots and use a locator (`expect(locator).toHaveScreenshot(...)`) instead.
 
 ### Generating and committing the baseline
@@ -929,13 +929,13 @@ Global defaults in `playwright.config.ts` are `maxDiffPixelRatio: 0.03` (3%) and
 `threshold: 0.3` (per-pixel YIQ tolerance). The 3% pixel ratio absorbs side-nav badge
 drift, transient banners, and minor padding shifts; the 0.3 YIQ threshold absorbs
 font-rendering churn between baseline-capture and run-time browsers. Real regressions
-still surface — a missing button or misrendered list typically hits double-digit
+still surface, since a missing button or misrendered list typically hits double-digit
 pixel ratios.
 
 Prefer adding a mask helper to the relevant PO (or use the existing
 `chromeMasks(page)` from `@/support/utils/visual-snapshot`, which bundles masthead +
 side-nav badge + dynamic-banner masks for full-page snapshots) over loosening the
-ratio further — every fix that bumps the ratio makes future regressions easier to
+ratio further. Every fix that bumps the ratio makes future regressions easier to
 miss.
 
 ```typescript
@@ -967,10 +967,10 @@ test('home page snapshot', async ({ page, rancherApi, isPrime }) => {
 Run through this before pushing:
 
 - [ ] Test passes when run alone: `npx playwright test my-test.spec.ts --reporter=line`
-- [ ] Test passes on a second run (idempotent — no leftover resources)
-- [ ] No raw CSS selectors in the spec file — all selectors live in POs
-- [ ] No `expect()` calls inside Page Objects — POs expose Locators (or return `Response` from action helpers), specs assert
-- [ ] No empty `catch` blocks anywhere (`} catch {}`, `.catch(() => {})`) — log + continue with `console.warn`, or rely on `failOnStatusCode = false` on idempotent cleanup
+- [ ] Test passes on a second run (idempotent, with no leftover resources)
+- [ ] No raw CSS selectors in the spec file; all selectors live in POs
+- [ ] No `expect()` calls inside Page Objects; POs expose Locators (or return `Response` from action helpers), specs assert
+- [ ] No empty `catch` blocks anywhere (`} catch {}`, `.catch(() => {})`); log + continue with `console.warn`, or rely on `failOnStatusCode = false` on idempotent cleanup
 - [ ] No `page.waitForTimeout(N)` in specs; PO sleeps go through `@/support/utils/debounce` helpers
 - [ ] Every resource created is cleaned up (`try/finally` or `afterEach`)
 - [ ] All assertions use `await expect(...)` (web-first, auto-retrying)

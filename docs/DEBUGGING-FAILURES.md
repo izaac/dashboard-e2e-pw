@@ -1,6 +1,6 @@
 # Debugging Test Failures
 
-Your test failed — here's how to figure out why and fix it. This guide walks through the tools,
+Your test failed. Here's how to figure out why and fix it. This guide walks through the tools,
 artifacts, and patterns you'll use most.
 
 For running tests, see [RUNNING-TESTS.md](./RUNNING-TESTS.md).
@@ -23,7 +23,7 @@ For writing tests, see [WRITING-TESTS.md](./WRITING-TESTS.md).
 
 ## 1. Test Failed, Now What?
 
-Debug in this order. Each step narrows the problem — don't skip ahead.
+Debug in this order. Each step narrows the problem, so don't skip ahead.
 
 1. **Run `yarn summarize-failures`** and read `test-results/FAILURE-SUMMARY.md`.
    The summary classifies every failure, cross-references network errors, and
@@ -84,9 +84,9 @@ is configured to retain traces, screenshots, and videos on failure automatically
 
 | Artifact | Location | What it tells you | When to use |
 |----------|----------|-------------------|-------------|
-| **Failure summary** | `test-results/FAILURE-SUMMARY.md` | Classified failure type, network error cross-refs, DOM state flags | Always first — before touching anything else |
+| **Failure summary** | `test-results/FAILURE-SUMMARY.md` | Classified failure type, network error cross-refs, DOM state flags | Always first, before touching anything else |
 | **Screenshot** | `test-results/<test-dir>/test-failed-*.png` | What was on screen at the exact moment of failure | Quick visual triage: wrong page? spinner? login? |
-| **Trace** | `test-results/<test-dir>/trace.zip` | Step-by-step timeline: every action, network request, DOM snapshot, locator highlight | Primary deep-debug tool — use for any non-obvious failure |
+| **Trace** | `test-results/<test-dir>/trace.zip` | Step-by-step timeline: every action, network request, DOM snapshot, locator highlight | Primary deep-debug tool; use for any non-obvious failure |
 | **Video** | `test-results/<test-dir>/video.webm` | Full recording of the browser session | Race conditions, animation issues, transition bugs |
 | **HTML report** | `playwright-report/index.html` | All tests + all artifacts in one browsable UI | Comparing multiple failures, sharing with teammates |
 
@@ -97,10 +97,10 @@ or click "Traces" in the HTML report.
 
 The trace viewer has four panels:
 
-- **Timeline** — every test action in order; click to jump
-- **DOM snapshot** — the page at that moment; inspect elements
-- **Network** — requests/responses; check status codes and payloads
-- **Console** — browser console logs and errors
+- **Timeline**: every test action in order; click to jump
+- **DOM snapshot**: the page at that moment; inspect elements
+- **Network**: requests/responses; check status codes and payloads
+- **Console**: browser console logs and errors
 
 Look for:
 
@@ -144,7 +144,7 @@ doesn't exist (test cleanup issue). 409 = conflict (resource already exists).
 
 **Navigation →** Check the URL in the screenshot. If you're on the login page,
 the session expired. If the URL path is wrong, check whether the PO uses
-`./path` (correct) or `/path` (wrong — bypasses `baseURL` prefix).
+`./path` (correct) or `/path` (wrong, because it bypasses `baseURL` prefix).
 
 ---
 
@@ -170,7 +170,7 @@ npx playwright test <spec> -g "<test name>" --headed
 
 **When:** You don't understand what the test is doing. Watching the browser
 reveals surprising behavior: wrong page, unexpected modal, slow loading.
-The test runs at full speed — blink and you'll miss it.
+The test runs at full speed; blink and you'll miss it.
 
 ### `--debug` mode
 
@@ -197,9 +197,9 @@ npx playwright test --ui
 **When:** You're iterating on a fix and want to re-run tests repeatedly
 without switching to the terminal. The UI mode shows:
 
-- All tests in a tree view — click to run
+- All tests in a tree view; click to run
 - Inline trace viewer for each run
-- Watch mode — re-runs on file change
+- Watch mode that re-runs on file change
 
 Best for active development and iterative debugging.
 
@@ -214,12 +214,12 @@ cause before you start fixing.
 |------|-------------|
 | Login page visible in screenshot | Auth/session expired, environment misconfigured |
 | Selector not found but page looks correct | PO selector outdated, upstream UI changed |
-| API 500 in network trace | Rancher backend bug — check server logs |
+| API 500 in network trace | Rancher backend bug; check server logs |
 | Works locally, fails in CI | Timing difference, resource constraints, network latency |
-| Passes on retry | Flaky — race condition or test isolation issue |
+| Passes on retry | Flaky, from a race condition or test isolation issue |
 | Spinner or loading indicator never clears | Backend slow or hung, websocket disconnected |
 | Wrong URL in screenshot | Navigation bug, redirect, or incorrect URL construction |
-| Test passes alone but fails in suite | Shared state leak — previous test didn't clean up |
+| Test passes alone but fails in suite | Shared state leak; previous test didn't clean up |
 | Different results with `--headed` vs headless | Viewport size difference or animation timing |
 
 ### What to do for each
@@ -230,7 +230,7 @@ cause before you start fixing.
   [rancher/dashboard](https://github.com/rancher/dashboard). Include the
   trace and screenshot. Skip the test with a link to the issue.
 - **Environment issue:** Check Rancher health, credentials, and connectivity.
-  Re-run after fixing the environment — don't change the test.
+  Re-run after fixing the environment, not by changing the test.
 
 ---
 
@@ -258,8 +258,8 @@ writing guide.
 
 ### Save button stays disabled even though the form looks complete
 
-A create form has every required field visibly populated — the screenshot shows
-text in the inputs — but the Save / Create button refuses to enable. The test
+A create form has every required field visibly populated (the screenshot shows
+text in the inputs), but the Save / Create button refuses to enable. The test
 times out on `expect(saveOrCreate).toBeEnabled()` and the trace contains zero
 POSTs to the resource endpoint.
 
@@ -281,12 +281,12 @@ upstream model property the form reads has changed shape between Rancher
 versions. Validate the field your inputs are visible in **first**, then look
 for the invisible one.
 
-**Triage in this order — don't skip steps:**
+**Triage in this order, and don't skip steps:**
 
 1. Run with `--trace on` (or flip `trace: 'on-first-retry'` → `'on'` in
    `playwright.config.ts`). Open the trace with `npx playwright show-trace`.
-   The network tab confirms whether any relevant POST fired after the click —
-   zero POSTs means the button never functionally enabled.
+   The network tab confirms whether any relevant POST fired after the click.
+   Zero POSTs means the button never functionally enabled.
 2. Inspect `attachments/dom-snapshot.html` for the form-save button. If it has
    `disabled=""` and `aria-disabled="true"` while the visible inputs have
    correct `value="..."`, the form thinks it's invalid for a reason that's
@@ -304,7 +304,7 @@ for the invisible one.
    ```
 
    For each rule, trace where the form expects that value to come from. A
-   project picker, namespace picker, or hidden watcher may be the source — and
+   project picker, namespace picker, or hidden watcher may be the source, and
    that source can be silently broken on a newer Rancher backend.
 4. Only after you've ruled out (3) should you suspect synthetic-event /
    v-model issues. Then try `pressSequentially()` instead of `fill()`. If that
@@ -312,21 +312,21 @@ for the invisible one.
 
 **Workarounds (only after (3) ruled out):**
 
-- **Bypass the form** — create the resource via `rancherApi` / `page.route()`
+- **Bypass the form**: create the resource via `rancherApi` / `page.route()`
   and have the spec assert the resulting list / detail UI instead.
-- **Edit-as-YAML** — most Rancher create pages expose a YAML editor that
+- **Edit-as-YAML**: most Rancher create pages expose a YAML editor that
   accepts a payload directly, sidestepping the validated form.
-- **`page.evaluate` dispatch** —
+- **`page.evaluate` dispatch**:
   `await locator.evaluate((el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }, value)`.
-  Brittle — only when alternatives don't fit.
-- **`test.fixme(true, ...)`** — when the root cause is a real upstream bug
+  Brittle; only when alternatives don't fit.
+- **`test.fixme(true, ...)`**: when the root cause is a real upstream bug
   (not a test issue), mark fixme with the bug reference rather than skipping
   silently. The test body should still document the intended flow so it's
   ready to un-fixme when the upstream fix lands.
 
 **Real example:** Project Secrets create form on Rancher v2.15-head. Save
 stayed disabled with all visible fields filled. The validation rule
-`metadata.namespace: required` is the trap — the form sets it from
+`metadata.namespace: required` is the trap, because the form sets it from
 `projects[i].status.backingNamespace`, and v2.15-head no longer exposes that
 field on the project resource (only `metadata.name` does), so the form's
 `metadata.namespace` ends up `undefined`. The fix is in upstream
@@ -340,7 +340,7 @@ set told us in 30 seconds. See `project-secrets.spec.ts`
 A Vue dialog opens, its `fetch()` correctly determines a checkbox should be
 checked (`v-model:value` set to `true`), but Playwright reads `isChecked()` as
 `false`. The DOM input is unchecked even though the data is correct. This is a
-Vue reactivity race — the `fetch()` result hasn't propagated to the DOM when
+Vue reactivity race: the `fetch()` result hasn't propagated to the DOM when
 Playwright reads it, especially when a Vuex store resync or cluster reload
 triggers a re-render mid-flight.
 
@@ -359,7 +359,7 @@ if (!(await input.isChecked())) {
 }
 ```
 
-**Real example:** `AddExtensionReposDialog` — the Partners checkbox starts
+**Real example:** `AddExtensionReposDialog`, where the Partners checkbox starts
 unchecked due to a store resync race, even though no partner repo exists.
 See `extensions.spec.ts` Partners repo test.
 
@@ -373,7 +373,7 @@ can **recreate the component**, resetting `data()` while `fetch()` hasn't re-run
 
 If you open the ⋮ menu and click "Add Rancher Repositories" at this moment,
 `showAddExtensionReposDialog()` calls `updateAddReposSetting()` which does
-`this.addExtensionReposBannerSetting.value = 'false'` — and crashes with
+`this.addExtensionReposBannerSetting.value = 'false'`, and crashes with
 `TypeError: Cannot set properties of undefined (setting 'value')`.
 The `promptModal` dispatch never fires, so no dialog appears.
 
@@ -383,7 +383,7 @@ opens. DOM snapshot shows `<div id="modals"><!----></div>` (empty).
 
 **Fix:** Instead of using the ⋮ menu, click the **banner's** "Add repositories"
 button (`extensionsPo.repoBannerActionButton()`). The banner only renders when
-`!loading && showAddReposBanner` — which requires `addExtensionReposBannerSetting`
+`!loading && showAddReposBanner`, which requires `addExtensionReposBannerSetting`
 to be loaded. If the banner is visible, the setting is guaranteed to exist and
 `updateAddReposSetting()` won't crash.
 
@@ -403,7 +403,7 @@ when the test tries to click the next element.
 **Fix:** Dismiss the overlay first, or wait for it to auto-dismiss. Check if
 the PO has a `closeToast()` or `dismissModal()` method.
 
-### "strict mode violation — resolved to 2 elements"
+### "strict mode violation: resolved to 2 elements"
 
 Playwright's strict mode means a locator must resolve to exactly one element.
 Two elements matched the same `data-testid`, usually from sibling components
@@ -428,12 +428,12 @@ Whether you're filing a test bug or an app bug, include these details.
 
 ### Required
 
-- **Spec file path and test name** — e.g.,
+- **Spec file path and test name**, e.g.,
   `e2e/tests/pages/explorer/workloads/deployments.spec.ts > "creates a deployment"`
-- **Failure type** — from the failure summary (timeout, selector, assertion, etc.)
-- **Screenshot** — attach or paste the path:
+- **Failure type**: from the failure summary (timeout, selector, assertion, etc.)
+- **Screenshot**, attach or paste the path:
   `test-results/creates-a-deployment/test-failed-1.png`
-- **Trace file** — attach or paste the path:
+- **Trace file**, attach or paste the path:
   `test-results/creates-a-deployment/trace.zip`
 - **Rancher version:**
 
@@ -469,15 +469,15 @@ Save button clicked but the API request timed out after 30s.
 
 **Notes:**
 Network trace shows the POST to `/v1/apps.deployments` returned 504.
-Likely a backend timeout — Rancher logs show high API latency.
+Likely a backend timeout. Rancher logs show high API latency.
 ```
 
 ---
 
 ## Further Reading
 
-- [RUNNING-TESTS.md](./RUNNING-TESTS.md) — environment setup and execution
-- [WRITING-TESTS.md](./WRITING-TESTS.md) — test authoring, POs, fixtures
+- [RUNNING-TESTS.md](./RUNNING-TESTS.md): environment setup and execution
+- [WRITING-TESTS.md](./WRITING-TESTS.md): test authoring, POs, fixtures
 - [Playwright docs: Debugging](https://playwright.dev/docs/debug)
 - [Playwright docs: Trace Viewer](https://playwright.dev/docs/trace-viewer)
 - [Playwright docs: Test Reporter](https://playwright.dev/docs/test-reporters)

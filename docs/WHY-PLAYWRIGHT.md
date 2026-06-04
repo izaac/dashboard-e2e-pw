@@ -1,13 +1,13 @@
 # Why Our Playwright Port Is Better Than Upstream Cypress
 
-A plain-English comparison for anyone — no deep framework knowledge needed.
+A plain-English comparison for anyone, with no deep framework knowledge needed.
 
 ---
 
 ## The One-Sentence Summary
 
-Upstream Cypress tests are **chained together like dominoes** — if one falls wrong, they all
-break. Our Playwright tests are **independent bricks** — each one stands on its own.
+Upstream Cypress tests are **chained together like dominoes**: if one falls wrong, they all
+break. Our Playwright tests are **independent bricks**, and each one stands on its own.
 
 ---
 
@@ -15,16 +15,16 @@ break. Our Playwright tests are **independent bricks** — each one stands on it
 
 | Area | Upstream (Cypress) | Ours (Playwright) |
 |------|-------------------|-------------------|
-| **Test independence** | Tests share browser state. Test 3 assumes test 1 and 2 already ran. | Every test starts fresh. Run any test alone — it works. |
+| **Test independence** | Tests share browser state. Test 3 assumes test 1 and 2 already ran. | Every test starts fresh. Run any test alone, and it works. |
 | **When a test crashes** | Later tests in the same block break because they expected the previous test to set things up. | Other tests are unaffected. Each one sets up its own world. |
 | **Cleanup** | Relies on the *next* test to reset state. If a test crashes, resources leak. | Every test cleans up after itself with `try/finally`. If it crashes, the next run catches leaked resources automatically. |
-| **Speed** | Cypress queues commands one-by-one with built-in waits between them. | Playwright runs as fast as the browser allows — no artificial slowdowns. |
+| **Speed** | Cypress queues commands one-by-one with built-in waits between them. | Playwright runs as fast as the browser allows, with no artificial slowdowns. |
 | **Flakiness from timing** | Cypress is *accidentally* slow enough to avoid Vue debounce bugs. If Cypress gets faster, those tests break. | We handle debounce explicitly. We know *why* we wait. |
 | **Visual testing** | Requires Percy (paid cloud service + token + separate CLI). | Built into Playwright. Screenshots stored in the repo. No external service needed. |
 | **Parallelism** | Hard to parallelize because tests depend on each other's state. | Easy to parallelize because every test is self-contained. |
-| **Debugging failures** | Read raw logs and screenshots manually. | Run `yarn summarize-failures` — get a classified summary instantly. |
-| **Network assertions** | `cy.intercept` + aliases with implicit timing magic. | Explicit `waitForResponse` — you see exactly what's being waited on and why. |
-| **Developer tooling** | Manual comparison between specs and page objects. | `yarn gap-map`, `yarn po-diff`, `yarn po-index` — automated project health checks. |
+| **Debugging failures** | Read raw logs and screenshots manually. | Run `yarn summarize-failures` to get a classified summary instantly. |
+| **Network assertions** | `cy.intercept` + aliases with implicit timing magic. | Explicit `waitForResponse`, so you see exactly what's being waited on and why. |
+| **Developer tooling** | Manual comparison between specs and page objects. | `yarn gap-map`, `yarn po-diff`, `yarn po-index`: automated project health checks. |
 
 ---
 
@@ -38,7 +38,7 @@ Imagine you're testing a recipe app:
 2. Test B: Edit that recipe (assumes Test A already created it)
 3. Test C: Delete that recipe (assumes Test B already edited it)
 
-If Test A breaks, Tests B and C *also* fail — even though editing and deleting might work fine.
+If Test A breaks, Tests B and C *also* fail, even though editing and deleting might work fine.
 You get 3 failures to investigate when only 1 thing is actually wrong.
 
 **Our approach (Playwright):**
@@ -76,7 +76,7 @@ When checking if something is visible on screen:
 Check if button is visible RIGHT NOW → yes/no
 ```
 
-If the page was still loading, you get "no" and the test fails — even though the button
+If the page was still loading, you get "no" and the test fails, even though the button
 would appear 100ms later.
 
 **Our way (smart):**
@@ -99,7 +99,7 @@ A **selector** is the code that finds a button or input on the page (like
 button's `data-testid`, you hunt through dozens of test files to update it.
 
 **Our pattern:** Selectors live *only* in Page Objects (PO files). The test says
-`await saveBanner.save()` — the Page Object knows *how* to find the save button. If the
+`await saveBanner.save()`, and the Page Object knows *how* to find the save button. If the
 selector changes, you update one file.
 
 ---
@@ -108,23 +108,23 @@ selector changes, you update one file.
 
 ### For QA Engineers
 
-- **Faster failure diagnosis** — one broken test means one broken thing, not a cascade
-- **Easier to write new tests** — just set up, assert, clean up. No worrying about test order
-- **Safer to run subsets** — tag filtering (`@generic`, `@explorer`) always works because tests
+- **Faster failure diagnosis**: one broken test means one broken thing, not a cascade
+- **Easier to write new tests**: just set up, assert, clean up. No worrying about test order
+- **Safer to run subsets**: tag filtering (`@generic`, `@explorer`) always works because tests
   are independent
 
 ### For CI/CD
 
-- **Parallelizable** — split tests across machines without worrying about ordering
-- **Retry-friendly** — a failed test can be retried alone without re-running the whole suite
-- **No mystery failures** — if it passes locally, it passes in CI (same behavior everywhere)
+- **Parallelizable**: split tests across machines without worrying about ordering
+- **Retry-friendly**: a failed test can be retried alone without re-running the whole suite
+- **No mystery failures**: if it passes locally, it passes in CI (same behavior everywhere)
 
 ### For the Team
 
-- **Lower maintenance** — UI changes only need Page Object updates, not test rewrites
-- **Built-in tooling** — gap maps, PO diffs, and failure summaries keep the suite healthy
+- **Lower maintenance**: UI changes only need Page Object updates, not test rewrites
+- **Built-in tooling**: gap maps, PO diffs, and failure summaries keep the suite healthy
   without manual bookkeeping
-- **No vendor lock-in** — no paid services required. Everything runs locally or in any CI system
+- **No vendor lock-in**: no paid services required. Everything runs locally or in any CI system
 
 ---
 
@@ -139,5 +139,5 @@ selector changes, you update one file.
 | Free from paid services | ❌ Percy for visual tests | ✅ All built-in |
 | Easy to find what broke | ❌ Cascade failures | ✅ One failure = one problem |
 
-Our port isn't just the same tests in a different framework — it's a fundamentally more
+Our port isn't just the same tests in a different framework. It's a fundamentally more
 reliable, maintainable, and developer-friendly test suite.

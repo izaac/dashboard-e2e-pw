@@ -1,6 +1,6 @@
-# Rancher Dashboard E2E — Playwright
+# Rancher Dashboard E2E: Playwright
 
-Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/dashboard). Tests run against a live Rancher instance — clicking buttons, creating resources, and verifying real UI behavior.
+Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/dashboard). Tests run against a live Rancher instance, clicking buttons, creating resources, and verifying real UI behavior.
 
 ## Get Running
 
@@ -41,7 +41,7 @@ npx playwright install chromium
 
 # Configure
 cp .env.example .env
-# Edit .env — set TEST_BASE_URL and TEST_PASSWORD for your Rancher instance
+# Edit .env to set TEST_BASE_URL and TEST_PASSWORD for your Rancher instance
 
 # Run all tests
 npx playwright test
@@ -60,16 +60,16 @@ npx playwright test -g "Log in with valid"
 | Guide | What it covers |
 |---|---|
 | **[Running Tests](docs/RUNNING-TESTS.md)** | Setup, execution modes, Docker, sharding, tag filtering, environment variables |
-| **[Debugging Failures](docs/DEBUGGING-FAILURES.md)** | Investigating failures — artifacts, traces, failure types, reproduction |
+| **[Debugging Failures](docs/DEBUGGING-FAILURES.md)** | Investigating failures: artifacts, traces, failure types, reproduction |
 | **[Writing Tests](docs/WRITING-TESTS.md)** | Page Objects, fixtures, golden rules, blueprints, step-by-step walkthrough |
 | **[Parallelism](docs/PARALLELISM.md)** | Which specs can run in parallel vs serial |
-| **[Contributing](CONTRIBUTING.md)** | How to contribute — workflow, rules, conventions |
+| **[Contributing](CONTRIBUTING.md)** | How to contribute: workflow, rules, conventions |
 
 ## Architecture
 
 ```
 e2e/
-  tests/          # Spec files — import POs and fixtures, no raw selectors
+  tests/          # Spec files import POs and fixtures, no raw selectors
   po/             # Page Objects (mirrors upstream Cypress structure)
   blueprints/     # Test data fixtures (factory functions)
 support/
@@ -83,11 +83,11 @@ docs/             # Guides and reference
 
 Every test is written to work reliably against a shared Rancher instance:
 
-- **Atomic** — sets up what it needs, does its thing, cleans up. No test depends on another.
-- **Idempotent** — run once or fifty times, pass or fail midway — works next time.
-- **Web-first assertions** — `await expect(loc).toBeVisible()` auto-retries instead of reading the DOM once.
-- **No raw selectors in specs** — every selector lives in a Page Object.
-- **Explicit cleanup** — every resource created gets cleaned up in `try/finally`.
+- **Atomic**: sets up what it needs, does its thing, cleans up. No test depends on another.
+- **Idempotent**: run once or fifty times, pass or fail midway, it works next time.
+- **Web-first assertions**: `await expect(loc).toBeVisible()` auto-retries instead of reading the DOM once.
+- **No raw selectors in specs**: every selector lives in a Page Object.
+- **Explicit cleanup**: every resource created gets cleaned up in `try/finally`.
 
 This isn't a find-and-replace from Cypress. Playwright runs at full speed, so timing bugs that Cypress hides behind its command queue surface immediately. See [Writing Tests](docs/WRITING-TESTS.md) for the full story on why and how.
 
@@ -100,7 +100,7 @@ yarn gap-map             # Generate assertion gap map (upstream vs ours)
 yarn summarize-failures  # Classify test failures after a run
 
 scripts/sharded-runs.sh -h           # Run the sharded suite N times back-to-back
-                                     # with a full nuke between each — flake hunting
+                                     # with a full nuke between each, for flake hunting
 ```
 
 ## License
