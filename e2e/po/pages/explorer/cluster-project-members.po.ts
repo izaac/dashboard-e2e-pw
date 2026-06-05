@@ -19,7 +19,7 @@ export default class ClusterProjectMembersPo extends PagePo {
   }
 
   async triggerAddClusterOrProjectMemberAction(): Promise<void> {
-    await this.page.locator('.btn.role-primary.pull-right').click();
+    await this.page.getByTestId('button-cluster-member-add').click();
   }
 
   async triggerAddProjectMemberAction(projectLabel: string): Promise<void> {
