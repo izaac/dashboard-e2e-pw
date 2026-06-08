@@ -26,6 +26,7 @@ export function gitRepoTargetAllClustersRequest(
   repo: string,
   branch: string,
   path: string,
+  targets?: object[],
 ): object {
   return {
     type: 'fleet.cattle.io.gitrepo',
@@ -38,7 +39,7 @@ export function gitRepoTargetAllClustersRequest(
       branch,
       paths: [path],
       correctDrift: { enabled: false },
-      targets: [
+      targets: targets ?? [
         {
           clusterSelector: {
             matchExpressions: [

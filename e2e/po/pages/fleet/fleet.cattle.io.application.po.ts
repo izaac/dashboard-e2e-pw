@@ -4,6 +4,8 @@ import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 
 export class FleetApplicationListPagePo extends PagePo {
   constructor(page: Page) {
@@ -62,12 +64,14 @@ export class FleetGitRepoCreateEditPo extends PagePo {
 
   async setGitRepoUrl(url: string): Promise<void> {
     await this.self()
-      .locator('label:has-text("Repository URL") + div input, [data-testid="gitrepo-repo-url"]')
+      .locator('.labeled-input:has(label:has-text("Repository URL")) input, [data-testid="gitrepo-repo-url"]')
       .fill(url);
   }
 
   async setBranchName(branch: string): Promise<void> {
-    await this.self().locator('label:has-text("Branch") + div input, [data-testid="gitrepo-branch"]').fill(branch);
+    await this.self()
+      .locator('.labeled-input:has(label:has-text("Branch")) input, [data-testid="gitrepo-branch"]')
+      .fill(branch);
   }
 
   async setGitRepoPath(path: string): Promise<void> {
@@ -85,12 +89,12 @@ export class FleetGitRepoCreateEditPo extends PagePo {
     await this.self().locator('label:has-text("Polling Interval") + div input').fill(String(value));
   }
 
-  targetClusterOptions(): Locator {
-    return this.self().locator('[data-testid="fleet-target-cluster-radio-button"]');
+  targetClusterOptions(): RadioGroupInputPo {
+    return new RadioGroupInputPo(this.page, '[data-testid="fleet-target-cluster-radio-button"]');
   }
 
-  targetCluster(): Locator {
-    return this.self().locator('[data-testid="fleet-target-cluster-name-selector"]');
+  targetCluster(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '[data-testid="fleet-target-cluster-name-selector"]');
   }
 
   mastheadTitleLocator(): Locator {
