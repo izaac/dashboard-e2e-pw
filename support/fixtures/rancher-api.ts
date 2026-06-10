@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import type { APIRequestContext } from '@playwright/test';
+import * as semver from 'semver';
 import type { CreateUserParams, CreateResourceNameOptions } from '@/globals';
 
 const MEDIUM_API_DELAY = 500;
@@ -961,6 +962,54 @@ export class RancherApi {
     this.chartPresenceCache.set(key, result);
 
     return result;
+  }
+
+  /**
+   * Check whether any published version of a chart is installable on this
+   * cluster's Kubernetes version (chart `kubeVersion` range vs server version).
+   * `rancher:head` periodically bumps embedded k3s past the charts' published
+   * caps (e.g. k3s 1.36.1 vs gatekeeper `< 1.36.0-0`), making installs fail
+   * with helm exit code 123 until the charts catch up.
+   *
+   * Returns 'compatible' when at least one version satisfies (or declares no
+   * constraint), 'incompatible' when every version excludes the cluster
+   * version, 'unknown' when the catalog or server version cannot be read.
+   */
+  async checkChartKubeCompat(repo: string, chartId: string): Promise<'compatible' | 'incompatible' | 'unknown'> {
+    const versionResp = await this.request.fetch(`${this.apiUrl}/k8s/clusters/local/version`, this.opts());
+
+    if (!versionResp.ok()) {
+      return 'unknown';
+    }
+
+    const gitVersion = (await versionResp.json().catch(() => ({})))?.gitVersion as string | undefined;
+    const clusterVersion = semver.coerce(gitVersion ?? '');
+
+    if (!clusterVersion) {
+      return 'unknown';
+    }
+
+    const resp = await this.request.fetch(
+      `${this.apiUrl}/v1/catalog.cattle.io.clusterrepos/${repo}?link=index`,
+      this.opts(),
+    );
+
+    if (!resp.ok()) {
+      return 'unknown';
+    }
+
+    const json = await resp.json().catch(() => ({}));
+    const chartVersions: Array<{ version?: string; kubeVersion?: string }> = json?.entries?.[chartId] ?? [];
+
+    if (chartVersions.length === 0) {
+      return 'unknown';
+    }
+
+    const someCompatible = chartVersions.some(
+      (v) => !v.kubeVersion || semver.satisfies(clusterVersion, v.kubeVersion, { includePrerelease: true }),
+    );
+
+    return someCompatible ? 'compatible' : 'incompatible';
   }
 
   /**

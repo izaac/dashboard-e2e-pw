@@ -6,7 +6,7 @@ import { promptModal } from '@/e2e/po/prompts/modalInstances.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
-  test('can group clusters by namespace', async ({ login, page, rancherApi }) => {
+  test('can group clusters by workspace', async ({ login, page, rancherApi }) => {
     const nsName = rancherApi.createE2EResourceName('namespace');
     const customClusterName = rancherApi.createE2EResourceName('generic-cluster');
     let nsCreated = false;
@@ -68,7 +68,8 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       await expect(clusterList.sortableTable().groupByButtons(1)).toBeVisible();
       await clusterList.sortableTable().groupByButtons(1).click();
 
-      const groupRow = clusterList.sortableTable().groupElementWithName(`Namespace: ${nsName}`);
+      // rancher:head relabeled the group rows from "Namespace:" to "Workspace:"
+      const groupRow = clusterList.sortableTable().groupElementWithName(`Workspace: ${nsName}`);
 
       await groupRow.scrollIntoViewIfNeeded();
       await expect(groupRow).toBeVisible();

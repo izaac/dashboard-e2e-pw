@@ -400,7 +400,17 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
       const hasStorageState = typeof storageState === 'string' && storageState.length > 0;
 
       if (hasStorageState && !options) {
-        await page.goto('./home', { waitUntil: 'domcontentloaded' });
+        try {
+          await page.goto('./home', { waitUntil: 'domcontentloaded' });
+        } catch (err) {
+          if (!((err as Error).message ?? '').includes('net::ERR_ABORTED')) {
+            throw err;
+          }
+          // An in-flight SPA redirect (e.g. post-logout bounce to auth/login) can
+          // abort the first navigation — the redirect has committed by now, retry once.
+          console.warn('[login] ./home navigation aborted by in-flight redirect — retrying');
+          await page.goto('./home', { waitUntil: 'domcontentloaded' });
+        }
 
         // Race: home (session valid) | login (expired) | setup (not configured) | timeout (slow/stuck)
         let pageState: 'home' | 'login' | 'setup' | 'timeout';
@@ -495,6 +505,16 @@ export const test = base.extend<RancherTestFixtures, RancherWorkerFixtures>({
       }
 
       base.skip(presence === 'filtered', `Chart '${chartId}' not in filtered catalog for this environment`);
+
+      // rancher:head periodically bumps embedded k3s past the published charts'
+      // kubeVersion caps; helm then refuses every version (exit code 123).
+      // Skip instead of failing until the charts catch up.
+      const kubeCompat = await rancherApi.checkChartKubeCompat(repo, chartId);
+
+      base.skip(
+        kubeCompat === 'incompatible',
+        `No published version of chart '${chartId}' supports this cluster's Kubernetes version`,
+      );
     };
 
     await use(guard);

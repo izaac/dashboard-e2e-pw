@@ -153,6 +153,13 @@ test.describe('Settings (Part 2)', () => {
 
   test('can update ui-index', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'ui-index';
+
+    // ui-index no longer exists on rancher:head (no upstream test counterpart
+    // either); guard so the test revives automatically if the setting returns.
+    const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
+
+    test.skip(settingResp.status === 404, 'ui-index setting not present on this Rancher version');
+
     const restore = await snapshotSetting(rancherApi, settingName);
 
     try {

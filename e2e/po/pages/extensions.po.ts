@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
@@ -7,7 +8,7 @@ import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
 import ComponentPo from '@/e2e/po/components/component.po';
 import BannersPo from '@/e2e/po/components/banners.po';
-import { LONG, VERY_LONG } from '@/support/timeouts';
+import { BRIEF, LONG, VERY_LONG } from '@/support/timeouts';
 
 // --------------- Install Extension Dialog ---------------
 
@@ -122,9 +123,17 @@ export default class ExtensionsPagePo extends PagePo {
 
   private async clickAction(extensionTitle: string, actionLabel: string): Promise<void> {
     const card = this.extensionCard(extensionTitle);
+    const menuItems = this.page.locator('[dropdown-menu-item]');
 
-    await card.locator('[data-testid="item-card-header-action-menu"]').click();
-    await this.page.locator('[dropdown-menu-item]').filter({ hasText: actionLabel }).click();
+    // The card's catalog/version data can still be loading when the action menu opens —
+    // the menu then renders without the action, or a card re-render unmounts the popper.
+    // Re-open the menu (only when closed) and click the item as one retried unit.
+    await expect(async () => {
+      if ((await menuItems.count()) === 0) {
+        await card.locator('[data-testid="item-card-header-action-menu"]').click();
+      }
+      await menuItems.filter({ hasText: actionLabel }).click({ timeout: BRIEF });
+    }).toPass({ timeout: LONG, intervals: [1_000, 2_000] });
   }
 
   async extensionCardClick(extensionTitle: string): Promise<void> {

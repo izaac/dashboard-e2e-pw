@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
-import { DEBOUNCE, PROVISIONING, SHORT_TIMEOUT_OPT } from '@/support/timeouts';
+import { DEBOUNCE, POLL_INTERVAL, PROVISIONING, SHORT_TIMEOUT_OPT, VERY_LONG } from '@/support/timeouts';
 
 const namespace = 'fleet-default';
 
@@ -98,20 +98,22 @@ async function cleanupClusterAndCredential(
 
 async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAuthenticationPagePo): Promise<void> {
   // Store resets from prior cluster cleanup can prevent the table from rendering.
-  // Retry with goTo if the sortable table doesn't appear on first attempt.
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await jwtAuthPage.goTo();
-    await jwtAuthPage.waitForPage();
+  // expect.poll re-navigates each iteration until the sortable table appears.
+  await expect
+    .poll(
+      async () => {
+        await jwtAuthPage.goTo();
+        await jwtAuthPage.waitForPage();
 
-    try {
-      await expect(jwtAuthPage.list().resourceTable().sortableTable().self()).toBeVisible();
-      break;
-    } catch {
-      if (attempt === 2) {
-        throw new Error('JWT table did not render after 3 attempts');
-      }
-    }
-  }
+        return jwtAuthPage.list().resourceTable().sortableTable().self().isVisible();
+      },
+      {
+        timeout: VERY_LONG,
+        intervals: [POLL_INTERVAL],
+        message: 'JWT table did not render after repeated navigation',
+      },
+    )
+    .toBe(true);
 
   await jwtAuthPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 

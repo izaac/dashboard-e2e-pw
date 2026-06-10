@@ -300,7 +300,9 @@ test.describe('Roles Templates', { tag: ['@usersAndAuths', '@adminUser'] }, () =
 
       const actionMenu = await detailPage.detail().openMastheadActionMenu();
 
-      await actionMenu.menuItem(5).click();
+      // Label-based select — rancher:head reordered the masthead action menu,
+      // so a positional index silently targets the wrong item.
+      await actionMenu.getMenuItem('Delete').click();
 
       const promptRemove = new PromptRemove(page);
 

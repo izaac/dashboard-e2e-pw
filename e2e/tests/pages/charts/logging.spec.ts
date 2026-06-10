@@ -9,7 +9,7 @@ import CardPo from '@/e2e/po/components/card.po';
 import LoggingPo from '@/e2e/po/other-products/logging.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
-import { BRIEF, EXTENSION_OPS, SHORT_TIMEOUT_OPT, LONG, STANDARD, VERY_LONG, PROVISIONING } from '@/support/timeouts';
+import { BRIEF, EXTENSION_OPS, SHORT_TIMEOUT_OPT, LONG, STANDARD, PROVISIONING } from '@/support/timeouts';
 
 const chartAppDisplayName = 'Logging';
 const chartApp = 'rancher-logging';
@@ -69,7 +69,7 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
 
       expect(installResp.status()).toBe(201);
 
-      await terminal.waitForTerminalStatus('Disconnected', VERY_LONG);
+      await terminal.waitForTerminalStatus('Disconnected', EXTENSION_OPS);
       await terminal.closeTerminal();
 
       const deployed = await rancherApi.waitForRancherResource(
@@ -264,9 +264,9 @@ test.describe('Logging Chart', { tag: ['@charts', '@adminUser'] }, () => {
       expect(chartUninstallResp.status()).toBe(201);
       expect(crdUninstallResp.status()).toBe(201);
 
-      await terminal.waitForTerminalStatus('Disconnected', LONG);
+      await terminal.waitForTerminalStatus('Disconnected', EXTENSION_OPS);
       await terminal.closeTerminalByTabName(`Uninstall ${chartNamespace}:${chartApp}`);
-      await terminal.waitForTerminalStatus('Disconnected', LONG);
+      await terminal.waitForTerminalStatus('Disconnected', EXTENSION_OPS);
       await terminal.closeTerminalByTabName(`Uninstall ${chartNamespace}:${chartCrd}`);
 
       await installedAppsPage.goTo();

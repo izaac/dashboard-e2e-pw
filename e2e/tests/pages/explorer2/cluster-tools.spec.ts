@@ -4,7 +4,7 @@ import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
-import { DEBOUNCE, LONG, VERY_LONG, PROVISIONING } from '@/support/timeouts';
+import { DEBOUNCE, EXTENSION_OPS, PROVISIONING } from '@/support/timeouts';
 
 // Upstream Cypress test uses 'rancher-alerting-drivers'; we use OPA Gatekeeper because
 // alerting-drivers (and most 109.x charts) require k8s 1.33+ AND a working
@@ -84,7 +84,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         expect(response.status()).toBe(201);
 
-        await terminal.waitForTerminalStatus('Disconnected', VERY_LONG);
+        await terminal.waitForTerminalStatus('Disconnected', EXTENSION_OPS);
         await terminal.closeTerminal();
         await clusterTools.waitForPage();
 
@@ -108,12 +108,11 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
         await rancherApi.ensureChartInstalled(chartRepo, chartNamespace, chartKey, chartCrd, 40, DEBOUNCE);
       });
 
-      test('can edit chart successfully', async ({ page }) => {
+      test('can edit chart successfully', async ({ page, rancherApi }) => {
         test.setTimeout(PROVISIONING);
 
         const clusterTools = new ClusterToolsPagePo(page, 'local');
         const installChartPage = new InstallChartPage(page);
-        const terminal = new KubectlPo(page);
 
         await clusterTools.goTo();
         await clusterTools.waitForPage();
@@ -133,8 +132,31 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         expect(response.status()).toBe(201);
 
-        await terminal.waitForTerminalStatus('Disconnected', VERY_LONG);
-        await terminal.closeTerminal();
+        // rancher:head no longer opens the helm-operation terminal window on
+        // upgrade (install/uninstall still do) — track the operation via API
+        // instead of the terminal 'Disconnected' status.
+        const opBody = await response.json();
+        const opDone = await rancherApi.waitForRancherResource(
+          'v1',
+          'catalog.cattle.io.operations',
+          `${opBody.operationNamespace}/${opBody.operationName}`,
+          (resp) => resp.body?.metadata?.state?.transitioning === false && resp.body?.metadata?.state?.name !== 'error',
+          40,
+          DEBOUNCE,
+        );
+
+        expect(opDone, `Upgrade operation for '${chartKey}' did not complete`).toBeTruthy();
+
+        const deployed = await rancherApi.waitForRancherResource(
+          'v1',
+          'catalog.cattle.io.apps',
+          `${chartNamespace}/${chartKey}`,
+          (resp) => resp.body?.metadata?.state?.name === 'deployed',
+          40,
+          DEBOUNCE,
+        );
+
+        expect(deployed, `Chart '${chartKey}' did not return to deployed state after upgrade`).toBeTruthy();
         await clusterTools.waitForPage();
       });
 
@@ -162,7 +184,7 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
 
         expect(response.status()).toBe(201);
 
-        await terminal.waitForTerminalStatus('Disconnected', LONG);
+        await terminal.waitForTerminalStatus('Disconnected', EXTENSION_OPS);
         await terminal.closeTerminal();
       });
     });

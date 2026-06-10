@@ -77,7 +77,7 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         await installChartPage.installChart();
 
         // Wait for terminal to show installation progress and complete
-        await terminal.waitForTerminalStatus('Disconnected', VERY_LONG);
+        await terminal.waitForTerminalStatus('Disconnected', EXTENSION_OPS);
         await terminal.closeTerminal();
 
         // Navigate to installed apps page and wait for load

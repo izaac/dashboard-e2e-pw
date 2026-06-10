@@ -126,6 +126,14 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   TypeScript. Last legacy `.js` files in an otherwise mostly-TS component
   tree; surfaced while debugging the CRD pagination test.
 
+## Chart kubeVersion drift watch
+
+- [ ] **OPA Gatekeeper uninstallable on current head**: k3s bumped to 1.36.1 but
+  every published `rancher-gatekeeper` version caps `kubeVersion < 1.36.0-0`,
+  so helm refuses with exit code 123 (`cluster-tools.spec.ts` lifecycle).
+  `chartGuard` now skips on kubeVersion incompatibility; remove this entry when
+  rancher-charts publish a compatible gatekeeper and the tests run again.
+
 ## Known chronic flakes: needs deeper investigation
 
 - [ ] **`harvester.spec.ts:108 can auto install harvester`**: fails 3/5 even with the
@@ -150,25 +158,60 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   the set drifts. Triage: re-check each against a pinned upstream tag to separate
   genuine head regressions from flakes, then harden or quarantine. The two
   `home.spec.ts` cases were fixed in `b026592` (checkbox column-offset on the
-  Cluster Management list; mgmt-side route for the description mock). Remaining:
+  Cluster Management list; mgmt-side route for the description mock).
+
+  2026-06-09 update: 5× sharded runs + DOM/network artifact triage classified the
+  consistent failures. Verdicts below; spec fixes land after the hardening
+  validation runs complete.
   - [ ] `cluster-manager.spec.ts:302 navigate to Cluster Machines Page`: Vue
     `TypeError ... 'replace'` + `this.$el.querySelector is not a function`,
     machine table empty; likely a `head` Vue component crash to file upstream.
-  - [ ] `cluster-list.spec.ts:9 can group clusters by namespace`: namespace
-    group-row never renders. VAI/server-side-pagination grouping behavior change.
-  - [ ] `edit-fake-cluster.spec.ts:19 registry auth retain ID`: action menu on
-    `some-fake-cluster-id` lacks `Edit Config` (same locator pattern as the
-    cloud-credential bug, but `fake-cluster.ts` already links prov→mgmt; needs
-    DOM-snapshot triage).
-  - [ ] `edit-fake-cluster.spec.ts:37 doc link new tab`: same `Edit Config`
-    menu-missing pattern as above.
-  - [ ] `v2prov-capi.spec.ts:67 no machine provider for CAPI clusters`: TBD,
-    artifact not yet triaged.
-  - [ ] `preferences.spec.ts:674 login landing page – home page`: PAGE-STILL-LOADING
-    at landing-page selection; user-pref-related, may be related to the
-    `Error parsing server pref theme SyntaxError` console error.
-  - [ ] `roles.spec.ts:282 delete a role template from the detail page`: EMPTY-STATE,
-    401 on `ext.cattle.io.selfuser`.
+  - [ ] `cluster-list.spec.ts:9 can group clusters by namespace`: head renamed the
+    group-row label `Namespace:` → `Workspace:` (matches upstream Cypress test
+    "group by workspace"). Spec fix: update the text filter and test name.
+  - [ ] `edit-fake-cluster.spec.ts:19 + :37`: head UI crash — console
+    `TypeError: Cannot read properties of undefined (reading 'machineProvider')`
+    kills the row action menu. Product bug; see "Upstream issues to file".
+  - [ ] `v2prov-capi.spec.ts:67 no machine provider for CAPI clusters`: same
+    `machineProvider` TypeError root cause; version cell renders `— —`.
+  - [x] `preferences.spec.ts:674 login landing page – home page`: fixed 2026-06-09.
+    Post-logout SPA redirect aborted the login fixture's `goto('./home')`
+    (`net::ERR_ABORTED`); fixture now retries once, PUT predicate filters 200.
+  - [ ] `roles.spec.ts:282 delete a role template from the detail page`: head
+    reordered the detail-page action menu; index-based `menuItem(5)` misses.
+    Spec fix: select by label instead of index.
+  - [ ] `settings-p2.spec.ts:154 can update ui-index`: the `ui-index` advanced
+    setting no longer exists on head (no upstream test counterpart either).
+    Spec fix: remove the test or guard on setting presence.
+  - [ ] `cluster-manager.spec.ts:754 Cluster Provisioning Log Page`: `btn-log`
+    tab removed on head (tabs now: node-pools/autoscaler/conditions/events/related).
+    Confirm where the provisioning log moved, then repoint or retire the test.
+  - [ ] `hosted-cluster-details.spec.ts:142/153/164 node pool tabs`: product bug —
+    `management.cattle.io.node` watch stuck in `resourceversion too old` re-sync
+    BackOff loop, node data never populates. See "Upstream issues to file".
+
+### Upstream issues to file (2026-06-09 artifact triage)
+
+- [ ] **rancher/dashboard: `machineProvider` getter null-deref on head.**
+  `TypeError: Cannot read properties of undefined (reading 'machineProvider')`
+  (bundle `index.eb2aed77.js`) when the cluster list/detail renders a cluster
+  missing `status.info` / machine provider config. Breaks row action menus and
+  version cells (`— —`). Repro: load Cluster Management list on `rancher:head`
+  with a fake/CAPI cluster present; see console TypeError. Affects
+  `edit-fake-cluster`, `v2prov-capi`, cascades into cluster-list rendering.
+- [ ] **rancher/rancher (or dashboard store): `management.cattle.io.node` watch
+  `resourceversion too old` re-sync BackOff loop.** Hosted cluster (AKS/EKS/GKE)
+  detail node-pool tabs never load; console shows repeated
+  `TOO_OLD ... Invalid watch revision, re-syncing` with growing delay. Repro:
+  open hosted-cluster detail node-pool tab on `rancher:head` min-resource
+  install.
+- [ ] **rancher/dashboard: landing-page "specific cluster" select renders zero
+  cluster options.** Prefs page → landing page radio "cluster:" → the cluster
+  select enables but its option list stays empty (DOM shows no
+  `vs__dropdown-option` nodes; console: `All of cluster.x-k8s.io.machine is not
+  loaded yet`). Likely same cluster-store breakage family as the
+  `machineProvider` TypeError. Our `preferences.spec.ts` "specific cluster" test
+  skip-guards on the empty list until fixed.
 
 ## Gold-standard audit (Phase 4 + long tail)
 

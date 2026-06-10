@@ -110,14 +110,15 @@ test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
 
     await driversPage.goTo();
     await driversPage.waitForPage();
+    // Wait out the loading-state overlay that briefly covers the refresh button after page mount
+    await driversPage.list().resourceTable().sortableTable().checkLoadingIndicatorNotVisible();
 
     const refreshResp = page.waitForResponse(
       (r) => r.url().includes('/v3/kontainerdrivers?action=refresh') && r.request().method() === 'POST',
       { timeout: LONG },
     );
 
-    // eslint-disable-next-line playwright/no-force-option -- refresh button is briefly covered by the loading-state overlay after page mount
-    await driversPage.refreshKubMetadata().click({ force: true });
+    await driversPage.refreshKubMetadata().click();
 
     const resp = await refreshResp;
 
