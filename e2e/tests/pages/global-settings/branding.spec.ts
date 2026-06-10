@@ -79,8 +79,9 @@ const BRANDING_SETTINGS = [
 ];
 
 test.describe('Branding', () => {
-  // Serial: tests mutate the BRANDING_SETTINGS singletons and rely on per-test snapshot/restore; parallel runs would race the resourceVersion handshake.
-  test.describe.configure({ mode: 'serial' });
+  // No serial mode: every test snapshots BRANDING_SETTINGS in beforeEach and
+  // restores in afterEach (which runs even on failure), so a failed sibling
+  // cannot leak state (workers: 1 already guarantees in-file ordering).
   let savedBrandingValues: Record<string, { value: string; resourceVersion: string }> = {};
 
   test.beforeEach(async ({ login, rancherApi }) => {

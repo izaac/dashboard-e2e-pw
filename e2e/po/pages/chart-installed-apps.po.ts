@@ -33,7 +33,7 @@ export default class ChartInstalledAppsListPagePo extends PagePo {
    * the resource is already `deployed` server-side; we are only verifying the
    * front-end caught up, not waiting on the install itself.
    */
-  async closeTerminalAndWaitDeployed(api: RancherApi, namespace: string, installableParts: string[]): Promise<void> {
+  async closeTerminalAndExpectDeployed(api: RancherApi, namespace: string, installableParts: string[]): Promise<void> {
     for (const item of installableParts) {
       await api.expectResourceState(
         'v1',

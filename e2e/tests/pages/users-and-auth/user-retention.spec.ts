@@ -59,8 +59,9 @@ async function resetRetentionSettings(rancherApi: RancherApi): Promise<void> {
 }
 
 test.describe('User retention: admin user', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
-  // All tests mutate the same global retention settings - serial prevents conflicts
-  test.describe.configure({ mode: 'serial' });
+  // No serial mode: every test resets the retention settings in its own
+  // try/finally (resetRetentionSettings), so a failed sibling cannot leak
+  // state (workers: 1 guarantees in-file ordering).
   test('save button should be disabled when form is invalid', async ({ page, login, rancherApi }) => {
     try {
       await login();

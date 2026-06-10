@@ -151,7 +151,7 @@ test.describe('Elemental Extension', { tag: ['@elemental', '@adminUser'] }, () =
 
       await elementalPo
         .appsPage()
-        .closeTerminalAndWaitDeployed(rancherApi, OPERATOR_NAMESPACE, [OPERATOR_CRD_RELEASE, OPERATOR_RELEASE]);
+        .closeTerminalAndExpectDeployed(rancherApi, OPERATOR_NAMESPACE, [OPERATOR_CRD_RELEASE, OPERATOR_RELEASE]);
 
       await elementalPo.dashboard().goTo();
       await expect(elementalPo.dashboard().mainTitle()).toContainText('OS Management Dashboard');

@@ -122,11 +122,11 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await userEdit.globalRoleBindings().self().scrollIntoViewIfNeeded();
 
       // Verify both roles are checked via real input state (aria-checked is unreliable for array v-models)
-      await userEdit.globalRoleBindings().roleCheckbox('user').isInputChecked();
-      await userEdit.globalRoleBindings().roleCheckbox('user-base').isInputChecked();
+      await expect(userEdit.globalRoleBindings().roleCheckbox('user').inputElement()).toBeChecked();
+      await expect(userEdit.globalRoleBindings().roleCheckbox('user-base').inputElement()).toBeChecked();
 
       await userEdit.globalRoleBindings().roleCheckbox('user-base').set();
-      await userEdit.globalRoleBindings().roleCheckbox('user-base').isInputNotChecked();
+      await expect(userEdit.globalRoleBindings().roleCheckbox('user-base').inputElement()).not.toBeChecked();
 
       const deleteResponsePromise = page.waitForResponse(
         (resp) => /globalrolebinding/i.test(resp.url()) && resp.request().method() === 'DELETE',

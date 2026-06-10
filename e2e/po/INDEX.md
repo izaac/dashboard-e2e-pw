@@ -17,7 +17,7 @@
 | ButtonGroupPo | button-group.po.ts | ComponentPo | — | set, selectByIndex, button |
 | CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
-| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, isInputChecked (+2) |
+| CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, inputElement (+1) |
 | CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
@@ -199,7 +199,7 @@
 | AboutPagePo | about.po.ts | PagePo | — | super, diagnosticsBtn, links, linksContaining, getLinkDestination, return, versionLink, getCliDownloadLinkByLabel (+4) |
 | CreateKeyPagePo | account-api-keys-create_key.po.ts | PagePo | — | super, title, description, expiryOptions, createButton, cancelButton, doneButton, apiAccessKey (+3) |
 | AccountPagePo | account-api-keys.po.ts | PagePo | — | super, waitForRequests, titleLocator, createApiKeyButton, changePasswordButton, create, changePassword, changePasswordModal (+8) |
-| ChartInstalledAppsListPagePo | chart-installed-apps.po.ts | PagePo | `/c/${clusterId}/${product}/catalog.cattle.io.app` | super, filter, appsList, closeTerminalAndWaitDeployed, for |
+| ChartInstalledAppsListPagePo | chart-installed-apps.po.ts | PagePo | `/c/${clusterId}/${product}/catalog.cattle.io.app` | super, filter, appsList, closeTerminalAndExpectDeployed, for |
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |

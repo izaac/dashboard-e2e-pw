@@ -224,6 +224,13 @@ Phase 1, 2, 3 and the documentation parts of Phase 5 are closed (see
 have now been done; see "Known chronic flakes" above for the timeout findings.
 Remaining Phase 4 items below are the follow-up work:
 
+- [ ] **Serial-mode borderline queue** (2026-06-10 audit): removed unjustified
+  serial from branding, home-links, kontainer-drivers, preferences, v2prov-capi,
+  user-retention (all had per-test snapshot/restore). Still need a deeper
+  cleanup-pattern read before deciding: settings, settings-p2, roles,
+  oidcProvider, extensions, logging, compliance, hosted-providers, links,
+  chart-install-wizard, pod-security-admissions, the two cloud provisioning
+  specs. Vestigial skip-stubs keep serial deliberately (upstream shape).
 - [ ] **Phase 4: Parallel-safe lane foundation**
   - [ ] Generate `PARALLELISM.md` from a script (gap-map / po-index style); fail CI on unclassified specs (audit finding #6).
   - [ ] Split serial-global vs parallel-safe Playwright projects.

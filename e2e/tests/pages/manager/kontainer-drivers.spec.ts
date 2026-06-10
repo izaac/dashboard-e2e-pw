@@ -38,8 +38,10 @@ async function waitForDriverAndHealth(
 }
 
 test.describe('Kontainer Drivers', { tag: ['@manager', '@adminUser'] }, () => {
-  // Serial: tests mutate built-in driver activation states (snapshot in beforeAll, restore in afterAll); parallel runs would race the global drivers list.
-  test.describe.configure({ mode: 'serial' });
+  // No serial mode: tests are independent — the activation error cases use
+  // mocked 500 routes (no real mutation), the bulk test seeds its own driver
+  // state via API, and the beforeAll/afterAll snapshot of activation states is
+  // a safety net, not shared test state (workers: 1 guarantees ordering).
 
   // Snapshot original states of built-in drivers we mutate, so we can restore them
   const originalStates: Record<string, boolean> = {};

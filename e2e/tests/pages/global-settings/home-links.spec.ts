@@ -8,8 +8,9 @@ const runTimestamp = Date.now();
 const runPrefix = `e2e-test-${runTimestamp}`;
 
 test.describe('Home Links', () => {
-  // Serial: tests mutate the global `ui-custom-links` setting; parallel runs would race the snapshot/restore cycle.
-  test.describe.configure({ mode: 'serial' });
+  // No serial mode: every test snapshots `ui-custom-links` in beforeEach and
+  // restores in afterEach (which runs even on failure), so a failed sibling
+  // cannot leak state (workers: 1 already guarantees in-file ordering).
   let homeLinksPage: HomeLinksPagePo;
   let originalCustomLinks: any;
 

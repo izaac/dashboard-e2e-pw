@@ -1,5 +1,4 @@
 import type { Page, Locator } from '@playwright/test';
-import { expect } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export default class CheckboxInputPo extends ComponentPo {
@@ -47,12 +46,9 @@ export default class CheckboxInputPo extends ComponentPo {
   }
 
   // Use for checkboxes bound to an array v-model (e.g. multi-select groups),
-  // where aria-checked is unreliable. These read the real <input> state instead.
-  async isInputChecked(): Promise<void> {
-    await expect(this.self().locator('input[type="checkbox"]')).toBeChecked();
-  }
-
-  async isInputNotChecked(): Promise<void> {
-    await expect(this.self().locator('input[type="checkbox"]')).not.toBeChecked();
+  // where aria-checked is unreliable. Assert on the real <input> element:
+  // `await expect(checkbox.inputElement()).toBeChecked()`.
+  inputElement(): Locator {
+    return this.self().locator('input[type="checkbox"]');
   }
 }
