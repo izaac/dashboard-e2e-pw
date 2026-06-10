@@ -68,11 +68,13 @@ test.describe('Cluster List - v2 Provisioning CAPI Clusters', { tag: ['@manager'
   test('should not report a machine provider for CAPI clusters', async ({ page }) => {
     const clusterList = new ClusterManagerListPagePo(page);
 
-    const capiProvider = clusterList.list().resourceTable().sortableTable().rowWithName(clusterName).column(4);
+    // Provider column targeted by class, not position — the row gained columns
+    // once the mgmt mock carried `status.info` (kube version/arch cells).
+    const capiProvider = clusterList.list().provider(clusterName);
 
     await expect(capiProvider).toHaveText(/ RKE2/);
 
-    const localProvider = clusterList.list().resourceTable().sortableTable().rowWithName('local').column(4);
+    const localProvider = clusterList.list().provider('local');
 
     await expect(localProvider).toHaveText(/Local (K3s|RKE2)/);
   });

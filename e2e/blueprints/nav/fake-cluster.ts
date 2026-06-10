@@ -6,10 +6,23 @@ import {
   generateFakeDaemonsetSchema,
   generateFakePodSchema,
 } from './k8s-schemas';
+import {
+  generateFakeNodeDriversReply,
+  generateFakeCloudCredentialsReply,
+  generateFakeMachineConfigReply,
+  generateFakeCloudCredIndividualReply,
+  generateFakeSecretsReply,
+} from './edit-cluster';
+import { generateProvClusterObj, generateMgmtClusterObj, MACHINE_POOL_ID, CLOUD_CRED_ID } from './fake-cluster-objects';
 
 /**
  * Sets up route intercepts for a fake cluster in the navigation menu.
  * Playwright equivalent of the Cypress generateFakeClusterDataAndIntercepts.
+ *
+ * The cluster objects come verbatim from the upstream cypress blueprints
+ * (see fake-cluster-objects.ts) so the dashboard's editability getters
+ * (machineProvider, canCustomEdit, canUpdate) see the exact data upstream
+ * tests against.
  *
  * Must be called BEFORE navigating to the page that triggers these requests.
  */
@@ -18,13 +31,18 @@ export async function generateFakeClusterDataAndIntercepts(
   {
     fakeProvClusterId = 'some-prov-cluster-id',
     fakeMgmtClusterId = 'some-mgmt-cluster-id',
+    addEditClusterCapabilities = false,
     longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description',
   }: {
     fakeProvClusterId?: string;
     fakeMgmtClusterId?: string;
+    addEditClusterCapabilities?: boolean;
     longClusterDescription?: string;
   },
 ): Promise<void> {
+  const provClusterObj = generateProvClusterObj(fakeProvClusterId, fakeMgmtClusterId);
+  const mgmtClusterObj = generateMgmtClusterObj(fakeProvClusterId, fakeMgmtClusterId);
+
   // Intercept fleet clusters - add description to local and inject fake cluster
   await page.route(/\/v1\/fleet\.cattle\.io\.clusters(\?|$)/, async (route) => {
     const response = await route.fetch();
@@ -68,65 +86,19 @@ export async function generateFakeClusterDataAndIntercepts(
       body.data[localIndex].metadata.annotations['field.cattle.io/description'] = longClusterDescription;
     }
 
-    body.data.push({
-      id: `fleet-default/${fakeProvClusterId}`,
-      type: 'provisioning.cattle.io.cluster',
-      apiVersion: 'provisioning.cattle.io/v1',
-      kind: 'Cluster',
-      links: {
-        remove: `https://localhost:8443/v1/provisioning.cattle.io.clusters/fleet-default/${fakeProvClusterId}`,
-        self: `https://localhost:8443/v1/provisioning.cattle.io.clusters/fleet-default/${fakeProvClusterId}`,
-        update: `https://localhost:8443/v1/provisioning.cattle.io.clusters/fleet-default/${fakeProvClusterId}`,
-        view: `https://localhost:8443/apis/provisioning.cattle.io/v1/namespaces/fleet-default/clusters/${fakeProvClusterId}`,
-      },
-      metadata: {
-        annotations: { 'field.cattle.io/creatorId': 'user-fake' },
-        creationTimestamp: '2024-03-07T15:45:25Z',
-        // Steve table renderer reads column values from `metadata.fields`. Without
-        // these the row is hidden in the cluster list even if all data is present.
-        fields: [fakeProvClusterId, 'true', `${fakeProvClusterId}-kubeconfig`],
-        finalizers: ['wrangler.cattle.io/provisioning-cluster-remove'],
-        generation: 3,
-        name: fakeProvClusterId,
-        namespace: 'fleet-default',
-        resourceVersion: '1',
-        // The State column gates visibility — must be `active` to render as a healthy row.
-        state: { error: false, message: 'Resource is Ready', name: 'active', transitioning: false },
-        uid: '326aa188-e66f-4cf0-8f54-9fc47e4c5d92',
-      },
-      spec: {
-        kubernetesVersion: 'v1.27.10+rke2r1',
-        localClusterAuthEndpoint: {},
-        rkeConfig: {
-          // Required by the Registry edit test (closeArrayListItem(0) → reg2 retains).
-          registries: {
-            configs: {
-              reg1: { authConfigSecretName: 'registryconfig-auth-reg1' },
-              reg2: { authConfigSecretName: 'registryconfig-auth-reg2' },
-            },
-          },
-        },
-      },
-      status: {
-        agentDeployed: true,
-        clientSecretName: `${fakeProvClusterId}-kubeconfig`,
-        clusterName: fakeMgmtClusterId,
-        conditions: [
-          { type: 'Ready', status: 'True', error: false, transitioning: false },
-          { type: 'Provisioned', status: 'True', error: false, transitioning: false },
-          { type: 'Updated', status: 'True', error: false, transitioning: false },
-        ],
-        fleetWorkspaceName: 'fleet-default',
-        observedGeneration: 3,
-        ready: true,
-      },
-    });
+    body.data.push(provClusterObj);
 
     if (typeof body.count === 'number') {
       body.count = body.data.length;
     }
 
     await route.fulfill({ response, json: body });
+  });
+
+  // Individual prov cluster fetch — the edit page loads the resource by id;
+  // the list regex above cannot match the `/clusters/<ns>/<id>?` URL shape.
+  await page.route(`**/v1/provisioning.cattle.io.clusters/fleet-default/${fakeProvClusterId}?*`, async (route) => {
+    await route.fulfill({ status: 200, json: provClusterObj });
   });
 
   // Intercept management clusters - add description to local and inject fake cluster
@@ -140,72 +112,20 @@ export async function generateFakeClusterDataAndIntercepts(
       body.data[localIndex].spec.description = longClusterDescription;
     }
 
-    body.data.push({
-      id: fakeMgmtClusterId,
-      type: 'management.cattle.io.cluster',
-      apiVersion: 'management.cattle.io/v3',
-      kind: 'Cluster',
-      // The cluster-list table reads `links.shell` to decide whether the row's
-      // shell action is available. Missing it threw a `Cannot read properties of
-      // undefined (reading 'shell')` from the bulkActionsForSelection getter
-      // and the row never rendered.
-      links: {
-        log: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}?link=log`,
-        projects: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}?link=projects`,
-        remove: 'blocked',
-        schemas: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}?link=schemas`,
-        self: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}`,
-        shell: `wss://localhost:8443/v3/clusters/${fakeMgmtClusterId}?shell=true`,
-        subscribe: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}?link=subscribe`,
-        update: 'blocked',
-        view: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}`,
-      },
-      actions: {
-        apply: `https://localhost:8443/v1/management.cattle.io.clusters/${fakeMgmtClusterId}?action=apply`,
-        generateKubeconfig: `https://localhost:8443/v3/clusters/${fakeMgmtClusterId}?action=generateKubeconfig`,
-        importYaml: `https://localhost:8443/v3/clusters/${fakeMgmtClusterId}?action=importYaml`,
-      },
-      metadata: {
-        annotations: {
-          'provisioning.cattle.io/administrated': 'true',
-          'objectset.rio.cattle.io/owner-name': fakeProvClusterId,
-          'objectset.rio.cattle.io/owner-namespace': 'fleet-default',
-        },
-        creationTimestamp: '2024-03-07T15:45:25Z',
-        fields: [fakeMgmtClusterId, '19h'],
-        labels: { 'provider.cattle.io': 'rke2' },
-        name: fakeMgmtClusterId,
-        resourceVersion: '1',
-        state: { error: false, message: 'Resource is Ready', name: 'active', transitioning: false },
-        uid: '5887e0fe-d20a-42cc-812e-cbc2213201fe',
-      },
-      spec: {
-        displayName: fakeProvClusterId,
-        description: '',
-        desiredAgentImage: '',
-        fleetWorkspaceName: 'fleet-default',
-        internal: false,
-        localClusterAuthEndpoint: { enabled: false },
-      },
-      status: {
-        conditions: [
-          { type: 'Ready', status: 'True', error: false, transitioning: false },
-          { type: 'Connected', status: 'True', error: false, transitioning: false },
-        ],
-        // `driver: 'imported'` is what cypress' mock uses — combined with `provider: 'rke2'` it
-        // routes the cluster edit to rke2.vue (which renders the documentation banner). Without
-        // this the generic edit component loads and the doc banner is absent.
-        driver: 'imported',
-        provider: 'rke2',
-        nodeCount: 1,
-      },
-    });
+    body.data.push(mgmtClusterObj);
 
     if (typeof body.count === 'number') {
       body.count = body.data.length;
     }
 
     await route.fulfill({ response, json: body });
+  });
+
+  // Individual mgmt cluster fetch — the prov model resolves `this.mgmt` by id;
+  // without this route the real rancher 404s and machineProvider/canCustomEdit
+  // resolve to nothing, so the 'Edit Config' action never renders.
+  await page.route(`**/v1/management.cattle.io.clusters/${fakeMgmtClusterId}?*`, async (route) => {
+    await route.fulfill({ status: 200, json: mgmtClusterObj });
   });
 
   // Intercept counts for fake cluster — minimal data so side-nav renders entries
@@ -348,6 +268,15 @@ export async function generateFakeClusterDataAndIntercepts(
   ];
 
   await page.route(/\/v1\/secrets(\?|\/fleet-default(\?|$))/, async (route) => {
+    if (addEditClusterCapabilities) {
+      // Capability mode mirrors upstream: serve the full fake secrets list
+      // (includes the registry auth secrets) instead of merging into the
+      // real response.
+      await route.fulfill({ status: 200, json: { data: generateFakeSecretsReply() } });
+
+      return;
+    }
+
     const response = await route.fetch();
     const body = await response.json();
 
@@ -357,6 +286,120 @@ export async function generateFakeClusterDataAndIntercepts(
     }
 
     await route.fulfill({ response, json: body });
+  });
+
+  if (!addEditClusterCapabilities) {
+    return;
+  }
+
+  // --- Edit capabilities (upstream cypress parity) ---------------------------
+  // Mocks the node driver, cloud credential, DO machine config, and DigitalOcean
+  // meta-proxy lookups the cluster edit page makes for a DO node-driver cluster.
+
+  await page.route('**/v1/management.cattle.io.nodedrivers?*', async (route) => {
+    await route.fulfill({ status: 200, json: { data: [generateFakeNodeDriversReply()] } });
+  });
+
+  await page.route(/\/v3\/cloudcredentials(\?|$)/, async (route) => {
+    await route.fulfill({ status: 200, json: { data: [generateFakeCloudCredentialsReply(CLOUD_CRED_ID)] } });
+  });
+
+  await page.route(`**/v3/cloudcredentials/cattle-global-data:cc-${CLOUD_CRED_ID}`, async (route) => {
+    await route.fulfill({ status: 200, json: generateFakeCloudCredIndividualReply(CLOUD_CRED_ID) });
+  });
+
+  await page.route(
+    `**/v1/rke-machine-config.cattle.io.digitaloceanconfigs/fleet-default/nc-${fakeProvClusterId}-pool1-${MACHINE_POOL_ID}?*`,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: generateFakeMachineConfigReply(fakeProvClusterId, MACHINE_POOL_ID),
+      });
+    },
+  );
+
+  await page.route('**/meta/proxy/api.digitalocean.com/v2/regions?*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: {
+        meta: { total: 1 },
+        regions: [
+          {
+            name: 'London 1',
+            slug: 'lon1',
+            features: ['backups', 'ipv6', 'metadata', 'install_agent', 'storage', 'image_transfer'],
+            available: true,
+            sizes: ['s-1vcpu-1gb'],
+          },
+        ],
+      },
+    });
+  });
+
+  await page.route('**/meta/proxy/api.digitalocean.com/v2/sizes?*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: {
+        meta: { total: 1 },
+        sizes: [
+          {
+            slug: 's-1vcpu-1gb',
+            memory: 1024,
+            vcpus: 1,
+            disk: 25,
+            transfer: 1,
+            price_monthly: 6,
+            price_hourly: 0.00893,
+            regions: ['ams3', 'blr1', 'fra1', 'lon1', 'nyc1', 'nyc3', 'sfo2', 'sfo3', 'sgp1', 'syd1', 'tor1'],
+            available: true,
+            description: 'Basic',
+            networking_througput: 2000,
+          },
+        ],
+      },
+    });
+  });
+
+  await page.route('**/meta/proxy/api.digitalocean.com/v2/images?*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: {
+        meta: { total: 1 },
+        images: [
+          {
+            id: 129211873,
+            name: '20.04 (LTS) x64',
+            distribution: 'Ubuntu',
+            slug: 'ubuntu-20-04-x64',
+            public: true,
+            regions: [
+              'tor1',
+              'syd1',
+              'sgp1',
+              'sfo3',
+              'sfo2',
+              'sfo1',
+              'nyc3',
+              'nyc2',
+              'nyc1',
+              'lon1',
+              'fra1',
+              'blr1',
+              'ams3',
+              'ams2',
+            ],
+            created_at: '2023-03-20T19:17:23Z',
+            min_disk_size: 7,
+            type: 'base',
+            size_gigabytes: 0.72,
+            description: 'Ubuntu 20.04 (LTS) x64',
+            tags: [],
+            status: 'available',
+            error_message: '',
+          },
+        ],
+      },
+    });
   });
 }
 

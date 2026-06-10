@@ -8,7 +8,7 @@ const fakeMgmtClusterId = 'some-fake-mgmt-id';
 
 test.describe('Cluster Edit (Fake DO cluster)', { tag: ['@manager', '@adminUser'] }, () => {
   test.beforeEach(async ({ page, login }) => {
-    await installFakeClusterRoutes(page, { fakeProvClusterId, fakeMgmtClusterId });
+    await installFakeClusterRoutes(page, { fakeProvClusterId, fakeMgmtClusterId, addEditClusterCapabilities: true });
     await login();
   });
 

@@ -42,7 +42,7 @@ near-master code; the commits below are spec adaptations to port, not fixes.
 | Jun 8 | `de6ed8c` | upstream removed the `ui-index` setting and its test; we skip-guard since 2026-06-09 — replace the guard with test removal at next sync |
 | May 30 | `0d4c73d` | upstream removed the provisioning-log tab test; we skip-guard — replace with removal at next sync |
 | May 23 | `6119bf9` | accepts `Pending` as a transient cluster state; we added `Active` to the same assert on 2026-06-10 — add `Pending` for parity |
-| May 20 | `db1dd2e` | edit-fake-cluster refactored to common code, dodging the `machineProvider` crash path — TO PORT (our spec still fails on head) |
+| May 20 | `db1dd2e` | PORTED 2026-06-10: fake-cluster + capi mock objects re-extracted verbatim into `e2e/blueprints/nav/fake-cluster-objects.ts` (status.info, machine pool, cloud cred, by-id routes, edit-capability intercepts); edit-fake-cluster and v2prov-capi green again |
 | May 15 | `da8589f` | roles detail action menu fix; we fixed independently via label-based select — verify parity during port |
 
 ## Gap-map false positives (covered, just renamed)
@@ -182,25 +182,12 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   - [ ] `cluster-manager.spec.ts:779 navigate to Cluster Machines Page`: Vue
     `TypeError ... 'replace'` + `this.$el.querySelector is not a function`,
     machine table empty; head Vue component crash, still failing.
-  - [ ] `edit-fake-cluster.spec.ts:19 + :37`: `machineProvider` TypeError kills
-    the row action menu. Product bug (see "Monitor upstream for fix"); port
-    upstream `db1dd2e` refactor which dodges the crash path.
-  - [ ] `v2prov-capi.spec.ts:68 no machine provider for CAPI clusters`: same
-    `machineProvider` TypeError root cause; version cell renders `— —`. Serial
-    removed 2026-06-10 so its siblings now run and pass.
   - [ ] `hosted-cluster-details.spec.ts:142/153/164 node pool tabs`: product bug —
     `management.cattle.io.node` watch stuck in `resourceversion too old` re-sync
     BackOff loop, node data never populates. See "Monitor upstream for fix".
 
 ### Monitor upstream for fix (2026-06-09 artifact triage)
 
-- [ ] **rancher/dashboard: `machineProvider` getter null-deref on head.**
-  `TypeError: Cannot read properties of undefined (reading 'machineProvider')`
-  (bundle `index.eb2aed77.js`) when the cluster list/detail renders a cluster
-  missing `status.info` / machine provider config. Breaks row action menus and
-  version cells (`— —`). Repro: load Cluster Management list on `rancher:head`
-  with a fake/CAPI cluster present; see console TypeError. Affects
-  `edit-fake-cluster`, `v2prov-capi`, cascades into cluster-list rendering.
 - [ ] **rancher/rancher (or dashboard store): `management.cattle.io.node` watch
   `resourceversion too old` re-sync BackOff loop.** Hosted cluster (AKS/EKS/GKE)
   detail node-pool tabs never load; console shows repeated

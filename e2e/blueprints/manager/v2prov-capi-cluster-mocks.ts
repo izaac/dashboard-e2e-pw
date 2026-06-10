@@ -543,12 +543,27 @@ export const mockCapiMgmtCluster = {
       virtualNetwork: '',
     },
     gkeStatus: { privateRequiresTunnel: null, upstreamSpec: null },
+    // head dashboard reads `status.info` during row render (machineProvider
+    // getter) — without it the row crashes with a TypeError and the provider
+    // cell renders `— —`. Mirrors upstream cypress mock (82361f03..db1dd2e).
+    info: {
+      arch: 'amd64',
+      kubernetesVersion: 'v1.34.3+rke2r1',
+      machineProvider: 'Digitalocean',
+      nodeCount: 2,
+      provisioningClusterRef: {
+        apiVersion: 'provisioning.cattle.io/v1',
+        kind: 'Cluster',
+        name: 'mocked-capi',
+        namespace: 'fleet-default',
+      },
+    },
     limits: {
       cpu: '0',
       memory: '0',
       pods: '0',
     },
-    provider: '',
+    provider: 'rke2',
     requested: {
       cpu: '0',
       cpuRaw: 0,
