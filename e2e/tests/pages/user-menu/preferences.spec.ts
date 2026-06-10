@@ -799,7 +799,7 @@ test.describe('User can update their preferences', () => {
 
       // Open the cluster select and read its options. rancher:head currently
       // renders an empty option list here (cluster store bug, see TODO.md
-      // "Upstream issues to file") — skip until fixed so the test self-revives.
+      // "Monitor upstream for fix") — skip until fixed so the test self-revives.
       const dropdown = prefPage.customPageOptionsDropdown();
 
       await dropdown.self().click();

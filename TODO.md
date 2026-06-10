@@ -54,6 +54,10 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 ### Need provisioning infrastructure (downstream / RKE2 / imported clusters)
 
+> Custom-node and imported-cluster runs are provisioned by the Ansible playbook
+> in `qa-infra-automation` branch `test/dashboard-e2e-pw` (latest, 2026-05-24,
+> supersedes `playwright-e2e-adapter`) under `ansible/testing/dashboard-e2e`.
+
 - [ ] `cluster-manager.spec.ts` (11): create/edit/copy/yaml/kubeconfig/download/delete on RKE2 custom + imported clusters; one display test
   - **Imported Generic**: `can create new cluster` is wired up end-to-end (registers via `applyImportedKubectlCommand`, cleans up via `rancherApi` in `afterEach`, retries:0). Remaining `test.fixme`s reference `SHARED_IMPORT_GENERIC_NAME` static constant rather than the cluster the create test actually provisions:
     - [ ] `can edit imported cluster and see changes afterwards`, needs shared-state refactor (beforeAll fixture creates one cluster, all 3 tests reuse it, afterAll deletes)
@@ -171,7 +175,7 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
     "group by workspace"). Spec fix: update the text filter and test name.
   - [ ] `edit-fake-cluster.spec.ts:19 + :37`: head UI crash — console
     `TypeError: Cannot read properties of undefined (reading 'machineProvider')`
-    kills the row action menu. Product bug; see "Upstream issues to file".
+    kills the row action menu. Product bug; see "Monitor upstream for fix".
   - [ ] `v2prov-capi.spec.ts:67 no machine provider for CAPI clusters`: same
     `machineProvider` TypeError root cause; version cell renders `— —`.
   - [x] `preferences.spec.ts:674 login landing page – home page`: fixed 2026-06-09.
@@ -188,9 +192,9 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
     Confirm where the provisioning log moved, then repoint or retire the test.
   - [ ] `hosted-cluster-details.spec.ts:142/153/164 node pool tabs`: product bug —
     `management.cattle.io.node` watch stuck in `resourceversion too old` re-sync
-    BackOff loop, node data never populates. See "Upstream issues to file".
+    BackOff loop, node data never populates. See "Monitor upstream for fix".
 
-### Upstream issues to file (2026-06-09 artifact triage)
+### Monitor upstream for fix (2026-06-09 artifact triage)
 
 - [ ] **rancher/dashboard: `machineProvider` getter null-deref on head.**
   `TypeError: Cannot read properties of undefined (reading 'machineProvider')`

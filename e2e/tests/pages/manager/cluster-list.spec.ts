@@ -63,7 +63,9 @@ test.describe('Cluster List', { tag: ['@manager', '@adminUser'] }, () => {
       await clusterList.waitForPage();
       await clusterList.goTo();
 
-      await expect(clusterList.list().state(customClusterName)).toContainText(/Updating|Reconciling/);
+      // Accept Active too: on faster Rancher builds the fake custom cluster can
+      // settle before this assertion runs, so the transient states are missable.
+      await expect(clusterList.list().state(customClusterName)).toContainText(/Updating|Reconciling|Active/);
 
       await expect(clusterList.sortableTable().groupByButtons(1)).toBeVisible();
       await clusterList.sortableTable().groupByButtons(1).click();

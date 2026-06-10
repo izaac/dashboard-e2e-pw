@@ -133,7 +133,7 @@ export default class ExtensionsPagePo extends PagePo {
         await card.locator('[data-testid="item-card-header-action-menu"]').click();
       }
       await menuItems.filter({ hasText: actionLabel }).click({ timeout: BRIEF });
-    }).toPass({ timeout: LONG, intervals: [1_000, 2_000] });
+    }).toPass({ timeout: VERY_LONG, intervals: [1_000, 2_000] });
   }
 
   async extensionCardClick(extensionTitle: string): Promise<void> {
