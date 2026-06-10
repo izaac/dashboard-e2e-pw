@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import JWTAuthenticationPagePo from '@/e2e/po/pages/cluster-manager/jwt-authentication.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
-import { DEBOUNCE, POLL_INTERVAL, PROVISIONING, SHORT_TIMEOUT_OPT, VERY_LONG } from '@/support/timeouts';
+import { DEBOUNCE, EXTRA_LONG, LONG, POLL_INTERVAL, PROVISIONING, SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const namespace = 'fleet-default';
 
@@ -97,18 +97,31 @@ async function cleanupClusterAndCredential(
 }
 
 async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAuthenticationPagePo): Promise<void> {
-  // Store resets from prior cluster cleanup can prevent the table from rendering.
-  // expect.poll re-navigates each iteration until the sortable table appears.
+  // Store resets from cluster create/cleanup churn (schema reloads, worker
+  // teardown) can delay the table mount long past page load. Each poll
+  // iteration re-navigates, then gives the table a LONG render window before
+  // declaring that attempt failed; an instant visibility check here would
+  // re-navigate before the churned store ever finishes mounting the table.
   await expect
     .poll(
       async () => {
         await jwtAuthPage.goTo();
         await jwtAuthPage.waitForPage();
 
-        return jwtAuthPage.list().resourceTable().sortableTable().self().isVisible();
+        try {
+          await jwtAuthPage.list().resourceTable().sortableTable().self().waitFor({ state: 'visible', timeout: LONG });
+
+          return true;
+        } catch (err) {
+          console.warn(
+            `[jwt-authentication] table not visible within attempt window, re-navigating: ${(err as Error)?.message?.split('\n')[0] ?? err}`,
+          );
+
+          return false;
+        }
       },
       {
-        timeout: VERY_LONG,
+        timeout: EXTRA_LONG,
         intervals: [POLL_INTERVAL],
         message: 'JWT table did not render after repeated navigation',
       },
@@ -131,8 +144,9 @@ async function goToJWTAuthenticationPageAndSettle(page: any, jwtAuthPage: JWTAut
 }
 
 test.describe('JWT Authentication', { tag: ['@manager', '@adminUser', '@needsInfra', '@cloudCredential'] }, () => {
-  // Serial: tests share the AWS-provisioned JWT instances + reuse the same downstream cluster fixture across cases.
-  test.describe.configure({ mode: 'serial' });
+  // No serial mode: every test provisions its own cluster(s) and credential and
+  // cleans them up in its own finally block, so one failure should not stop the
+  // rest of the file (workers: 1 already guarantees in-file ordering).
   test('should show the JWT Authentication list page', async ({ login, page, rancherApi, envMeta }) => {
     test.skip(!envMeta.awsAccessKey, 'Requires AWS credentials');
     // Cluster create + JWT toggle exceeds the default 60 s test timeout.
