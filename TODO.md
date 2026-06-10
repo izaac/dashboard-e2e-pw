@@ -1,6 +1,6 @@
 # TODO
 
-> Last upstream sync check: 2026-05-22
+> Last upstream sync check: 2026-06-10
 
 ## Upstream Sync Status
 
@@ -22,15 +22,28 @@ ported (see Watch list); the rest need no porting.
 | May 5 | `55da6031` | aalves08 | Remove extensions compatibility tests, just deletions, nothing to port |
 | May 4 | `3c1e37a7` | IsaSih | Flexibilize release notes assertions for prime, test hardening only |
 
-### Watch list
+> Note for future cluster-mock ports (from the `mgmt-to-prov` #17228 port): the
+> dashboard loads clusters by id via server-side-pagination
+> `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be
+> RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
 
-- [x] **`mgmt-to-prov` branch** (richard-cox), merged to master as `rancher/dashboard`
-  PR #17228. Ported the coverage: `clusterMgmtDigitalOceanSingleResponse` blueprint +
-  mgmt-cluster mock in `cloud-credential.spec.ts`; `cluster-prov-select-credential`
-  testid in the cluster create/edit POs. Note for future cluster-mock ports: the
-  dashboard now loads clusters by id via server-side-pagination
-  `?filter=id IN (fleet-default/<name>)` queries: `page.route` patterns must be
-  RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
+### Upstream commits May 20 – Jun 8, reviewed 2026-06-10
+
+Context: upstream CI tests against the same floating `rancher/rancher:head`
+image we use (`branches-metadata.json`, master → tag `head`, consumed by
+`scripts/e2e-docker-start`). They stay green by adapting specs within days,
+not because the product issues are fixed. The dashboard bundle our head
+rancher serves comes from CDN `dashboard/latest`, rebuilt per master merge
+(hours of lag), so the issues under "Monitor upstream for fix" are live on
+near-master code; the commits below are spec adaptations to port, not fixes.
+
+| Date | Commit | Verdict |
+|------|--------|---------|
+| Jun 8 | `de6ed8c` | upstream removed the `ui-index` setting and its test; we skip-guard since 2026-06-09 — replace the guard with test removal at next sync |
+| May 30 | `0d4c73d` | upstream removed the provisioning-log tab test; we skip-guard — replace with removal at next sync |
+| May 23 | `6119bf9` | accepts `Pending` as a transient cluster state; we added `Active` to the same assert on 2026-06-10 — add `Pending` for parity |
+| May 20 | `db1dd2e` | edit-fake-cluster refactored to common code, dodging the `machineProvider` crash path — TO PORT (our spec still fails on head) |
+| May 15 | `da8589f` | roles detail action menu fix; we fixed independently via label-based select — verify parity during port |
 
 ## Gap-map false positives (covered, just renamed)
 
@@ -159,37 +172,22 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   alongside dashboard-side SPA crashes in the browser console (`TypeError:
   Cannot read properties of undefined (reading 'replace')`, `this.$el.querySelector
   is not a function`, etc.). The suite pulls a fresh `rancher:head` each run so
-  the set drifts. Triage: re-check each against a pinned upstream tag to separate
-  genuine head regressions from flakes, then harden or quarantine. The two
-  `home.spec.ts` cases were fixed in `b026592` (checkbox column-offset on the
-  Cluster Management list; mgmt-side route for the description mock).
+  the set drifts. The two `home.spec.ts` cases were fixed in `b026592` (checkbox
+  column-offset on the Cluster Management list; mgmt-side route for the
+  description mock).
 
-  2026-06-09 update: 5× sharded runs + DOM/network artifact triage classified the
-  consistent failures. Verdicts below; spec fixes land after the hardening
-  validation runs complete.
-  - [ ] `cluster-manager.spec.ts:302 navigate to Cluster Machines Page`: Vue
+  2026-06-09/10 update: 5× baseline + 5× post-hardening sharded runs +
+  DOM/network artifact triage classified everything. Current state after the
+  hardening and head-alignment commits (`74236b6`..`8537f53`):
+  - [ ] `cluster-manager.spec.ts:779 navigate to Cluster Machines Page`: Vue
     `TypeError ... 'replace'` + `this.$el.querySelector is not a function`,
-    machine table empty; likely a `head` Vue component crash to file upstream.
-  - [ ] `cluster-list.spec.ts:9 can group clusters by namespace`: head renamed the
-    group-row label `Namespace:` → `Workspace:` (matches upstream Cypress test
-    "group by workspace"). Spec fix: update the text filter and test name.
-  - [ ] `edit-fake-cluster.spec.ts:19 + :37`: head UI crash — console
-    `TypeError: Cannot read properties of undefined (reading 'machineProvider')`
-    kills the row action menu. Product bug; see "Monitor upstream for fix".
-  - [ ] `v2prov-capi.spec.ts:67 no machine provider for CAPI clusters`: same
-    `machineProvider` TypeError root cause; version cell renders `— —`.
-  - [x] `preferences.spec.ts:674 login landing page – home page`: fixed 2026-06-09.
-    Post-logout SPA redirect aborted the login fixture's `goto('./home')`
-    (`net::ERR_ABORTED`); fixture now retries once, PUT predicate filters 200.
-  - [ ] `roles.spec.ts:282 delete a role template from the detail page`: head
-    reordered the detail-page action menu; index-based `menuItem(5)` misses.
-    Spec fix: select by label instead of index.
-  - [ ] `settings-p2.spec.ts:154 can update ui-index`: the `ui-index` advanced
-    setting no longer exists on head (no upstream test counterpart either).
-    Spec fix: remove the test or guard on setting presence.
-  - [ ] `cluster-manager.spec.ts:754 Cluster Provisioning Log Page`: `btn-log`
-    tab removed on head (tabs now: node-pools/autoscaler/conditions/events/related).
-    Confirm where the provisioning log moved, then repoint or retire the test.
+    machine table empty; head Vue component crash, still failing.
+  - [ ] `edit-fake-cluster.spec.ts:19 + :37`: `machineProvider` TypeError kills
+    the row action menu. Product bug (see "Monitor upstream for fix"); port
+    upstream `db1dd2e` refactor which dodges the crash path.
+  - [ ] `v2prov-capi.spec.ts:68 no machine provider for CAPI clusters`: same
+    `machineProvider` TypeError root cause; version cell renders `— —`. Serial
+    removed 2026-06-10 so its siblings now run and pass.
   - [ ] `hosted-cluster-details.spec.ts:142/153/164 node pool tabs`: product bug —
     `management.cattle.io.node` watch stuck in `resourceversion too old` re-sync
     BackOff loop, node data never populates. See "Monitor upstream for fix".
