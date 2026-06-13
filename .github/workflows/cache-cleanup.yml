@@ -1,0 +1,63 @@
+name: Cache cleanup
+
+# Keeps the actions cache from growing unbounded by capping dashboard-dist
+# entries at 10 per branch (ref). GitHub's hard limit is 10 GiB per repo with
+# LRU eviction, but waiting for that pushes useful caches out at random; this
+# trims deterministically by last-access order so the SHAs we care about
+# (current and recent merges) stay warm.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  trim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep 10 most-recent dashboard-dist caches per branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KEEP: "10"
+        run: |
+          set -euo pipefail
+
+          mapfile -t REFS < <(
+            gh cache list -R "$REPO" --limit 1000 \
+              --json key,ref \
+              --jq '.[] | select(.key | startswith("dashboard-dist-")) | .ref' \
+              | sort -u
+          )
+
+          if [ "${#REFS[@]}" -eq 0 ]; then
+            echo "No dashboard-dist caches found."
+            exit 0
+          fi
+
+          deleted_total=0
+          for ref in "${REFS[@]}"; do
+            mapfile -t IDS < <(
+              gh cache list -R "$REPO" --ref "$ref" --limit 1000 \
+                --json id,key,lastAccessedAt \
+                --jq "[.[] | select(.key | startswith(\"dashboard-dist-\"))]
+                      | sort_by(.lastAccessedAt) | reverse
+                      | .[${KEEP}:]
+                      | .[].id"
+            )
+            if [ "${#IDS[@]}" -eq 0 ]; then
+              echo "ref '$ref': already within cap of $KEEP, nothing to delete"
+              continue
+            fi
+            echo "ref '$ref': deleting ${#IDS[@]} older cache(s)"
+            for id in "${IDS[@]}"; do
+              gh cache delete "$id" -R "$REPO" \
+                && deleted_total=$((deleted_total + 1)) \
+                || echo "  (failed to delete $id, may already be gone)"
+            done
+          done
+
+          echo "Deleted $deleted_total cache entry(ies) across ${#REFS[@]} ref(s)."
