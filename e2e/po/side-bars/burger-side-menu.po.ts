@@ -131,6 +131,25 @@ export default class BurgerMenuPo extends ComponentPo {
     return this.self().locator('.body a.option:not(.cluster)');
   }
 
+  /**
+   * Resolve a single global-apps link by its accessible name. Used by the menu-walk
+   * spec to avoid `nth(i)`: positional locators are lazy and re-resolve on every
+   * call, so DOM reorders (extension-injected items) between `getAttribute('href')`
+   * and `click()` can land on a different anchor. The href also shifts with route
+   * context (`/c/local/...` at home vs `/c/_/...` once you enter a global page),
+   * so aria-label is the only identifier stable enough to drive the walk.
+   */
+  globalAppByAriaLabel(label: string): Locator {
+    return this.self().locator(`.body a.option:not(.cluster)[aria-label="${label}"]`).first();
+  }
+
+  /** Snapshot every global-apps link's aria-label (skips entries with no label). */
+  async globalAppAriaLabels(): Promise<string[]> {
+    const raw = await this.globalApps().evaluateAll((els) => els.map((el) => el.getAttribute('aria-label')));
+
+    return raw.filter((l): l is string => !!l);
+  }
+
   /** Get all clusters (pinned, filtered, or not) */
   allClusters(): Locator {
     return this.self().locator('.body .clusters .cluster.selector.option');

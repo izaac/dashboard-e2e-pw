@@ -224,23 +224,32 @@ test.describe('Side Menu: main', () => {
         const burgerMenu = new BurgerMenuPo(page);
         const navErrors = captureNavErrors(page);
 
-        // Set is stable across the walk, so count once (menu already open from beforeEach).
-        const count = await burgerMenu.globalApps().count();
+        // Snapshot aria-labels up front, then iterate by label. Two reasons we
+        // can't drive this loop by `nth(i)` or by snapshotted href:
+        //   - `nth(i)` is a lazy positional locator that re-resolves on every
+        //     method call; DOM reorders between `getAttribute('href')` and
+        //     `click()` can land us on a sibling anchor (observed: settings
+        //     href read, extensions clicked).
+        //   - Menu hrefs shift with route context (`/c/local/...` at home vs
+        //     `/c/_/...` once a global section is open), so a captured href
+        //     stops matching the rendered DOM after the first hop.
+        // aria-label is stable across both, so we lock each hop to one.
+        const labels = await burgerMenu.globalAppAriaLabels();
 
         // Floor, not an exact count: Cluster Management, Users & Authentication, Extensions, and
         // Global Settings are always present for an admin, so a half-rendered menu trips here
         // instead of silently passing on a single link. Kept a floor (not `toBe`) so
         // extension-injected and feature-gated entries can only add to the set, never break it.
-        expect(count).toBeGreaterThanOrEqual(4);
+        expect(labels.length).toBeGreaterThanOrEqual(4);
 
-        for (let i = 0; i < count; i++) {
+        for (const label of labels) {
           // Navigating closes the menu (@click="hide()"); re-open before each hop.
           await burgerMenu.open();
 
           // Global sections are heterogeneous (resource lists, dashboards like
           // Fleet, tabbed pages) and don't all expose an accessible page <h1>,
           // so assert correct routing + no error page + no crash rather than an h1.
-          await clickNavLinkAndAssertLanding(page, burgerMenu.globalApps().nth(i), navErrors, {
+          await clickNavLinkAndAssertLanding(page, burgerMenu.globalAppByAriaLabel(label), navErrors, {
             requireHeading: false,
           });
         }

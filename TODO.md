@@ -112,6 +112,15 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] Qase IDs: to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
+- [ ] **k3d provider (docker-install deprecation prep)**: `PROVIDER=k3d` lands
+  `scripts/k3d-rancher.sh` + compose overlays (branch `k3d-provider`). Phase C
+  outstanding: restart-cycle specs (`feature-flags`, `no-vai-setup`,
+  `oidc-provider-setup`) against k3d — k8s kubelet restart backoff
+  (10s→20s→40s) may exceed current poll budgets; 3-run k3d vs 3-run docker
+  aggregate diff. Watch upstream enabling `scripts/e2e-k3s-start` in their CI
+  (currently experimental, PR #14854 "add but don't use") and re-sync helm
+  values when they do. Docker stays default until head docker images stop
+  publishing.
 
 ## Cluster cleanup hardening (orphaned mgmt clusters)
 

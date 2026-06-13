@@ -13,7 +13,11 @@ in
   };
 
   packages = with pkgs;
-    [kubectl]
+    [
+      kubectl
+      k3d
+      kubernetes-helm
+    ]
     ++ lib.optionals isLinux [chromium];
 
   env =
@@ -31,6 +35,6 @@ in
     if [ ! -f .env ]; then
       echo "WARNING: No .env file — copy .env.example and fill in credentials"
     fi
-    echo "Rancher E2E ready — node, kubectl wired"
+    echo "Rancher E2E ready — node, kubectl, k3d, helm wired"
   '';
 }
