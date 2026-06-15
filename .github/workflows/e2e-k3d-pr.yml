@@ -1,0 +1,244 @@
+name: PR E2E (k3d)
+
+# Validates PRs by running tag-scoped slices of the suite against a Rancher
+# provisioned with the k3d provider (Helm chart on k3s-in-docker), the
+# post-docker-install form. The Rancher image tag, chart line, and matching
+# rancher/dashboard ref are resolved from the branch the PR TARGETS via
+# branches-metadata.json — release branches automatically test against their
+# own rancher line and dashboard line (upstream rancher/dashboard mechanism).
+#
+# Two-job shape (mirrors upstream's split-by-tag test matrix):
+#   build-dashboard  — runs once, resolves targets, builds the dashboard dist
+#                      from the matched ref, publishes it as a workflow
+#                      artifact for the matrix to consume.
+#   e2e-k3d (matrix) — one runner per tag group; each spins up its own k3d
+#                      cluster, downloads the prebuilt dist, mounts it over
+#                      the rancher pod, and runs the suite filtered by tag.
+#
+# Single-cluster per matrix leg (each leg has its own runner): GitHub-hosted
+# standard runners have 4 vCPU / 16 GiB which fits one Rancher comfortably.
+# Sharded two-cluster runs stay a local/self-hosted flow.
+
+on:
+  pull_request:
+    branches: [main, release-*]
+  # Manual override for testing a specific rancher/dashboard ref against the
+  # suite (e.g. validating a dashboard PR from outside the dashboard repo).
+  workflow_dispatch:
+    inputs:
+      dashboard_ref:
+        description: "rancher/dashboard ref to build and mount (overrides branches-metadata.json)"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  K3D_VERSION: v5.8.3
+  K3D_SHA256: dbaa79a76ace7f4ca230a1ff41dc7d8a5036a8ad0309e9c54f9bf3836dbe853e
+
+jobs:
+  build-dashboard:
+    name: Build branch-matched dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      rancher_image_tag: ${{ steps.resolve.outputs.rancher_image_tag }}
+      rancher_release: ${{ steps.resolve.outputs.rancher_release }}
+      dashboard_sha: ${{ steps.resolve.outputs.dashboard_sha }}
+      dashboard_repo: ${{ steps.resolve.outputs.dashboard_repo }}
+      dashboard_ref: ${{ steps.resolve.outputs.dashboard_ref }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve targets from target branch
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BASE="${{ github.base_ref || 'main' }}"
+          ENTRY=$(jq -r --arg b "$BASE" '.branches[$b] // .branches.main' branches-metadata.json)
+          if [ "$(jq -r --arg b "$BASE" '.branches | has($b)' branches-metadata.json)" = "false" ]; then
+            echo "::warning::no branches-metadata.json entry for '$BASE' — falling back to main's mapping"
+          fi
+          TAG=$(echo "$ENTRY" | jq -r '.e2e["rancher-image"].tag')
+          RELEASE=$(echo "$ENTRY" | jq -r '.e2e["chart-release"]')
+          DASHBOARD_REPO=$(echo "$ENTRY" | jq -r '.e2e.dashboard.repo // empty')
+          DASHBOARD_REF="${{ inputs.dashboard_ref }}"
+          if [ -z "$DASHBOARD_REF" ]; then
+            DASHBOARD_REF=$(echo "$ENTRY" | jq -r '.e2e.dashboard.ref // empty')
+          fi
+          # Hard requirement: without a branch-matched dashboard ref the PR is
+          # not actually being validated against branch code — it would just
+          # run against whatever the image's CDN serves at the moment, which
+          # has nothing to do with this PR's target line. Fail fast so the
+          # maintainer adds the mapping instead of getting a misleading green.
+          if [ -z "$DASHBOARD_REPO" ] || [ -z "$DASHBOARD_REF" ]; then
+            echo "::error::branches-metadata.json has no '.e2e.dashboard.{repo,ref}' for '$BASE' (or its fallback). Add the mapping before merging PRs to this branch."
+            exit 1
+          fi
+          # Resolve to a SHA so the build cache key is stable across the day —
+          # the ref (master, release-2.14) moves; the SHA is the artifact we
+          # actually want to reuse, and is also what we check out so the build
+          # is reproducible against a fixed commit.
+          DASHBOARD_SHA=$(gh api "repos/$DASHBOARD_REPO/commits/$DASHBOARD_REF" --jq .sha)
+          if [ -z "$DASHBOARD_SHA" ]; then
+            echo "::error::could not resolve a SHA for $DASHBOARD_REPO@$DASHBOARD_REF"
+            exit 1
+          fi
+          {
+            echo "rancher_image_tag=$TAG"
+            echo "rancher_release=$RELEASE"
+            echo "dashboard_repo=$DASHBOARD_REPO"
+            echo "dashboard_ref=$DASHBOARD_REF"
+            echo "dashboard_sha=$DASHBOARD_SHA"
+          } >> "$GITHUB_OUTPUT"
+          echo "Target branch '$BASE' -> rancher/rancher:$TAG, chart $RELEASE, building $DASHBOARD_REPO@$DASHBOARD_REF (SHA $DASHBOARD_SHA)"
+
+      # Cache the BUILT dist keyed on the dashboard SHA, not the ref. master
+      # moves a few times a day; building from source costs ~8 minutes
+      # (yarn install + vue-cli-service build). With the cache, runs that
+      # share a SHA reuse the dist in seconds. Cache misses still build.
+      - name: Cache dashboard dist
+        id: dashboard-cache
+        uses: actions/cache@v4
+        with:
+          path: dashboard-src/dist
+          key: dashboard-dist-${{ steps.resolve.outputs.dashboard_sha }}
+
+      - name: Checkout matched rancher/dashboard ref
+        if: steps.dashboard-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ steps.resolve.outputs.dashboard_repo }}
+          ref: ${{ steps.resolve.outputs.dashboard_sha }}
+          path: dashboard-src
+          fetch-depth: 1
+
+      - name: Setup node (for dashboard build)
+        if: steps.dashboard-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: dashboard-src/.nvmrc
+          cache: yarn
+          cache-dependency-path: dashboard-src/yarn.lock
+
+      - name: Build dashboard
+        if: steps.dashboard-cache.outputs.cache-hit != 'true'
+        working-directory: dashboard-src
+        run: yarn install --frozen-lockfile && yarn e2e:build
+
+      # Hand the dist to the matrix legs. Always upload regardless of cache
+      # hit — the dist is at dashboard-src/dist either way (cache restore on
+      # hit, fresh build on miss). 1-day retention keeps storage cost
+      # negligible while leaving room for re-run-failed jobs the same day.
+      - name: Upload dashboard dist
+        uses: actions/upload-artifact@v5
+        with:
+          name: dashboard-dist
+          path: dashboard-src/dist
+          retention-days: 1
+          if-no-files-found: error
+
+  e2e-k3d:
+    name: "${{ matrix.tag.name }} via k3d (branch-matched rancher)"
+    needs: build-dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      # Each tag group is independent — one slice failing should not skip the
+      # rest, both ran their own cluster and each gives signal on its area.
+      fail-fast: false
+      matrix:
+        tag:
+          # Demonstrates the upstream split-by-tag pattern. Add another entry
+          # here to fan out further; storage and compute cost scale linearly
+          # (build-dashboard runs once, only the matrix legs duplicate).
+          - { name: "@generic",    grep: "@generic" }
+          - { name: "@navigation", grep: "@navigation" }
+    env:
+      # k3d-rancher.sh reads these to pick the chart line and image tag for
+      # the cluster, so the matrix legs target whatever the resolve step
+      # locked in.
+      RANCHER_IMAGE_TAG: ${{ needs.build-dashboard.outputs.rancher_image_tag }}
+      RANCHER_RELEASE: ${{ needs.build-dashboard.outputs.rancher_release }}
+      DASHBOARD_SHA: ${{ needs.build-dashboard.outputs.dashboard_sha }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download dashboard dist
+        uses: actions/download-artifact@v5
+        with:
+          name: dashboard-dist
+          path: dashboard-src/dist
+
+      - name: Install k3d (pinned + checksum)
+        run: |
+          curl -fsSLo k3d "https://github.com/k3d-io/k3d/releases/download/${K3D_VERSION}/k3d-linux-amd64"
+          echo "${K3D_SHA256}  k3d" | sha256sum -c -
+          chmod +x k3d
+          sudo mv k3d /usr/local/bin/k3d
+          k3d version
+
+      - name: Pre-create artifact dirs with runner ownership
+        run: mkdir -p test-results playwright-report
+
+      - name: Provision rancher on k3d (mount branch-matched dashboard)
+        env:
+          DASHBOARD_DIST: ${{ github.workspace }}/dashboard-src/dist
+        run: bash scripts/k3d-rancher.sh up e2e
+
+      # Resource snapshot after rancher is up, before tests run. Cheap and
+      # gives us concrete numbers to decide whether the standard runner (4
+      # vCPU / 16 GiB / 14 GB SSD) has enough headroom — locally we saw
+      # ~3 GiB per cluster but GH-hosted has docker/system overhead on top.
+      - name: Diagnostics — runner + cluster resources
+        if: always()
+        run: |
+          echo "--- host: free -h ---"
+          free -h
+          echo "--- host: df -h ---"
+          df -h /
+          echo "--- docker system df ---"
+          docker system df
+          echo "--- k3d node container stats ---"
+          docker stats --no-stream --format '{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}' || true
+          KUBECONFIG=$(k3d kubeconfig write e2e)
+          echo "--- pod resource usage (metrics-server) ---"
+          kubectl --kubeconfig "$KUBECONFIG" top pods -A 2>/dev/null || echo "metrics-server not yet ready"
+          echo "--- cattle-system pod status ---"
+          kubectl --kubeconfig "$KUBECONFIG" -n cattle-system get pods -o wide || true
+
+      - name: Run ${{ matrix.tag.name }} tests
+        run: HOST_UID=$(id -u) HOST_GID=$(id -g) bash scripts/k3d-run.sh
+        env:
+          GREP_TAGS: ${{ matrix.tag.grep }}
+          # Strip credential-bearing artifacts before they hit a public artifact
+          # bucket: traces capture Authorization headers and session cookies;
+          # videos capture the whole login flow.
+          TEST_NO_VIDEOS: "true"
+          TEST_NO_TRACES: "true"
+
+      - name: Capture rancher pod logs
+        if: always()
+        run: bash scripts/k3d-rancher.sh logs e2e > rancher-e2e.log 2>&1 || true
+
+      - name: Upload failure artifacts
+        uses: actions/upload-artifact@v5
+        # Only on failure — green runs leave nothing in storage. Public-repo
+        # storage above the 500 MB free quota is billed at $0.25/GB/month, so
+        # uploading rancher logs and screenshots on every green run adds up.
+        if: failure()
+        with:
+          # Matrix-namespaced so the two legs do not collide on the same name.
+          name: e2e-k3d-${{ matrix.tag.name }}
+          path: |
+            test-results/**/*.png
+            rancher-e2e.log
+          retention-days: 3
+
+      - name: Teardown
+        if: always()
+        run: bash scripts/k3d-rancher.sh down e2e

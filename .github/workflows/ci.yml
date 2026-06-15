@@ -36,34 +36,8 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
-  smoke:
-    name: Smoke Tests (@generic)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Pre-create artifact dirs with runner ownership
-        run: mkdir -p test-results playwright-report
-
-      - name: Run @generic tests against live Rancher
-        run: HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build --abort-on-container-exit --exit-code-from tests --no-attach rancher
-        env:
-          GREP_TAGS: "@generic"
-          # Strip credential-bearing artifacts before they hit a public artifact
-          # bucket: traces capture Authorization headers and session cookies;
-          # videos capture the whole login flow.
-          TEST_NO_VIDEOS: "true"
-          TEST_NO_TRACES: "true"
-
-      - name: Upload failure screenshots
-        uses: actions/upload-artifact@v5
-        if: always()
-        with:
-          name: smoke-screenshots
-          path: test-results/**/*.png
-          retention-days: 7
-
-      - name: Teardown
-        if: always()
-        run: docker compose down -v
+  # The docker-compose Smoke Tests job was superseded by the k3d-based
+  # PR E2E workflow (.github/workflows/e2e-k3d-pr.yml), which also pins
+  # the rancher image to the PR's target branch and overrides the UI
+  # with the matching dashboard build. The docker single-container
+  # install is being deprecated upstream so this lane has no future.

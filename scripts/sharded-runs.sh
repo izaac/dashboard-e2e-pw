@@ -57,7 +57,19 @@ if [ -z "$OUT_DIR" ]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-COMPOSE_FLAGS=(-f docker-compose.sharded.yml -f docker-compose.sharded.nix.yml)
+
+# PROVIDER selects how the two Rancher instances are provisioned:
+#   docker (default) — privileged rancher containers from the compose file
+#   k3d              — one k3d cluster per instance via scripts/k3d-rancher.sh
+PROVIDER="${PROVIDER:-docker}"
+
+if [ "$PROVIDER" = "k3d" ]; then
+  # No nix override: the rancher-nft iptables shim only exists for the docker
+  # rancher image; under k3d, k3s runs inside rancher/k3s node images.
+  COMPOSE_FLAGS=(-f docker-compose.sharded.yml -f docker-compose.sharded.k3d.yml)
+else
+  COMPOSE_FLAGS=(-f docker-compose.sharded.yml -f docker-compose.sharded.nix.yml)
+fi
 
 mkdir -p "$OUT_DIR"
 cd "$REPO_ROOT"
@@ -88,6 +100,23 @@ ensure_rancher_healthy() {
   return 1
 }
 
+# k3d twin of ensure_rancher_healthy: a failed bring-up is healed by deleting
+# and recreating the whole cluster — strictly stronger than the volume nuke
+# (fresh etcd, fresh PVs, fresh loadbalancer).
+ensure_k3d_rancher_ready() {
+  local inst="$1"
+  local attempt
+  for attempt in 1 2 3; do
+    if bash "$(dirname "$0")/k3d-rancher.sh" up "$inst"; then
+      return 0
+    fi
+    echo "--- $inst not ready (attempt $attempt/3) — deleting cluster + recreating ---"
+    bash "$(dirname "$0")/k3d-rancher.sh" down "$inst" || true
+  done
+  echo "FATAL: $inst never reached ready after 3 attempts"
+  return 1
+}
+
 for i in $(seq 1 "$N"); do
   RUN_DIR="$OUT_DIR/run-$i"
   mkdir -p "$RUN_DIR"
@@ -97,32 +126,59 @@ for i in $(seq 1 "$N"); do
     date
 
     echo "--- Tear down ---"
-    docker compose "${COMPOSE_FLAGS[@]}" down -v
-
-    echo "--- Remove cached images (incl. upstream base) ---"
-    docker rmi rancher-nft:local rancher/rancher:v2.14-head rancher/rancher:head docker.io/rancher/rancher:head 2>/dev/null || true
+    docker compose "${COMPOSE_FLAGS[@]}" down -v 2>/dev/null || true
+    if [ "$PROVIDER" = "k3d" ]; then
+      bash "$(dirname "$0")/k3d-rancher.sh" down e2e-1 || true
+      bash "$(dirname "$0")/k3d-rancher.sh" down e2e-2 || true
+    else
+      echo "--- Remove cached images (incl. upstream base) ---"
+      docker rmi rancher-nft:local rancher/rancher:v2.14-head rancher/rancher:head docker.io/rancher/rancher:head 2>/dev/null || true
+    fi
 
     echo "--- Clear test-results + blob-report ---"
     rm -rf test-results blob-report
 
-    echo "--- Pull fresh upstream rancher head image ---"
-    docker compose "${COMPOSE_FLAGS[@]}" pull rancher-1 rancher-2 2>/dev/null || \
-      docker compose "${COMPOSE_FLAGS[@]}" pull 2>/dev/null || true
+    if [ "$PROVIDER" = "docker" ]; then
+      echo "--- Pull fresh upstream rancher head image ---"
+      docker compose "${COMPOSE_FLAGS[@]}" pull rancher-1 rancher-2 2>/dev/null || \
+        docker compose "${COMPOSE_FLAGS[@]}" pull 2>/dev/null || true
+    fi
 
-    echo "--- Build (with --pull to force fresh FROM layer) ---"
-    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" build --pull
+    if [ "$PROVIDER" = "k3d" ]; then
+      echo "--- Provision k3d rancher clusters e2e-1 and e2e-2 (wait ready) ---"
+      # Sequential on purpose: booting both ranchers in parallel on one host
+      # pressures the multiclustermanager-start leader race — same stagger the
+      # docker path gets from rancher-2's depends_on. Image freshness comes
+      # from rancherImagePullPolicy=Always plus a fresh cluster per run, so
+      # the docker path's rmi+pull steps have no k3d equivalent.
+      ensure_k3d_rancher_ready e2e-1
+      ensure_k3d_rancher_ready e2e-2
 
-    echo "--- Bring up rancher-1 and rancher-2 (wait healthy) ---"
-    # Two-phase up: bring the ranchers up before the shards so compose's
-    # first-pass dependency check doesn't see a transient startup FATAL and
-    # abort the whole run. ensure_rancher_healthy then heals the poisoned-
-    # volume crash loop that `restart: unless-stopped` cannot recover from.
-    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d rancher-1 rancher-2
-    ensure_rancher_healthy rancher-1
-    ensure_rancher_healthy rancher-2
+      SHARD1_TEST_BASE_URL="$(. /tmp/k3d-rancher-e2e-1.env && echo "$TEST_BASE_URL")"
+      SHARD2_TEST_BASE_URL="$(. /tmp/k3d-rancher-e2e-2.env && echo "$TEST_BASE_URL")"
+      export SHARD1_TEST_BASE_URL SHARD2_TEST_BASE_URL
 
-    echo "--- Bring up shards + merge ---"
-    GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d
+      echo "--- Build (with --pull to force fresh FROM layer) ---"
+      GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" build --pull
+
+      echo "--- Bring up shards + merge ---"
+      GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d
+    else
+      echo "--- Build (with --pull to force fresh FROM layer) ---"
+      GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" build --pull
+
+      echo "--- Bring up rancher-1 and rancher-2 (wait healthy) ---"
+      # Two-phase up: bring the ranchers up before the shards so compose's
+      # first-pass dependency check doesn't see a transient startup FATAL and
+      # abort the whole run. ensure_rancher_healthy then heals the poisoned-
+      # volume crash loop that `restart: unless-stopped` cannot recover from.
+      GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d rancher-1 rancher-2
+      ensure_rancher_healthy rancher-1
+      ensure_rancher_healthy rancher-2
+
+      echo "--- Bring up shards + merge ---"
+      GREP_TAGS="$GREP_TAGS_ARG" docker compose "${COMPOSE_FLAGS[@]}" up -d
+    fi
 
     echo "--- Wait for merge ---"
     start_ts=$(date +%s)
@@ -133,9 +189,17 @@ for i in $(seq 1 "$N"); do
 
   echo "--- Run $i: collect artifacts ---" >> "$RUN_DIR/log.txt"
 
-  for c in merge-1 rancher-1-1 rancher-2-1 shard-1-1 shard-2-1; do
-    docker logs "dashboard-e2e-pw-$c" > "$RUN_DIR/${c%-1}.log" 2>&1 || true
-  done
+  if [ "$PROVIDER" = "k3d" ]; then
+    for c in merge-1 shard-1-1 shard-2-1; do
+      docker logs "dashboard-e2e-pw-$c" > "$RUN_DIR/${c%-1}.log" 2>&1 || true
+    done
+    bash "$(dirname "$0")/k3d-rancher.sh" logs e2e-1 > "$RUN_DIR/rancher-1.log" 2>&1 || true
+    bash "$(dirname "$0")/k3d-rancher.sh" logs e2e-2 > "$RUN_DIR/rancher-2.log" 2>&1 || true
+  else
+    for c in merge-1 rancher-1-1 rancher-2-1 shard-1-1 shard-2-1; do
+      docker logs "dashboard-e2e-pw-$c" > "$RUN_DIR/${c%-1}.log" 2>&1 || true
+    done
+  fi
 
   docker run --rm \
     -v dashboard-e2e-pw_blob-reports:/blobs:ro \

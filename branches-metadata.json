@@ -1,0 +1,19 @@
+{
+  "_comment": "Maps repo branches to the Rancher image, chart line and rancher/dashboard ref their e2e runs target, mirroring upstream rancher/dashboard's branches-metadata.json. CI resolves a PR's entry from its TARGET branch; unknown branches fall back to main's entry. The dashboard ref is mandatory: it gets checked out, built and mounted over the rancher pod's embedded dashboard so PRs validate against the matching dashboard source line. The PR workflow hard fails if no dashboard mapping resolves, because falling back to the image's CDN dashboard would mean validating against unrelated code.",
+  "branches": {
+    "main": {
+      "e2e": {
+        "rancher-image": {
+          "namespace": "rancher",
+          "name": "rancher",
+          "tag": "head"
+        },
+        "chart-release": "2.15",
+        "dashboard": {
+          "repo": "rancher/dashboard",
+          "ref": "master"
+        }
+      }
+    }
+  }
+}

@@ -392,6 +392,56 @@ snapshots to the matching `prime/` or `community/` subdirectory automatically.
 | `HOST_UID`         | `1000`                               | UID the tests container runs as (artifacts owned by host user) |
 | `HOST_GID`         | `100`                                | GID the tests container runs as                       |
 
+### k3d provider (preview)
+
+Rancher is deprecating the docker single-container install; the long-term form
+is the Helm chart on Kubernetes. `PROVIDER=k3d` provisions each Rancher
+instance as its own k3d cluster (k3s-in-docker) with the official chart,
+mirroring upstream's experimental `e2e-k3s-start`. Docker remains the default
+provider until the docker images stop publishing.
+
+```bash
+# Tooling comes from the devenv shell (k3d, helm, kubectl)
+devenv shell
+
+# Single instance: provision + run tests in one go
+GREP_TAGS='@generic' scripts/k3d-run.sh
+
+# Or step by step
+bash scripts/k3d-rancher.sh up e2e         # create cluster, install rancher, wait ready
+bash scripts/k3d-rancher.sh env e2e        # print TEST_BASE_URL + network handoff
+bash scripts/k3d-rancher.sh logs e2e       # rancher + webhook pod logs
+bash scripts/k3d-rancher.sh down e2e       # delete the cluster
+
+# Sharded (two k3d clusters, e2e-1 + e2e-2)
+PROVIDER=k3d scripts/sharded-runs.sh -n 1 -t '@generic'
+```
+
+Key differences from the docker provider:
+
+- The dashboard URL is `https://<loadbalancer-ip>.sslip.io/dashboard` (written
+  to `/tmp/k3d-rancher-<instance>.env`); host ports 8443+N also map per
+  instance for manual poking.
+- No NixOS `rancher-nft` overlay — k3s runs inside `rancher/k3s` node images.
+- A failed bring-up heals by cluster delete + recreate (replaces the docker
+  path's poisoned-volume nuke).
+- Tunables: `RANCHER_RELEASE` (chart line on charts.optimus, default `2.15`),
+  `RANCHER_IMAGE_TAG` (`head`), `K3S_IMAGE`, `CERT_MANAGER_VERSION`,
+  `AUDIT_LOG=1` for the audit sidecar. If charts.optimus is unreachable, use
+  `https://releases.rancher.com/server-charts/latest` with `--devel`.
+- PR-build UI mode: `DASHBOARD_DIST=/path/to/dist bash scripts/k3d-rancher.sh up e2e`
+  mounts a locally built dashboard over the pod's UI (hostPath through the k3d
+  node) and sets `CATTLE_UI_OFFLINE_PREFERRED=true` — the k3d equivalent of
+  upstream's PR-branch testing, but restart-proof. Default off: the suite
+  tests the image's CDN-resolved dashboard.
+- If your DNS blocks `sslip.io`, the `up` preflight fails fast; see the
+  script header for the `extra_hosts` escape hatch.
+- Footprint (measured 2026-06-10, head, tests mid-run): ~3 GiB RAM per
+  Rancher cluster all-in (k3s node + rancher + fleet + turtles +
+  cert-manager + traefik), ~26 MiB per loadbalancer, ~0.6 GiB per running
+  shard. A full sharded run totals ~6.5 GiB. Cold provision to ready takes
+  ~8 minutes per instance (image pulls included).
+
 ---
 
 ## 5. Docker Gotchas

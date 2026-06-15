@@ -1,0 +1,38 @@
+# PROVIDER=k3d overlay for the single-stack flow.
+# Usage (via scripts/k3d-run.sh):
+#   scripts/k3d-rancher.sh up e2e
+#   source /tmp/k3d-rancher-e2e.env
+#   docker compose -f docker-compose.yml -f docker-compose.k3d.yml run --rm tests
+#
+# Rancher runs in a k3d cluster (scripts/k3d-rancher.sh), not in compose; the
+# tests container attaches to the k3d network and targets the sslip.io hostname
+# from the handoff env file.
+
+services:
+  rancher:
+    profiles: ["docker-provider"]
+
+  tests:
+    # Rancher readiness is guaranteed by k3d-rancher.sh before compose run.
+    depends_on: !reset []
+    networks:
+      k3d-e2e:
+    environment:
+      TEST_BASE_URL: ${TEST_BASE_URL:?run scripts/k3d-rancher.sh up e2e and source its env file}
+      # CI artifact hygiene flags (see .github/workflows/e2e-k3d-pr.yml) — the
+      # base compose file does not forward them.
+      TEST_NO_VIDEOS: ${TEST_NO_VIDEOS:-}
+      TEST_NO_TRACES: ${TEST_NO_TRACES:-}
+    # CI checks rancher/dashboard out at <repo>/dashboard-src to build the UI
+    # we mount into the rancher pod. That dir is on the host and is bind-mounted
+    # into /app along with the rest of the repo, but its cypress spec files
+    # match our testMatch globs (`e2e/tests/.../**/*.spec.ts`) and would be
+    # loaded by Playwright as test files. Anonymous volume here shadows it
+    # inside the container so Playwright never sees it. Same trick as
+    # /app/node_modules in the base compose file.
+    volumes:
+      - /app/dashboard-src
+
+networks:
+  k3d-e2e:
+    external: true
