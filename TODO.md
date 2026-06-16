@@ -112,6 +112,18 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] Qase IDs: to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
+- [x] **External Rancher access for cloud-driver provisioning** (branch
+  `external-rancher-access`): `EXTERNAL=true scripts/k3d-rancher.sh up e2e`
+  fronts the k3d Rancher with a sha256-pinned cloudflared quick tunnel, pins
+  `server-url` to the public host, and sets `agent-tls-mode=system-store` so a
+  downstream cloud node can register back through the tunnel. `scripts/k3d-run.sh`
+  defaults `GREP_TAGS=@provisioning` and forwards AWS/Azure/GKE/custom-node creds
+  in that mode. Cold-start flake (first provisioning reconcile lags the create
+  spec) is absorbed by a throwaway imported-cluster warm-up in `do_wait`.
+  Validated end-to-end: Amazon EC2 RKE2 create passes cold with `retries=0`, no
+  orphan EC2 (afterAll teardown). Not wired into PR checks (needs real cloud
+  creds + spend); run manually. See `docs/RUNNING-TESTS.md` k3d external-access
+  section.
 - [ ] **k3d provider (docker-install deprecation prep)**: `PROVIDER=k3d` lands
   `scripts/k3d-rancher.sh` + compose overlays (branch `k3d-provider`). Phase C
   outstanding: restart-cycle specs (`feature-flags`, `no-vai-setup`,

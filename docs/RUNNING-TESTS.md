@@ -471,6 +471,49 @@ Key differences from the docker provider:
   shard. A full sharded run totals ~6.5 GiB. Cold provision to ready takes
   ~8 minutes per instance (image pulls included).
 
+#### External access for provisioning tests
+
+Cluster-provisioning specs (e.g. `@provisioning`, and the AWS/Azure/GKE/custom-node
+guarded tests) spin up a real downstream node on a cloud provider. That node lives on
+the public internet and must register back to your Rancher, but the default k3d URL
+(`https://<lb-ip>.sslip.io`) is only routable inside Docker. `EXTERNAL=true` solves
+this: `up` starts a [cloudflared](https://github.com/cloudflare/cloudflared) quick
+tunnel, installs Rancher on the allocated public host, pins `server-url` to it, and
+sets `agent-tls-mode=system-store` so the node agent trusts Cloudflare's edge cert.
+
+```bash
+# One-shot: tunnel + provision + run the provisioning specs against it.
+# EXTERNAL=true auto-defaults GREP_TAGS to @provisioning.
+EXTERNAL=true \
+AWS_ACCESS_KEY_ID=...  AWS_SECRET_ACCESS_KEY=... \
+scripts/k3d-run.sh
+
+# Or step by step.
+EXTERNAL=true bash scripts/k3d-rancher.sh up e2e   # auto-tunnel + external install
+bash scripts/k3d-rancher.sh down e2e               # tears the tunnel down too
+```
+
+Notes:
+
+- `cloudflared` is fetched on demand (pinned version, sha256-verified) and cached
+  under `~/.cache/dashboard-e2e/`. No manual install, no `SSL_CERT_FILE` exports.
+- On a cold Rancher the first provisioning reconcile lags while the controller
+  warms its caches, which can flake the first cluster-create spec. External
+  bring-up therefore primes the provisioning controller with one throwaway
+  imported cluster (no machines, zero cloud cost) so the first real test create
+  does not race that cold start.
+- `EXTERNAL=true scripts/k3d-run.sh` defaults `GREP_TAGS` to `@provisioning`
+  (the repo `.env` otherwise filters `@needsInfra`/`@provisioning` out). Pass your
+  own `GREP_TAGS` to override.
+- The quick-tunnel host is random per run and dies when the tunnel process stops, so
+  `down` always cleans it up. CI legs each get their own unique host with no collision.
+- Bring your own host instead of the auto tunnel with
+  `EXTERNAL_HOSTNAME=rancher.example.com` (named tunnel / custom DNS).
+- This is **not wired into PR checks** — it needs real cloud credentials and incurs
+  cloud spend. Run it manually when you have creds.
+- Set the AWS machine-pool **region** explicitly on cluster create; it defaults
+  separately from the cloud credential.
+
 ---
 
 ## 5. Docker Gotchas
@@ -541,7 +584,10 @@ Or persist them in `.env`.
 
 ### Cloud credentials (for `@needsInfra` tests)
 
-These are only needed if you're running tests tagged `@needsInfra`. Most people can skip these entirely.
+These are only needed if you're running tests tagged `@needsInfra` or
+`@provisioning`. Most people can skip these entirely. Pair them with
+`EXTERNAL=true` (see [the k3d external-access section](#external-access-for-provisioning-tests))
+so the downstream node can reach Rancher.
 
 | Variable                    | What it's for       |
 | --------------------------- | ------------------- |
@@ -553,6 +599,9 @@ These are only needed if you're running tests tagged `@needsInfra`. Most people 
 | `GKE_SERVICE_ACCOUNT`       | GKE provisioning    |
 | `CUSTOM_NODE_IP`            | Custom node tests   |
 | `CUSTOM_NODE_KEY`           | Custom node tests   |
+| `CUSTOM_NODE_USER`          | Custom node SSH user (default `ec2-user`)                            |
+| `EXTERNAL`                  | `true` => `up` tunnels Rancher to a public host so nodes can register |
+| `EXTERNAL_HOSTNAME`         | Public host to install on instead of the auto quick tunnel           |
 
 ---
 
