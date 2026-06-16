@@ -229,7 +229,7 @@ test.describe('Home Page', () => {
       await expect(link).toHaveAttribute('href', expect.stringContaining('getting-started/overview'));
     });
 
-    test('can click on Commercial Support link', { tag: ['@noPrime'] }, async ({ page, login }) => {
+    test('can click on Rancher Prime link', { tag: ['@noPrime'] }, async ({ page, login }) => {
       await login();
 
       const homePage = new HomePagePo(page);
@@ -237,8 +237,8 @@ test.describe('Home Page', () => {
       await homePage.goTo();
       await homePage.waitForPage();
 
-      await homePage.clickSupportLink(5);
-      await expect(page).toHaveURL(/\/support/);
+      await homePage.clickSupportLink(5, true);
+      await expect(page).toHaveURL(/suse\.com\/products\/rancher/);
     });
 
     test(

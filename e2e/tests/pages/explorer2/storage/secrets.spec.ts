@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import { SecretsListPagePo } from '@/e2e/po/pages/explorer/secrets.po';
 
-test.describe('Secrets', { tag: ['@explorer2', '@adminUser'] }, () => {
+test.describe('Secrets', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test.beforeEach(async ({ login }) => {
     await login();
   });

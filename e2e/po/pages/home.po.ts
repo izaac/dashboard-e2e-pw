@@ -113,7 +113,9 @@ export default class HomePagePo extends PagePo {
     const link = this.supportLinks().nth(index);
 
     if (isNewTab) {
-      await link.filter({ has: this.page.locator('[target]') }).waitFor();
+      // The anchor itself carries the target attribute, so match the link that
+      // also satisfies [target] (a descendant `has:` filter would never match).
+      await link.and(this.page.locator('[target]')).waitFor();
       // Remove target attribute so we stay in the same tab (Playwright limitation like Cypress)
       await link.evaluate((el) => el.removeAttribute('target'));
       await link.click();

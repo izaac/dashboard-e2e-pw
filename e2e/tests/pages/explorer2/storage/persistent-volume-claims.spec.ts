@@ -2,7 +2,7 @@ import { test, expect } from '@/support/fixtures';
 import { PersistentVolumeClaimsPagePo } from '@/e2e/po/pages/explorer/persistent-volume-claims.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
-test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser'] }, () => {
+test.describe('PersistentVolumeClaims', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test.describe('List', { tag: ['@noVai', '@adminUser'] }, () => {
     test('validate persistent volume claims table headers', async ({ page, login }) => {
       await login();

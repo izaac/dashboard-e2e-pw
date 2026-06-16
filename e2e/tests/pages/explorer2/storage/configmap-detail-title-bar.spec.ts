@@ -13,7 +13,7 @@ const variants = [
   },
 ];
 
-test.describe('ConfigMap detail title bar', { tag: ['@explorer2', '@adminUser'] }, () => {
+test.describe('ConfigMap detail title bar', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test.beforeEach(async ({ login }) => {
     await login();
   });
