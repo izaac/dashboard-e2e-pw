@@ -45,57 +45,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     outputs:
-      rancher_image_tag: ${{ steps.resolve.outputs.rancher_image_tag }}
-      rancher_release: ${{ steps.resolve.outputs.rancher_release }}
-      dashboard_sha: ${{ steps.resolve.outputs.dashboard_sha }}
-      dashboard_repo: ${{ steps.resolve.outputs.dashboard_repo }}
-      dashboard_ref: ${{ steps.resolve.outputs.dashboard_ref }}
+      rancher_image_tag: ${{ steps.resolve.outputs.RANCHER_IMAGE_TAG }}
+      rancher_release: ${{ steps.resolve.outputs.RANCHER_RELEASE }}
+      dashboard_sha: ${{ steps.resolve.outputs.DASHBOARD_SHA }}
     steps:
       - uses: actions/checkout@v5
 
+      # Resolve the branch-matched targets with the same script developers run
+      # locally, so CI and local share one implementation (scripts/k3d-e2e.sh).
+      # It reads branches-metadata.json, falls back to main for unknown
+      # branches, and hard-fails when no dashboard mapping resolves.
       - name: Resolve targets from target branch
         id: resolve
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          BASE="${{ github.base_ref || 'main' }}"
-          ENTRY=$(jq -r --arg b "$BASE" '.branches[$b] // .branches.main' branches-metadata.json)
-          if [ "$(jq -r --arg b "$BASE" '.branches | has($b)' branches-metadata.json)" = "false" ]; then
-            echo "::warning::no branches-metadata.json entry for '$BASE' — falling back to main's mapping"
-          fi
-          TAG=$(echo "$ENTRY" | jq -r '.e2e["rancher-image"].tag')
-          RELEASE=$(echo "$ENTRY" | jq -r '.e2e["chart-release"]')
-          DASHBOARD_REPO=$(echo "$ENTRY" | jq -r '.e2e.dashboard.repo // empty')
-          DASHBOARD_REF="${{ inputs.dashboard_ref }}"
-          if [ -z "$DASHBOARD_REF" ]; then
-            DASHBOARD_REF=$(echo "$ENTRY" | jq -r '.e2e.dashboard.ref // empty')
-          fi
-          # Hard requirement: without a branch-matched dashboard ref the PR is
-          # not actually being validated against branch code — it would just
-          # run against whatever the image's CDN serves at the moment, which
-          # has nothing to do with this PR's target line. Fail fast so the
-          # maintainer adds the mapping instead of getting a misleading green.
-          if [ -z "$DASHBOARD_REPO" ] || [ -z "$DASHBOARD_REF" ]; then
-            echo "::error::branches-metadata.json has no '.e2e.dashboard.{repo,ref}' for '$BASE' (or its fallback). Add the mapping before merging PRs to this branch."
-            exit 1
-          fi
-          # Resolve to a SHA so the build cache key is stable across the day —
-          # the ref (master, release-2.14) moves; the SHA is the artifact we
-          # actually want to reuse, and is also what we check out so the build
-          # is reproducible against a fixed commit.
-          DASHBOARD_SHA=$(gh api "repos/$DASHBOARD_REPO/commits/$DASHBOARD_REF" --jq .sha)
-          if [ -z "$DASHBOARD_SHA" ]; then
-            echo "::error::could not resolve a SHA for $DASHBOARD_REPO@$DASHBOARD_REF"
-            exit 1
-          fi
-          {
-            echo "rancher_image_tag=$TAG"
-            echo "rancher_release=$RELEASE"
-            echo "dashboard_repo=$DASHBOARD_REPO"
-            echo "dashboard_ref=$DASHBOARD_REF"
-            echo "dashboard_sha=$DASHBOARD_SHA"
-          } >> "$GITHUB_OUTPUT"
-          echo "Target branch '$BASE' -> rancher/rancher:$TAG, chart $RELEASE, building $DASHBOARD_REPO@$DASHBOARD_REF (SHA $DASHBOARD_SHA)"
+          BASE: ${{ github.base_ref || 'main' }}
+          DASHBOARD_REF: ${{ inputs.dashboard_ref }}
+        run: scripts/k3d-e2e.sh resolve | tee -a "$GITHUB_OUTPUT"
 
       # Cache the BUILT dist keyed on the dashboard SHA, not the ref. master
       # moves a few times a day; building from source costs ~8 minutes
@@ -106,29 +72,18 @@ jobs:
         uses: actions/cache@v4
         with:
           path: dashboard-src/dist
-          key: dashboard-dist-${{ steps.resolve.outputs.dashboard_sha }}
+          key: dashboard-dist-${{ steps.resolve.outputs.DASHBOARD_SHA }}
 
-      - name: Checkout matched rancher/dashboard ref
-        if: steps.dashboard-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v5
-        with:
-          repository: ${{ steps.resolve.outputs.dashboard_repo }}
-          ref: ${{ steps.resolve.outputs.dashboard_sha }}
-          path: dashboard-src
-          fetch-depth: 1
-
-      - name: Setup node (for dashboard build)
-        if: steps.dashboard-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: dashboard-src/.nvmrc
-          cache: yarn
-          cache-dependency-path: dashboard-src/yarn.lock
-
+      # scripts/k3d-e2e.sh build clones the matched ref into dashboard-src and
+      # builds the dist inside the node image (FHS toolchain, matches local) —
+      # exactly the command a developer runs locally. Skipped on cache hit.
       - name: Build dashboard
         if: steps.dashboard-cache.outputs.cache-hit != 'true'
-        working-directory: dashboard-src
-        run: yarn install --frozen-lockfile && yarn e2e:build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ github.base_ref || 'main' }}
+          DASHBOARD_REF: ${{ inputs.dashboard_ref }}
+        run: scripts/k3d-e2e.sh build
 
       # Hand the dist to the matrix legs. Always upload regardless of cache
       # hit — the dist is at dashboard-src/dist either way (cache restore on

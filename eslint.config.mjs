@@ -14,6 +14,7 @@ export default [
       'playwright-report/**',
       'blob-report/**',
       'browser-logs/**',
+      'dashboard-src/**',
     ],
   },
   {
