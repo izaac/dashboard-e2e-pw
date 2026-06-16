@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
 
-test.describe('Explorer Index', { tag: ['@explorer2', '@adminUser'] }, () => {
+test.describe('Explorer Index', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test('can redirect', async ({ page, login }) => {
     await login();
     const indexPage = new PagePo(page, '/c/local/');

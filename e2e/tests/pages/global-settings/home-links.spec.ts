@@ -80,9 +80,9 @@ test.describe('Home Links', () => {
 
       await homePage.goTo();
 
-      // "SUSE Application Collection" for Rancher Prime, otherwise "Commercial Support"
+      // "SUSE Application Collection" for Rancher Prime, otherwise "Rancher Prime"
       const version = await rancherApi.getRancherVersion();
-      const expectedValue = version.RancherPrime === 'true' ? 'SUSE Application Collection' : 'Commercial Support';
+      const expectedValue = version.RancherPrime === 'true' ? 'SUSE Application Collection' : 'Rancher Prime';
       const supportLinks = homeLinksPage.supportLinks();
 
       await expect(supportLinks).toHaveCount(1);

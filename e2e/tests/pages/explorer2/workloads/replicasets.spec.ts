@@ -3,7 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
-test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser'] }, () => {
+test.describe('Cluster Explorer', { tag: ['@explorer2', '@adminUser', '@standardUser'] }, () => {
   test.describe('Workloads', () => {
     test.describe('Replicasets', () => {
       test('should not be able to rollback a replicaset', async ({ page, login, rancherApi }) => {

@@ -4,7 +4,7 @@ import ResourceYamlPo from '@/e2e/po/components/resource-yaml.po';
 
 const namespace = 'default';
 
-test.describe('Yaml Editor', () => {
+test.describe('Yaml Editor', { tag: ['@components', '@adminUser', '@standardUser'] }, () => {
   let name: string;
 
   test.beforeEach(async ({ login, rancherApi }) => {

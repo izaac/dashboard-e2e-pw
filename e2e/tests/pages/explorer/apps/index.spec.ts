@@ -1,7 +1,7 @@
 import { test, expect } from '@/support/fixtures';
 import PagePo from '@/e2e/po/pages/page.po';
 
-test.describe('Apps Index', { tag: ['@explorer', '@adminUser'] }, () => {
+test.describe('Apps Index', { tag: ['@explorer', '@adminUser', '@standardUser'] }, () => {
   test.beforeEach(async ({ login }) => {
     await login();
   });

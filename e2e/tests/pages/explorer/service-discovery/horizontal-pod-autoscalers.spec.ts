@@ -5,7 +5,7 @@ import {
   horizontalpodautoscalerGetResponseSmallSet,
 } from '@/e2e/blueprints/explorer/workloads/service-discovery/horizontal-pod-autoscalers-get';
 
-test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser'] }, () => {
+test.describe('HorizontalPodAutoscalers', { tag: ['@explorer', '@adminUser', '@standardUser'] }, () => {
   test.describe('List', { tag: ['@noVai'] }, () => {
     test('validate HorizontalPodAutoscalers table in empty state', async ({ page, login }) => {
       await login();
