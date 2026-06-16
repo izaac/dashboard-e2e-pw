@@ -211,6 +211,42 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   `machineProvider` TypeError. Our `preferences.spec.ts` "specific cluster" test
   skip-guards on the empty list until fixed.
 
+## External Rancher access for provisioning tests (future)
+
+The k3d wrapper (`scripts/k3d-rancher.sh`) currently sets Rancher's
+`server-url`/`hostname` to `<lb_ip>.sslip.io`, where `lb_ip` is the
+docker-internal load-balancer IP (`172.18.x.x`, RFC1918). That address only
+routes from the host and from inside the k3d docker network, so it is fine for
+the UI tests we run today but blocks real provisioning: a downstream
+`cattle-cluster-agent` reads `server-url`, then must resolve, route to, and
+TLS-validate it to register and turn the cluster Active. A private docker IP is
+unreachable from any node that is not on that docker network.
+
+sslip.io already mints a valid hostname for any IP, and the Rancher Helm cert
+covers whatever `hostname` we set, so the only real blocker is choosing an IP
+the downstream nodes can actually route to. Tiers, cheapest first:
+
+- [ ] **Same docker network** (k3d-in-k3d, vcluster, dockerised nodes): no
+  change needed, `172.18.x.x` already routes inside the network. Good enough to
+  smoke-test the provisioning UI + agent handshake without external infra.
+- [ ] **Same LAN** (other VMs/boxes on the host's network): add a
+  `RANCHER_EXTERNAL`/`RANCHER_HOSTNAME` mode that sets `hostname` to
+  `<host-LAN-ip>.sslip.io` and maps the LB to host `443:443` (so `server-url`
+  needs no `:port`). k3d already binds host ports on `0.0.0.0`; just open the
+  host firewall for 443. The script's existing `--add-host`/`RANCHER_HOSTNAME`
+  escape hatch (k3d-rancher.sh ~line 129) is the hook to build on.
+- [ ] **Internet nodes** (AWS/Azure/GKE real machines): need a routable address.
+  Options without standing infra: a reverse tunnel (cloudflared free tier,
+  ngrok) or a mesh VPN. Set `hostname` to the tunnel/mesh address and the cert
+  follows.
+
+Cost note: prefer a zero-charge path. Tailscale's free/personal plan covers up
+to 100 devices / 3 users, so a lab host + a handful of provisioned nodes on a
+personal tailnet stays free, no public exposure, and no firewall holes, set
+`server-url` to the host's Tailscale IP via sslip. cloudflared's free Quick
+Tunnel is the fallback if we want zero account state. Avoid anything that bills
+per-tunnel or per-seat.
+
 ## Gold-standard audit (Phase 4 + long tail)
 
 Phase 1, 2, 3 and the documentation parts of Phase 5 are closed (see
