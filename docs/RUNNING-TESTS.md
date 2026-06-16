@@ -417,6 +417,35 @@ bash scripts/k3d-rancher.sh down e2e       # delete the cluster
 PROVIDER=k3d scripts/sharded-runs.sh -n 1 -t '@generic'
 ```
 
+#### Branch-matched dashboard (CI-faithful) — `scripts/k3d-e2e.sh`
+
+The PR workflow (`.github/workflows/e2e-k3d-pr.yml`) does not test the image's
+CDN dashboard — it builds the `rancher/dashboard` ref mapped to the target
+branch in `branches-metadata.json` and mounts it over the Rancher pod's UI, so
+PRs validate against the matching dashboard source. `scripts/k3d-e2e.sh` is the
+single wrapper that runs that exact flow locally, so a developer reproduces CI
+with one command:
+
+```bash
+# Full flow: build branch-matched dist -> provision k3d -> run tagged suite
+GREP_TAGS='@generic' scripts/k3d-e2e.sh all
+
+# Or stage by stage
+scripts/k3d-e2e.sh resolve                  # print the resolved image/chart/dashboard targets
+scripts/k3d-e2e.sh build                    # clone the matched ref + build its dist
+scripts/k3d-e2e.sh up                       # provision k3d with the dist mounted
+GREP_TAGS='@generic' scripts/k3d-e2e.sh test -- e2e/tests/pages/generic/home.spec.ts
+scripts/k3d-e2e.sh down                     # tear down + remove the built dist
+```
+
+The dist is built inside the `node:<.nvmrc>` image (not the host): the
+dashboard's build scripts use absolute `#!/bin/bash` shebangs that do not exist
+on non-FHS hosts like NixOS, and the container runs as your uid so the output
+is not root-owned. Parameters (all optional env vars): `BASE` (branch key to
+resolve, default `main`), `DASHBOARD_REF` (override the ref to build),
+`INSTANCE` (`e2e` or `e2e-<n>`), `GREP_TAGS`, `DASHBOARD_DIST` (reuse a
+prebuilt dist), `SKIP_BUILD=1` (reuse the existing dist), `NODE_IMAGE`.
+
 Key differences from the docker provider:
 
 - The dashboard URL is `https://<loadbalancer-ip>.sslip.io/dashboard` (written

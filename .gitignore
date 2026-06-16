@@ -54,3 +54,7 @@ out/
 *.log
 npm-debug.log*
 local.yaml
+
+# CI-faithful local k3d flow: branch-matched rancher/dashboard checkout + dist
+# cloned and built by scripts/k3d-e2e.sh (mirrors the build-dashboard CI job).
+dashboard-src/

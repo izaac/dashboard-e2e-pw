@@ -72,7 +72,7 @@ else
 fi
 
 mkdir -p "$OUT_DIR"
-cd "$REPO_ROOT"
+cd "$REPO_ROOT" || exit 1
 
 echo "Sharded runs: N=$N, GREP_TAGS='$GREP_TAGS_ARG', OUT_DIR=$OUT_DIR"
 
@@ -154,7 +154,9 @@ for i in $(seq 1 "$N"); do
       ensure_k3d_rancher_ready e2e-1
       ensure_k3d_rancher_ready e2e-2
 
+      # shellcheck disable=SC1091  # runtime handoff files written by k3d-rancher.sh
       SHARD1_TEST_BASE_URL="$(. /tmp/k3d-rancher-e2e-1.env && echo "$TEST_BASE_URL")"
+      # shellcheck disable=SC1091  # runtime handoff files written by k3d-rancher.sh
       SHARD2_TEST_BASE_URL="$(. /tmp/k3d-rancher-e2e-2.env && echo "$TEST_BASE_URL")"
       export SHARD1_TEST_BASE_URL SHARD2_TEST_BASE_URL
 
