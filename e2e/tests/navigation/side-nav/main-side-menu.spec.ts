@@ -5,7 +5,7 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import PagePo from '@/e2e/po/pages/page.po';
 import { generateFakeClusterDataAndIntercepts } from '@/e2e/blueprints/nav/fake-cluster';
 import { captureNavErrors, clickNavLinkAndAssertLanding } from '@/support/utils/nav-walk';
-import { LONG } from '@/support/timeouts';
+import { BRIEF, EXTENDED, LONG } from '@/support/timeouts';
 
 const longClusterDescription = 'this-is-some-really-really-really-really-really-really-long-description';
 const fakeProvClusterId = 'some-fake-cluster-id';
@@ -243,13 +243,26 @@ test.describe('Side Menu: main', () => {
         expect(labels.length).toBeGreaterThanOrEqual(4);
 
         for (const label of labels) {
-          // Navigating closes the menu (@click="hide()"); re-open before each hop.
-          await burgerMenu.open();
+          const link = burgerMenu.globalAppByAriaLabel(label);
+
+          // The previous hop's navigation may auto-close the menu, and whether it
+          // does is dashboard-version dependent (master closes it via hide(), head
+          // leaves it open). open() decides off a single isOpen() class read, which
+          // can be stale while a close animates: it then skips the toggle and the
+          // link is force-clicked on a menu that finishes closing out from under it,
+          // dropping the click (observed: clicked Global Settings, stayed on
+          // Extensions). Retry open-until-ready so the link is genuinely expanded
+          // and clickable before we click it, deterministically on both behaviours.
+          await expect(async () => {
+            await burgerMenu.open();
+            await expect(burgerMenu.sideMenu()).toHaveClass(/menu-open/, { timeout: BRIEF });
+            await expect(link).toBeVisible({ timeout: BRIEF });
+          }).toPass({ timeout: EXTENDED });
 
           // Global sections are heterogeneous (resource lists, dashboards like
           // Fleet, tabbed pages) and don't all expose an accessible page <h1>,
           // so assert correct routing + no error page + no crash rather than an h1.
-          await clickNavLinkAndAssertLanding(page, burgerMenu.globalAppByAriaLabel(label), navErrors, {
+          await clickNavLinkAndAssertLanding(page, link, navErrors, {
             requireHeading: false,
           });
         }
