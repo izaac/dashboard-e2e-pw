@@ -23,6 +23,20 @@ services:
       # base compose file does not forward them.
       TEST_NO_VIDEOS: ${TEST_NO_VIDEOS:-}
       TEST_NO_TRACES: ${TEST_NO_TRACES:-}
+      # Cloud credentials for provisioning/infra specs (@provisioning and the
+      # AWS/Azure/GKE/custom-node guarded tests). Empty unless the developer
+      # exports them; the guarded tests test.skip() when absent. Pair with
+      # EXTERNAL=true on `scripts/k3d-rancher.sh up` so the downstream node can
+      # register back through the cloudflared tunnel.
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AZURE_AKS_SUBSCRIPTION_ID: ${AZURE_AKS_SUBSCRIPTION_ID:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
+      CUSTOM_NODE_IP: ${CUSTOM_NODE_IP:-}
+      CUSTOM_NODE_KEY: ${CUSTOM_NODE_KEY:-}
+      CUSTOM_NODE_USER: ${CUSTOM_NODE_USER:-}
+      GKE_SERVICE_ACCOUNT: ${GKE_SERVICE_ACCOUNT:-}
     # CI checks rancher/dashboard out at <repo>/dashboard-src to build the UI
     # we mount into the rancher pod. That dir is on the host and is bind-mounted
     # into /app along with the rest of the repo, but its cypress spec files

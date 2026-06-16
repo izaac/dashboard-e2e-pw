@@ -6,11 +6,44 @@
 #
 # Usage:
 #   GREP_TAGS='@generic' scripts/k3d-run.sh [extra playwright args...]
+#
+# Provisioning specs (downstream node must register back to Rancher) need a
+# publicly reachable server-url and real cloud credentials. Export the creds
+# and set EXTERNAL=true so the auto-provision below installs Rancher behind a
+# cloudflared quick tunnel:
+#   EXTERNAL=true \
+#   AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... \
+#   scripts/k3d-run.sh
+# EXTERNAL=true also defaults GREP_TAGS to '@provisioning' (the repo .env
+# otherwise filters @needsInfra/@provisioning out); pass your own GREP_TAGS to
+# override. Credential vars forwarded to the tests container (see
+# docker-compose.k3d.yml):
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
+#   AZURE_AKS_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET,
+#   CUSTOM_NODE_IP, CUSTOM_NODE_KEY, CUSTOM_NODE_USER, GKE_SERVICE_ACCOUNT.
+# Guarded tests test.skip() when their credential is absent.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
+
+# True for 1/true/yes/on (case-insensitive).
+is_true() {
+  case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in
+    1 | true | yes | on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# In external mode the whole point is the provisioning suite, but the repo .env
+# (auto-loaded by compose) sets a GREP_TAGS that excludes @needsInfra. A shell
+# GREP_TAGS overrides .env, so default it here unless the caller pinned one.
+if is_true "${EXTERNAL:-}" && [ -z "${GREP_TAGS:-}" ]; then
+  GREP_TAGS='@provisioning'
+  export GREP_TAGS
+  echo "--- EXTERNAL: defaulting GREP_TAGS=@provisioning ---"
+fi
 
 ENV_FILE=/tmp/k3d-rancher-e2e.env
 

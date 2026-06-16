@@ -28,6 +28,10 @@
 #                         hostPath-mounted over the rancher pod's dashboard, with
 #                         CATTLE_UI_OFFLINE_PREFERRED=true. Default off (the suite
 #                         tests the image's CDN-resolved dashboard).
+#   EXTERNAL              true => `up` starts a cloudflared quick tunnel and installs
+#                         Rancher on that public host so downstream nodes can register
+#                         (provisioning tests). Default off (docker-internal sslip.io).
+#   EXTERNAL_HOSTNAME     explicit public host to install on (skips the auto tunnel).
 #
 # Handoff: writes /tmp/k3d-rancher-<instance>.env with TEST_BASE_URL, RANCHER_LB_IP,
 # K3D_NETWORK, HOST_HTTPS_PORT, KUBECONFIG for consumption by run scripts / compose.
@@ -41,6 +45,27 @@ K3S_IMAGE="${K3S_IMAGE:-rancher/k3s:v1.33.1-k3s1}"
 CERT_MANAGER_VERSION="${CERT_MANAGER_VERSION:-v1.7.1}"
 AUDIT_LOG="${AUDIT_LOG:-0}"
 DASHBOARD_DIST="${DASHBOARD_DIST:-}"
+
+# External access (optional): when set, Rancher is installed with this public
+# hostname instead of the docker-internal <lb_ip>.sslip.io. Pair it with a
+# cloudflared quick tunnel (see the 'tunnel' subcommand) so an out-of-cluster
+# node agent can resolve and reach the server-url to register.
+EXTERNAL_HOSTNAME="${EXTERNAL_HOSTNAME:-}"
+
+# Convenience switch for the provisioning flow: EXTERNAL=true makes `up` start a
+# cloudflared quick tunnel itself and use the allocated public host as
+# EXTERNAL_HOSTNAME, so a developer with cloud credentials can run
+#   EXTERNAL=true scripts/k3d-rancher.sh up e2e
+# without juggling the tunnel host by hand. An explicit EXTERNAL_HOSTNAME still
+# wins (bring-your-own named tunnel / custom DNS).
+EXTERNAL="${EXTERNAL:-}"
+
+# Pinned cloudflared for the tunnel helper. Checksums are verified on download
+# so a tampered or truncated binary is never executed. Bump VERSION and both
+# sums together (sha256sum cloudflared-linux-<arch>).
+CLOUDFLARED_VERSION="${CLOUDFLARED_VERSION:-2026.6.0}"
+CLOUDFLARED_SHA256_amd64="08d27c4c5d3ed73ee3e98ef2ddceb4ad09fd4cfc28e243565a189538e8ccd706"
+CLOUDFLARED_SHA256_arm64="8482ebf1e74a2a4a1a9f1e090e17e3de08423f94100ece6789287cb26fb9480f"
 
 CMD="${1:-}"
 INSTANCE="${2:-}"
@@ -69,6 +94,14 @@ HOST_HTTP_PORT=$((8080 + IDX))
 ENV_FILE="/tmp/k3d-rancher-${INSTANCE}.env"
 NETWORK="k3d-${INSTANCE}"
 
+# True for 1/true/yes/on (case-insensitive); false otherwise.
+is_true() {
+  case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in
+    1 | true | yes | on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 kubeconfig() {
   k3d kubeconfig write "$INSTANCE" 2>/dev/null
 }
@@ -81,6 +114,113 @@ lb_ip() {
   docker inspect "k3d-${INSTANCE}-serverlb" \
     --format "{{(index .NetworkSettings.Networks \"${NETWORK}\").IPAddress}}"
 }
+
+# Find a CA bundle for HTTPS downloads so callers do not have to export
+# SSL_CERT_FILE/CURL_CA_BUNDLE by hand. Honours those if already set, then the
+# Nix-provided bundle, then the common system locations. Prints nothing if none
+# is found (curl falls back to its built-in default).
+ca_bundle() {
+  local c
+  for c in \
+    "${SSL_CERT_FILE:-}" \
+    "${CURL_CA_BUNDLE:-}" \
+    "${NIX_SSL_CERT_FILE:-}" \
+    /etc/ssl/certs/ca-certificates.crt \
+    /etc/ssl/certs/ca-bundle.crt \
+    /etc/pki/tls/certs/ca-bundle.crt; do
+    if [ -n "$c" ] && [ -r "$c" ]; then
+      echo "$c"
+      return 0
+    fi
+  done
+}
+
+# Resolve a verified cloudflared binary, downloading the pinned release if one is
+# not already on PATH. Prints the absolute path on stdout; all logging goes to
+# stderr so the path can be captured by callers.
+ensure_cloudflared() {
+  if command -v cloudflared >/dev/null 2>&1; then
+    command -v cloudflared
+    return 0
+  fi
+
+  local arch want
+  case "$(uname -m)" in
+    x86_64) arch=amd64; want="$CLOUDFLARED_SHA256_amd64" ;;
+    aarch64 | arm64) arch=arm64; want="$CLOUDFLARED_SHA256_arm64" ;;
+    *)
+      echo "FATAL: unsupported arch '$(uname -m)' for cloudflared bootstrap" >&2
+      return 1
+      ;;
+  esac
+
+  local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dashboard-e2e"
+  local bin="${cache_dir}/cloudflared-${CLOUDFLARED_VERSION}-${arch}"
+  mkdir -p "$cache_dir"
+
+  if [ -x "$bin" ] && [ "$(sha256sum "$bin" | awk '{print $1}')" = "$want" ]; then
+    echo "$bin"
+    return 0
+  fi
+
+  local url="https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-${arch}"
+  echo "--- cloudflared: downloading pinned ${CLOUDFLARED_VERSION} (${arch}) ---" >&2
+  local tmp="${bin}.tmp.$$"
+  local curl_args=(-fsSL -o "$tmp")
+  local ca
+  ca="$(ca_bundle)"
+  [ -n "$ca" ] && curl_args+=(--cacert "$ca")
+  if ! curl "${curl_args[@]}" "$url"; then
+    rm -f "$tmp"
+    echo "FATAL: cloudflared download failed: $url" >&2
+    return 1
+  fi
+
+  local got
+  got="$(sha256sum "$tmp" | awk '{print $1}')"
+  if [ "$got" != "$want" ]; then
+    rm -f "$tmp"
+    echo "FATAL: cloudflared checksum mismatch (${arch})" >&2
+    echo "  expected: $want" >&2
+    echo "  got:      $got" >&2
+    return 1
+  fi
+
+  chmod +x "$tmp"
+  mv -f "$tmp" "$bin"
+  echo "--- cloudflared: verified and cached at $bin ---" >&2
+  echo "$bin"
+}
+
+# Start a cloudflared quick tunnel in front of this instance's Rancher and print
+# the public https URL it allocated. The tunnel runs detached; its pid and url
+# are recorded next to the handoff env so 'down' can stop it.
+do_tunnel() {
+  local cf url log pidfile
+  cf="$(ensure_cloudflared)"
+  log="/tmp/k3d-tunnel-${INSTANCE}.log"
+  pidfile="/tmp/k3d-tunnel-${INSTANCE}.pid"
+  : > "$log"
+
+  # No --http-host-header override: 'up' installs Rancher with hostname equal to
+  # the tunnel host, so the ingress matches the request Host natively.
+  setsid "$cf" tunnel --url "https://localhost:${HOST_HTTPS_PORT}" --no-tls-verify \
+    >> "$log" 2>&1 &
+  echo "$!" > "$pidfile"
+
+  local i
+  for i in $(seq 1 30); do
+    url="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$log" | head -1 || true)"
+    [ -n "$url" ] && break
+    sleep 1
+  done
+  if [ -z "$url" ]; then
+    echo "FATAL: cloudflared did not report a tunnel url (see $log)" >&2
+    return 1
+  fi
+  echo "$url"
+}
+
 
 retry() {
   # retry <attempts> <sleep_s> <description> -- <command...>
@@ -102,6 +242,18 @@ do_up() {
   command -v k3d >/dev/null || { echo "FATAL: k3d not in PATH (enter devenv shell)" >&2; exit 1; }
   command -v helm >/dev/null || { echo "FATAL: helm not in PATH (enter devenv shell)" >&2; exit 1; }
 
+  # EXTERNAL=true with no explicit hostname: bring up the quick tunnel first and
+  # adopt its host. cloudflared allocates and prints the URL before the origin
+  # is reachable, so starting it ahead of the cluster is fine (and matches the
+  # validated tunnel-first flow where the ingress is installed with this host).
+  if [ -z "$EXTERNAL_HOSTNAME" ] && is_true "$EXTERNAL"; then
+    echo "--- external mode: starting cloudflared quick tunnel ---"
+    local tunnel_url
+    tunnel_url="$(do_tunnel)"
+    EXTERNAL_HOSTNAME="${tunnel_url#https://}"
+    echo "--- external hostname: ${EXTERNAL_HOSTNAME} ---"
+  fi
+
   local create_args=(
     cluster create "$INSTANCE"
     --servers 1 --agents 0
@@ -122,6 +274,10 @@ do_up() {
   local ip hostname
   ip="$(lb_ip)"
   hostname="${ip}.sslip.io"
+
+  if [ -n "$EXTERNAL_HOSTNAME" ]; then
+    hostname="$EXTERNAL_HOSTNAME"
+  fi
 
   # sslip preflight: corporate/odd DNS setups sometimes rewrite or block sslip.io.
   if ! getent hosts "$hostname" >/dev/null; then
@@ -201,9 +357,26 @@ do_wait() {
   local ip hostname
   ip="$(lb_ip)"
   hostname="${ip}.sslip.io"
+  [ -n "$EXTERNAL_HOSTNAME" ] && hostname="$EXTERNAL_HOSTNAME"
 
   echo "--- waiting: rancher deployment rollout ---"
   kc -n cattle-system rollout status deploy/rancher --timeout=600s
+
+  if [ -n "$EXTERNAL_HOSTNAME" ]; then
+    echo "--- external mode: pinning server-url to https://${hostname} ---"
+    retry 20 5 "server-url set" -- \
+      kc patch settings.management.cattle.io server-url --type=merge \
+        -p "{\"value\":\"https://${hostname}\"}"
+
+    # The tunnel terminates TLS with its own publicly-trusted cert, not the
+    # Rancher ingress cert. With the default 'strict' mode a downstream node
+    # agent pins Rancher's internal CA and rejects the tunnel cert, so it never
+    # checks in. 'system-store' makes agents trust the public cert instead.
+    echo "--- external mode: setting agent-tls-mode=system-store ---"
+    retry 20 5 "agent-tls-mode set" -- \
+      kc patch settings.management.cattle.io agent-tls-mode --type=merge \
+        -p '{"value":"system-store"}'
+  fi
 
   echo "--- waiting: dashboard responds 200 ---"
   retry 20 5 "dashboard HTTP 200" -- \
@@ -261,7 +434,54 @@ do_wait() {
     echo "WARNING: cluster CPU did not settle under ${threshold}% within 5 min — proceeding anyway"
   fi
 
+  # External mode == provisioning intent. Prime the provisioning controller now
+  # so the first real provisioning test create does not race its cold start.
+  [ -n "$EXTERNAL_HOSTNAME" ] && warm_provisioning
+
   echo "--- rancher ready: https://${hostname}/dashboard (host port ${HOST_HTTPS_PORT}) ---"
+}
+
+# Prime the provisioning -> management.cattle.io.cluster controller path with a
+# throwaway imported cluster (spec: {} mints a management cluster but creates no
+# machines, so there is zero cloud cost). On a cold Rancher the first
+# provisioning reconcile lags tens of seconds while the controller warms its
+# informer caches; the dashboard's post-create "wait for the cluster to become
+# available" loop then outlasts the test's row-visible timeout and the create
+# spec flakes. Doing one throwaway reconcile here absorbs that cold start so the
+# first real test create navigates immediately. Best-effort: a hiccup warns and
+# proceeds rather than blocking the whole bring-up (test retries still backstop).
+warm_provisioning() {
+  local name="e2e-prov-warmup" ns="fleet-default" mc i
+  echo "--- warm-up: priming provisioning controller (throwaway imported cluster) ---"
+
+  if ! kc apply -f - >/dev/null 2>&1 <<EOF
+apiVersion: provisioning.cattle.io/v1
+kind: Cluster
+metadata:
+  name: ${name}
+  namespace: ${ns}
+spec: {}
+EOF
+  then
+    echo "WARNING: warm-up cluster apply failed — skipping prime (tests may cold-start)" >&2
+    return 0
+  fi
+
+  mc=""
+  for i in $(seq 1 90); do
+    mc="$(kc get clusters.provisioning.cattle.io "$name" -n "$ns" \
+          -o jsonpath='{.status.clusterName}' 2>/dev/null || true)"
+    [ -n "$mc" ] && break
+    sleep 2
+  done
+  if [ -n "$mc" ]; then
+    echo "warm-up: provisioning controller primed (mgmt mirror ${mc})"
+  else
+    echo "WARNING: warm-up mgmt mirror not observed in 180s — proceeding anyway" >&2
+  fi
+
+  kc delete clusters.provisioning.cattle.io "$name" -n "$ns" \
+    --wait=true --timeout=120s >/dev/null 2>&1 || true
 }
 
 do_logs() {
@@ -273,8 +493,24 @@ do_logs() {
 }
 
 do_down() {
+  stop_tunnel
   k3d cluster delete "$INSTANCE" || true
   rm -f "$ENV_FILE"
+}
+
+# Stop the cloudflared tunnel for this instance: the pid we recorded plus any
+# stray cloudflared whose command line targets this instance's https port (so a
+# stale pidfile or a manually started tunnel is still cleaned up). PID-targeted
+# kills only — no pkill/killall.
+stop_tunnel() {
+  local pidfile="/tmp/k3d-tunnel-${INSTANCE}.pid" p
+  if [ -f "$pidfile" ]; then
+    kill "$(cat "$pidfile")" 2>/dev/null || true
+    rm -f "$pidfile" "/tmp/k3d-tunnel-${INSTANCE}.log"
+  fi
+  for p in $(pgrep -f "cloudflared.*localhost:${HOST_HTTPS_PORT}" 2>/dev/null); do
+    kill "$p" 2>/dev/null || true
+  done
 }
 
 do_env() {
@@ -287,6 +523,8 @@ case "$CMD" in
   logs) do_logs ;;
   down) do_down ;;
   env) do_env ;;
+  tunnel) do_tunnel ;;
+  cloudflared) ensure_cloudflared ;;
   *)
     usage >&2
     exit 2
