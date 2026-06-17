@@ -47,6 +47,23 @@ services:
     volumes:
       - /app/dashboard-src
 
+  cypress:
+    depends_on: !reset []
+    networks:
+      k3d-e2e:
+    environment:
+      TEST_BASE_URL: ${TEST_BASE_URL:?run scripts/k3d-rancher.sh up e2e and source its env file}
+      API: ${API:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AZURE_AKS_SUBSCRIPTION_ID: ${AZURE_AKS_SUBSCRIPTION_ID:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
+      CUSTOM_NODE_IP: ${CUSTOM_NODE_IP:-}
+      CUSTOM_NODE_KEY: ${CUSTOM_NODE_KEY:-}
+      CUSTOM_NODE_USER: ${CUSTOM_NODE_USER:-}
+      GKE_SERVICE_ACCOUNT: ${GKE_SERVICE_ACCOUNT:-}
+
 networks:
   k3d-e2e:
     external: true
