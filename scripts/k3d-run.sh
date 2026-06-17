@@ -45,10 +45,24 @@ if is_true "${EXTERNAL:-}" && [ -z "${GREP_TAGS:-}" ]; then
   echo "--- EXTERNAL: defaulting GREP_TAGS=@provisioning ---"
 fi
 
-ENV_FILE=/tmp/k3d-rancher-e2e.env
+ENV_FILE=/tmp/muster-env-e2e
 
 if [ ! -f "$ENV_FILE" ]; then
-  bash scripts/k3d-rancher.sh up e2e
+  muster_args=()
+  if is_true "${EXTERNAL:-}"; then
+    muster_args+=(--external)
+  fi
+
+  if command -v muster >/dev/null 2>&1; then
+    muster up --instance e2e "${muster_args[@]}"
+    muster env --instance e2e "${muster_args[@]}" > "$ENV_FILE"
+  elif [ -x "./muster/muster" ]; then
+    ./muster/muster up --instance e2e "${muster_args[@]}"
+    ./muster/muster env --instance e2e "${muster_args[@]}" > "$ENV_FILE"
+  else
+    echo "::error:: muster not found. Please install muster or clone it into ./muster."
+    exit 1
+  fi
 fi
 
 # shellcheck disable=SC1090
