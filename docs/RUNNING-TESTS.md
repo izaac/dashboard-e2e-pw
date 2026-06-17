@@ -404,14 +404,17 @@ provider until the docker images stop publishing.
 # Tooling comes from the devenv shell (k3d, helm, kubectl)
 devenv shell
 
+# Install muster (the standalone orchestration script)
+git clone https://github.com/izaac/muster.git ./muster
+
 # Single instance: provision + run tests in one go
 GREP_TAGS='@generic' scripts/k3d-run.sh
 
 # Or step by step
-bash scripts/k3d-rancher.sh up e2e         # create cluster, install rancher, wait ready
-bash scripts/k3d-rancher.sh env e2e        # print TEST_BASE_URL + network handoff
-bash scripts/k3d-rancher.sh logs e2e       # rancher + webhook pod logs
-bash scripts/k3d-rancher.sh down e2e       # delete the cluster
+./muster/muster up --instance e2e         # create cluster, install rancher, wait ready
+./muster/muster env --instance e2e        # print TEST_BASE_URL + network handoff
+kubectl --kubeconfig $(k3d kubeconfig write e2e) -n cattle-system logs -l app=rancher  # rancher pod logs
+./muster/muster down --instance e2e       # delete the cluster
 
 # Sharded (two k3d clusters, e2e-1 + e2e-2)
 PROVIDER=k3d scripts/sharded-runs.sh -n 1 -t '@generic'
@@ -458,7 +461,7 @@ Key differences from the docker provider:
   `RANCHER_IMAGE_TAG` (`head`), `K3S_IMAGE`, `CERT_MANAGER_VERSION`,
   `AUDIT_LOG=1` for the audit sidecar. If charts.optimus is unreachable, use
   `https://releases.rancher.com/server-charts/latest` with `--devel`.
-- PR-build UI mode: `DASHBOARD_DIST=/path/to/dist bash scripts/k3d-rancher.sh up e2e`
+- PR-build UI mode: `DASHBOARD_DIST=/path/to/dist ./muster/muster up --instance e2e`
   mounts a locally built dashboard over the pod's UI (hostPath through the k3d
   node) and sets `CATTLE_UI_OFFLINE_PREFERRED=true` — the k3d equivalent of
   upstream's PR-branch testing, but restart-proof. Default off: the suite
@@ -489,8 +492,8 @@ AWS_ACCESS_KEY_ID=...  AWS_SECRET_ACCESS_KEY=... \
 scripts/k3d-run.sh
 
 # Or step by step.
-EXTERNAL=true bash scripts/k3d-rancher.sh up e2e   # auto-tunnel + external install
-bash scripts/k3d-rancher.sh down e2e               # tears the tunnel down too
+EXTERNAL=true ./muster/muster up --instance e2e   # auto-tunnel + external install
+./muster/muster down --instance e2e               # tears the tunnel down too
 ```
 
 Notes:

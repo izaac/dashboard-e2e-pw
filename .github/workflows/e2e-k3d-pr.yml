@@ -140,10 +140,18 @@ jobs:
       - name: Pre-create artifact dirs with runner ownership
         run: mkdir -p test-results playwright-report
 
+      - name: Checkout muster
+        uses: actions/checkout@v5
+        with:
+          repository: izaac/muster
+          path: muster
+
       - name: Provision rancher on k3d (mount branch-matched dashboard)
         env:
           DASHBOARD_DIST: ${{ github.workspace }}/dashboard-src/dist
-        run: bash scripts/k3d-rancher.sh up e2e
+        run: |
+          ./muster/muster up --instance e2e
+          ./muster/muster env --instance e2e > /tmp/muster-env-e2e
 
       # Resource snapshot after rancher is up, before tests run. Cheap and
       # gives us concrete numbers to decide whether the standard runner (4
@@ -178,7 +186,7 @@ jobs:
 
       - name: Capture rancher pod logs
         if: always()
-        run: bash scripts/k3d-rancher.sh logs e2e > rancher-e2e.log 2>&1 || true
+        run: kubectl --kubeconfig $(k3d kubeconfig write e2e) -n cattle-system logs -l app=rancher > rancher-e2e.log 2>&1 || true
 
       - name: Upload failure artifacts
         uses: actions/upload-artifact@v5
@@ -196,4 +204,4 @@ jobs:
 
       - name: Teardown
         if: always()
-        run: bash scripts/k3d-rancher.sh down e2e
+        run: ./muster/muster down --instance e2e
