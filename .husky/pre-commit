@@ -8,3 +8,7 @@ npx tsc --noEmit
 
 npx tsx scripts/generate-po-index.ts
 git add e2e/po/INDEX.md
+
+# Validate Docker Compose configs and overlays
+docker compose config -q
+TEST_BASE_URL=dummy docker compose -f docker-compose.yml -f docker-compose.k3d.yml config -q
