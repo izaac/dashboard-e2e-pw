@@ -47,5 +47,25 @@ services:
       - ./test-results:/app/test-results
       - ./playwright-report:/app/playwright-report
 
+  cypress:
+    image: cypress/included:11.1.0
+    depends_on:
+      rancher:
+        condition: service_healthy
+    environment:
+      TEST_BASE_URL: https://rancher/dashboard
+      CATTLE_BOOTSTRAP_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_PASSWORD: ${RANCHER_PASSWORD:-password1234}
+      TEST_USERNAME: admin
+      API: https://rancher
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      CYPRESS_grepTags: ${GREP_TAGS:-}
+    user: "${HOST_UID:-1000}:${HOST_GID:-100}"
+    working_dir: /e2e
+    volumes:
+      # Bind-mount upstream dashboard to run its suite natively.
+      # The node_modules must be populated by a prior build step.
+      - ./dashboard-src:/e2e
+
 volumes:
   rancher-data:

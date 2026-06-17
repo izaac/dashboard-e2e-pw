@@ -106,17 +106,12 @@ ensure_rancher_healthy() {
 ensure_k3d_rancher_ready() {
   local inst="$1"
   local attempt
-  local muster_args=()
-  if [ "${EXTERNAL:-}" = "true" ] || [ "${EXTERNAL:-}" = "1" ]; then
-    muster_args+=(--external)
-  fi
   for attempt in 1 2 3; do
-    if ./muster/muster up --instance "$inst" "${muster_args[@]}"; then
-      ./muster/muster env --instance "$inst" "${muster_args[@]}" > "/tmp/muster-env-$inst"
+    if bash "$(dirname "$0")/k3d-rancher.sh" up "$inst"; then
       return 0
     fi
     echo "--- $inst not ready (attempt $attempt/3) — deleting cluster + recreating ---"
-    ./muster/muster down --instance "$inst" || true
+    bash "$(dirname "$0")/k3d-rancher.sh" down "$inst" || true
   done
   echo "FATAL: $inst never reached ready after 3 attempts"
   return 1
@@ -133,8 +128,8 @@ for i in $(seq 1 "$N"); do
     echo "--- Tear down ---"
     docker compose "${COMPOSE_FLAGS[@]}" down -v 2>/dev/null || true
     if [ "$PROVIDER" = "k3d" ]; then
-      ./muster/muster down --instance e2e-1 || true
-      ./muster/muster down --instance e2e-2 || true
+      bash "$(dirname "$0")/k3d-rancher.sh" down e2e-1 || true
+      bash "$(dirname "$0")/k3d-rancher.sh" down e2e-2 || true
     else
       echo "--- Remove cached images (incl. upstream base) ---"
       docker rmi rancher-nft:local rancher/rancher:v2.14-head rancher/rancher:head docker.io/rancher/rancher:head 2>/dev/null || true
@@ -159,10 +154,10 @@ for i in $(seq 1 "$N"); do
       ensure_k3d_rancher_ready e2e-1
       ensure_k3d_rancher_ready e2e-2
 
-      # shellcheck disable=SC1091  # runtime handoff files written by muster env
-      SHARD1_TEST_BASE_URL="$(. /tmp/muster-env-e2e-1 && echo "$TEST_BASE_URL")"
-      # shellcheck disable=SC1091  # runtime handoff files written by muster env
-      SHARD2_TEST_BASE_URL="$(. /tmp/muster-env-e2e-2 && echo "$TEST_BASE_URL")"
+      # shellcheck disable=SC1091  # runtime handoff files written by k3d-rancher.sh
+      SHARD1_TEST_BASE_URL="$(. /tmp/k3d-rancher-e2e-1.env && echo "$TEST_BASE_URL")"
+      # shellcheck disable=SC1091  # runtime handoff files written by k3d-rancher.sh
+      SHARD2_TEST_BASE_URL="$(. /tmp/k3d-rancher-e2e-2.env && echo "$TEST_BASE_URL")"
       export SHARD1_TEST_BASE_URL SHARD2_TEST_BASE_URL
 
       echo "--- Build (with --pull to force fresh FROM layer) ---"
@@ -200,8 +195,8 @@ for i in $(seq 1 "$N"); do
     for c in merge-1 shard-1-1 shard-2-1; do
       docker logs "dashboard-e2e-pw-$c" > "$RUN_DIR/${c%-1}.log" 2>&1 || true
     done
-    kubectl --kubeconfig $(k3d kubeconfig write e2e-1) -n cattle-system logs -l app=rancher > "$RUN_DIR/rancher-1.log" 2>&1 || true
-    kubectl --kubeconfig $(k3d kubeconfig write e2e-2) -n cattle-system logs -l app=rancher > "$RUN_DIR/rancher-2.log" 2>&1 || true
+    bash "$(dirname "$0")/k3d-rancher.sh" logs e2e-1 > "$RUN_DIR/rancher-1.log" 2>&1 || true
+    bash "$(dirname "$0")/k3d-rancher.sh" logs e2e-2 > "$RUN_DIR/rancher-2.log" 2>&1 || true
   else
     for c in merge-1 rancher-1-1 rancher-2-1 shard-1-1 shard-2-1; do
       docker logs "dashboard-e2e-pw-$c" > "$RUN_DIR/${c%-1}.log" 2>&1 || true

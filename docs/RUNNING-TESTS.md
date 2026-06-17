@@ -404,17 +404,14 @@ provider until the docker images stop publishing.
 # Tooling comes from the devenv shell (k3d, helm, kubectl)
 devenv shell
 
-# Install muster (the standalone orchestration script)
-git clone https://github.com/izaac/muster.git ./muster
-
 # Single instance: provision + run tests in one go
 GREP_TAGS='@generic' scripts/k3d-run.sh
 
 # Or step by step
-./muster/muster up --instance e2e         # create cluster, install rancher, wait ready
-./muster/muster env --instance e2e        # print TEST_BASE_URL + network handoff
-kubectl --kubeconfig $(k3d kubeconfig write e2e) -n cattle-system logs -l app=rancher  # rancher pod logs
-./muster/muster down --instance e2e       # delete the cluster
+bash scripts/k3d-rancher.sh up e2e         # create cluster, install rancher, wait ready
+bash scripts/k3d-rancher.sh env e2e        # print TEST_BASE_URL + network handoff
+bash scripts/k3d-rancher.sh logs e2e       # rancher + webhook pod logs
+bash scripts/k3d-rancher.sh down e2e       # delete the cluster
 
 # Sharded (two k3d clusters, e2e-1 + e2e-2)
 PROVIDER=k3d scripts/sharded-runs.sh -n 1 -t '@generic'
@@ -461,7 +458,7 @@ Key differences from the docker provider:
   `RANCHER_IMAGE_TAG` (`head`), `K3S_IMAGE`, `CERT_MANAGER_VERSION`,
   `AUDIT_LOG=1` for the audit sidecar. If charts.optimus is unreachable, use
   `https://releases.rancher.com/server-charts/latest` with `--devel`.
-- PR-build UI mode: `DASHBOARD_DIST=/path/to/dist ./muster/muster up --instance e2e`
+- PR-build UI mode: `DASHBOARD_DIST=/path/to/dist bash scripts/k3d-rancher.sh up e2e`
   mounts a locally built dashboard over the pod's UI (hostPath through the k3d
   node) and sets `CATTLE_UI_OFFLINE_PREFERRED=true` — the k3d equivalent of
   upstream's PR-branch testing, but restart-proof. Default off: the suite
@@ -473,6 +470,28 @@ Key differences from the docker provider:
   cert-manager + traefik), ~26 MiB per loadbalancer, ~0.6 GiB per running
   shard. A full sharded run totals ~6.5 GiB. Cold provision to ready takes
   ~8 minutes per instance (image pulls included).
+
+#### Running the upstream Cypress suite
+
+If you need to run the legacy upstream Cypress suite against your k3d cluster, you can use the Cypress wrapper. This uses the official cypress/included image and the Cypress handoff adapter from muster, meaning you do not need to install Node or Cypress on your host machine.
+
+Because the wrapper mounts the dashboard source directory, you must run the build step first to populate the node_modules directory:
+
+```bash
+# First, populate node_modules by building the dashboard
+scripts/k3d-e2e.sh build
+
+# Run the full upstream suite
+scripts/k3d-cypress-run.sh
+
+# Run specific tests using Cypress grep tags
+GREP_TAGS='@generic' scripts/k3d-cypress-run.sh
+
+# Run a specific spec file natively
+scripts/k3d-cypress-run.sh --spec cypress/e2e/tests/pages/generic/login.spec.ts
+```
+
+The Cypress container attaches to the same k3d network as the Playwright tests and reads the environment variables perfectly formatted by the handoff script. Note that if you experience video recording failures with ffmpeg due to container permissions, you can export `CYPRESS_video=false` to bypass it.
 
 #### External access for provisioning tests
 
@@ -492,8 +511,8 @@ AWS_ACCESS_KEY_ID=...  AWS_SECRET_ACCESS_KEY=... \
 scripts/k3d-run.sh
 
 # Or step by step.
-EXTERNAL=true ./muster/muster up --instance e2e   # auto-tunnel + external install
-./muster/muster down --instance e2e               # tears the tunnel down too
+EXTERNAL=true bash scripts/k3d-rancher.sh up e2e   # auto-tunnel + external install
+bash scripts/k3d-rancher.sh down e2e               # tears the tunnel down too
 ```
 
 Notes:
