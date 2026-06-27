@@ -1,36 +1,29 @@
 #!/usr/bin/env bash
-# Local, CI-faithful driver for the k3d e2e flow.
+# Local, CI-faithful resolver/builder for the branch-matched dashboard dist.
 #
 # This is the single source of truth shared by developers and the PR workflow
-# (.github/workflows/e2e-k3d-pr.yml). It resolves the branch-matched Rancher
-# image / chart line / dashboard ref from branches-metadata.json, builds the
-# matching rancher/dashboard dist, provisions Rancher on k3d with that dist
-# mounted, and runs the suite in the tests container attached to the k3d
-# network. Running it locally reproduces exactly what CI does.
+# (.github/workflows/e2e-k3d-pr.yml) for resolving the branch-matched Rancher
+# image / chart line / dashboard ref from branches-metadata.json and building
+# the matching rancher/dashboard dist. Provisioning Rancher and running the
+# suite are handled by the muster runner (scripts/local.sh); the dist produced
+# here is mounted into the Rancher pod via DASHBOARD_DIST.
 #
-# Prerequisites: enter the devenv shell first so node, yarn, k3d, helm,
-# kubectl and docker are on PATH:
-#   nix develop --impure -c scripts/k3d-e2e.sh all
+# Prerequisites: node, yarn, git, docker and jq on PATH (the devenv shell
+# provides them):
+#   nix develop --impure -c scripts/k3d-e2e.sh build
 #
 # Usage:
-#   scripts/k3d-e2e.sh <command> [-- playwright args...]
+#   scripts/k3d-e2e.sh <command>
 #
 # Commands:
 #   resolve   Print KEY=VALUE targets resolved from branches-metadata.json.
 #   build     Clone/checkout the matched dashboard ref and build its dist.
-#   up        Provision Rancher on k3d with the built dist mounted.
-#   test      Run the suite in the tests container (docker -> k3d network).
-#   down      Tear down the cluster and remove the built dist.
-#   all       build + up + test.
 #
 # Parameters (environment variables):
 #   BASE            Branch key to resolve in branches-metadata.json (default main).
 #   DASHBOARD_REF   Override the dashboard ref to build (default from metadata).
-#   INSTANCE        k3d instance name: e2e or e2e-<n> (default e2e).
-#   GREP_TAGS       Playwright tag filter for `test` (e.g. @generic).
-#   DASHBOARD_DIST  Override the dist path mounted into Rancher (default the
-#                   dist produced by `build`).
-#   SKIP_BUILD      If set to 1, `up`/`all` reuse an existing dist (no rebuild).
+#   DASHBOARD_DIST  Override the dist path (default the dist produced by `build`).
+#   SKIP_BUILD      If set to 1, `build` reuses an existing dist (no rebuild).
 #   NODE_IMAGE      Container image used to build the dist (default node:<.nvmrc>).
 #
 # Why the dist is built in a container: rancher/dashboard's build scripts use
@@ -38,9 +31,6 @@
 # Building inside the node image gives every developer the same FHS toolchain
 # CI uses, and `-u $(id -u)` keeps the produced files owned by the developer
 # rather than root.
-#
-# Handoff: `up` writes /tmp/k3d-rancher-<instance>.env (via k3d-rancher.sh) for
-# the tests container to consume.
 
 set -euo pipefail
 
@@ -48,7 +38,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 BASE="${BASE:-main}"
-INSTANCE="${INSTANCE:-e2e}"
 METADATA="${REPO_ROOT}/branches-metadata.json"
 DASHBOARD_SRC="${REPO_ROOT}/dashboard-src"
 DIST_DIR="${DASHBOARD_SRC}/dist"
@@ -149,58 +138,15 @@ build() {
   log "dist ready: ${DIST_DIR}"
 }
 
-up() {
-  require k3d
-  require helm
-  load_targets
-
-  local dist="${DASHBOARD_DIST:-$DIST_DIR}"
-  [ -d "$dist" ] && [ -n "$(ls -A "$dist" 2>/dev/null)" ] || \
-    fatal "no dashboard dist at ${dist} — run '$0 build' first"
-
-  log "provisioning rancher on k3d (${INSTANCE}) with branch-matched dashboard"
-  RANCHER_IMAGE_TAG="$RANCHER_IMAGE_TAG" \
-  RANCHER_RELEASE="$RANCHER_RELEASE" \
-  DASHBOARD_DIST="$dist" \
-    bash "${REPO_ROOT}/scripts/k3d-rancher.sh" up "$INSTANCE"
-}
-
-test_run() {
-  require docker
-  local env_file="/tmp/k3d-rancher-${INSTANCE}.env"
-  [ -f "$env_file" ] || fatal "no handoff at ${env_file} — run '$0 up' first"
-
-  log "running suite (GREP_TAGS='${GREP_TAGS:-}') via docker -> k3d network"
-  HOST_UID="$(id -u)" HOST_GID="$(id -g)" \
-    bash "${REPO_ROOT}/scripts/k3d-run.sh" "$@"
-}
-
-down() {
-  if command -v k3d >/dev/null 2>&1; then
-    log "tearing down k3d instance ${INSTANCE}"
-    bash "${REPO_ROOT}/scripts/k3d-rancher.sh" down "$INSTANCE" || true
-  fi
-  if [ -d "$DIST_DIR" ]; then
-    log "removing built dist ${DIST_DIR}"
-    rm -rf "$DIST_DIR"
-  fi
-}
-
 main() {
   local cmd="${1:-}"
   shift || true
-  # Allow `-- playwright args` after the command for `test`/`all`.
-  [ "${1:-}" = "--" ] && shift || true
 
   case "$cmd" in
     resolve) resolve ;;
     build)   build ;;
-    up)      up ;;
-    test)    test_run "$@" ;;
-    down)    down ;;
-    all)     build; up; test_run "$@" ;;
     *)
-      sed -n '2,46p' "$0" | sed 's/^# \{0,1\}//' >&2
+      sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//' >&2
       exit 2
       ;;
   esac

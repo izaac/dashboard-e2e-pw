@@ -8,7 +8,7 @@ node_modules/
 # CI checks rancher/dashboard out at dashboard-src/ to build the dashboard
 # dist we mount into the rancher pod. Keep it out of the test image's build
 # context — otherwise `COPY . .` bakes the cypress source into /app, and the
-# anonymous volume mask in docker-compose.k3d.yml inherits image content
+# anonymous volume mask in docker-compose.pw.yml inherits image content
 # instead of being empty (docker copies layer content into a new anon volume
 # when the target path has content).
 dashboard-src/
