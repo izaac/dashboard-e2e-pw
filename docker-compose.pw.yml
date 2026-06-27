@@ -29,8 +29,10 @@ x-pw-common: &pw-common
   build:
     context: .
     dockerfile: Dockerfile.pw
-  networks:
-    k3d:
+  # A single fixed tag so the image is built once and reused across the test,
+  # report, merge services and across per-shard compose projects (which would
+  # otherwise each build their own <project>-tests image).
+  image: dashboard-e2e-pw-tests:local
   shm_size: "2g"
   working_dir: /app
   volumes:
@@ -45,13 +47,18 @@ x-pw-common: &pw-common
 
 x-pw-env: &pw-env
   # TEST_BASE_URL is validated by scripts/local.sh before this file is invoked;
-  # the soft default keeps `report` (which needs no Rancher) usable standalone.
+  # the soft default keeps `report`/`merge` (which need no Rancher) usable alone.
   TEST_BASE_URL: ${TEST_BASE_URL:-http://localhost}
   CATTLE_BOOTSTRAP_PASSWORD: ${CATTLE_BOOTSTRAP_PASSWORD:-password1234}
   TEST_PASSWORD: ${TEST_PASSWORD:-password1234}
   TEST_USERNAME: ${TEST_USERNAME:-admin}
   GREP_TAGS: ${GREP_TAGS:-}
   PW_EXTRA: ${PW_EXTRA:-}
+  PW_REPORTER: ${PW_REPORTER:-line}
+  # Per-shard blob output dir so parallel shards don't race the shared
+  # blob-report intermediate files (report.jsonl/resources). Empty for single
+  # runs, where the line reporter ignores it.
+  PLAYWRIGHT_BLOB_OUTPUT_DIR: ${PLAYWRIGHT_BLOB_OUTPUT_DIR:-}
   NODE_TLS_REJECT_UNAUTHORIZED: "0"
   HOST_UID: ${HOST_UID:-0}
   HOST_GID: ${HOST_GID:-0}
@@ -63,8 +70,12 @@ x-pw-env: &pw-env
   TEST_SKIP: ${TEST_SKIP:-}
 
 services:
+  # Only the test runner needs to reach Rancher, so only it joins the external
+  # k3d network; report/merge stay on the default network.
   tests:
     <<: *pw-common
+    networks:
+      k3d:
     entrypoint: ["/opt/pw-entrypoint.sh"]
     command: ["playwright-run"]
     environment: *pw-env
@@ -88,6 +99,16 @@ services:
     environment: *pw-env
     ports:
       - "${REPORT_PORT:-9323}:${REPORT_PORT:-9323}"
+
+  # `scripts/local-sharded.sh` merges the per-shard blob reports into one HTML
+  # report after all shards finish. Behind a profile so it never runs by default.
+  # Routed through the entrypoint so its output is chowned back to the host user.
+  merge:
+    <<: *pw-common
+    profiles: ["merge"]
+    entrypoint: ["/opt/pw-entrypoint.sh"]
+    command: ["merge-report", "/app/blob-report"]
+    environment: *pw-env
 
 volumes:
   pw-node-modules:

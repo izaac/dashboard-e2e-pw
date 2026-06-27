@@ -32,10 +32,18 @@ npx playwright install chromium >/dev/null 2>&1 || true
 status=0
 if [ "${1:-}" = "playwright-run" ]; then
   shift
-  # PW_EXTRA carries any extra `playwright test` args (the `up` path cannot
-  # append them per-invocation the way `run` could).
+  # PW_REPORTER selects the reporter (line for a single run, blob for shards so
+  # the results can be merged afterwards). PW_EXTRA carries any extra
+  # `playwright test` args (the `up` path cannot append them per-invocation the
+  # way `run` could), e.g. --shard=1/2.
   # shellcheck disable=SC2086
-  npx playwright test --reporter=line "$@" ${PW_EXTRA:-} || status=$?
+  npx playwright test --reporter="${PW_REPORTER:-line}" "$@" ${PW_EXTRA:-} || status=$?
+elif [ "${1:-}" = "merge-report" ]; then
+  shift
+  # Combine the per-shard blob reports into one HTML report. Routed through this
+  # entrypoint (rather than a bare command) so chown_back hands the output back
+  # to the host user.
+  npx playwright merge-reports --reporter html "${1:-/app/blob-report}" || status=$?
 else
   "$@" || status=$?
 fi
