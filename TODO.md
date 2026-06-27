@@ -112,27 +112,26 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] Qase IDs: to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
-- [x] **External Rancher access for cloud-driver provisioning** (branch
-  `external-rancher-access`): `EXTERNAL=true scripts/k3d-rancher.sh up e2e`
-  fronts the k3d Rancher with a sha256-pinned cloudflared quick tunnel, pins
-  `server-url` to the public host, and sets `agent-tls-mode=system-store` so a
-  downstream cloud node can register back through the tunnel. `scripts/k3d-run.sh`
-  defaults `GREP_TAGS=@provisioning` and forwards AWS/Azure/GKE/custom-node creds
-  in that mode. Cold-start flake (first provisioning reconcile lags the create
-  spec) is absorbed by a throwaway imported-cluster warm-up in `do_wait`.
-  Validated end-to-end: Amazon EC2 RKE2 create passes cold with `retries=0`, no
-  orphan EC2 (afterAll teardown). Not wired into PR checks (needs real cloud
-  creds + spend); run manually. See `docs/RUNNING-TESTS.md` k3d external-access
-  section.
-- [ ] **k3d provider (docker-install deprecation prep)**: `PROVIDER=k3d` lands
-  `scripts/k3d-rancher.sh` + compose overlays (branch `k3d-provider`). Phase C
-  outstanding: restart-cycle specs (`feature-flags`, `no-vai-setup`,
-  `oidc-provider-setup`) against k3d — k8s kubelet restart backoff
-  (10s→20s→40s) may exceed current poll budgets; 3-run k3d vs 3-run docker
-  aggregate diff. Watch upstream enabling `scripts/e2e-k3s-start` in their CI
-  (currently experimental, PR #14854 "add but don't use") and re-sync helm
-  values when they do. Docker stays default until head docker images stop
-  publishing.
+- [x] **External Rancher access for cloud-driver provisioning** (now provided by
+  muster's `--external`): `EXTERNAL=true yarn local:test` fronts the k3d Rancher
+  with a sha256-pinned cloudflared quick tunnel, pins `server-url` to the public
+  host, and sets `agent-tls-mode=system-store` so a downstream cloud node can
+  register back through the tunnel. The runner defaults `GREP_TAGS=@provisioning`
+  and forwards AWS/Azure/GKE/custom-node creds in that mode. Cold-start flake
+  (first provisioning reconcile lags the create spec) is absorbed by a throwaway
+  imported-cluster warm-up. Validated end-to-end: Amazon EC2 RKE2 create passes
+  cold with `retries=0`, no orphan EC2 (afterAll teardown). Not wired into PR
+  checks (needs real cloud creds + spend); run manually. See
+  `docs/RUNNING-TESTS.md` external-access section.
+- [x] **k3d provider (docker-install deprecation prep)**: superseded by the
+  muster migration. Provisioning now runs entirely through muster (`yarn local:*`
+  / `scripts/local.sh`); the in-repo `k3d-rancher.sh` and compose overlays were
+  retired. Remaining follow-up: restart-cycle specs (`feature-flags`,
+  `no-vai-setup`, `oidc-provider-setup`) against k3d, where the k8s kubelet
+  restart backoff (10s->20s->40s) may exceed current poll budgets; 3-run k3d vs
+  3-run docker aggregate diff. Watch upstream enabling `scripts/e2e-k3s-start` in
+  their CI (currently experimental, PR #14854 "add but don't use") and re-sync
+  helm values when they do.
 
 ## Cluster cleanup hardening (orphaned mgmt clusters)
 
@@ -225,7 +224,13 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
 
 ## External Rancher access for provisioning tests (future)
 
-The k3d wrapper (`scripts/k3d-rancher.sh`) currently sets Rancher's
+> **Superseded by the muster migration.** External access is now implemented in
+> muster's `--external` mode (cloudflared quick tunnel, pinned `server-url`,
+> `agent-tls-mode=system-store`), driven by `EXTERNAL=true yarn local:test`. The
+> in-repo `k3d-rancher.sh` referenced below was retired. The tiered analysis is
+> kept for historical context.
+
+The old k3d wrapper (`scripts/k3d-rancher.sh`) set Rancher's
 `server-url`/`hostname` to `<lb_ip>.sslip.io`, where `lb_ip` is the
 docker-internal load-balancer IP (`172.18.x.x`, RFC1918). That address only
 routes from the host and from inside the k3d docker network, so it is fine for

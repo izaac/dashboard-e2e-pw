@@ -4,31 +4,52 @@ Playwright E2E test suite for [Rancher Dashboard](https://github.com/rancher/das
 
 ## Get Running
 
-### Fastest path: Docker (no Node required)
+### Fastest path: containerized runner (no Node required)
+
+The suite can provision its own Rancher and run entirely in a container, so the
+only things your host needs are a Docker or Podman daemon and the muster
+provisioning tools (`k3d`, `kubectl`, `helm`). You do not need Node, Yarn, or a
+browser on the host, because the tests run inside the container.
+
+First, make the [muster](https://github.com/izaac/muster) provisioner reachable.
+Clone it next to this repo and point the `./muster` symlink at it:
 
 ```bash
-# Boots Rancher + runs the generic smoke suite (~70 tests)
-GREP_TAGS="@generic" docker compose up
+git clone https://github.com/izaac/muster.git ../muster
+ln -s ../muster muster
+# Alternatively, set MUSTER=/path/to/muster, or install muster on your PATH.
 ```
 
-> First run pulls ~2 GB and takes 10–15 minutes. Requires Docker with at least 6 GB RAM and free ports `8443`/`8080`.
+Then provision Rancher and run a suite:
 
 ```bash
-# Run the full admin suite
-docker compose up
-
-# Run with a specific Rancher version
-RANCHER_IMAGE=docker.io/rancher/rancher:v2.14.0 docker compose up
-
-# Sharded (2 Rancher instances, ~2× faster, needs ~10 GB RAM)
-docker compose -f docker-compose.sharded.yml up
-
-# NixOS Users: Append `-f docker-compose.nix.yml` (Single) or `-f docker-compose.sharded.nix.yml` (Sharded)
-# e.g., docker compose -f docker-compose.yml -f docker-compose.nix.yml up
-
-# Stop everything and clean data
-docker compose down -v
+# Boots Rancher on k3d, then runs the generic smoke suite (~70 tests)
+GREP_TAGS="@generic" yarn local:test
 ```
+
+> The first run pulls the Rancher image and builds the test container, so it
+> takes roughly 10 to 15 minutes. After that, the cluster and images are reused.
+
+```bash
+# Run the full admin suite against the running cluster
+yarn local:test
+
+# Pass any Playwright arguments through after the subcommand
+yarn local:test -- -g "Log in with valid"
+
+# Provision once and keep Rancher up for repeated runs
+yarn local:up
+yarn local:test
+
+# Sharded: one Rancher per shard, merged into a single report
+SHARDS=2 yarn local:test:sharded
+
+# Tear everything down
+yarn local:down
+```
+
+> On a Podman host the runner selects the rootful socket automatically. Rancher's
+> jailer needs real device-node creation, so the substrate has to be rootful.
 
 ### Native setup (your own Rancher instance)
 
@@ -99,8 +120,9 @@ yarn po-diff             # Compare POs against upstream Cypress
 yarn gap-map             # Generate assertion gap map (upstream vs ours)
 yarn summarize-failures  # Classify test failures after a run
 
-scripts/sharded-runs.sh -h           # Run the sharded suite N times back-to-back
-                                     # with a full nuke between each, for flake hunting
+yarn local:up            # Provision Rancher via muster and keep it running
+yarn local:test          # Run the suite in a container against that Rancher
+yarn local:down          # Tear the cluster down
 ```
 
 ## License
