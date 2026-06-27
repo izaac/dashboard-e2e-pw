@@ -1,0 +1,98 @@
+# Containerised Playwright runner for this suite.
+#
+# Runs the tests inside a container joined to a muster-provisioned Rancher's k3d
+# network, so the host needs only a Docker- or Podman-compatible daemon (no
+# Node, Yarn, or browser install). Driven by `yarn local:test` via
+# scripts/local.sh, which provisions Rancher with muster and sources its env
+# before invoking compose.
+#
+# The test sources are bind-mounted from the checkout; node_modules lives in a
+# named volume so a host install is neither required nor clobbered. The image is
+# built from Dockerfile.pw and embeds no revision of the suite.
+#
+# Instance/network are parametrised (INSTANCE, K3D_NETWORK) so sharded runs can
+# point each shard's container at its own per-shard Rancher network.
+#
+# scripts/local.sh drives this with `compose up --abort-on-container-exit
+# --exit-code-from tests` rather than `compose run`: Podman's Docker-compatible
+# API rejects the TTY attach/hijack that `run` performs ("unable to upgrade to
+# tcp, received 500"), whereas `up` streams container logs and works on both
+# Docker and Podman.
+#
+# Usage (normally via scripts/local.sh):
+#   eval "$(muster env --instance e2e --out cypress)"
+#   K3D_NETWORK=k3d-e2e PW_REPO_PATH=. \
+#     docker compose -f docker-compose.pw.yml up \
+#       --abort-on-container-exit --exit-code-from tests tests
+
+x-pw-common: &pw-common
+  build:
+    context: .
+    dockerfile: Dockerfile.pw
+  networks:
+    k3d:
+  shm_size: "2g"
+  working_dir: /app
+  volumes:
+    - ${PW_REPO_PATH:-.}:/app
+    - pw-node-modules:/app/node_modules
+    # A bind mount ignores .dockerignore, so mask the optional rancher/dashboard
+    # checkout (used by CI to build the UI dist) to keep its Cypress specs out of
+    # Playwright discovery. The config also guards this via testIgnore.
+    - /app/dashboard-src
+  tmpfs:
+    - /tmp
+
+x-pw-env: &pw-env
+  # TEST_BASE_URL is validated by scripts/local.sh before this file is invoked;
+  # the soft default keeps `report` (which needs no Rancher) usable standalone.
+  TEST_BASE_URL: ${TEST_BASE_URL:-http://localhost}
+  CATTLE_BOOTSTRAP_PASSWORD: ${CATTLE_BOOTSTRAP_PASSWORD:-password1234}
+  TEST_PASSWORD: ${TEST_PASSWORD:-password1234}
+  TEST_USERNAME: ${TEST_USERNAME:-admin}
+  GREP_TAGS: ${GREP_TAGS:-}
+  PW_EXTRA: ${PW_EXTRA:-}
+  NODE_TLS_REJECT_UNAUTHORIZED: "0"
+  HOST_UID: ${HOST_UID:-0}
+  HOST_GID: ${HOST_GID:-0}
+  TEST_NO_SCREENSHOTS: ${TEST_NO_SCREENSHOTS:-}
+  TEST_NO_VIDEOS: ${TEST_NO_VIDEOS:-}
+  TEST_NO_TRACES: ${TEST_NO_TRACES:-}
+  TEST_A11Y: ${TEST_A11Y:-}
+  TEST_ONLY: ${TEST_ONLY:-}
+  TEST_SKIP: ${TEST_SKIP:-}
+
+services:
+  tests:
+    <<: *pw-common
+    entrypoint: ["/opt/pw-entrypoint.sh"]
+    command: ["playwright-run"]
+    environment: *pw-env
+
+  # `scripts/local.sh report` serves the last HTML report. It needs no Rancher
+  # network, only the bind-mounted checkout and a published port, so it sits
+  # behind a profile and is never started by the test run.
+  report:
+    <<: *pw-common
+    profiles: ["report"]
+    entrypoint: []
+    command:
+      - npx
+      - playwright
+      - show-report
+      - --host
+      - 0.0.0.0
+      - --port
+      - ${REPORT_PORT:-9323}
+      - /app/playwright-report
+    environment: *pw-env
+    ports:
+      - "${REPORT_PORT:-9323}:${REPORT_PORT:-9323}"
+
+volumes:
+  pw-node-modules:
+
+networks:
+  k3d:
+    external: true
+    name: ${K3D_NETWORK:-k3d-e2e}
