@@ -11,13 +11,15 @@ only things your host needs are a Docker or Podman daemon and the muster
 provisioning tools (`k3d`, `kubectl`, `helm`). You do not need Node, Yarn, or a
 browser on the host, because the tests run inside the container.
 
-First, make the [muster](https://github.com/izaac/muster) provisioner reachable.
-Clone it next to this repo and point the `./muster` symlink at it:
+First, install the [muster](https://github.com/izaac/muster) provisioner. Its
+`install.sh` copies muster into `~/.local/share/muster` and symlinks the
+entrypoint onto your PATH, so the runner finds it automatically:
 
 ```bash
-git clone https://github.com/izaac/muster.git ../muster
-ln -s ../muster muster
-# Alternatively, set MUSTER=/path/to/muster, or install muster on your PATH.
+git clone https://github.com/izaac/muster.git
+cd muster && ./install.sh && cd -
+# Make sure ~/.local/bin is on your PATH (install.sh prints a note if it is not).
+# Alternatively, point the ./muster symlink at a checkout, or set MUSTER=/path/to/muster.
 ```
 
 Then provision Rancher and run a suite:

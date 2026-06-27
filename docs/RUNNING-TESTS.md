@@ -221,13 +221,31 @@ the official Helm chart, exactly the way CI does. The wrappers in `scripts/`
 (`local.sh` and `local-sharded.sh`) drive muster and the container runner, and
 the `yarn local:*` scripts are thin aliases over them.
 
-### Point the runner at muster
+### Install muster
 
 The wrappers look for muster in this order: the `MUSTER` env var, then the
-`./muster` symlink in the repo root, then `muster` on your `PATH`. The simplest
-setup is to clone muster next to this repo and symlink it:
+`./muster` symlink in the repo root, then `muster` on your `PATH`. The
+recommended setup is to install muster onto your PATH with its `install.sh`,
+which the third lookup then finds with no per-repo wiring:
 
 ```bash
+git clone https://github.com/izaac/muster.git
+cd muster && ./install.sh && cd -
+```
+
+`install.sh` copies the muster tree into `~/.local/share/muster` and symlinks the
+entrypoint to `~/.local/bin/muster`. muster resolves its own library tree through
+that symlink, so the single binary on your PATH is all the runner needs. Make
+sure `~/.local/bin` is on your PATH; the script prints a note if it is not.
+Re-running the script upgrades an existing install in place, and `./install.sh
+--uninstall` removes everything it created. For a system-wide install, use
+`PREFIX=/usr/local ./install.sh`.
+
+If you would rather keep muster pinned to a working checkout, the older options
+still work: point the `./muster` symlink at it, or set `MUSTER=/path/to/muster`.
+
+```bash
+# Alternative: symlink a checkout next to this repo
 git clone https://github.com/izaac/muster.git ../muster
 ln -s ../muster muster
 ```
