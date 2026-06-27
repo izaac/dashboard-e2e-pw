@@ -135,6 +135,17 @@ export default defineConfig({
   testDir: '.',
   testMatch: getTestMatch(),
 
+  /* Never treat the rancher/dashboard checkout as a test source. CI clones it
+   * to <repo>/dashboard-src to build the UI dist; its bundled Cypress specs
+   * live under dashboard-src/cypress/e2e/tests/** and collide with our
+   * unanchored testMatch globs (e.g. e2e/tests/pages/**). CI currently hides
+   * them with an anonymous `- /app/dashboard-src` compose volume, but that mask
+   * is compose-only and disappears under the muster runner, so ignore the
+   * directory at the config level instead. Inherited by the setup/auth
+   * projects; the chromium project repeats it because a project-level
+   * testIgnore overrides (does not merge with) this top-level value. */
+  testIgnore: 'dashboard-src/**',
+
   /* Tag filtering (parsed from GREP_TAGS env var) */
   grep,
   grepInvert,
@@ -246,7 +257,7 @@ export default defineConfig({
     {
       name: 'chromium',
       dependencies: ['auth'],
-      testIgnore: ['e2e/tests/setup/**', 'e2e/tests/auth.setup.ts'],
+      testIgnore: ['e2e/tests/setup/**', 'e2e/tests/auth.setup.ts', 'dashboard-src/**'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: adminAuthFile,

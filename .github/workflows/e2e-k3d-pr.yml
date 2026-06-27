@@ -113,15 +113,16 @@ jobs:
           # (build-dashboard runs once, only the matrix legs duplicate).
           - { name: "@generic",    grep: "@generic" }
           - { name: "@navigation", grep: "@navigation" }
-    env:
-      # k3d-rancher.sh reads these to pick the chart line and image tag for
-      # the cluster, so the matrix legs target whatever the resolve step
-      # locked in.
-      RANCHER_IMAGE_TAG: ${{ needs.build-dashboard.outputs.rancher_image_tag }}
-      RANCHER_RELEASE: ${{ needs.build-dashboard.outputs.rancher_release }}
-      DASHBOARD_SHA: ${{ needs.build-dashboard.outputs.dashboard_sha }}
     steps:
       - uses: actions/checkout@v5
+
+      # The muster provisioner lives in its own repo; check it out alongside the
+      # suite so scripts/local.sh finds it at ./muster/muster.
+      - name: Checkout muster
+        uses: actions/checkout@v5
+        with:
+          repository: izaac/muster
+          path: muster
 
       - name: Download dashboard dist
         uses: actions/download-artifact@v5
@@ -140,10 +141,15 @@ jobs:
       - name: Pre-create artifact dirs with runner ownership
         run: mkdir -p test-results playwright-report
 
-      - name: Provision rancher on k3d (mount branch-matched dashboard)
+      # muster provisions the same k3d-hosted Rancher and mounts the
+      # branch-matched dashboard dist over the pod UI. For main the default
+      # channel (rancher-com-alpha) resolves to Docker Hub rancher/rancher:<tag>,
+      # matching branches-metadata.json, so only the image tag is pinned here.
+      - name: Provision rancher on k3d via muster (mount branch-matched dashboard)
         env:
           DASHBOARD_DIST: ${{ github.workspace }}/dashboard-src/dist
-        run: bash scripts/k3d-rancher.sh up e2e
+          VERSION: ${{ needs.build-dashboard.outputs.rancher_image_tag }}
+        run: bash scripts/local.sh up
 
       # Resource snapshot after rancher is up, before tests run. Cheap and
       # gives us concrete numbers to decide whether the standard runner (4
@@ -166,8 +172,11 @@ jobs:
           echo "--- cattle-system pod status ---"
           kubectl --kubeconfig "$KUBECONFIG" -n cattle-system get pods -o wide || true
 
+      # The suite runs in a container joined to the k3d network (muster handoff
+      # provides TEST_BASE_URL); scripts/local.sh reuses the cluster provisioned
+      # above. Outputs are chowned back to the runner user for artifact upload.
       - name: Run ${{ matrix.tag.name }} tests
-        run: HOST_UID=$(id -u) HOST_GID=$(id -g) bash scripts/k3d-run.sh
+        run: bash scripts/local.sh test
         env:
           GREP_TAGS: ${{ matrix.tag.grep }}
           # Strip credential-bearing artifacts before they hit a public artifact
@@ -178,7 +187,10 @@ jobs:
 
       - name: Capture rancher pod logs
         if: always()
-        run: bash scripts/k3d-rancher.sh logs e2e > rancher-e2e.log 2>&1 || true
+        run: |
+          KUBECONFIG=$(k3d kubeconfig write e2e)
+          kubectl --kubeconfig "$KUBECONFIG" -n cattle-system logs -l app=rancher \
+            --tail=-1 --all-containers --prefix > rancher-e2e.log 2>&1 || true
 
       - name: Upload failure artifacts
         uses: actions/upload-artifact@v5
@@ -196,4 +208,4 @@ jobs:
 
       - name: Teardown
         if: always()
-        run: bash scripts/k3d-rancher.sh down e2e
+        run: bash scripts/local.sh down

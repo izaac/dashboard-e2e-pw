@@ -1,0 +1,23 @@
+# Self-contained Playwright runner for this suite.
+#
+# Lets `yarn local:test` run the suite inside a container so the host needs no
+# Node, Yarn, or browser install: only a Docker- or Podman-compatible daemon.
+# The Microsoft Playwright base image ships Node, Yarn, and the bundled browsers
+# (Chromium, Firefox, WebKit) for amd64 and arm64, so there is no host-specific
+# browser split.
+#
+# The project sources and node_modules are provided at run time (a bind mount of
+# the checkout plus a named volume), so this image stays generic and embeds no
+# particular revision of the suite.
+#
+# Keep this tag in sync with the @playwright/test version pinned in
+# package.json so the bundled browsers match the test runner.
+FROM mcr.microsoft.com/playwright:v1.52.0-noble
+
+WORKDIR /app
+
+# Infrastructure (not suite revision): install deps, run the suite, hand build
+# outputs back to the host user. Baked in so the image is self-contained even
+# though the suite sources arrive via bind mount.
+COPY scripts/pw-entrypoint.sh /opt/pw-entrypoint.sh
+RUN chmod +x /opt/pw-entrypoint.sh
