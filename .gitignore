@@ -22,10 +22,6 @@ local.yaml
 devenv.lock
 .direnv/
 
-# NixOS Docker (local-only, not needed on non-NixOS hosts)
-Dockerfile.rancher-nix
-docker-compose.nix.yml
-
 # Claude Code
 .claude/
 
@@ -58,3 +54,6 @@ local.yaml
 # CI-faithful local k3d flow: branch-matched rancher/dashboard checkout + dist
 # cloned and built by scripts/k3d-e2e.sh (mirrors the build-dashboard CI job).
 dashboard-src/
+
+# Local symlink to the muster provisioner checkout (CI checks it out itself)
+/muster
