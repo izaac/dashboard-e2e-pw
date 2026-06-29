@@ -7,6 +7,9 @@
 #              the repo, else `muster` on PATH.
 #   PROVIDER   muster substrate provider. Default: k3d.
 #   DASHBOARD_DIST / REPO / VERSION  Optional muster `up` overrides.
+#   PREFER_STAGING  Keep-fresh: when set truthy and VERSION is a rolling head
+#              tag, let muster auto-promote the backend to a newer SUSE staging
+#              build. A concrete VERSION pin always wins. Default: off.
 
 die() {
   echo "ERROR: $*" >&2
@@ -108,6 +111,7 @@ ensure_up() {
   [ -n "${DASHBOARD_DIST:-}" ] && up_args+=(--dashboard-dist "$DASHBOARD_DIST")
   [ -n "${REPO:-}" ] && up_args+=(--repo "$REPO")
   [ -n "${VERSION:-}" ] && up_args+=(--version "$VERSION")
+  is_truthy "${PREFER_STAGING:-}" && up_args+=(--prefer-staging)
   # EXTERNAL == provisioning intent: muster pins server-url behind a cloudflared
   # tunnel so downstream nodes can register back. Internal runs skip it.
   is_truthy "${EXTERNAL:-}" && up_args+=(--external)
