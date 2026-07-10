@@ -280,7 +280,7 @@ export async function generateFakeClusterDataAndIntercepts(
     const response = await route.fetch();
     const body = await response.json();
 
-    body.data = [...(body.data ?? []), ...fakeRegistrySecrets];
+    body.data = [...(Array.isArray(body.data) ? body.data : []), ...fakeRegistrySecrets];
     if (typeof body.count === 'number') {
       body.count = body.data.length;
     }
