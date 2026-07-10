@@ -6,7 +6,6 @@ import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { snapshotSetting } from '@/support/utils/setting-snapshot';
 
 const settingsData: Record<string, { new: string; new2?: string; new3?: string }> = {
-  'ui-index': { new: 'https://my-custom-ui.example.com/latest/index.html' },
   'ui-dashboard-index': { new: 'https://my-custom-ui.example.com/dashboard/index.html' },
   'ui-offline-preferred': { new: 'Local', new2: 'Remote', new3: 'Dynamic' },
   'ui-brand': { new: 'suse' },
@@ -148,63 +147,6 @@ test.describe('Settings (Part 2)', () => {
       await input.fill(inputValue);
       await expect(settingsPage.errorBanner().filter({ hasText: 'Server URL must be an URL' })).toBeVisible();
       await expect(settingsPage.errorBanner().filter({ hasText: 'Server URL must be https' })).toBeVisible();
-    }
-  });
-
-  test('can update ui-index', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-    const settingName = 'ui-index';
-
-    // ui-index no longer exists on rancher:head (no upstream test counterpart
-    // either); guard so the test revives automatically if the setting returns.
-    const settingResp = await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName, 0);
-
-    test.skip(settingResp.status === 404, 'ui-index setting not present on this Rancher version');
-
-    const restore = await snapshotSetting(rancherApi, settingName);
-
-    try {
-      await navToSettings(page);
-      await editSetting(page, settingName);
-
-      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
-
-      const input = settingsPage.settingInput();
-
-      await input.clear();
-      await input.fill(settingsData[settingName].new);
-
-      const saveResponsePromise = page.waitForResponse(
-        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-      );
-
-      await settingsPage.saveButton().click();
-      const saveResp = await saveResponsePromise;
-
-      expect(saveResp.status()).toBe(200);
-      expect(saveResp.request().postDataJSON().value).toBe(settingsData[settingName].new);
-
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
-
-      // Reset via UI
-      await navToSettings(page);
-      await editSetting(page, settingName);
-
-      await settingsPage.useDefaultButton().click();
-      const resetResponsePromise = page.waitForResponse(
-        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-      );
-
-      await settingsPage.saveButton().click();
-      const resetResp = await resetResponsePromise;
-
-      expect(resetResp.status()).toBe(200);
-
-      const defaultVal = (await rancherApi.getRancherResource('v1', 'management.cattle.io.settings', settingName)).body
-        .default;
-
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(defaultVal);
-    } finally {
-      await restore();
     }
   });
 
