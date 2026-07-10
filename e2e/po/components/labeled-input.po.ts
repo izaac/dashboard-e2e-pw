@@ -43,4 +43,10 @@ export default class LabeledInputPo extends ComponentPo {
   input(): Locator {
     return this.self();
   }
+
+  validationMessage(): Locator {
+    return this.self()
+      .locator('xpath=ancestor::*[contains(@class,"labeled-input")]')
+      .getByTestId('labeledTooltip-info-icon');
+  }
 }
