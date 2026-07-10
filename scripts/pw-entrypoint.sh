@@ -29,6 +29,20 @@ fi
 # No-op when the bundled browser already matches the pinned Playwright version.
 npx playwright install chromium >/dev/null 2>&1 || true
 
+# Wait for Rancher to be reachable from the container before running tests.
+# The container just joined the k3d network; DNS/routing may not be stable on
+# the first request, causing ERR_NETWORK_CHANGED in the browser.
+if [ -n "${TEST_BASE_URL:-}" ]; then
+  echo "--- Waiting for Rancher at ${TEST_BASE_URL} ---"
+  for i in $(seq 1 30); do
+    if wget -q -O /dev/null --no-check-certificate "${TEST_BASE_URL}" 2>/dev/null; then
+      echo "--- Rancher reachable (attempt $i/30) ---"
+      break
+    fi
+    sleep 1
+  done
+fi
+
 status=0
 if [ "${1:-}" = "playwright-run" ]; then
   shift
