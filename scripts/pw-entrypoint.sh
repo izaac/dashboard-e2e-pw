@@ -14,7 +14,7 @@ HOST_GID="${HOST_GID:-0}"
 chown_back() {
   # The container runs as root so it can install deps and write into the named
   # node_modules volume; reassign only the host-visible outputs to the caller.
-  for d in test-results playwright-report blob-report .auth; do
+  for d in test-results playwright-report blob-report .auth snapshots; do
     if [ -e "/app/$d" ]; then
       chown -R "$HOST_UID:$HOST_GID" "/app/$d" 2>/dev/null || true
     fi
