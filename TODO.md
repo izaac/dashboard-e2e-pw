@@ -19,7 +19,6 @@ Ordered by biggest win / lowest effort first.
 
 | Effort | Win | Commit | Verdict / action |
 |--------|-----|--------|-------------------|
-| S | S - no-op | `1b424c5` #18009 | `get-support.spec.ts` + `get-support.po.ts` removed (Prime rebrand). We have neither; nothing to port |
 | M | M - 6 tests + feature | `875d324e2e` #17728 | Convert `explorer2/workloads/workload-dashboard.spec.ts` (6 tests) + new `workload-dashboard.po.ts` PO (78 lines, ~7 methods). New Workload Dashboard landing page. Biggest net-new coverage block |
 | M | M - 1 test + new PO | `c0271168b1` #15347 | `gitrepo.spec.ts`: add `Can create a GitRepo with GitHub App git authentication`. Needs `SelectOrCreateAuthPo` (new upstream PO, ~16 methods incl. `setGitHubAppSecret`, `createGitHubAppAuth`). Unblocks fleet git-auth coverage |
 | M | S - 1 test + banner PO | `fc8dc705c1` #16383 | `cluster-manager.spec.ts` + `users.spec.ts`: add TOC assertion (`creation page should include a table of contents`). Needs `fixed-banner.po.ts` TOC methods |
