@@ -99,6 +99,11 @@ export default class ProductNavPo extends ComponentPo {
     return this.self().locator('.header');
   }
 
+  /** Get group header labels (h6 within tab headers) */
+  tabHeaderLabels(): Locator {
+    return this.tabHeaders().locator('h6');
+  }
+
   /** Get version number */
   version(): VersionNumberPo {
     return new VersionNumberPo(this.page, '.side-menu .version');
