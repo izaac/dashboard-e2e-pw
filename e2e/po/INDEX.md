@@ -30,7 +30,7 @@
 | ImportYamlPo | import-yaml.po.ts | ComponentPo | `[data-testid=` | super, importYamlEditor, successIndicator, importButton, closeButton, cancelButton, importYamlSortableTable |
 | KeyValuePo | key-value.po.ts | ComponentPo | — | addButton, setKeyValueAtIndex |
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
-| LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, input, byLabel, bySelector |
+| LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, input, validationMessage, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, dropdown, searchInput, optionByIndex, optionByLabel, deselectButton, setOptionAndClick, clickOptionWithLabel (+7) |
 | ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
@@ -289,7 +289,7 @@
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |
-| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, masthead, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI (+26) |
+| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, masthead, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI (+27) |
 
 ## pages/extensions/
 

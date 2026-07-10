@@ -96,6 +96,10 @@ export class WorkloadsCreatePageBasePo extends PagePo {
     return this.page.getByTestId('name-ns-description-name');
   }
 
+  nameLabeledInput(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="name-ns-description-name"] input');
+  }
+
   async selectNamespace(label: string): Promise<void> {
     const nsSelect = new LabeledSelectPo(this.page, '[data-testid="name-ns-description-namespace"]');
 

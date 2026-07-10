@@ -20,6 +20,30 @@ import { EXTRA_LONG, LONG, SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 test.describe('Deployments', { tag: ['@explorer2', '@adminUser'] }, () => {
   test.describe('CRUD', { tag: ['@standardUser', '@adminUser'] }, () => {
+    test('should show a translated field name in the required validation message when the name input is left empty', async ({
+      page,
+      login,
+    }) => {
+      await login();
+
+      const deploymentsCreatePage = new WorkloadsDeploymentsCreatePagePo(page, 'local');
+
+      await deploymentsCreatePage.goTo();
+      await deploymentsCreatePage.waitForPage();
+
+      const nameInput = deploymentsCreatePage.nameLabeledInput();
+
+      // Focus the name input then blur it to trigger inline validation
+      await nameInput.input().focus();
+      await deploymentsCreatePage.containerImage().input().focus();
+
+      // Validation error should use translated key "Name", not default "Value"
+      const tooltip = nameInput.validationMessage();
+
+      await expect(tooltip).toHaveAttribute('aria-label', /"Name" is required/);
+      await expect(tooltip).not.toHaveAttribute('aria-label', /"Value" is required/);
+    });
+
     test('should be able to create a new deployment with basic options', async ({ page, login, rancherApi }) => {
       test.setTimeout(EXTRA_LONG);
       await login();
