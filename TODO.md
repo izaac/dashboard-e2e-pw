@@ -1,6 +1,6 @@
 # TODO
 
-> Last upstream sync check: 2026-06-10
+> Last upstream sync check: 2026-07-09
 
 ## Upstream Sync Status
 
@@ -8,19 +8,28 @@
 commit `b07a64e` ("Sync upstream: Microsoft Entra ID rebrand + local cluster edit
 accordion check").
 
-### Upstream commits since last sync (May 1 – May 19), reviewed
+**Reviewed (not yet ported) up to:** `../dashboard` master at `7570de16f`
+(Jul 9, 2026). Re-quantified via `yarn gap-map` (94%, 643/684) and `yarn po-diff`
+(287 upstream POs, 98 unported). Validate any port with `yarn local:test`
+(muster `--external` for provisioning specs).
 
-The `mgmt-to-prov` commits below merged to master as PR #17228 and have been
-ported (see Watch list); the rest need no porting.
+### Upstream commits Jun 9 - Jul 9, reviewed 2026-07-09
 
-| Date | Commit | Author | Verdict |
-|------|--------|--------|---------|
-| May 15 | `3737f3f8` | richard-cox | `mgmt-to-prov` PO helpers, merged as #17228, ported |
-| May 13 | `94d65b5c` | richard-cox | `mgmt-to-prov` `v2prov-capi.spec` fix, merged as #17228, ported |
-| May 12 | `82361f03` | richard-cox | `mgmt-to-prov` blueprint + cluster-list text, merged as #17228, ported |
-| May 6 | `2faefe0c` | yonasberhe23 | Cluster tools: resource polling refactor: Cypress-specific hardening, we already handle via `rancherApi` + `waitForResponse` |
-| May 5 | `55da6031` | aalves08 | Remove extensions compatibility tests, just deletions, nothing to port |
-| May 4 | `3c1e37a7` | IsaSih | Flexibilize release notes assertions for prime, test hardening only |
+Ordered by biggest win / lowest effort first.
+
+| Effort | Win | Commit | Verdict / action |
+|--------|-----|--------|-------------------|
+| S | S - no-op | `1b424c5` #18009 | `get-support.spec.ts` + `get-support.po.ts` removed (Prime rebrand). We have neither; nothing to port |
+| M | M - 6 tests + feature | `875d324e2e` #17728 | Convert `explorer2/workloads/workload-dashboard.spec.ts` (6 tests) + new `workload-dashboard.po.ts` PO (78 lines, ~7 methods). New Workload Dashboard landing page. Biggest net-new coverage block |
+| M | M - 1 test + new PO | `c0271168b1` #15347 | `gitrepo.spec.ts`: add `Can create a GitRepo with GitHub App git authentication`. Needs `SelectOrCreateAuthPo` (new upstream PO, ~16 methods incl. `setGitHubAppSecret`, `createGitHubAppAuth`). Unblocks fleet git-auth coverage |
+| M | S - 1 test + banner PO | `fc8dc705c1` #16383 | `cluster-manager.spec.ts` + `users.spec.ts`: add TOC assertion (`creation page should include a table of contents`). Needs `fixed-banner.po.ts` TOC methods |
+| M | M - 2 specs re-sync | `24928447df` #17924, `5e44c1c72` #17150 | Repositories Refresh Interval + Chart Install UI improvements. Touch `chart-repositories.po`, `install-charts.po`, `logging.spec`, `chart-install-wizard.spec`, `repositories.spec` |
+| M | M - +/-60 lines | `be3879ed2` #18188 (roles part) | `roles.spec.ts` re-sync: we have 18 vs upstream 13 (+5). Resource-class validator i18n keys changed |
+| M | M - +/-69 lines | `93a21f141c` #18099 | `extensions.spec.ts`: authenticated private registries. `SelectOrCreateAuthPo` again; `roles.po`, `extensions.po` edits |
+| M | S - 1 test | (fleet display-name) | `fleet-cluster-target-display-name.spec.ts`: display name in cluster target selector when editing a gitrepo |
+| M | S - beforeNext hook | `a6a5a55b4` #17997 | `beforeNext` added to `cruResource` steps. Audit our `CreateEditViewPo` for a `beforeNext`/step-hook seam |
+| L | L - churn, defer | `aeeb8a97a` #18108 | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
+| - | watch | `f6192e983` #10897 | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
 
 > Note for future cluster-mock ports (from the `mgmt-to-prov` #17228 port): the
 > dashboard loads clusters by id via server-side-pagination
