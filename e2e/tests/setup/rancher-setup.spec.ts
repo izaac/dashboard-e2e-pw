@@ -5,7 +5,7 @@ import { LoginPagePo } from '@/e2e/po/pages/login-page.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import { PARTIAL_SETTING_THRESHOLD } from '@/support/utils/settings-utils';
 import { SHORT_TIMEOUT_OPT, MEDIUM_TIMEOUT_OPT } from '@/support/timeouts';
-import { BRIEF, EXTENDED, STANDARD } from '@/support/timeouts';
+import { BRIEF, STANDARD } from '@/support/timeouts';
 
 /**
  * Rancher setup — equivalent of cypress/e2e/tests/setup/rancher-setup.spec.ts
@@ -25,16 +25,66 @@ type BootstrapState = 'needs-login' | 'needs-configure' | 'bootstrapped';
 
 /**
  * Detect the current Rancher bootstrap state by navigating to the home page
- * and checking where the SPA redirects. Always performs a fresh check — each
- * test gets its own page, so server state may have changed between tests.
+ * and checking where the SPA redirects.
+ *
+ * Handles the case where a previous run left a valid server-side session
+ * (unlimited TTL is set for long suite runs): the SPA stays at /home
+ * instead of redirecting to /auth/login, which means Rancher is already
+ * bootstrapped.
  */
 async function detectBootstrapState(page: import('@playwright/test').Page): Promise<BootstrapState> {
   const homePage = new HomePagePo(page);
+  const MAX_ATTEMPTS = 3;
 
-  await homePage.goTo();
+  let pageState: 'home' | 'auth' | 'timeout' = 'timeout';
 
-  // Wait for SPA redirect to settle — unauthenticated users land on /auth/login or /auth/setup
-  await expect(page).toHaveURL(/\/auth\/(login|setup)/, { timeout: EXTENDED });
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await page.goto('./home', { waitUntil: 'domcontentloaded' });
+    } catch (err) {
+      // ERR_NETWORK_CHANGED / ERR_ABORTED: container network not stable yet
+      if (attempt < MAX_ATTEMPTS) {
+        console.warn(
+          `[detectBootstrapState] Navigation failed (attempt ${attempt}/${MAX_ATTEMPTS}): ${(err as Error).message}`,
+        );
+        await new Promise((r) => setTimeout(r, 2_000));
+        continue;
+      }
+
+      throw err;
+    }
+
+    // Race: home banner (session valid, SPA mounted, already bootstrapped)
+    // vs auth redirect (no session, SPA redirects to /auth/login or /auth/setup)
+    try {
+      pageState = await Promise.race([
+        homePage
+          .title()
+          .waitFor({ state: 'visible', timeout: STANDARD })
+          .then(() => 'home' as const),
+        page.waitForURL(/\/auth\/(login|setup)/, { timeout: STANDARD }).then(() => 'auth' as const),
+      ]);
+
+      break; // One condition met, stop retrying
+    } catch {
+      if (attempt < MAX_ATTEMPTS) {
+        console.warn(
+          `[detectBootstrapState] SPA did not settle (attempt ${attempt}/${MAX_ATTEMPTS}), retrying navigation`,
+        );
+        continue;
+      }
+
+      pageState = 'timeout';
+    }
+  }
+
+  if (pageState === 'home') {
+    return 'bootstrapped';
+  }
+
+  if (pageState === 'timeout') {
+    throw new Error(`[detectBootstrapState] Timed out after ${MAX_ATTEMPTS} attempts. Last URL: ${page.url()}`);
+  }
 
   const url = page.url();
 

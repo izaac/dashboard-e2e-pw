@@ -270,6 +270,9 @@ export default defineConfig({
 
   /* Output directory for test artifacts */
   outputDir: 'test-results',
+
+  /* Clean up cached auth files after suite ends */
+  globalTeardown: 'support/global-teardown.ts',
 });
 
 export { baseURL, apiUrl, username };
