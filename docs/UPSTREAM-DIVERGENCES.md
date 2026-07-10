@@ -21,6 +21,7 @@ handled differently.
 6. [Visual Snapshots (Percy → Playwright)](#6-visual-snapshots-percy--playwright)
 7. [Elemental Extension Coverage](#7-elemental-extension-coverage)
 8. [Navigation: goTo() for Setup vs. Dedicated Walks](#8-navigation-goto-for-setup-vs-dedicated-walks)
+9. [Describe Nesting: Infra Tags vs. Upstream Structure](#9-describe-nesting-infra-tags-vs-upstream-structure)
 
 ---
 
@@ -306,7 +307,33 @@ fixed expected-entries list, because extension-injected entries mean the set is 
 
 ---
 
-## Adding New Entries
+## 9. Describe Nesting: Infra Tags vs. Upstream Structure
+
+**Upstream (Cypress):** The "table of contents" assertion for the import cluster form is nested
+under `Cluster Manager > Imported > Generic`. Cypress has no tag-based infra gating, so a
+form-only UI check can live beside tests that provision real downstream clusters without penalty.
+
+**Our approach (Playwright):** Our `Imported` describe block carries `@needsInfra @provisioning`
+tags because most of its tests require a real cluster. The table-of-contents test only inspects
+the create form's accordions and needs **no infrastructure**. Nesting it under `Imported` would
+force it to inherit `@needsInfra @provisioning` and get skipped in normal (no-infra) runs.
+
+So the test lives in its own top-level describe, `Import cluster form Table of Contents`,
+outside the infra-gated block. The **leaf test name matches upstream exactly**, so gap-map parity
+tracking still resolves it 1:1.
+
+```typescript
+// Not nested under the @needsInfra 'Imported' describe: this test needs no cluster.
+test.describe('Import cluster form Table of Contents', () => {
+  test('creation page should include a table of contents containing an entry for each Accordion on the page', ...);
+});
+```
+
+**Why diverge:** Tag inheritance is a Playwright structural concern with no Cypress equivalent.
+Mirroring upstream's nesting would silently skip a no-infra test in the default run, which is worse
+than a cosmetic structure difference. Leaf-name parity keeps the port auditable.
+
+---
 
 When you find a new intentional divergence from upstream:
 

@@ -55,4 +55,24 @@ export default abstract class ClusterManagerCreateImportPagePo extends PagePo {
   async toggleAccordion(index: number, label: string): Promise<void> {
     await this.accordion(index, label).click();
   }
+
+  accordionHeaders(): Locator {
+    return this.self().getByTestId('accordion-header');
+  }
+
+  tocListItems(): Locator {
+    return this.self().locator('[data-testid^="toc-list-item-"]');
+  }
+
+  tocListItemButton(index: number): Locator {
+    return this.self().getByTestId(`toc-list-item-${index}`).locator('button');
+  }
+
+  scrollContainer(): Locator {
+    return this.page.locator('.main-layout');
+  }
+
+  scrollTop(): Promise<number> {
+    return this.scrollContainer().evaluate((el) => el.scrollTop);
+  }
 }

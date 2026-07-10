@@ -10,6 +10,10 @@ export default class ClusterManagerImportGenericPagePo extends ClusterManagerImp
     return this.self().getByTestId('registries-accordion');
   }
 
+  registriesAccordionBody(): Locator {
+    return this.registriesAccordion().getByTestId('accordion-body');
+  }
+
   networkingAccordion(): Locator {
     return this.self().getByTestId('networking-accordion');
   }

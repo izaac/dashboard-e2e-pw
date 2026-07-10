@@ -19,13 +19,9 @@ Ordered by biggest win / lowest effort first.
 
 | Effort | Win | Commit | Verdict / action |
 |--------|-----|--------|-------------------|
-| M | M - 6 tests + feature | `875d324e2e` #17728 | Convert `explorer2/workloads/workload-dashboard.spec.ts` (6 tests) + new `workload-dashboard.po.ts` PO (78 lines, ~7 methods). New Workload Dashboard landing page. Biggest net-new coverage block |
-| M | M - 1 test + new PO | `c0271168b1` #15347 | `gitrepo.spec.ts`: add `Can create a GitRepo with GitHub App git authentication`. Needs `SelectOrCreateAuthPo` (new upstream PO, ~16 methods incl. `setGitHubAppSecret`, `createGitHubAppAuth`). Unblocks fleet git-auth coverage |
-| M | S - 1 test + banner PO | `fc8dc705c1` #16383 | `cluster-manager.spec.ts` + `users.spec.ts`: add TOC assertion (`creation page should include a table of contents`). Needs `fixed-banner.po.ts` TOC methods |
 | M | M - 2 specs re-sync | `24928447df` #17924, `5e44c1c72` #17150 | Repositories Refresh Interval + Chart Install UI improvements. Touch `chart-repositories.po`, `install-charts.po`, `logging.spec`, `chart-install-wizard.spec`, `repositories.spec` |
 | M | M - +/-60 lines | `be3879ed2` #18188 (roles part) | `roles.spec.ts` re-sync: we have 18 vs upstream 13 (+5). Resource-class validator i18n keys changed |
 | M | M - +/-69 lines | `93a21f141c` #18099 | `extensions.spec.ts`: authenticated private registries. `SelectOrCreateAuthPo` again; `roles.po`, `extensions.po` edits |
-| M | S - 1 test | (fleet display-name) | `fleet-cluster-target-display-name.spec.ts`: display name in cluster target selector when editing a gitrepo |
 | M | S - beforeNext hook | `a6a5a55b4` #17997 | `beforeNext` added to `cruResource` steps. Audit our `CreateEditViewPo` for a `beforeNext`/step-hook seam |
 | L | L - churn, defer | `aeeb8a97a` #18108 | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
 | - | watch | `f6192e983` #10897 | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
