@@ -6,6 +6,7 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
+import SelectOrCreateAuthPo from '@/e2e/po/components/select-or-create-auth.po';
 
 export class FleetApplicationListPagePo extends PagePo {
   constructor(page: Page) {
@@ -95,6 +96,10 @@ export class FleetGitRepoCreateEditPo extends PagePo {
 
   targetCluster(): LabeledSelectPo {
     return new LabeledSelectPo(this.page, '[data-testid="fleet-target-cluster-name-selector"]');
+  }
+
+  gitAuthSelectOrCreate(): SelectOrCreateAuthPo {
+    return new SelectOrCreateAuthPo(this.page, '[data-testid="gitrepo-git-auth"]');
   }
 
   mastheadTitleLocator(): Locator {

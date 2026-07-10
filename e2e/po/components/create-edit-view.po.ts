@@ -53,6 +53,11 @@ export default class CreateEditViewPo extends ComponentPo {
     await this.saveButtonPo().action('Save', 'Saved');
   }
 
+  /** Click the Next button in a multi-step create wizard (same DOM element as Save). */
+  async nextPage(): Promise<void> {
+    await this.saveButtonPo().click();
+  }
+
   keyInput(index = 0): Locator {
     return this.page.getByTestId(`input-kv-item-key-${index}`).first();
   }

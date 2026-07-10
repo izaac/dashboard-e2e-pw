@@ -11,6 +11,7 @@ import { gitRepoTargetAllClustersRequest } from '@/e2e/blueprints/fleet/gitrepos
 import { HeaderPo } from '@/e2e/po/components/header.po';
 import { BRIEF, LONG, STANDARD } from '@/support/timeouts';
 import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
+import { generateFakeClusterDataAndIntercepts } from '@/e2e/blueprints/nav/fake-cluster';
 
 /**
  * Git Repo spec — converted from upstream fleet/gitrepo.spec.ts.
@@ -29,9 +30,72 @@ const repoInfo = {
 };
 
 test.describe('Git Repo', { tag: ['@fleet', '@adminUser'] }, () => {
-  // eslint-disable-next-line playwright/expect-expect -- stub body never runs
-  test('Can create a GitRepo', async () => {
-    test.skip(true, 'Requires downstream clusters — fake cluster intercepts need real fleet multi-cluster setup');
+  test('Can create a GitRepo with GitHub App git authentication', async ({ page, login, rancherApi }) => {
+    const fakeProvClusterId = rancherApi.createE2EResourceName('gh-app-prov');
+    const fakeMgmtClusterId = `c-${fakeProvClusterId}`;
+    const gitRepoName = rancherApi.createE2EResourceName('gitrepo-ghapp');
+
+    const appId = '12345';
+    const installationId = '67890';
+    const privateKey = '-----BEGIN RSA PRIVATE KEY-----\nFAKEKEYCONTENT\n-----END RSA PRIVATE KEY-----';
+
+    // Route must be set up BEFORE login so fake cluster data is active when the page loads
+    await generateFakeClusterDataAndIntercepts(page, { fakeProvClusterId, fakeMgmtClusterId });
+
+    const secretResponse = page.waitForResponse(
+      (resp) => resp.url().includes(`/v1/secrets/${workspace}`) && resp.request().method() === 'POST',
+    );
+
+    await login();
+
+    const listPage = new FleetApplicationListPagePo(page);
+    const header = new HeaderPo(page);
+    const gitRepoCreatePage = new FleetGitRepoCreateEditPo(page);
+
+    try {
+      await listPage.goTo();
+      await listPage.waitForPage();
+      await header.selectWorkspace(workspace);
+
+      await gitRepoCreatePage.goTo();
+      await gitRepoCreatePage.waitForPage();
+
+      // Step 1: Metadata
+      await gitRepoCreatePage.resourceDetail().createEditView().nameNsDescription().name().set(gitRepoName);
+      await gitRepoCreatePage.resourceDetail().createEditView().nextPage();
+
+      // Step 2: Repository details
+      await gitRepoCreatePage.setGitRepoUrl(repoInfo.repoUrl);
+      await gitRepoCreatePage.setBranchName(repoInfo.branch);
+      await gitRepoCreatePage.setGitRepoPath(repoInfo.paths);
+      await gitRepoCreatePage.resourceDetail().createEditView().nextPage();
+
+      // Step 3: Target selection
+      await gitRepoCreatePage.targetClusterOptions().set(1);
+      await gitRepoCreatePage.targetClusterOptions().set(2);
+      await gitRepoCreatePage.targetCluster().dropdown().click();
+      await gitRepoCreatePage.targetCluster().clickOptionWithLabel(fakeProvClusterId);
+      await gitRepoCreatePage.resourceDetail().createEditView().nextPage();
+
+      // Step 4: Advanced - create GitHub App auth secret
+      await gitRepoCreatePage.gitAuthSelectOrCreate().createGitHubAppAuth(appId, installationId, privateKey);
+
+      await gitRepoCreatePage.resourceDetail().createEditView().createButton().click();
+
+      const response = await secretResponse;
+
+      expect(response.status()).toBe(201);
+
+      const requestBody = response.request().postDataJSON();
+
+      expect(requestBody.metadata.labels['fleet.cattle.io/managed']).toBe('true');
+      expect(requestBody.data['github_app_id']).toBe(Buffer.from(appId).toString('base64'));
+      expect(requestBody.data['github_app_installation_id']).toBe(Buffer.from(installationId).toString('base64'));
+      expect(requestBody.data['github_app_private_key']).toBe(Buffer.from(privateKey).toString('base64'));
+    } finally {
+      await rancherApi.deleteRancherResource('v1', 'fleet.cattle.io.gitrepos', `${workspace}/${gitRepoName}`, false);
+      await page.unroute('**/v1/**');
+    }
   });
 
   test('check table headers are available in list and details view', async ({ page, login, rancherApi }) => {

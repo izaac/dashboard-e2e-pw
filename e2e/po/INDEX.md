@@ -22,7 +22,7 @@
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
 | CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard |
-| CreateEditViewPo | create-edit-view.po.ts | ComponentPo | — | nameNsDescription, errorBanner, formSave, saveButtonPo, createButton, cancelButton, editYamlButton, editClusterYamlButton (+9) |
+| CreateEditViewPo | create-edit-view.po.ts | ComponentPo | — | nameNsDescription, errorBanner, formSave, saveButtonPo, createButton, cancelButton, editYamlButton, editClusterYamlButton (+10) |
 | CruResourcePo | cru-resource.po.ts | ComponentPo | — | super, saveOrCreate, cancel, findSubTypeByName, selectSubType, selectSubTypeByIndex, saveAndWaitForRequests |
 | DialogPo | dialog.po.ts | ComponentPo | — | super, getActionButton |
 | Growl | growl.po.ts | ComponentPo | `.growl-list` | super, items, byText |
@@ -47,7 +47,7 @@
 | ResourceTablePo | resource-table.po.ts | ComponentPo | — | super, sortableTable, downloadYamlButton, snapshotNowButton, resourceTableDetails, goToDetailsPage |
 | ResourceYamlPo | resource-yaml.po.ts | ComponentPo | `.resource-yaml` | super, body, footer, codeMirror, cancel, saveOrCreate |
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
-| SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, createBasicAuth, createSSHAuth, createRKEAuth, waitForNotLoading |
+| SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, setGitHubAppSecret, createBasicAuth, createSSHAuth, createRKEAuth (+2) |
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
 | SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, if, bulkActionDropDownPopOver, bulkActionDropDownButton (+56) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, allTabs, tabNames, for (+1) |
@@ -303,7 +303,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | FleetDashboardListPagePo | fleet-dashboard.po.ts | PagePo | `/c/${clusterId}/fleet` | super, navTo, workspaceCard, slideInPanel, slideInPanelTitleLink, fleetDashboardEmptyState, getStartedButton, viewModeButton (+3) |
-| FleetApplicationListPagePo | fleet.cattle.io.application.po.ts | PagePo | `/c/_/fleet/application` | super, list, resourceTableDetails, sortableTable, goToDetailsPage, resourceDetail, createGitRepo, createHelmOp (+12) |
+| FleetApplicationListPagePo | fleet.cattle.io.application.po.ts | PagePo | `/c/_/fleet/application` | super, list, resourceTableDetails, sortableTable, goToDetailsPage, resourceDetail, createGitRepo, createHelmOp (+13) |
 | FleetBundlesListPagePo | fleet.cattle.io.bundle.po.ts | PagePo | — | super, baseResourceList, list, resourceTableDetails, goToDetailsPage, resourceDetail, tabs, resourcesList |
 | FleetBundleNamespaceMappingListPagePo | fleet.cattle.io.bundlenamespacemapping.po.ts | PagePo | — | super, baseResourceList, list, resourceDetail |
 | FleetClusterListPagePo | fleet.cattle.io.cluster.po.ts | PagePo | — | super, list, resourceTableDetails, sortableTable, mainRows, goToDetailsPage, editFleetCluster, clusterTabs (+6) |
