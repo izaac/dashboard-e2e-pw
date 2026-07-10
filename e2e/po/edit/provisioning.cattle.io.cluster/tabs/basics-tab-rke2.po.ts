@@ -19,4 +19,33 @@ export default class BasicsRke2 extends ComponentPo {
   networkNoneSelectedForCni(): Locator {
     return this.page.locator('[data-testid="clusterBasics__noneOptionSelectedForCni"]');
   }
+
+  /**
+   * Ingress port input on the Basics tab, located by its exact field label.
+   * The upstream LabeledInput fields carry no data-testid, so we scope by the
+   * `.labeled-input` wrapper whose label text matches exactly. Exact matching
+   * avoids the 'Traefik HTTP' / 'Traefik HTTPS' substring collision.
+   */
+  private ingressPortInput(label: string): Locator {
+    return this.self()
+      .locator('.labeled-input')
+      .filter({ has: this.page.getByText(label, { exact: true }) })
+      .locator('input');
+  }
+
+  traefikHttpInput(): Locator {
+    return this.ingressPortInput('Traefik HTTP');
+  }
+
+  traefikHttpsInput(): Locator {
+    return this.ingressPortInput('Traefik HTTPS');
+  }
+
+  nginxHttpInput(): Locator {
+    return this.ingressPortInput('Ingress-NGINX HTTP');
+  }
+
+  nginxHttpsInput(): Locator {
+    return this.ingressPortInput('Ingress-NGINX HTTPS');
+  }
 }
