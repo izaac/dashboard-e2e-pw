@@ -13,12 +13,6 @@ const blueprintEditPath = path.resolve('e2e/blueprints/cluster_management/machin
 async function cleanupMachineDeployment(rancherApi: any, fullName: string) {
   try {
     await rancherApi.deleteRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', fullName, false);
-    const resource = await rancherApi.getRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', fullName, 0);
-
-    if (resource.status === 200 && resource.body.metadata?.finalizers) {
-      delete resource.body.metadata.finalizers;
-      await rancherApi.setRancherResource('v1', 'cluster.x-k8s.io.machinedeployments', fullName, resource.body);
-    }
     // Wait for the resource to actually disappear — the dashboard list keeps
     // a "Removing…" row visible until the steve cache catches up, which can
     // bleed into peer tests and visual snapshots.
@@ -198,10 +192,8 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
       await deleteResp;
       await mdPage.waitForPage();
 
-      // Strip finalizers eagerly — without them the row sticks as "Removing…"
-      // and the not-attached assertion below times out before the controller
-      // reconciles. cleanupMachineDeployment tolerates 404 so the defensive
-      // call in finally is idempotent.
+      // cleanup polls the API to 404; the auto-retrying not.toBeAttached
+      // assertion then waits for the steve cache to reflect it.
       await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
 
       await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
@@ -242,7 +234,7 @@ test.describe('MachineDeployments', { tag: ['@manager', '@adminUser'] }, () => {
       await deleteResp;
       await mdPage.waitForPage();
 
-      // Strip finalizers eagerly — see "can delete a MachineDeployment" above for rationale.
+      // cleanup polls the API to 404; see "can delete a MachineDeployment" above.
       await cleanupMachineDeployment(rancherApi, `${nsName}/${mdName}`);
 
       await expect(mdPage.list().resourceTable().sortableTable().rowElementWithName(mdName)).not.toBeAttached();
