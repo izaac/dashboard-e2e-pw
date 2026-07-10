@@ -47,10 +47,8 @@ near-master code; the commits below are spec adaptations to port, not fixes.
 
 | Date | Commit | Verdict |
 |------|--------|---------|
-| Jun 8 | `de6ed8c` | upstream removed the `ui-index` setting and its test; we skip-guard since 2026-06-09 — replace the guard with test removal at next sync |
 | May 30 | `0d4c73d` | upstream removed the provisioning-log tab test; we skip-guard — replace with removal at next sync |
-| May 23 | `6119bf9` | accepts `Pending` as a transient cluster state; we added `Active` to the same assert on 2026-06-10 — add `Pending` for parity |
-| May 20 | `db1dd2e` | PORTED 2026-06-10: fake-cluster + capi mock objects re-extracted verbatim into `e2e/blueprints/nav/fake-cluster-objects.ts` (status.info, machine pool, cloud cred, by-id routes, edit-capability intercepts); edit-fake-cluster and v2prov-capi green again |
+| May 20 | `db1dd2e` | PORTED 2026-06-10: fake-cluster + capi mock objects re-extracted verbatim into `e2e/blueprints/nav/fake-cluster-objects.ts` (status.info, machine pool, cloud cred, by-by routes, edit-capability intercepts); edit-fake-cluster and v2prov-capi green again |
 | May 15 | `da8589f` | roles detail action menu fix; we fixed independently via label-based select — verify parity during port |
 
 ## Gap-map false positives (covered, just renamed)
