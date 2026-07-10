@@ -694,6 +694,41 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     });
   });
 
+  test.describe('Import cluster form Table of Contents', () => {
+    test('creation page should include a table of contents containing an entry for each Accordion on the page', async ({
+      page,
+      login,
+    }) => {
+      await login();
+
+      const clusterList = new ClusterManagerListPagePo(page);
+      const importPage = new ClusterManagerImportGenericPagePo(page);
+
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+
+      await expect(clusterList.list().self()).toBeVisible(MEDIUM_TIMEOUT_OPT);
+      await clusterList.importCluster();
+
+      await importPage.waitForPage('mode=import');
+      await importPage.selectGeneric(0).click();
+      await importPage.waitForPage('mode=import&type=import&rkeType=rke2');
+
+      // Wait for the form to finish rendering before counting accordions
+      await expect(importPage.registriesAccordion()).toBeVisible();
+
+      // The table of contents has one entry per accordion on the page
+      const accordionCount = await importPage.accordionHeaders().count();
+
+      await expect(importPage.tocListItems()).toHaveCount(accordionCount);
+
+      // Clicking a TOC entry scrolls the page down and opens its accordion
+      await importPage.tocListItemButton(3).click();
+      await expect.poll(() => importPage.scrollTop()).toBeGreaterThan(0);
+      await expect(importPage.registriesAccordionBody()).toBeVisible();
+    });
+  });
+
   test('can navigate to Cluster Management Page', async ({ page, login }) => {
     await login();
 

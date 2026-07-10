@@ -654,7 +654,7 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
   });
 
   test.describe('Create admin user with standard user', { tag: ['@flaky'] }, () => {
-    test('User creation should complete after admin user fails to create for Standard user with Manage Users Role', async ({
+    test('User creation should throw an error if creating a user with a higher permission set, the error should be removable, and creation should succeed once permissions are appropriately lowered', async ({
       page,
       login,
       rancherApi,
@@ -735,6 +735,10 @@ test.describe('Users', { tag: ['@usersAndAuths', '@adminUser'] }, () => {
       await expect(adminCreate.errorBanner()).toContainText(
         'You cannot assign Global Permissions that are higher than your own',
       );
+
+      // The error banner is removable; close it before lowering permissions
+      await adminCreate.errorBannerCloseButton().click();
+      await expect(adminCreate.errorBanner()).not.toBeAttached();
 
       await adminCreate.selectCheckbox('Administrator').uncheck();
       await adminCreate.selectCheckbox('User-Base').set();

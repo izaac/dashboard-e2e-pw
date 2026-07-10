@@ -131,6 +131,10 @@ export default class MgmtUserEditPo extends PagePo {
     return this.page.locator('#cru-errors');
   }
 
+  errorBannerCloseButton(): Locator {
+    return this.errorBanner().getByTestId('banner-close');
+  }
+
   resourceDetail(): ResourceDetailPo {
     return new ResourceDetailPo(this.page, ':scope', this.self());
   }

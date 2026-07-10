@@ -120,7 +120,7 @@
 | GlobalRoleEditPo | management.cattle.io.globalrole.po.ts | RoleEditPo | — | super, yamlEditor |
 | OidcClientCreateEditPo | management.cattle.io.oidcclient.po.ts | PagePo | — | super, nameNsDescription, callbackUrls, refreshTokenExpiration, tokenExpiration, saveCreateForm |
 | RoleTemplateEditPo | management.cattle.io.roletemplate.po.ts | RoleEditPo | — | super |
-| GlobalRoleBindingsPo | management.cattle.io.user.po.ts | ComponentPo | `.global-permissions` | super, roleCheckbox, globalOptionsLocator, globalOptions, for, name, username, description (+9) |
+| GlobalRoleBindingsPo | management.cattle.io.user.po.ts | ComponentPo | `.global-permissions` | super, roleCheckbox, globalOptionsLocator, globalOptions, for, name, username, description (+10) |
 | PodSecurityAdmissionsCreateEditPo | pod-security-admissions.po.ts | PagePo | — | super, nameNsDescription, resourceDetail, psaControlLevel, psaControlVersion, setExemptionsCheckbox, setExemptionsInput, editAsYaml (+1) |
 | ResourceDetailPo | resource-detail.po.ts | ComponentPo | — | super, cruResource, createEditView, resourceYaml, tabs, tabbedList, title, masthead (+1) |
 | RoleEditPo | role.po.ts | PagePo | — | super, name, description, selectCheckbox, saveCreateForm, saveEditYamlForm, saveAndWaitForRequests, selectVerbs (+3) |
@@ -129,7 +129,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| ClusterManagerCreateImportPagePo | cluster-create-import.po.ts | PagePo | — | resourceDetail, nameNsDescription, selectOptionForCloudCredentialWithLabel, selectTab, create, save, basicsTab, accordion (+1) |
+| ClusterManagerCreateImportPagePo | cluster-create-import.po.ts | PagePo | — | resourceDetail, nameNsDescription, selectOptionForCloudCredentialWithLabel, selectTab, create, save, basicsTab, accordion (+6) |
 
 ## edit/provisioning.cattle.io.cluster/create/
 
@@ -169,7 +169,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | ClusterManagerEditImportedPagePo | cluster-edit.po.ts | PagePo | — | super, nameNsDescription, ace, accordion, toggleAccordion, accordionByLabel, networkingAccordion, registriesAccordion (+12) |
-| ClusterManagerImportGenericPagePo | cluster-import-generic.po.ts | ClusterManagerImportPagePo | — | registriesAccordion, networkingAccordion, versionManagementBanner |
+| ClusterManagerImportGenericPagePo | cluster-import-generic.po.ts | ClusterManagerImportPagePo | — | registriesAccordion, registriesAccordionBody, networkingAccordion, versionManagementBanner |
 
 ## lists/
 
