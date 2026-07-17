@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
@@ -6,6 +7,7 @@ import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 import ResourceDetailPo from '@/e2e/po/edit/resource-detail.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import { LONG, POLL_INTERVAL } from '@/support/timeouts';
 
 export class HarvesterClusterPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -40,6 +42,19 @@ export class HarvesterClusterPagePo extends PagePo {
 
   list(): BaseResourceList {
     return new BaseResourceList(this.page, '[data-testid="sortable-table-list-container"]');
+  }
+
+  clusterRow(name: string): Locator {
+    return this.list().resourceTable().sortableTable().rowWithName(name).self();
+  }
+
+  async waitForClusterRow(name: string, timeout: number): Promise<void> {
+    await expect(async () => {
+      // A full navigation rebuilds the store when its WebSocket misses the newly indexed management cluster.
+      await this.goTo();
+      await this.waitForPage(undefined, undefined, { timeout: LONG });
+      await expect(this.clusterRow(name)).toBeVisible({ timeout: LONG });
+    }).toPass({ timeout, intervals: [POLL_INTERVAL] });
   }
 
   extensionWarning(): Locator {

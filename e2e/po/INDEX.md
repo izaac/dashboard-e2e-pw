@@ -338,7 +338,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| HarvesterClusterPagePo | harvester-clusters.po.ts | PagePo | — | super, navTo, masthead, title, importHarvesterClusterButton, list, extensionWarning, harvesterLogo (+7) |
+| HarvesterClusterPagePo | harvester-clusters.po.ts | PagePo | — | super, navTo, masthead, title, importHarvesterClusterButton, list, clusterRow, waitForClusterRow (+9) |
 
 ## prompts/
 

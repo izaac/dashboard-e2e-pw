@@ -146,10 +146,10 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
 `cluster-provisioning-amazon-ec2-rke2.spec.ts`.
 
-- [ ] **`harvester.spec.ts`**: the import flow creates a real v3 management cluster
+- [x] **`harvester.spec.ts`**: the import flow creates a real v3 management cluster
   (registration stub, no nodes) plus a linked v1 prov cluster (`fleet-default/<id>`).
-  Current cleanup deletes only the v1 prov, orphaning the mgmt cluster. Switch the
-  delete to `rancherApi.deleteClusterAndWait`. Confirmed while porting to Cypress:
+  Cleanup now uses `rancherApi.deleteClusterAndWait`, which removes both resources
+  and waits for the controller cascade. Confirmed while porting to Cypress:
   the v3 mgmt cluster (`c-86qd2`) lingered after the v1 delete and only reached 404
   once the helper polled for it.
 - [ ] **`fleet-clusters.spec.ts`**: currently a stub (see "Need provisioning
@@ -175,19 +175,10 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
 
 ## Known chronic flakes: needs deeper investigation
 
-- [ ] **`harvester.spec.ts:108 can auto install harvester`**: fails 3/5 even with the
-  current install-flow hardening (page reload after API deployed → navigate to
-  /uiplugins#installed → click `extension-reload-banner` if shown → 3-reload
-  retry loop with LONG waits). The harvester extension's masthead action
-  ("Import Existing") is provided by Vue components registered when the
-  extension JS bundle loads; on some Rancher instances the SPA never
-  re-registers the plugin after install, so the action button never appears
-  no matter how many reloads. Likely a Rancher dashboard plugin-loader race
-  we cannot fix without changing the SPA. Options:
-  - Accept the flake (current state, retries mask it most of the time);
-  - Convert to `test.skip(buttonNotVisible, 'env-level plugin loader race')`;
-  - Refactor to test only the API path + extension card visibility, drop
-    the cluster-import UI portion.
+- [x] **`harvester.spec.ts:108 can auto install harvester`**: re-enabled to match
+  upstream `d0b50721ee`. Waits for linked API resources and retries list loading;
+  serial is required by the singleton Harvester app/repository. Validated 10/10
+  sequential runs with zero retries and no cleanup failures.
 
 - [ ] **Sharded-run timeout failures**: a stable-subset sharded run (`@adminUser`
   minus `@prime`/`@noVai`/`@needsInfra`/`@provisioning`) surfaced 9 failures
