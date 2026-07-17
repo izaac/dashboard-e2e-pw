@@ -26,36 +26,10 @@ Ordered by biggest win / lowest effort first.
 | L | L - churn, defer | `aeeb8a97a` #18108 | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
 | - | watch | `f6192e983` #10897 | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
 
-### Ported 2026-07-17
-
-- [x] `feature-flags.spec.ts`: removed `rke1-custom-node-cleanup` toggle test
-  and its entry in the read-only flags list. Upstream `01935b78e4` deleted the
-  flag from Rancher, so the test can no longer pass.
-- [x] `charts/monitoring-istio.spec.ts`: marked the Prometheus/Grafana storage
-  options test `fixme` to match upstream `#18352` disable.
-- [x] `explorer2/cluster-tools.spec.ts`: marked the feature charts navigation
-  test `fixme` to match upstream `#18352` disable.
-
 > Note for future cluster-mock ports (from the `mgmt-to-prov` #17228 port): the
 > dashboard loads clusters by id via server-side-pagination
 > `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be
 > RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
-
-### Upstream commits May 20 – Jun 8, reviewed 2026-06-10
-
-Context: upstream CI tests against the same floating `rancher/rancher:head`
-image we use (`branches-metadata.json`, master → tag `head`, consumed by
-`scripts/e2e-docker-start`). They stay green by adapting specs within days,
-not because the product issues are fixed. The dashboard bundle our head
-rancher serves comes from CDN `dashboard/latest`, rebuilt per master merge
-(hours of lag), so the issues under "Monitor upstream for fix" are live on
-near-master code; the commits below are spec adaptations to port, not fixes.
-
-| Date | Commit | Verdict |
-|------|--------|---------|
-| May 30 | `0d4c73d` | upstream removed the provisioning-log tab test; we skip-guard — replace with removal at next sync |
-| May 20 | `db1dd2e` | PORTED 2026-06-10: fake-cluster + capi mock objects re-extracted verbatim into `e2e/blueprints/nav/fake-cluster-objects.ts` (status.info, machine pool, cloud cred, by-by routes, edit-capability intercepts); edit-fake-cluster and v2prov-capi green again |
-| May 15 | `da8589f` | roles detail action menu fix; we fixed independently via label-based select — verify parity during port |
 
 ## Gap-map false positives (covered, just renamed)
 
@@ -124,26 +98,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] Qase IDs: to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
-- [x] **External Rancher access for cloud-driver provisioning** (now provided by
-  muster's `--external`): `EXTERNAL=true yarn local:test` fronts the k3d Rancher
-  with a sha256-pinned cloudflared quick tunnel, pins `server-url` to the public
-  host, and sets `agent-tls-mode=system-store` so a downstream cloud node can
-  register back through the tunnel. The runner defaults `GREP_TAGS=@provisioning`
-  and forwards AWS/Azure/GKE/custom-node creds in that mode. Cold-start flake
-  (first provisioning reconcile lags the create spec) is absorbed by a throwaway
-  imported-cluster warm-up. Validated end-to-end: Amazon EC2 RKE2 create passes
-  cold with `retries=0`, no orphan EC2 (afterAll teardown). Not wired into PR
-  checks (needs real cloud creds + spend); run manually. See
-  `docs/RUNNING-TESTS.md` external-access section.
-- [x] **k3d provider (docker-install deprecation prep)**: superseded by the
-  muster migration. Provisioning now runs entirely through muster (`yarn local:*`
-  / `scripts/local.sh`); the in-repo `k3d-rancher.sh` and compose overlays were
-  retired. Remaining follow-up: restart-cycle specs (`feature-flags`,
-  `no-vai-setup`, `oidc-provider-setup`) against k3d, where the k8s kubelet
-  restart backoff (10s->20s->40s) may exceed current poll budgets; 3-run k3d vs
-  3-run docker aggregate diff. Watch upstream enabling `scripts/e2e-k3s-start` in
-  their CI (currently experimental, PR #14854 "add but don't use") and re-sync
-  helm values when they do.
 
 ## Cluster cleanup hardening (orphaned mgmt clusters)
 
@@ -153,15 +107,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 > deletes the v1 prov cluster, waits for it to 404, then waits for the linked v3
 > management cluster (`status.clusterName`) to 404.
 
-Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
-`cluster-provisioning-amazon-ec2-rke2.spec.ts`.
-
-- [x] **`harvester.spec.ts`**: the import flow creates a real v3 management cluster
-  (registration stub, no nodes) plus a linked v1 prov cluster (`fleet-default/<id>`).
-  Cleanup now uses `rancherApi.deleteClusterAndWait`, which removes both resources
-  and waits for the controller cascade. Confirmed while porting to Cypress:
-  the v3 mgmt cluster (`c-86qd2`) lingered after the v1 delete and only reached 404
-  once the helper polled for it.
 - [ ] **`fleet-clusters.spec.ts`**: currently a stub (see "Need provisioning
   infrastructure" above). When implemented it provisions a real Amazon RKE2 cluster
   (same path as the amazon spec), so use `rancherApi.deleteClusterAndWait` for the
@@ -184,11 +129,6 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   rancher-charts publish a compatible gatekeeper and the tests run again.
 
 ## Known chronic flakes: needs deeper investigation
-
-- [x] **`harvester.spec.ts:108 can auto install harvester`**: re-enabled to match
-  upstream `d0b50721ee`. Waits for linked API resources and retries list loading;
-  serial is required by the singleton Harvester app/repository. Validated 10/10
-  sequential runs with zero retries and no cleanup failures.
 
 - [ ] **Sharded-run timeout failures**: a stable-subset sharded run (`@adminUser`
   minus `@prime`/`@noVai`/`@needsInfra`/`@provisioning`) surfaced 9 failures
@@ -224,48 +164,6 @@ Already applied: `cluster-provisioning-azure-rke2.spec.ts`,
   loaded yet`). Likely same cluster-store breakage family as the
   `machineProvider` TypeError. Our `preferences.spec.ts` "specific cluster" test
   skip-guards on the empty list until fixed.
-
-## External Rancher access for provisioning tests (future)
-
-> **Superseded by the muster migration.** External access is now implemented in
-> muster's `--external` mode (cloudflared quick tunnel, pinned `server-url`,
-> `agent-tls-mode=system-store`), driven by `EXTERNAL=true yarn local:test`. The
-> in-repo `k3d-rancher.sh` referenced below was retired. The tiered analysis is
-> kept for historical context.
-
-The old k3d wrapper (`scripts/k3d-rancher.sh`) set Rancher's
-`server-url`/`hostname` to `<lb_ip>.sslip.io`, where `lb_ip` is the
-docker-internal load-balancer IP (`172.18.x.x`, RFC1918). That address only
-routes from the host and from inside the k3d docker network, so it is fine for
-the UI tests we run today but blocks real provisioning: a downstream
-`cattle-cluster-agent` reads `server-url`, then must resolve, route to, and
-TLS-validate it to register and turn the cluster Active. A private docker IP is
-unreachable from any node that is not on that docker network.
-
-sslip.io already mints a valid hostname for any IP, and the Rancher Helm cert
-covers whatever `hostname` we set, so the only real blocker is choosing an IP
-the downstream nodes can actually route to. Tiers, cheapest first:
-
-- [ ] **Same docker network** (k3d-in-k3d, vcluster, dockerised nodes): no
-  change needed, `172.18.x.x` already routes inside the network. Good enough to
-  smoke-test the provisioning UI + agent handshake without external infra.
-- [ ] **Same LAN** (other VMs/boxes on the host's network): add a
-  `RANCHER_EXTERNAL`/`RANCHER_HOSTNAME` mode that sets `hostname` to
-  `<host-LAN-ip>.sslip.io` and maps the LB to host `443:443` (so `server-url`
-  needs no `:port`). k3d already binds host ports on `0.0.0.0`; just open the
-  host firewall for 443. The script's existing `--add-host`/`RANCHER_HOSTNAME`
-  escape hatch (k3d-rancher.sh ~line 129) is the hook to build on.
-- [ ] **Internet nodes** (AWS/Azure/GKE real machines): need a routable address.
-  Options without standing infra: a reverse tunnel (cloudflared free tier,
-  ngrok) or a mesh VPN. Set `hostname` to the tunnel/mesh address and the cert
-  follows.
-
-Cost note: prefer a zero-charge path. Tailscale's free/personal plan covers up
-to 100 devices / 3 users, so a lab host + a handful of provisioned nodes on a
-personal tailnet stays free, no public exposure, and no firewall holes, set
-`server-url` to the host's Tailscale IP via sslip. cloudflared's free Quick
-Tunnel is the fallback if we want zero account state. Avoid anything that bills
-per-tunnel or per-seat.
 
 ## Gold-standard audit (Phase 4 + long tail)
 
