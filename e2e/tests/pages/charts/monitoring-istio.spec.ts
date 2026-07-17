@@ -64,66 +64,68 @@ test.describe('Charts', { tag: ['@charts', '@adminUser'] }, () => {
         }
       });
 
-      test('Prometheus and Grafana should have all relevant storage options and Storage Class inputs', async ({
-        page,
-      }) => {
-        const chartPage = new ChartPage(page);
-        const installChart = new InstallChartPage(page);
-        const tabbedOptions = new TabbedPo(page);
-        const prometheus = new PrometheusTab(page);
-        const grafana = new GrafanaTab(page);
+      // TODO: #18352 Re-enable test
+      test.fixme(
+        'Prometheus and Grafana should have all relevant storage options and Storage Class inputs',
+        async ({ page }) => {
+          const chartPage = new ChartPage(page);
+          const installChart = new InstallChartPage(page);
+          const tabbedOptions = new TabbedPo(page);
+          const prometheus = new PrometheusTab(page);
+          const grafana = new GrafanaTab(page);
 
-        await chartPage.navTo('Monitoring');
-        await chartPage.waitForChartPage(CHART.repo, CHART.id);
-        await chartPage.goToInstall();
-        await installChart.waitForChartPage(CHART.repo, CHART.id);
+          await chartPage.navTo('Monitoring');
+          await chartPage.waitForChartPage(CHART.repo, CHART.id);
+          await chartPage.goToInstall();
+          await installChart.waitForChartPage(CHART.repo, CHART.id);
 
-        // Check Grafana has all storage options: https://github.com/rancher/dashboard/issues/11540
-        await installChart.nextPage();
-        await installChart.selectTab(tabbedOptions, grafana.tabID());
-        await installChart.waitForChartPage(CHART.repo, CHART.id);
+          // Check Grafana has all storage options: https://github.com/rancher/dashboard/issues/11540
+          await installChart.nextPage();
+          await installChart.selectTab(tabbedOptions, grafana.tabID());
+          await installChart.waitForChartPage(CHART.repo, CHART.id);
 
-        await expect(grafana.storageOptions().getAllOptions()).toHaveCount(4);
-        await expect(grafana.storageOptions().radioSpanByLabel('Disabled')).toHaveAttribute('aria-checked', 'true');
+          await expect(grafana.storageOptions().getAllOptions()).toHaveCount(4);
+          await expect(grafana.storageOptions().radioSpanByLabel('Disabled')).toHaveAttribute('aria-checked', 'true');
 
-        const options = [
-          'Disabled',
-          'Enable With Existing PVC',
-          'Enable with PVC Template',
-          'Enable with StatefulSet Template',
-        ];
+          const options = [
+            'Disabled',
+            'Enable With Existing PVC',
+            'Enable with PVC Template',
+            'Enable with StatefulSet Template',
+          ];
 
-        for (let index = 0; index < options.length; index++) {
-          await expect(grafana.storageOptions().getOptionByIndex(index)).toHaveText(options[index]);
-        }
+          for (let index = 0; index < options.length; index++) {
+            await expect(grafana.storageOptions().getOptionByIndex(index)).toHaveText(options[index]);
+          }
 
-        // Check Grafana has storage class input: https://github.com/rancher/dashboard/issues/11539
-        await grafana.storageOptions().set(2);
-        await expect(grafana.storageClass().self()).toBeAttached();
-        await grafana.storageClass().dropdown().click();
-        await grafana.storageClass().clickOptionWithLabel(storageClass);
-        await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
+          // Check Grafana has storage class input: https://github.com/rancher/dashboard/issues/11539
+          await grafana.storageOptions().set(2);
+          await expect(grafana.storageClass().self()).toBeAttached();
+          await grafana.storageClass().dropdown().click();
+          await grafana.storageClass().clickOptionWithLabel(storageClass);
+          await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
-        await grafana.storageOptions().set(3);
-        await expect(grafana.storageClass().self()).toBeAttached();
-        await grafana.storageClass().dropdown().click();
-        await grafana.storageClass().clickOptionWithLabel(storageClass);
-        await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
+          await grafana.storageOptions().set(3);
+          await expect(grafana.storageClass().self()).toBeAttached();
+          await grafana.storageClass().dropdown().click();
+          await grafana.storageClass().clickOptionWithLabel(storageClass);
+          await expect(grafana.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
 
-        // Check Prometheus has storage class input: https://github.com/rancher/dashboard/issues/11539
-        await installChart.selectTab(tabbedOptions, prometheus.tabID());
-        await installChart.waitForChartPage(CHART.repo, CHART.id);
+          // Check Prometheus has storage class input: https://github.com/rancher/dashboard/issues/11539
+          await installChart.selectTab(tabbedOptions, prometheus.tabID());
+          await installChart.waitForChartPage(CHART.repo, CHART.id);
 
-        await prometheus.scrollToTabBottom();
+          await prometheus.scrollToTabBottom();
 
-        await expect(prometheus.persistentStorage().self()).toBeVisible();
-        await prometheus.persistentStorage().set();
+          await expect(prometheus.persistentStorage().self()).toBeVisible();
+          await prometheus.persistentStorage().set();
 
-        await expect(prometheus.storageClass().self()).toBeAttached();
-        await prometheus.storageClass().dropdown().click();
-        await prometheus.storageClass().clickOptionWithLabel(storageClass);
-        await expect(prometheus.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
-      });
+          await expect(prometheus.storageClass().self()).toBeAttached();
+          await prometheus.storageClass().dropdown().click();
+          await prometheus.storageClass().clickOptionWithLabel(storageClass);
+          await expect(prometheus.storageClass().selectedOption()).toHaveText(storageClass, { useInnerText: true });
+        },
+      );
     });
   });
 });

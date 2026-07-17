@@ -208,41 +208,6 @@ test.describe('Feature Flags', () => {
     },
   );
 
-  test(
-    'can toggle rke1-custom-node-cleanup feature flag',
-    { tag: ['@globalSettings', '@adminUser'] },
-    async ({ page, rancherApi }) => {
-      const featureFlagsPage = new FeatureFlagsPagePo(page);
-      const flagName = 'rke1-custom-node-cleanup';
-
-      const originalValue = await getFeatureFlagValue(rancherApi, flagName);
-
-      await setFeatureFlagValue(rancherApi, flagName, true);
-
-      try {
-        await featureFlagsPage.navTo();
-        await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
-
-        // Deactivate
-        await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Deactivate');
-        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Deactivate', flagName, false);
-
-        await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Disabled');
-
-        // Reload to stabilize DOM — store update re-renders table and detaches action menus
-        await featureFlagsPage.navTo();
-
-        // Activate
-        await featureFlagsPage.list().clickRowActionMenuItem(flagName, 'Activate');
-        await featureFlagsPage.clickCardActionButtonAndExpectFlagSet('Activate', flagName, true);
-
-        await expect(featureFlagsPage.list().details(flagName, 0)).toContainText('Active');
-      } finally {
-        await setFeatureFlagValue(rancherApi, flagName, originalValue);
-      }
-    },
-  );
-
   test('can toggle token-hashing feature flag', { tag: ['@globalSettings', '@adminUser'] }, async ({ page }) => {
     // token-hashing is a one-way flag: once activated, it cannot be deactivated.
     // Running this test permanently mutates the Rancher instance.
@@ -421,7 +386,6 @@ test.describe('Feature Flags - Standard User', { tag: ['@globalSettings', '@stan
       'istio-virtual-service-ui',
       'legacy',
       'multi-cluster-management',
-      'rke1-custom-node-cleanup',
       'rke2',
       'token-hashing',
       'unsupported-storage-drivers',

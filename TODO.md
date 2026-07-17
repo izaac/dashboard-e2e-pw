@@ -26,6 +26,16 @@ Ordered by biggest win / lowest effort first.
 | L | L - churn, defer | `aeeb8a97a` #18108 | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
 | - | watch | `f6192e983` #10897 | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
 
+### Ported 2026-07-17
+
+- [x] `feature-flags.spec.ts`: removed `rke1-custom-node-cleanup` toggle test
+  and its entry in the read-only flags list. Upstream `01935b78e4` deleted the
+  flag from Rancher, so the test can no longer pass.
+- [x] `charts/monitoring-istio.spec.ts`: marked the Prometheus/Grafana storage
+  options test `fixme` to match upstream `#18352` disable.
+- [x] `explorer2/cluster-tools.spec.ts`: marked the feature charts navigation
+  test `fixme` to match upstream `#18352` disable.
+
 > Note for future cluster-mock ports (from the `mgmt-to-prov` #17228 port): the
 > dashboard loads clusters by id via server-side-pagination
 > `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be

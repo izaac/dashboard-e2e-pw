@@ -21,7 +21,8 @@ test.describe('Cluster Tools', { tag: ['@explorer2', '@adminUser'] }, () => {
     await login();
   });
 
-  test('can navigate to cluster tools and see all feature charts', async ({ page }) => {
+  // TODO: #18352 Re-enable test
+  test.fixme('can navigate to cluster tools and see all feature charts', async ({ page }) => {
     const clusterDashboard = new ClusterDashboardPagePo(page, 'local');
 
     await clusterDashboard.goTo();
