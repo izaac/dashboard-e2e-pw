@@ -2,7 +2,6 @@ import { test, expect } from '@/support/fixtures';
 import { ChartPage } from '@/e2e/po/pages/explorer/charts/chart.po';
 import { InstallChartPage } from '@/e2e/po/pages/explorer/charts/install-charts.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
-import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import ChartInstalledAppsListPagePo from '@/e2e/po/pages/chart-installed-apps.po';
 import { NamespaceFilterPo } from '@/e2e/po/components/namespace-filter.po';
 import { EXTENSION_OPS, EXTRA_LONG, LONG } from '@/support/timeouts';
@@ -80,6 +79,12 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       await chartPage.navTo('rancher-demo');
       await chartPage.waitForChartHeader('rancher-demo', LONG);
       await chartPage.goToInstall();
+
+      const chartNameLink = installChartPage.chartNameLink();
+
+      await expect(chartNameLink).toContainText('rancher-demo');
+      await expect(chartNameLink).toHaveAttribute('href', /\/apps\/charts\/chart\?/);
+
       await installChartPage.chartName().fill('rancher-demo');
 
       // Ensure the chart installs into the 'default' namespace so the configmap dropdown shows our test configmap.
@@ -96,11 +101,16 @@ test.describe('Charts Wizard', { tag: ['@charts', '@adminUser', '@noVai'] }, () 
       await expect(tabbedPo.allTabs()).toHaveCount(4);
       await installChartPage.selectTab(tabbedPo, 'Other Demo Fields');
 
-      const labeledSelect = new LabeledSelectPo(page, 'section[id="Other Demo Fields"] [type="search"]');
+      const labeledSelect = installChartPage.questionsGroupSelect('Other Demo Fields');
 
       await labeledSelect.self().scrollIntoViewIfNeeded();
       await labeledSelect.dropdown().click();
-      await labeledSelect.optionByLabel(configMapPayload.metadata.name).click();
+
+      const configMapOption = labeledSelect.optionByLabel(configMapPayload.metadata.name);
+
+      await expect(configMapOption).toBeVisible();
+      await configMapOption.click();
+      await expect(labeledSelect.selectedOption()).toContainText(configMapPayload.metadata.name);
     });
   });
 

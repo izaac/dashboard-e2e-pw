@@ -19,14 +19,28 @@ Ordered by biggest win / lowest effort first.
 
 | Effort | Win | Commit | Verdict / action |
 |--------|-----|--------|-------------------|
-| M | M - 2 specs re-sync | `24928447df` #17924, `5e44c1c72` #17150 | Repositories Refresh Interval + Chart Install UI improvements. Touch `chart-repositories.po`, `install-charts.po`, `logging.spec`, `chart-install-wizard.spec`, `repositories.spec` |
-| M | M - +/-60 lines | `be3879ed2` #18188 (roles part) | `roles.spec.ts` re-sync: we have 18 vs upstream 13 (+5). Resource-class validator i18n keys changed |
-| M | M - +/-69 lines | `93a21f141c` #18099 | `extensions.spec.ts`: authenticated private registries. `SelectOrCreateAuthPo` again; `roles.po`, `extensions.po` edits |
-| M | S - beforeNext hook | `a6a5a55b4` #17997 | `beforeNext` added to `cruResource` steps. Audit our `CreateEditViewPo` for a `beforeNext`/step-hook seam |
-| L | L - churn, defer | `aeeb8a97a` #18108 | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
-| - | watch | `f6192e983` #10897 | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
+| M | M - +/-60 lines | `be3879ed2` (roles part) | `roles.spec.ts` re-sync: we have 18 vs upstream 13 (+5). Resource-class validator i18n keys changed |
+| M | M - +/-69 lines | `93a21f141c` | `extensions.spec.ts`: authenticated private registries. `SelectOrCreateAuthPo` again; `roles.po`, `extensions.po` edits |
+| M | S - beforeNext hook | `a6a5a55b4` | `beforeNext` added to `cruResource` steps. Audit our `CreateEditViewPo` for a `beforeNext`/step-hook seam |
+| L | L - churn, defer | `aeeb8a97a` | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
+| - | watch | `f6192e983` | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
 
-> Note for future cluster-mock ports (from the `mgmt-to-prov` #17228 port): the
+**Ported 2026-07-18** (verified live on `v2.15.0-alpha21` via muster
+`--repo rancher-alpha --version 2.15`):
+
+- `24928447df` Repositories Refresh Interval: `refreshIntervalInput()`
+  retargeted to `clusterrepo-refresh-interval-input` (now a LabeledInput plus a
+  separate unit selector; unit defaults to hours so the submitted
+  `refreshInterval` is the entered value times 3600). OCI repo test enriched to
+  assert refreshInterval, minWait, absent maxWait, and insecurePlainHttp.
+- `5e44c1c72` Chart Install UI improvements: added `chartNameLink()` to
+  `install-charts.po` and asserted its text plus `href` in `chart-install-wizard.spec`.
+  Also hardened the "ConfigMaps listed" test: vue-select renders the combobox
+  role on the wrapper (not the search input), so the resource picker is now
+  reached via `install-charts.po` `questionsGroupSelect('Other Demo Fields')`
+  with explicit visible/selected assertions.
+
+> Note for future cluster-mock ports (from the `mgmt-to-prov` port): the
 > dashboard loads clusters by id via server-side-pagination
 > `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be
 > RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
@@ -96,7 +110,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] `jwt-authentication.spec.ts` (2): bulk enable/disable JWT (websocket bug, `test.fixme`)
 - [ ] `agent-configuration-rke2.spec.ts` (1): placeholder, Vue3 skip upstream
-- [ ] `node-drivers.spec.ts` (1): placeholder (upstream rancher/dashboard#10275)
+- [ ] `node-drivers.spec.ts` (1): placeholder
 
 ### Form blocked by upstream bug
 

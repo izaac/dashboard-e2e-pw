@@ -141,8 +141,15 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return new SelectOrCreateAuthPo(this.page, '[data-testid="clusterrepo-auth-secret"]');
   }
 
-  refreshIntervalInput(): Locator {
-    return this.page.getByTestId('clusterrepo-refresh-interval');
+  /**
+   * Refresh interval value input. Rancher 2.15 (#17924) split the single
+   * interval field into a value input plus a unit selector; the value input
+   * moved from `clusterrepo-refresh-interval` to
+   * `clusterrepo-refresh-interval-input`. The unit defaults to hours, so the
+   * submitted `refreshInterval` is the entered value multiplied by 3600.
+   */
+  refreshIntervalInput(): LabeledInputPo {
+    return new LabeledInputPo(this.page, '[data-testid="clusterrepo-refresh-interval-input"]', this.self());
   }
 
   async saveAndWaitForRequests(method: string, url: string): Promise<Response> {

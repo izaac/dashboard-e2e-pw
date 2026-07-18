@@ -47,6 +47,10 @@ export class InstallChartPage extends PagePo {
     return this.self().getByTestId('NameNsDescriptionNameInput');
   }
 
+  chartNameLink(): Locator {
+    return this.self().getByTestId('chart-install-name-link');
+  }
+
   /** NameNsDescription component for chart install */
   nameNsDescription(): NameNsDescriptionPo {
     return new NameNsDescriptionPo(this.page, '.dashboard-root');
@@ -63,6 +67,16 @@ export class InstallChartPage extends PagePo {
 
   chartVersionSelector(): LabeledSelectPo {
     return new LabeledSelectPo(this.page, '[data-testid="chart-version-selector"]');
+  }
+
+  /**
+   * Vue-select for a chart question rendered inside a named questions group tab
+   * (e.g. the `throwaway.resource` ConfigMap picker under "Other Demo Fields").
+   * Anchors on the vue-select wrapper so the PO's `dropdown()` resolves the
+   * combobox role, which vue-select renders on the wrapper, not the search input.
+   */
+  questionsGroupSelect(groupId: string): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, `section[id="${groupId}"] .v-select`);
   }
 
   customRegistryCheckbox(): CheckboxInputPo {

@@ -347,6 +347,9 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
     const repoName = rancherApi.createE2EResourceName('repo-oci');
     const repositoriesPage = new ChartRepositoriesPagePo(page);
     const ociUrl = 'oci://test.rancher.io/charts/mychart';
+    const ociMinWait = '2';
+    const ociMaxWait = '7';
+    const refreshInterval = '12';
 
     try {
       await repositoriesPage.goTo();
@@ -357,8 +360,14 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       await repositoriesPage.createEditRepositories().nameNsDescription().description().set(`${repoName}-description`);
       await repositoriesPage.createEditRepositories().selectOciUrlCard();
       await repositoriesPage.createEditRepositories().ociUrl().set(ociUrl);
+      await repositoriesPage.createEditRepositories().refreshIntervalInput().set(refreshInterval);
 
       await repositoriesPage.createEditRepositories().clusterRepoAuthSelectOrCreate().createBasicAuth('test', 'test');
+
+      await repositoriesPage.createEditRepositories().ociMinWaitField().fill(ociMinWait);
+      // Set then clear maxWait so the payload assertion confirms the key is omitted.
+      await repositoriesPage.createEditRepositories().ociMaxWaitField().fill(ociMaxWait);
+      await repositoriesPage.createEditRepositories().ociMaxWaitField().clear();
 
       const createResp = page.waitForResponse(
         (r) => r.url().includes(CLUSTER_REPOS_BASE_URL) && r.request().method() === 'POST',
@@ -371,6 +380,10 @@ test.describe('Cluster Management Helm Repositories', { tag: ['@manager', '@admi
       const reqBody = JSON.parse(resp.request().postData() || '{}');
 
       expect(reqBody.spec?.url).toBe(ociUrl);
+      expect(reqBody.spec?.exponentialBackOffValues?.minWait).toBe(Number(ociMinWait));
+      expect(reqBody.spec?.exponentialBackOffValues?.maxWait).toBeUndefined();
+      expect(reqBody.spec?.insecurePlainHttp).toBe(false);
+      expect(reqBody.spec?.refreshInterval).toBe(Number(refreshInterval) * 3600);
 
       await repositoriesPage.waitForPage();
       await expect(repositoriesPage.list().details(repoName, 2)).toBeVisible();
