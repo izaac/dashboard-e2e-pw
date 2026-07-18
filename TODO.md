@@ -54,14 +54,22 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 ### Need provisioning infrastructure (downstream / RKE2 / imported clusters)
 
 > Custom-node and imported-cluster runs are provisioned by the Ansible playbook
-> in `qa-infra-automation` branch `test/dashboard-e2e-pw` (latest, 2026-05-24,
-> supersedes `playwright-e2e-adapter`) under `ansible/testing/dashboard-e2e`.
+> in `qa-infra-automation` branch `test/dashboard-e2e-pw` under
+> `ansible/testing/dashboard-e2e-pw` (provisions HA Rancher on a public FQDN +
+> import k3s cluster + custom node). Run `./run.sh provision`, then run specs
+> locally against the live Rancher (`TEST_BASE_URL`, `TEST_PASSWORD`,
+> `CUSTOM_NODE_IP`/`CUSTOM_NODE_KEY`, and `KUBECONFIG` = import cluster).
+>
+> Verified 2026-07-17 against a live playbook provision: both create tests pass
+> end-to-end with `retries:0` (imported registers via kubectl apply, RKE2 custom
+> registers over SSH; both reach Active and clean up). Use `GREP_TAGS` to include
+> `@needsInfra` locally, since the repo `.env` filters it out by default.
 
-- [ ] `cluster-manager.spec.ts` (11): create/edit/copy/yaml/kubeconfig/download/delete on RKE2 custom + imported clusters; one display test
-  - **Imported Generic**: `can create new cluster` is wired up end-to-end (registers via `applyImportedKubectlCommand`, cleans up via `rancherApi` in `afterEach`, retries:0). Remaining `test.fixme`s reference `SHARED_IMPORT_GENERIC_NAME` static constant rather than the cluster the create test actually provisions:
+- [ ] `cluster-manager.spec.ts`: create tests pass live; edit/copy/yaml/kubeconfig/download/delete on RKE2 custom + imported clusters stay `test.fixme` pending a shared-cluster lifecycle
+  - **Imported Generic**: `can create new cluster` verified live 2026-07-17. Remaining `test.fixme`s reference `SHARED_IMPORT_GENERIC_NAME` static constant rather than the cluster the create test actually provisions:
     - [ ] `can edit imported cluster and see changes afterwards`, needs shared-state refactor (beforeAll fixture creates one cluster, all 3 tests reuse it, afterAll deletes)
     - [ ] `can delete cluster by bulk actions`, same shared-state refactor
-  - **RKE2 Custom**: `can create new cluster` is wired up end-to-end (registers via `registerCustomNode` SSH, cleans up via v1 `provisioning.cattle.io.clusters/fleet-default/<name>` in `afterEach`, retries:0). Remaining `test.fixme`s reference `SHARED_RKE2_CUSTOM_NAME`:
+  - **RKE2 Custom**: `can create new cluster` verified live 2026-07-17. Remaining `test.fixme`s reference `SHARED_RKE2_CUSTOM_NAME`. Note: the create test leaves RKE2 installed on the custom node, so re-running create needs a fresh (or cleaned) node:
     - [ ] `can copy config to clipboard`, shared cluster + clipboard stub
     - [ ] `can edit cluster and see changes afterwards`
     - [ ] `can view cluster YAML editor`
@@ -73,7 +81,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
     - `beforeAll` per describe block creates cluster, exposes name via closure, `afterAll` deletes. Tests run `mode: 'serial'`.
     - Worker-scoped fixture (`test.extend`) creates cluster once per worker, returns name. Cleaner but adds fixture infra to track.
   - Once that lands, replace `SHARED_*_NAME` constants with the fixture-returned name and drop `test.fixme` on each remaining body.
-- [ ] `fleet-clusters.spec.ts` (10): list/details, bundle add/remove, pause/unpause, edit, download, workspace assign, delete
+- [ ] `fleet-clusters.spec.ts` (10): list/details, bundle add/remove, pause/unpause, edit, download, workspace assign, delete. Pending: hard `test.skip('Requires downstream clusters')` at describe level. Needs a real downstream RKE2 cluster registered to Fleet (the playbook's import k3s cluster is not fleet-registered). Provision path: same Amazon RKE2 create flow, then `rancherApi.deleteClusterAndWait` for teardown (qa-tasks#2328: deleting only the v1 prov cluster leaves the linked v3 mgmt cluster reconciling).
 - [ ] `gitrepo.spec.ts` (1): `Can create a GitRepo` (needs real fleet multi-cluster)
 
 ### Need third-party auth provider
@@ -98,20 +106,6 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] Qase IDs: to be mapped manually by QA
 - [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
-
-## Cluster cleanup hardening (orphaned mgmt clusters)
-
-> Tracks qa-tasks#2328: a cleanup that deletes only the v1 provisioning cluster
-> leaves the linked v3 management cluster reconciling, which stresses the backend
-> across a run. `rancherApi.deleteClusterAndWait` (`support/fixtures/rancher-api.ts`)
-> deletes the v1 prov cluster, waits for it to 404, then waits for the linked v3
-> management cluster (`status.clusterName`) to 404.
-
-- [ ] **`fleet-clusters.spec.ts`**: currently a stub (see "Need provisioning
-  infrastructure" above). When implemented it provisions a real Amazon RKE2 cluster
-  (same path as the amazon spec), so use `rancherApi.deleteClusterAndWait` for the
-  cluster teardown. The Cypress port confirmed the linked v3 mgmt cluster
-  (`c-m-kvvcfvm5`) lingered after the v1 delete.
 
 ## Upstream advocacy
 
@@ -142,7 +136,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
   2026-06-09/10 update: 5× baseline + 5× post-hardening sharded runs +
   DOM/network artifact triage classified everything. Current state after the
   hardening and head-alignment commits (`74236b6`..`8537f53`):
-  - [ ] `cluster-manager.spec.ts:779 navigate to Cluster Machines Page`: Vue
+  - [ ] `cluster-manager.spec.ts:814 navigate to Cluster Machines Page`: Vue
     `TypeError ... 'replace'` + `this.$el.querySelector is not a function`,
     machine table empty; head Vue component crash, still failing.
   - [ ] `hosted-cluster-details.spec.ts:142/153/164 node pool tabs`: product bug —

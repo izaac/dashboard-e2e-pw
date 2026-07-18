@@ -38,9 +38,11 @@ export default class CloudCredentialsCreateEditPo extends PagePo {
   /**
    * When hide-sensitive pref is on (default), edit/clone pages show a Key-Value form
    * instead of LabeledInput fields. Row order for Amazon EC2: accessKey=0, defaultRegion=1, secretKey=2.
+   * The value cell renders a plain input (text for visible fields, password for concealed
+   * ones); older Rancher builds used a `value-multiline` textarea here.
    */
   kvValueByIndex(rowIndex: number): Locator {
-    return this.self().getByTestId(`kv-item-value-${rowIndex}`).locator('[data-testid="value-multiline"]');
+    return this.self().getByTestId(`kv-item-value-${rowIndex}`).locator('input:not([type="file"]), textarea');
   }
 
   defaultRegion(): LabeledSelectPo {
