@@ -19,7 +19,6 @@ Ordered by biggest win / lowest effort first.
 
 | Effort | Win | Commit | Verdict / action |
 |--------|-----|--------|-------------------|
-| M | M - +/-60 lines | `be3879ed2` (roles part) | `roles.spec.ts` re-sync: we have 18 vs upstream 13 (+5). Resource-class validator i18n keys changed |
 | M | M - +/-69 lines | `93a21f141c` | `extensions.spec.ts`: authenticated private registries. `SelectOrCreateAuthPo` again; `roles.po`, `extensions.po` edits |
 | M | S - beforeNext hook | `a6a5a55b4` | `beforeNext` added to `cruResource` steps. Audit our `CreateEditViewPo` for a `beforeNext`/step-hook seam |
 | L | L - churn, defer | `aeeb8a97a` | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |

@@ -223,11 +223,15 @@ export function globalRolesLargeResponse(count: number, uniqueName = 'aaaa-uniqu
 }
 
 export async function generateGlobalRolesDataSmall(page: Page): Promise<void> {
-  await page.route('**/v1/management.cattle.io.globalroles?*', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(globalRolesGetResponseSmallSet),
-    }),
-  );
+  await page.route(/\/v1\/management\.cattle\.io\.globalroles/, (route) => {
+    const url = route.request().url();
+
+    // Let the change-watch and resource-version polls fall through so the mocked
+    // collection is only served to the list fetch, matching the large-dataset route.
+    if (url.includes('watch=true') || url.includes('resourceVersion')) {
+      return route.abort();
+    }
+
+    return route.fulfill({ json: globalRolesGetResponseSmallSet });
+  });
 }

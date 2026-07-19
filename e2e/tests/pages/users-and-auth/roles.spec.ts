@@ -6,7 +6,7 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import ClusterDashboardPagePo from '@/e2e/po/pages/explorer/cluster-dashboard.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
-import { globalRolesLargeResponse } from '@/e2e/blueprints/roles/global-roles-get';
+import { globalRolesLargeResponse, generateGlobalRolesDataSmall } from '@/e2e/blueprints/roles/global-roles-get';
 import { setTablePreferences, restoreTablePreferences } from '@/e2e/tests/pages/explorer2/workloads/pagination.utils';
 import * as jsyaml from 'js-yaml';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
@@ -800,6 +800,31 @@ rules:
         // Navigate to first page
         await roles.pagingFirstButton('GLOBAL').click();
         await expect(roles.pagingInfo('GLOBAL')).toContainText(`1 - 10 of ${MOCK_COUNT}`);
+      } finally {
+        await restoreTablePreferences(rancherApi, savedPrefs);
+      }
+    });
+
+    test('pagination is hidden when the dataset fits on a single page', async ({ page, login, rancherApi }) => {
+      const savedPrefs = await setTablePreferences(rancherApi, []);
+
+      try {
+        await generateGlobalRolesDataSmall(page);
+
+        await login();
+        const roles = new RolesPo(page);
+
+        await roles.goTo();
+        await roles.waitForPage();
+
+        const table = roles.list('GLOBAL').resourceTable().sortableTable();
+
+        await expect(table.self()).toBeVisible();
+        await table.checkLoadingIndicatorNotVisible();
+        await expect(table.rowElements()).toHaveCount(2);
+
+        // With fewer rows than the page size the pagination control is not rendered.
+        await expect(roles.paginatedTab('GLOBAL')).not.toBeAttached();
       } finally {
         await restoreTablePreferences(rancherApi, savedPrefs);
       }
