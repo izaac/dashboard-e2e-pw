@@ -47,6 +47,8 @@ jobs:
     outputs:
       rancher_image_tag: ${{ steps.resolve.outputs.RANCHER_IMAGE_TAG }}
       rancher_release: ${{ steps.resolve.outputs.RANCHER_RELEASE }}
+      rancher_repo: ${{ steps.resolve.outputs.RANCHER_REPO }}
+      rancher_version: ${{ steps.resolve.outputs.RANCHER_VERSION }}
       dashboard_sha: ${{ steps.resolve.outputs.DASHBOARD_SHA }}
     steps:
       - uses: actions/checkout@v5
@@ -142,13 +144,16 @@ jobs:
         run: mkdir -p test-results playwright-report
 
       # muster provisions the same k3d-hosted Rancher and mounts the
-      # branch-matched dashboard dist over the pod UI. For main the default
-      # channel (rancher-com-alpha) resolves to Docker Hub rancher/rancher:<tag>,
-      # matching branches-metadata.json, so only the image tag is pinned here.
+      # branch-matched dashboard dist over the pod UI. REPO/VERSION come from the
+      # target branch's branches-metadata.json muster block: main leaves REPO
+      # empty so muster's default channel (rancher-com-alpha) pulls Docker Hub
+      # rancher/rancher:head, while a release branch pins its channel (e.g.
+      # rancher-alpha -> stgregistry) and version line.
       - name: Provision rancher on k3d via muster (mount branch-matched dashboard)
         env:
           DASHBOARD_DIST: ${{ github.workspace }}/dashboard-src/dist
-          VERSION: ${{ needs.build-dashboard.outputs.rancher_image_tag }}
+          REPO: ${{ needs.build-dashboard.outputs.rancher_repo }}
+          VERSION: ${{ needs.build-dashboard.outputs.rancher_version }}
         run: bash scripts/local.sh up
 
       # Resource snapshot after rancher is up, before tests run. Cheap and
