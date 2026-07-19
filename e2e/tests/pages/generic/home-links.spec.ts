@@ -77,7 +77,7 @@ test.describe('Home Page Support Links', { tag: ['@generic', '@adminUser', '@sta
     await expect(link).toHaveAttribute('href', expect.stringContaining('getting-started/overview'));
   });
 
-  test('can click on Rancher Prime link', { tag: ['@noPrime'] }, async ({ page, login }) => {
+  test('can click on Rancher Prime link', async ({ page, login, isPrime }) => {
     await login();
 
     const homePage = new HomePagePo(page);
@@ -86,7 +86,12 @@ test.describe('Home Page Support Links', { tag: ['@generic', '@adminUser', '@sta
     await homePage.waitForPage();
 
     await homePage.clickSupportLink(5, true);
-    await expect(page).toHaveURL(/suse\.com\/products\/rancher/);
+
+    // The sixth support link is edition-specific: community links out to the
+    // Rancher product page, Prime to the SUSE Application Collection.
+    const expectedUrl = isPrime ? /apps\.rancher\.io/ : /suse\.com\/products\/rancher/;
+
+    await expect(page).toHaveURL(expectedUrl);
   });
 
   test(

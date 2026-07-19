@@ -196,6 +196,7 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
 
   test('Should access every navigation link provided from the server, including nested cases, without errors', async ({
     page,
+    isPrime,
   }) => {
     const productNavPo = new ProductNavPo(page);
     const navErrors = captureNavErrors(page);
@@ -227,7 +228,11 @@ test.describe('Side navigation: Cluster', { tag: ['@navigation', '@adminUser'] }
       for (let linkIdx = 0; linkIdx < linkCount; linkIdx++) {
         const link = productNavPo.visibleNavTypes().nth(linkIdx);
 
-        await clickNavLinkAndAssertLanding(page, link, navErrors);
+        // Prime's Cluster Tools page renders an empty state ("No Cluster Tools
+        // found") with no page <h1> when the catalog carries no feature charts,
+        // so relax the heading proof on Prime and rely on routing + no error
+        // page + no crash as the "section loaded" signal.
+        await clickNavLinkAndAssertLanding(page, link, navErrors, { requireHeading: !isPrime });
       }
     }
   });

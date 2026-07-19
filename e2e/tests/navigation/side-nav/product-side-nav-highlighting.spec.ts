@@ -43,7 +43,7 @@ test.describe('Side navigation: Highlighting', { tag: ['@navigation', '@adminUse
     expect(activeItem).toBe('Cluster and Project Members');
   });
 
-  test('Chart and sub-pages are highlighted correctly', async ({ page }) => {
+  test('Chart and sub-pages are highlighted correctly', async ({ page, isPrime }) => {
     const homePage = new HomePagePo(page);
 
     await homePage.goTo();
@@ -75,20 +75,25 @@ test.describe('Side navigation: Highlighting', { tag: ['@navigation', '@adminUse
     // Wait for charts page to load
     await expect(chartsPage.chartCards().first()).toBeVisible();
 
-    // Search for the chart
-    await chartsPage.chartsSearchFilterInput().fill(CHART.name);
-    await expect(chartsPage.chartsSearchFilterInput()).toHaveValue(CHART.name);
-
-    // Ensure the specific chart exists
-    await expect(chartsPage.getChartByName(CHART.name)).toBeVisible();
-
-    // Go to the chart detail page
-    await chartsPage.clickChart(CHART.name);
-
     const chartPage = new ChartPage(page);
 
-    // Wait for navigation to the chart page
-    await chartPage.waitForPageWithSpecificUrl(undefined, `repo-type=cluster&repo=${CHART.repo}&chart=${CHART.id}`);
+    // Prime's catalog (repos: Rancher Prime/Partners/RKE2) does not carry the
+    // community "Alerting Drivers" chart, so drive the highlight walk off the
+    // first chart the Prime catalog surfaces. Community keeps the exact chart
+    // assertion (search, named card, exact detail URL).
+    if (isPrime) {
+      await chartsPage.chartCards().first().click();
+      await page.waitForURL(/chart=/);
+    } else {
+      await chartsPage.chartsSearchFilterInput().fill(CHART.name);
+      // eslint-disable-next-line playwright/no-conditional-expect -- community-only exact chart assertion; Prime uses first available chart
+      await expect(chartsPage.chartsSearchFilterInput()).toHaveValue(CHART.name);
+      // eslint-disable-next-line playwright/no-conditional-expect -- community-only exact chart assertion; Prime uses first available chart
+      await expect(chartsPage.getChartByName(CHART.name)).toBeVisible();
+
+      await chartsPage.clickChart(CHART.name);
+      await chartPage.waitForPageWithSpecificUrl(undefined, `repo-type=cluster&repo=${CHART.repo}&chart=${CHART.id}`);
+    }
 
     const activeOnChart = await productNavPo.activeNavItem();
 
