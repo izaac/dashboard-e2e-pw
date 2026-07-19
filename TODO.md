@@ -2,7 +2,7 @@
 
 > Last upstream sync check: 2026-07-09
 
-## Upstream Sync Status
+## Upstream sync
 
 **Local repo synced up to:** upstream commit `f5e49a55` (Apr 30, 2026) via local
 commit `b07a64e` ("Sync upstream: Microsoft Entra ID rebrand + local cluster edit
@@ -13,38 +13,29 @@ accordion check").
 (287 upstream POs, 98 unported). Validate any port with `yarn local:test`
 (muster `--external` for provisioning specs).
 
-### Upstream commits Jun 9 - Jul 9, reviewed 2026-07-09
+### Reviewed Jun 9 - Jul 9 (reviewed 2026-07-09)
 
-Ordered by biggest win / lowest effort first.
+Deferred (real, do when adjacent code is touched):
 
-| Effort | Win | Commit | Verdict / action |
-|--------|-----|--------|-------------------|
-| M | M - +/-69 lines | `93a21f141c` | `extensions.spec.ts`: authenticated private registries. `SelectOrCreateAuthPo` again; `roles.po`, `extensions.po` edits |
-| M | S - beforeNext hook | `a6a5a55b4` | `beforeNext` added to `cruResource` steps. Audit our `CreateEditViewPo` for a `beforeNext`/step-hook seam |
-| L | L - churn, defer | `aeeb8a97a` | Table-actions resize. Many small selector/assertion tweaks across list POs. Bundle with whichever spec is touched next; do not sweep |
-| - | watch | `f6192e983` | E2E uses Helm instead of Docker. Infrastructural on the upstream side; no direct port |
+- `aeeb8a97a` Table-actions resize (L, churn): many small selector/assertion
+  tweaks across list POs. Bundle with whichever spec is touched next; do not sweep.
 
-**Ported 2026-07-18** (verified live on `v2.15.0-alpha21` via muster
-`--repo rancher-alpha --version 2.15`):
+No port needed (recorded so they are not re-reviewed):
 
-- `24928447df` Repositories Refresh Interval: `refreshIntervalInput()`
-  retargeted to `clusterrepo-refresh-interval-input` (now a LabeledInput plus a
-  separate unit selector; unit defaults to hours so the submitted
-  `refreshInterval` is the entered value times 3600). OCI repo test enriched to
-  assert refreshInterval, minWait, absent maxWait, and insecurePlainHttp.
-- `5e44c1c72` Chart Install UI improvements: added `chartNameLink()` to
-  `install-charts.po` and asserted its text plus `href` in `chart-install-wizard.spec`.
-  Also hardened the "ConfigMaps listed" test: vue-select renders the combobox
-  role on the wrapper (not the search input), so the resource picker is now
-  reached via `install-charts.po` `questionsGroupSelect('Other Demo Fields')`
-  with explicit visible/selected assertions.
+- `93a21f141c` private-registry feature: component work (`PrivateRegistry.vue` +
+  chart-install pull secrets), no Cypress test. A real test needs a private OCI
+  registry + creds we do not have. `SelectOrCreateAuthPo` already ported.
+- `a6a5a55b4` beforeNext: upstream `CruResource.vue` prop, not a test seam; no
+  spec needs it. Watch: if a multi-step create on a `beforeNext` step ever flakes,
+  `nextPage()` must wait for the validation to resolve before asserting.
+- `f6192e983` E2E Helm-not-Docker: upstream-side infra change, no port.
 
 > Note for future cluster-mock ports (from the `mgmt-to-prov` port): the
 > dashboard loads clusters by id via server-side-pagination
 > `?filter=id IN (fleet-default/<name>)` queries — `page.route` patterns must be
 > RegExps, not globs, since a glob `*` cannot cross the `/` in a namespaced id.
 
-## Gap-map false positives (covered, just renamed)
+### Gap-map false positives (covered, just renamed)
 
 `docs/ASSERTION-GAP-MAP.md` matches by exact upstream test name. The following
 upstream tests appear under "Missing" but are actually covered with different
@@ -60,7 +51,7 @@ names, so leave them off the work queue:
 - `Validate home page with percy` → ported as `home page matches snapshot` (visual)
 - `should create a new pod` / `…folder` / `…validate folder name` / `…delete folder` (4 tests in `websockets/connection.spec.ts`) → consolidated into the single end-to-end test `should create a pod and manage folders via WebSocket exec`
 
-## Empty stub tests
+## Missing coverage (blocked stubs)
 
 Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-expect -- stub body never runs`. Implementation needed once blockers below are resolved.
 
@@ -115,19 +106,9 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 - [ ] `project-secrets.spec.ts`: `creates a project-scoped secret` is `test.fixme`. Save stays disabled because v2.15-head projects no longer expose `status.backingNamespace` (read by `shell/edit/secret/index.vue`). Title test passes. See `docs/DEBUGGING-FAILURES.md`.
 
-## CI / Infra
+## Known issues & upstream watches
 
-- [ ] Qase IDs: to be mapped manually by QA
-- [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
-
-## Upstream advocacy
-
-- [ ] Push upstream rancher/dashboard to migrate
-  `shell/components/SortableTable/paging.js` (and its `debug.js` sibling) to
-  TypeScript. Last legacy `.js` files in an otherwise mostly-TS component
-  tree; surfaced while debugging the CRD pagination test.
-
-## Chart kubeVersion drift watch
+### Chart kubeVersion drift (OPA Gatekeeper)
 
 - [ ] **OPA Gatekeeper uninstallable on current head**: k3s bumped to 1.36.1 but
   every published `rancher-gatekeeper` version caps `kubeVersion < 1.36.0-0`,
@@ -135,7 +116,7 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
   `chartGuard` now skips on kubeVersion incompatibility; remove this entry when
   rancher-charts publish a compatible gatekeeper and the tests run again.
 
-## Known chronic flakes: needs deeper investigation
+### Chronic flakes (needs deeper investigation)
 
 - [ ] **Sharded-run timeout failures**: a stable-subset sharded run (`@adminUser`
   minus `@prime`/`@noVai`/`@needsInfra`/`@provisioning`) surfaced 9 failures
@@ -172,7 +153,14 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
   `machineProvider` TypeError. Our `preferences.spec.ts` "specific cluster" test
   skip-guards on the empty list until fixed.
 
-## Gold-standard audit (Phase 4 + long tail)
+## Engineering & infrastructure
+
+### CI / CD
+
+- [ ] Qase IDs: to be mapped manually by QA
+- [ ] Jenkins job for Playwright pipeline (Jenkinsfile in qa-infra-automation)
+
+### Gold-standard audit (Phase 4 + long tail)
 
 Phase 1, 2, 3 and the documentation parts of Phase 5 are closed (see
 `docs/AUDIT-PLAYWRIGHT-GOLDEN-STANDARD-2026-05-04.md`). Sharded full-suite runs
