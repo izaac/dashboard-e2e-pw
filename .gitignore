@@ -9,6 +9,7 @@ blob-reports/
 .auth/
 *.storageState.json
 browser-logs/
+perf-out/
 
 # Environment
 .env

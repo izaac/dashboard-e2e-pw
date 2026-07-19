@@ -86,6 +86,7 @@ npx playwright test -g "Log in with valid"
 | **[Debugging Failures](docs/DEBUGGING-FAILURES.md)** | Investigating failures: artifacts, traces, failure types, reproduction |
 | **[Writing Tests](docs/WRITING-TESTS.md)** | Page Objects, fixtures, golden rules, blueprints, step-by-step walkthrough |
 | **[Parallelism](docs/PARALLELISM.md)** | Which specs can run in parallel vs serial |
+| **[Performance Testing](docs/PERFORMANCE-TESTING.md)** | Opt-in performance probes: isolation, running, tuning knobs, output |
 | **[Contributing](CONTRIBUTING.md)** | How to contribute: workflow, rules, conventions |
 
 ## Architecture

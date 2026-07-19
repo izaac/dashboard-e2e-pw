@@ -85,6 +85,10 @@ const getTestMatch = (): string[] => {
     dirs = ['accessibility'];
   }
 
+  if (process.env.TEST_PERF) {
+    dirs = ['performance'];
+  }
+
   return dirs.map((d) => `e2e/tests/${d}/**/*.spec.ts`);
 };
 

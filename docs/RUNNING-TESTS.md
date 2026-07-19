@@ -625,6 +625,15 @@ Global default in `playwright.config.ts`: `maxDiffPixelRatio: 0.01` (1%). Prefer
 masking volatile content (e.g. via `SortableTablePo.ageColumn()`) over raising the
 global ratio.
 
+### Performance probes
+
+The suite also carries opt-in **performance probes** (`e2e/tests/performance/`,
+tag `@performance`, enabled with `TEST_PERF=1`). They measure UI timing rather
+than assert pass/fail and are kept out of every normal run.
+
+> **For how to run and tune them**, see
+> [PERFORMANCE-TESTING.md](./PERFORMANCE-TESTING.md).
+
 ---
 
 ## 8. Reading Test Results
