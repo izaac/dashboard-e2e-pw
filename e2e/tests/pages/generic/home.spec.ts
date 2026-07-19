@@ -27,7 +27,7 @@ test.describe('Home Page', { tag: ['@generic', '@adminUser', '@standardUser'] },
     }
   });
 
-  test('has notification for release notes', async ({ page, login, rancherApi }) => {
+  test('has notification for release notes', async ({ page, login, rancherApi, isPrime }) => {
     await rancherApi.setUserPreference({ 'read-whatsnew': '' });
 
     await login();
@@ -70,7 +70,15 @@ test.describe('Home Page', { tag: ['@generic', '@adminUser', '@standardUser'] },
     await expect(nc.expandedState()).toBeAttached();
     await expect(nc.self()).toBeAttached();
     await expect(nc.self()).toBeVisible();
-    await expect(nc.unreadIndicator()).not.toBeAttached();
+
+    // Prime ships a persistent "Rancher Prime Registration" notification that
+    // re-flags itself unread on reopen, so the global unread indicator no longer
+    // tracks the release-notes item alone. Assert the release-notes item's own
+    // read state below instead of the global indicator on Prime.
+    if (!isPrime) {
+      // eslint-disable-next-line playwright/no-conditional-expect -- global unread indicator is edition-specific; Prime asserts item read state instead
+      await expect(nc.unreadIndicator()).not.toBeAttached();
+    }
 
     // Verify notification title and toggle read state
     const item2 = nc.getNotificationByName('release-notes');
