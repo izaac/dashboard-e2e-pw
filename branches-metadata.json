@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps repo branches to the Rancher image, chart line and rancher/dashboard ref their e2e runs target, mirroring upstream rancher/dashboard's branches-metadata.json. CI resolves a PR's entry from its TARGET branch; unknown branches fall back to main's entry. The dashboard ref is mandatory: it gets checked out, built and mounted over the rancher pod's embedded dashboard so PRs validate against the matching dashboard source line. The PR workflow hard fails if no dashboard mapping resolves, because falling back to the image's CDN dashboard would mean validating against unrelated code.",
+  "_comment": "Maps repo branches to the Rancher image, chart line and rancher/dashboard ref their e2e runs target, mirroring upstream rancher/dashboard's branches-metadata.json. CI resolves a PR's entry from its TARGET branch; unknown branches fall back to main's entry. Provisioning is driven by the `muster` block: `muster.repo` selects the release channel (omit for the default Docker Hub rancher-com-alpha) and `muster.version` is the muster `--version` value (a line like `2.15`, or a concrete pin). `rancher-image` is documentary; the operative image is whatever muster resolves for the channel and version. The dashboard ref is mandatory: it gets checked out, built and mounted over the rancher pod's embedded dashboard so PRs validate against the matching dashboard source line. The PR workflow hard fails if no dashboard mapping resolves, because falling back to the image's CDN dashboard would mean validating against unrelated code.",
   "branches": {
     "main": {
       "e2e": {
@@ -9,9 +9,31 @@
           "tag": "head"
         },
         "chart-release": "2.15",
+        "muster": {
+          "version": "head"
+        },
         "dashboard": {
           "repo": "rancher/dashboard",
           "ref": "master"
+        }
+      }
+    },
+    "release-2.15": {
+      "e2e": {
+        "rancher-image": {
+          "registry": "stgregistry.suse.com",
+          "namespace": "rancher",
+          "name": "rancher",
+          "tag": "v2.15.0-alpha"
+        },
+        "chart-release": "2.15",
+        "muster": {
+          "repo": "rancher-alpha",
+          "version": "2.15"
+        },
+        "dashboard": {
+          "repo": "rancher/dashboard",
+          "ref": "release-2.15"
         }
       }
     }

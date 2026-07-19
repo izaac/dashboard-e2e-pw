@@ -61,10 +61,12 @@ resolve() {
     echo "::warning::no branches-metadata.json entry for '$BASE' — falling back to main" >&2
   fi
 
-  local entry tag release repo ref sha
+  local entry tag release repo ref sha channel version
   entry="$(jq -c --arg b "$BASE" '.branches[$b] // .branches.main' "$METADATA")"
   tag="$(echo "$entry" | jq -r '.e2e["rancher-image"].tag')"
   release="$(echo "$entry" | jq -r '.e2e["chart-release"]')"
+  channel="$(echo "$entry" | jq -r '.e2e.muster.repo // empty')"
+  version="$(echo "$entry" | jq -r '.e2e.muster.version // .e2e["rancher-image"].tag')"
   repo="$(echo "$entry" | jq -r '.e2e.dashboard.repo // empty')"
   ref="${DASHBOARD_REF:-$(echo "$entry" | jq -r '.e2e.dashboard.ref // empty')}"
 
@@ -79,6 +81,8 @@ resolve() {
 
   echo "RANCHER_IMAGE_TAG=${tag}"
   echo "RANCHER_RELEASE=${release}"
+  echo "RANCHER_REPO=${channel}"
+  echo "RANCHER_VERSION=${version}"
   echo "DASHBOARD_REPO=${repo}"
   echo "DASHBOARD_REF=${ref}"
   echo "DASHBOARD_SHA=${sha}"
