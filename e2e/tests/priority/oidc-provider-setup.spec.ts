@@ -67,7 +67,8 @@ test.describe('Enable OIDC Provider', { tag: ['@jenkins', '@noPrime', '@adminUse
   // accommodates a worst-case restart cycle plus assertions.
   test.setTimeout(PROVISIONING);
 
-  test('Enable Feature Flag', async ({ page, login, rancherApi }) => {
+  test('Enable Feature Flag', async ({ page, login, rancherApi, isPrime }) => {
+    test.skip(isPrime, 'oidc-provider feature flag is managed differently on Rancher Prime');
     await login();
 
     const homePage = new HomePagePo(page);

@@ -315,69 +315,74 @@ test.describe('Settings (Part 2)', () => {
     }
   });
 
-  test('can update ui-brand', { tag: ['@noPrime', '@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
-    const settingName = 'ui-brand';
-    const burgerMenu = new BurgerMenuPo(page);
-    const restore = await snapshotSetting(rancherApi, settingName);
+  test(
+    'can update ui-brand',
+    { tag: ['@noPrime', '@globalSettings', '@adminUser'] },
+    async ({ page, rancherApi, isPrime }) => {
+      test.skip(isPrime, 'ui-brand is locked to SUSE branding on Rancher Prime; reset never clears the SUSE logo');
+      const settingName = 'ui-brand';
+      const burgerMenu = new BurgerMenuPo(page);
+      const restore = await snapshotSetting(rancherApi, settingName);
 
-    try {
-      await navToSettings(page);
-      await editSetting(page, settingName);
+      try {
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-      await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
+        await expect(settingsPage.settingTitle()).toContainText(`Setting: ${settingName}`);
 
-      const input = settingsPage.settingInput();
+        const input = settingsPage.settingInput();
 
-      await input.clear();
-      await input.fill(settingsData[settingName].new);
+        await input.clear();
+        await input.fill(settingsData[settingName].new);
 
-      const saveResponsePromise = page.waitForResponse(
-        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-      );
+        const saveResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-      await settingsPage.saveButton().click();
-      await saveResponsePromise;
+        await settingsPage.saveButton().click();
+        await saveResponsePromise;
 
-      await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
+        await expect(settingsPage.advancedSettingRow(settingName)).toContainText(settingsData[settingName].new);
 
-      // Check the side-menu brand image swapped to the SUSE logo. We discriminate by
-      // bounding-box width: SUSE logo renders ~200 px, the default Rancher logo ~167 px,
-      // so anything ≥ 180 px is unambiguously the SUSE asset. Avoid tight 198–202 ranges
-      // — those flake on font-rendering / zoom / anti-aliasing drift between captures.
-      await burgerMenu.toggle();
-      await expect(burgerMenu.brandLogoImage()).toBeVisible();
-      const suseLogoWidth = await burgerMenu.brandLogoImage().evaluate((el) => el.getBoundingClientRect().width);
+        // Check the side-menu brand image swapped to the SUSE logo. We discriminate by
+        // bounding-box width: SUSE logo renders ~200 px, the default Rancher logo ~167 px,
+        // so anything ≥ 180 px is unambiguously the SUSE asset. Avoid tight 198–202 ranges
+        // — those flake on font-rendering / zoom / anti-aliasing drift between captures.
+        await burgerMenu.toggle();
+        await expect(burgerMenu.brandLogoImage()).toBeVisible();
+        const suseLogoWidth = await burgerMenu.brandLogoImage().evaluate((el) => el.getBoundingClientRect().width);
 
-      expect(suseLogoWidth).toBeGreaterThanOrEqual(180);
-      await burgerMenu.toggle();
+        expect(suseLogoWidth).toBeGreaterThanOrEqual(180);
+        await burgerMenu.toggle();
 
-      // Reset via UI
-      await navToSettings(page);
-      await editSetting(page, settingName);
+        // Reset via UI
+        await navToSettings(page);
+        await editSetting(page, settingName);
 
-      await settingsPage.useDefaultButton().click();
-      const resetResponsePromise = page.waitForResponse(
-        (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
-      );
+        await settingsPage.useDefaultButton().click();
+        const resetResponsePromise = page.waitForResponse(
+          (resp: any) => resp.url().includes(settingName) && resp.request().method() === 'PUT',
+        );
 
-      await settingsPage.saveButton().click();
-      await resetResponsePromise;
+        await settingsPage.saveButton().click();
+        await resetResponsePromise;
 
-      await expect(settingsPage.advancedSettingRow(settingName)).not.toContainText(settingsData[settingName].new);
+        await expect(settingsPage.advancedSettingRow(settingName)).not.toContainText(settingsData[settingName].new);
 
-      // Check side-menu brand image reverted to the default Rancher logo. Default
-      // renders ~167 px versus SUSE's ~200 px — anything < 180 px is unambiguously
-      // the default asset. See the SUSE assertion above for why we relax the
-      // tight 165–170 range.
-      await burgerMenu.toggle();
-      await expect(burgerMenu.brandLogoImage()).toBeVisible();
-      const sideDefaultWidth = await burgerMenu.brandLogoImage().evaluate((el) => el.getBoundingClientRect().width);
+        // Check side-menu brand image reverted to the default Rancher logo. Default
+        // renders ~167 px versus SUSE's ~200 px — anything < 180 px is unambiguously
+        // the default asset. See the SUSE assertion above for why we relax the
+        // tight 165–170 range.
+        await burgerMenu.toggle();
+        await expect(burgerMenu.brandLogoImage()).toBeVisible();
+        const sideDefaultWidth = await burgerMenu.brandLogoImage().evaluate((el) => el.getBoundingClientRect().width);
 
-      expect(sideDefaultWidth).toBeLessThan(180);
-    } finally {
-      await restore();
-    }
-  });
+        expect(sideDefaultWidth).toBeLessThan(180);
+      } finally {
+        await restore();
+      }
+    },
+  );
 
   test('can update hide-local-cluster', { tag: ['@globalSettings', '@adminUser'] }, async ({ page, rancherApi }) => {
     const settingName = 'hide-local-cluster';
