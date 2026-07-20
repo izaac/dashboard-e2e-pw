@@ -6,10 +6,11 @@ import { LONG } from '@/support/timeouts';
 test.describe('Apps', () => {
   test.describe('Repositories', { tag: ['@explorer', '@adminUser'] }, () => {
     test.describe('Add', () => {
-      test('after add, repo list should not contain multiple entries', async ({ page, login, rancherApi }) => {
+      test('after add, repo list should not contain multiple entries', async ({ page, login, rancherApi, isPrime }) => {
         await login();
         const repoName = `helm-repo-dupe-test-${Date.now()}`;
         const appRepoList = new ChartRepositoriesPagePo(page, 'local', 'apps');
+        const rancherRepoName = isPrime ? 'Rancher Prime' : 'Rancher';
 
         await appRepoList.goTo();
         await appRepoList.waitForPage();
@@ -17,7 +18,7 @@ test.describe('Apps', () => {
         await appRepoList.sortableTable().checkLoadingIndicatorNotVisible();
 
         await expect(appRepoList.sortableTable().rowElementWithName('Partners')).toBeVisible();
-        await expect(appRepoList.sortableTable().rowElementWithName('Rancher')).toBeVisible();
+        await expect(appRepoList.sortableTable().rowElementWithName(rancherRepoName)).toBeVisible();
         await expect(appRepoList.sortableTable().rowElementWithName('RKE2')).toBeVisible();
 
         const initialRowCount = await appRepoList.sortableTable().rowCount();
@@ -125,17 +126,18 @@ test.describe('Apps', () => {
     });
 
     test.describe('Refresh', () => {
-      test('repo refresh results in correct api requests', async ({ page, login }) => {
+      test('repo refresh results in correct api requests', async ({ page, login, isPrime }) => {
         await login();
 
         const appRepoList = new ChartRepositoriesPagePo(page, 'local', 'apps');
+        const rancherRepoName = isPrime ? 'Rancher Prime' : 'Rancher';
 
         await appRepoList.goTo();
         await appRepoList.waitForPage();
 
         await appRepoList.sortableTable().checkLoadingIndicatorNotVisible();
-        await expect(appRepoList.sortableTable().rowElementWithName('Rancher')).toBeVisible();
-        await expect(appRepoList.list().state('Rancher')).toContainText('Active', { timeout: LONG });
+        await expect(appRepoList.sortableTable().rowElementWithName(rancherRepoName)).toBeVisible();
+        await expect(appRepoList.list().state(rancherRepoName)).toContainText('Active', { timeout: LONG });
       });
     });
   });
