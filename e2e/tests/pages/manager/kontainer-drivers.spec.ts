@@ -6,6 +6,7 @@ import DeactivateDriverDialogPo from '@/e2e/po/prompts/deactivateDriverDialog.po
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
+import ProductNavPo from '@/e2e/po/side-bars/product-side-nav.po';
 import { EXTRA_LONG, LONG, LONG_TIMEOUT_OPT, POLL_INTERVAL, SHORT_TIMEOUT_OPT, VERY_LONG } from '@/support/timeouts';
 import { ensureLightTheme, chromeMasks, visualSnapshot } from '@/support/utils/visual-snapshot';
 
@@ -594,6 +595,11 @@ test.describe('Visual snapshots', { tag: ['@visual', '@manager', '@adminUser'] }
       await driversPage.goTo();
       await driversPage.waitForPage();
       await driversPage.list().resourceTable().sortableTable().waitForReady();
+
+      // The Providers nav group loads "Cluster API Providers" asynchronously.
+      // Without this gate the screenshot races that entry, so the sidebar (and
+      // thus the whole page) intermittently differs from the baseline.
+      await expect(new ProductNavPo(page).sideMenuEntryByLabel('Cluster API Providers')).toBeVisible();
 
       await expect(page).toHaveScreenshot(visualSnapshot(isPrime, 'kontainer-drivers-list.png'), {
         fullPage: true,

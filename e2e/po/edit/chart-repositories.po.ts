@@ -152,9 +152,21 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     return new LabeledInputPo(this.page, '[data-testid="clusterrepo-refresh-interval-input"]', this.self());
   }
 
+  /**
+   * Clicks Save and resolves with the first successful (2xx) response for the
+   * given method + url.
+   *
+   * Editing a freshly-downloaded gitRepo clusterrepo can race the controller:
+   * the edit form may hold a resourceVersion that the controller has already
+   * bumped, so the initial PUT returns 409. The dashboard's CreateEditView
+   * mixin auto-resolves this by re-fetching and re-saving, but that retry is
+   * only observable if we ignore the intermediate 409 and wait for the 2xx.
+   * Waiting on the first response instead would fail the assertion and let the
+   * test's cleanup delete the resource before the retry lands.
+   */
   async saveAndWaitForRequests(method: string, url: string): Promise<Response> {
     const responsePromise = this.page.waitForResponse(
-      (resp) => resp.url().includes(url) && resp.request().method() === method,
+      (resp) => resp.url().includes(url) && resp.request().method() === method && resp.ok(),
       { timeout: STANDARD },
     );
 
