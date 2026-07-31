@@ -1,6 +1,6 @@
 # TODO
 
-> Last upstream sync check: 2026-07-09
+> Last upstream sync check: 2026-07-30
 
 ## Upstream sync
 
@@ -8,17 +8,34 @@
 commit `b07a64e` ("Sync upstream: Microsoft Entra ID rebrand + local cluster edit
 accordion check").
 
-**Reviewed (not yet ported) up to:** `../dashboard` master at `7570de16f`
-(Jul 9, 2026). Re-quantified via `yarn gap-map` (94%, 643/684) and `yarn po-diff`
-(287 upstream POs, 98 unported). Validate any port with `yarn local:test`
-(muster `--external` for provisioning specs).
+**Reviewed (not yet ported) up to:** `../dashboard` master at `467c5f5027`
+(Jul 30, 2026). Re-quantified via `yarn gap-map` (97%, 661/681) and `yarn po-diff`
+(288 upstream POs, 98 unported, 252 missing methods across 87 POs). Validate any
+port with `yarn local:test` (muster `--external` for provisioning specs).
 
-### Reviewed Jun 9 - Jul 9 (reviewed 2026-07-09)
+### Reviewed Jul 10 - Jul 30 (reviewed 2026-07-30)
+
+Genuine gaps from master drift this window:
+
+- [ ] **Fail-whale in-context test** (`pages/generic/not-found-page.spec.ts`):
+  upstream added `Will show the fail whale in-context (retaining cluster context)
+  when a resource list is loaded with an unknown resource type`. Requires porting
+  the new upstream `FailWhalePo` (`components/fail-whale.po.ts`, 3 methods:
+  `checkExists`, `title`, `message`) first. Our `not-found-page.spec.ts` has 8
+  hardened tests but none assert the in-context fail-whale-with-retained-side-nav
+  case; add it once `FailWhalePo` lands.
 
 Deferred (real, do when adjacent code is touched):
 
 - `aeeb8a97a` Table-actions resize (L, churn): many small selector/assertion
   tweaks across list POs. Bundle with whichever spec is touched next; do not sweep.
+- PO method drift (no test needs these yet; port when adjacent code is touched):
+  - `LoginPagePo`: upstream added `welcomeMessage` / `isWelcomeMessage` (absent in PW).
+  - `PagePo`: upstream added `waitForMastheadTitle` (absent in PW).
+  - `RancherSetupConfigurePage`: upstream added `waitForPage` (absent in PW).
+  - `WorkloadDashboardPagePo`: upstream `interceptSummariesAsEmpty` /
+    `waitForEmptySummaries` (mock helpers; PW has `byTypeCards()` already, no
+    PW test intercepts empty summaries).
 
 No port needed (recorded so they are not re-reviewed):
 
@@ -50,6 +67,10 @@ names, so leave them off the work queue:
 - `should display continuous delivery page git repo` → ported as `git repo list page matches snapshot` (visual)
 - `Validate home page with percy` → ported as `home page matches snapshot` (visual)
 - `should create a new pod` / `…folder` / `…validate folder name` / `…delete folder` (4 tests in `websockets/connection.spec.ts`) → consolidated into the single end-to-end test `should create a pod and manage folders via WebSocket exec`
+- `is installed and a rule created` (`pages/charts/logging.spec.ts`) → covered by `can create cluster output and flow` (asserts `flowRuleItem(0)` visible)
+- `should place users with a null Last Login at the bottom in descending order and at the top in ascending order` (`pages/users-and-auth/last-login-sort.spec.ts`) → split into the hardened pair `populate Last Login for the active test user` + `places null Last Login at the top in ascending and at the bottom in descending`
+- `should keep the state badge adjacent to a short resource name` / `…long resource name` (`pages/explorer2/storage/configmap-detail-title-bar.spec.ts`) → consolidated into the parametrized `keeps the state badge adjacent to <variant>` (boundingBox pixel-gap assertion)
+- `should show display name in cluster target selector when editing a gitrepo that references a cluster by metadata.name` (`pages/fleet/fleet-cluster-target-display-name.spec.ts`) → covered by `resolves metadata.name targets to display name when editing a gitrepo`
 
 ## Missing coverage (blocked stubs)
 
