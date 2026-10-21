@@ -1,14 +1,10 @@
 ---
 description: Debugging specialist subagent for analyzing failed Playwright test runs and DOM states.
 mode: subagent
-model: openrouter/deepseek/deepseek-r1
-permissions:
-  - action: edit
-    resource: "e2e/**/*.ts"
-    effect: allow
-  - action: bash
-    resource: "*"
-    effect: allow
+model: opencode/deepseek-v4.1-flash-free
+permission:
+  edit: allow
+  bash: allow
 ---
 
 You are a deep debugging specialist.

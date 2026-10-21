@@ -26,6 +26,11 @@ export default class TabbedPo extends ComponentPo {
     return this.page.getByTestId(testId);
   }
 
+  /** Panel Locator for a tab — resolves to `data-testid="tab-panel-${name}"`. */
+  panel(name: string): Locator {
+    return this.page.getByTestId(`tab-panel-${name}`);
+  }
+
   allTabs(componentTestId = 'tabbed'): Locator {
     return this.page.getByTestId(`${componentTestId}-block`).locator('> li');
   }

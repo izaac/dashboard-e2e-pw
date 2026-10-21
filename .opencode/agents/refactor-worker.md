@@ -1,14 +1,10 @@
 ---
 description: Capable worker subagent for refactoring specs, running Playwright tests, and debugging failures.
 mode: subagent
-model: openrouter/google/gemini-3.6-flash
-permissions:
-  - action: edit
-    resource: "e2e/**/*.ts"
-    effect: allow
-  - action: bash
-    resource: "*"
-    effect: allow
+model: opencode/glm-5.3-flash-free
+permission:
+  edit: allow
+  bash: allow
 ---
 
 You are a precise refactoring and debugging subagent.

@@ -30,4 +30,8 @@ export default class ListRowPo {
   nameLink(): Locator {
     return this.rowLocator.locator('td.col-link-detail a');
   }
+
+  checkbox(): Locator {
+    return this.rowLocator.getByRole('checkbox').first();
+  }
 }

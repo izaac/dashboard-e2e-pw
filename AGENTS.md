@@ -74,6 +74,7 @@
 - **Framework:** Playwright Test (`@playwright/test`)
 - **Language:** TypeScript (strict mode)
 - **Pattern:** Page Object Model (PO), which mirrors upstream Cypress structure
+- **Fixtures:** `login`, `rancherApi`, `envMeta`, `isPrime`, `chartGuard` (`@/support/fixtures`)
 - **API Helper:** `RancherApi` class injected via Playwright fixture
 - **Auth:** `login()` fixture performs UI login per-test
 - **Assertions:** Playwright built-in `expect` (not Chai)
@@ -95,10 +96,10 @@ e2e/
     edit/         # Resource create/edit POs
   blueprints/     # Test data fixtures (factory functions)
 support/
-  fixtures/       # Playwright fixtures (login, rancherApi, envMeta)
-  utils/          # Shared utilities
+  fixtures/       # Playwright fixtures (login, rancherApi, envMeta, isPrime, chartGuard)
+  utils/          # Shared utilities (debounce, timers)
 scripts/          # Developer tooling (gap-map, po-index, po-diff)
-docs/             # Guides and reference
+docs/             # Guides and reference (WRITING-TESTS, RUNNING-TESTS, DEBUGGING-FAILURES)
 ```
 
 ---
@@ -123,6 +124,9 @@ Use this to:
 ## PROJECT LINKS
 
 - [README](README.md)
+- [Writing Tests Guide](docs/WRITING-TESTS.md)
+- [Running Tests Guide](docs/RUNNING-TESTS.md)
+- [Debugging Failures Guide](docs/DEBUGGING-FAILURES.md)
 - [Playwright Config](playwright.config.ts)
 - [Fixtures & Helpers](support/fixtures/index.ts)
 - [Base Component PO](e2e/po/components/component.po.ts)
@@ -163,9 +167,11 @@ Set in `.env` or export:
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `TEST_BASE_URL` | Yes | `https://localhost:8005` | Dashboard URL (include `/dashboard`) |
+| `API` | No | — | Rancher backend API URL |
 | `TEST_PASSWORD` | Yes | — | Login password |
 | `TEST_USERNAME` | No | `admin` | Login username |
 | `CATTLE_BOOTSTRAP_PASSWORD` | Setup only | — | Bootstrap password for first login |
+| `PLAYWRIGHT_CHROMIUM_PATH` | No | — | System Chromium executable path (e.g. on NixOS) |
 | `TEST_SKIP` | No | — | Comma-separated dirs to skip |
 | `TEST_ONLY` | No | — | Comma-separated dirs to run exclusively |
 | `GREP_TAGS` | No | — | Filter tests by tag |
@@ -221,9 +227,9 @@ as "broken", check if it simply can't run:
 
 ---
 
-## TEST DESIGN PRINCIPLES
+## TEST DESIGN PRINCIPLES: THE 9 GOLDEN RULES (docs/WRITING-TESTS.md)
 
-### Atomic Tests
+### Rule 1: Every test stands alone (Atomicity)
 
 > Verified against Playwright official best practices: "Each test should be completely isolated and run independently."
 > Playwright calls this "starting from scratch" and warns that the alternative (cleaning up between tests) "can lead to
@@ -238,7 +244,7 @@ not replicate that pattern.** Every Playwright test must:
 - Clean up after itself (restore original state)
 - Never use shared mutable state between tests (`let` at describe scope that one test writes and another reads)
 
-### Idempotent Tests
+### Rule 2: Tests work on run 1 and run 100 (Idempotency)
 
 *Our extension beyond Playwright's docs, required because tests share a live Rancher instance.*
 
@@ -246,25 +252,89 @@ Tests must produce the **same result** regardless of how many times they run or 
 
 - Use `rancherApi` to ensure known starting state before each test (e.g., save → set → test → restore)
 - Never assume default values. Query current state, set what you need, restore when done
-- Use unique test data (timestamps, random suffixes) to avoid collisions with parallel runs
-- If a resource might already exist, check first, and don't fail on "already exists"
+- Use unique test data (timestamps `${Date.now()}`, random suffixes) to avoid collisions with parallel runs
+- If a resource might already exist, check first or use `deleteRancherResource(..., false)` (which does not throw on 404)
 
-### Resource Cleanup (in order of preference)
+### Rule 3: Always clean up
 
-1. **Playwright fixtures with `use()`**: framework-guaranteed teardown, best for reusable resource patterns (browser
-   contexts, API clients). Playwright's officially recommended primary pattern.
-2. **`try/finally` inside the test**: correct for per-test resources with dynamic IDs created mid-test. Cleanup runs
-   on assertion failure.
-3. **`afterEach`/`afterAll`**: acceptable for shared setup (one resource used by all tests in a describe). Requires
-   shared variable. Use sparingly.
+Every resource created must be deleted when the test finishes. Use `try/finally` so cleanup runs even if assertions fail:
+
+```typescript
+test('modify a setting', async ({ rancherApi }) => {
+  const original = await rancherApi.getSetting('ui-brand');
+  await rancherApi.setSetting('ui-brand', 'test-brand');
+
+  try {
+    // ... your assertions ...
+  } finally {
+    // Runs even if assertions fail
+    await rancherApi.setSetting('ui-brand', original);
+  }
+});
+```
+
+**Cleanup priority (in order of preference):**
+
+1. **`try/finally` inside the test**: best for per-test resources with dynamic IDs created mid-test. Cleanup runs on assertion failure.
+2. **`afterEach`/`afterAll`**: acceptable for shared setup (one resource used by all tests in a describe). Requires shared variable. Use sparingly.
+3. **Playwright fixtures with `use()`**: framework-guaranteed teardown, best for reusable resource patterns (browser contexts, API clients).
 4. **Never: no cleanup.** Every resource created must be cleaned up. "The next test will reset it" is not acceptable.
 
-### Playwright Idioms
+### Rule 4: No raw selectors in spec files
 
-When a test needs to behave differently based on runtime state (missing infra, feature flags,
-env-locked settings), use `test.skip(condition, reason)`. Never put `expect()` calls inside an
-`if` branch to conditionally guard behavior. The `playwright/no-conditional-expect` rule flags
-this because it can silently skip assertions when the condition has a bug.
+Selectors belong in Page Objects (`e2e/po/**`), never in spec files. Specs read in plain English:
+
+```typescript
+// BAD: raw selectors in spec
+await page.locator('.btn.bg-primary').click();
+await page.locator('[data-testid="banner-title"]').innerText();
+
+// GOOD: encapsulated in Page Object
+await myPage.saveButton().click();
+await myPage.title().innerText();
+```
+
+- **Locator preference in POs**: `getByTestId` > `getByRole` > `getByText` > CSS selectors. Use `getByTestId` to match upstream Rancher `data-testid` attributes.
+
+### Rule 5: Web-first assertions
+
+Use `await expect(...)`, which retries automatically until the condition is true or timeout expires. Never check once with manual booleans:
+
+```typescript
+// BAD: checks DOM once, causes race condition
+expect(await element.isVisible()).toBe(true);
+
+// GOOD: retries automatically until visible or timeout
+await expect(element).toBeVisible();
+```
+
+- No manual waits around assertions (don't wrap `expect()` in try/catch).
+
+### Rule 6: Assertions live in specs, not Page Objects
+
+Page Objects expose Locators and perform actions. Specs own all `expect()` calls.
+
+- **Exception:** `waitFor*` helpers inside POs that verify an element state as a precondition (e.g. `waitForPage()`, `waitForDebounce()`).
+- When an action verifies an API response (e.g. Save button click), return the `Promise<Response>` from the PO and assert status in the spec.
+
+### Rule 7: No empty catch blocks
+
+Never write `} catch {}` or `.catch(() => {})`. Silent swallows hide auth failures and network errors, masking genuine bugs as UI flakes.
+
+- Tolerate expected 404s cleanly via `failOnStatusCode = false` without throwing.
+- When catching is necessary in runtime helpers, log with context: `console.warn('[cleanup] failed:', err)`.
+
+### Rule 8: No page.waitForTimeout(N) in specs; use named utils in POs
+
+Specs should not contain fixed sleeps (`playwright/no-wait-for-timeout`).
+Page Objects handle documented Vue debounce windows or slide-in panel mount transitions using named helpers from `@/support/utils/debounce`:
+
+- `waitForVueDebounce(this.page)` (e.g. for `RulePath.vue` 500ms debounce before `save()`)
+- `waitForUiTransition(this.page)`
+
+### Rule 9: Use Playwright idioms, not workarounds
+
+When a test needs to behave differently based on runtime state (missing infra, feature flags, env-locked settings, edition differences), use `test.skip(condition, reason)`. Never put `expect()` calls inside an `if` branch (`playwright/no-conditional-expect`).
 
 The correct pattern is two focused tests with opposing `test.skip` guards:
 
@@ -283,15 +353,6 @@ test('can update my-setting', async ({ rancherApi }) => {
   // full edit test
 });
 ```
-
-### Assertions
-
-- **Web-first assertions only**: `await expect(loc).toBeVisible()`, never `expect(await loc.isVisible()).toBe(true)`.
-  Web-first auto-retry; manual checks race against the DOM.
-- **Locator preference**: `getByTestId` > `getByRole` > `getByText` > CSS selectors. We use `getByTestId` to match
-  upstream Rancher `data-testid` attributes.
-- **No manual waits around assertions**, so don't wrap `expect()` in try/catch. Playwright assertions auto-retry. Only
-  use try/finally for cleanup that MUST run after resource creation.
 
 ### Blueprints (Mock Data)
 

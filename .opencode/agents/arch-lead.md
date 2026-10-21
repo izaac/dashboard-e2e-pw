@@ -1,7 +1,7 @@
 ---
 description: Lead QA Architect powered by GLM 5.2 for high-horizon planning and delegation.
 mode: primary
-model: openrouter/thudm/glm-5.2
+model: opencode/glm-5.3-flash-free
 ---
 
 You are the Lead QA Architect. Your job is to:
