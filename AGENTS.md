@@ -521,3 +521,11 @@ Husky + lint-staged runs on every commit:
 - **Always query Context7** before implementing patterns you are not 100% certain about, especially test design
   (cleanup, fixtures, assertions), Playwright API usage, and any library/framework best practices. Training data may be
   stale; Context7 has current docs. This applies to both main context and subagents.
+
+---
+
+## Evidence policy
+
+- Screenshot evidence under e2e/tests is a local run artifact. Capture directories named evidence-<issue>/ and their files are never committed in this repo, and the gitignore rule that keeps them out must stay.
+- Visual snapshot baselines used by visual tests live under snapshots/ (community and prime variants) and are versioned normally; the pre-commit guard blocks only evidence-<issue>/ paths, never those baselines.
+- The terminal step for validating a scenario is: run the suite, review the evidence, copy the final reviewed set into plans/qa-<issue>-evidence/ in the ui-qa-plans repo, and commit it there together with the matching plans/qa-<issue>-comment.md update.

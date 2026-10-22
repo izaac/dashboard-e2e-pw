@@ -1,3 +1,10 @@
+if git diff --cached --name-only | grep -qE 'evidence-[0-9]+/'; then
+  echo "ERROR: per-issue evidence dirs are run artifacts and are never committed here." >&2
+  echo "       Unstage them (git restore --staged) and copy the reviewed set into" >&2
+  echo "       ui-qa-plans/plans/qa-<issue>-evidence/ instead." >&2
+  exit 1
+fi
+
 npx lint-staged
 
 # Match CI checks exactly
