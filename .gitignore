@@ -11,6 +11,9 @@ blob-reports/
 browser-logs/
 perf-out/
 
+# Per-issue evidence screenshots under e2e/tests (e.g. evidence-19241/)
+e2e/tests/pages/**/evidence-*/
+
 # Environment
 .env
 .env.local

@@ -35,6 +35,13 @@ export default class BurgerMenuPo extends ComponentPo {
     }
   }
 
+  /** Close the slide-out menu if it is currently open */
+  async close(): Promise<void> {
+    if (await this.isOpen()) {
+      await this.toggle();
+    }
+  }
+
   /** Navigate to a top-level side menu entry by label (non-cluster) */
   async burgerMenuNavToMenuByLabel(label: string): Promise<void> {
     await this.sideMenu().waitFor({ state: 'attached' });

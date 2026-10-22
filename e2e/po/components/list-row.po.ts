@@ -34,4 +34,12 @@ export default class ListRowPo {
   checkbox(): Locator {
     return this.rowLocator.getByRole('checkbox').first();
   }
+
+  badge(): Locator {
+    return this.rowLocator.locator('.cluster-badge-icon');
+  }
+
+  pinBtn(): Locator {
+    return this.rowLocator.locator('[data-testid="cluster-row-pin"], .cluster-row-pin');
+  }
 }

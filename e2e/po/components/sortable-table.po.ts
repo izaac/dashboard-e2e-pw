@@ -21,8 +21,31 @@ export default class SortableTablePo extends ComponentPo {
   }
 
   bulkActionButton(label: string): Locator {
-    // Bulk action buttons live in .sortable-table-header (sibling of .sortable-table)
-    return this.self().locator('..').locator('.fixed-header-actions .bulk button').filter({ hasText: label });
+    return this.page.locator('.fixed-header-actions .bulk button').filter({ hasText: label });
+  }
+
+  selectionActionsTrigger(): Locator {
+    return this.page.locator('[data-testid$="-selection-actions"]');
+  }
+
+  async openSelectionActions(): Promise<void> {
+    const trigger = this.selectionActionsTrigger();
+
+    if (await trigger.isVisible()) {
+      if ((await trigger.getAttribute('aria-expanded')) === 'true') {
+        return;
+      }
+
+      await trigger.click();
+    }
+  }
+
+  selectionAction(action: string): Locator {
+    return this.page.locator(`[data-testid$="-selection-action-${action}"]`);
+  }
+
+  bulkBar(): Locator {
+    return this.page.locator('.fixed-header-actions');
   }
 
   bulkActionDropDown(): Locator {

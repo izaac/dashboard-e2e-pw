@@ -33,7 +33,7 @@
 | KubectlPo | kubectl.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, closeTerminalByTabName, waitForTerminalStatus, if, waitForTerminalToBeVisible, executeCommand (+1) |
 | LabeledInputPo | labeled-input.po.ts | ComponentPo | — | set, getAttributeValue, clear, value, input, validationMessage, byLabel, bySelector |
 | LabeledSelectPo | labeled-select.po.ts | ComponentPo | — | super, dropdown, searchInput, optionByIndex, optionByLabel, deselectButton, setOptionAndClick, clickOptionWithLabel (+7) |
-| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkbox |
+| ListRowPo | list-row.po.ts | — | — | self, column, actionBtn, get, nameLink, checkbox, badge, pinBtn |
 | LoadingPo | loading.po.ts | ComponentPo | — | super |
 | NameNsDescriptionPo | name-ns-description.po.ts | ComponentPo | — | super, name, description, namespace, selectNamespace, project |
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, optionByLabel, searchByName, clearSearchButton, clearSelectionButton (+13) |
@@ -51,7 +51,7 @@
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, setGitHubAppSecret, createBasicAuth, createSSHAuth, createRKEAuth (+2) |
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, bulkActionDropDown, bulkActionDropDownOpen, if, bulkActionDropDownPopOver, bulkActionDropDownButton (+56) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, selectionActionsTrigger, openSelectionActions, if, selectionAction, bulkBar (+60) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, panel, allTabs, tabNames (+2) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | TooltipPo | tooltip.po.ts | ComponentPo | `:scope` | super, show, content |
@@ -356,7 +356,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, isOpen, open, if, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel, clusterKeyComboIcon (+31) |
+| BurgerMenuPo | burger-side-menu.po.ts | ComponentPo | `[data-testid=` | super, toggle, isOpen, open, if, close, burgerMenuNavToMenuByLabel, burgerMenuNavToClusterByLabel (+32) |
 | ProductNavPo | product-side-nav.po.ts | ComponentPo | `.side-nav` | super, groups, groupByName, closedGroups, accordionItems, expandedGroup, subAccordions, groupChildList (+14) |
 | SlideInPo | slide-in.po.ts | ComponentPo | `[data-testid=` | super, waitforContent, closeButton |
 | UserMenuPo | user-menu.po.ts | ComponentPo | `[data-testid=` | super, userMenuContainer, open, isOpen, ensureOpen, if, isClosed, getMenuItems (+2) |
