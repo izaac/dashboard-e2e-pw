@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import type { RancherApi } from '@/support/fixtures/rancher-api';
+import { POLL_INTERVAL, VERY_LONG } from '@/support/timeouts';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
@@ -152,7 +153,7 @@ async function ensure19241Fixtures(rancherApi: RancherApi): Promise<void> {
         name,
         (resp: any) => resp.status === 404,
         20,
-        1000,
+        POLL_INTERVAL,
       );
 
       if (!gone) {
@@ -175,8 +176,8 @@ async function ensure19241Fixtures(rancherApi: RancherApi): Promise<void> {
     'provisioning.cattle.io.clusters',
     provId,
     (resp: any) => Boolean(resp.body?.status?.clusterName),
-    30,
-    2000,
+    VERY_LONG / POLL_INTERVAL,
+    POLL_INTERVAL,
   );
 
   if (!provReady) {
