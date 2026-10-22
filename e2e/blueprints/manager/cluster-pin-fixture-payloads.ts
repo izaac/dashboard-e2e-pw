@@ -1,11 +1,8 @@
-const QA_ISSUE_LABELS = { 'qa-issue': '19241' };
-
-export function qa19241CustomBadgeMgmtClusterPayload(): object {
+export function clusterPinBadgeCustomMgmtClusterPayload(): object {
   return {
     type: 'management.cattle.io.cluster',
     metadata: {
-      name: 'qa-19241-custom-badge',
-      labels: { ...QA_ISSUE_LABELS },
+      name: 'cluster-pin-fixtures-badge-custom',
       annotations: {
         'ui.rancher/badge-color': '#b62020',
         'ui.rancher/badge-text': 'Critical Production',
@@ -19,12 +16,11 @@ export function qa19241CustomBadgeMgmtClusterPayload(): object {
   };
 }
 
-export function qa19241AutoBadgeMgmtClusterPayload(): object {
+export function clusterPinBadgeAutoMgmtClusterPayload(): object {
   return {
     type: 'management.cattle.io.cluster',
     metadata: {
-      name: 'qa-19241-auto-badge',
-      labels: { ...QA_ISSUE_LABELS },
+      name: 'cluster-pin-fixtures-badge-auto',
       annotations: {
         'ui.rancher/badge-color': '#673ab7',
         'ui.rancher/badge-text': 'Analytics Pipeline',
@@ -37,12 +33,11 @@ export function qa19241AutoBadgeMgmtClusterPayload(): object {
   };
 }
 
-export function qa19241StandardMgmtClusterPayload(): object {
+export function clusterPinStandardMgmtClusterPayload(): object {
   return {
     type: 'management.cattle.io.cluster',
     metadata: {
-      name: 'qa-19241-standard',
-      labels: { ...QA_ISSUE_LABELS },
+      name: 'cluster-pin-fixtures-standard',
     },
     spec: {
       internal: false,
@@ -51,12 +46,11 @@ export function qa19241StandardMgmtClusterPayload(): object {
   };
 }
 
-export function qa19241BulkMgmtClusterPayload(index: number): object {
+export function clusterPinBulkMgmtClusterPayload(index: number): object {
   return {
     type: 'management.cattle.io.cluster',
     metadata: {
-      name: `qa-19241-bulk0${index}`,
-      labels: { ...QA_ISSUE_LABELS },
+      name: `cluster-pin-fixtures-bulk0${index}`,
     },
     spec: {
       internal: false,
@@ -65,13 +59,12 @@ export function qa19241BulkMgmtClusterPayload(index: number): object {
   };
 }
 
-export function qa19241ProvClusterPayload(namespace: string): object {
+export function clusterPinProvClusterPayload(namespace: string): object {
   return {
     type: 'provisioning.cattle.io.cluster',
     metadata: {
-      name: 'qa-19241-prov',
+      name: 'cluster-pin-fixtures-prov',
       namespace,
-      labels: { ...QA_ISSUE_LABELS },
     },
     spec: {},
   };

@@ -8,24 +8,24 @@ import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 import ClusterManagerDetailRke2CustomPagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-custom.po';
 import {
-  qa19241AutoBadgeMgmtClusterPayload,
-  qa19241BulkMgmtClusterPayload,
-  qa19241CustomBadgeMgmtClusterPayload,
-  qa19241ProvClusterPayload,
-  qa19241StandardMgmtClusterPayload,
+  clusterPinBadgeAutoMgmtClusterPayload,
+  clusterPinBulkMgmtClusterPayload,
+  clusterPinBadgeCustomMgmtClusterPayload,
+  clusterPinProvClusterPayload,
+  clusterPinStandardMgmtClusterPayload,
 } from '@/e2e/blueprints/manager/cluster-pin-fixture-payloads';
 
 const FIXTURE_MGMT_CLUSTERS = [
-  { name: 'qa-19241-custom-badge', payloadFactory: qa19241CustomBadgeMgmtClusterPayload },
-  { name: 'qa-19241-auto-badge', payloadFactory: qa19241AutoBadgeMgmtClusterPayload },
-  { name: 'qa-19241-standard', payloadFactory: qa19241StandardMgmtClusterPayload },
-  { name: 'qa-19241-bulk01', payloadFactory: () => qa19241BulkMgmtClusterPayload(1) },
-  { name: 'qa-19241-bulk02', payloadFactory: () => qa19241BulkMgmtClusterPayload(2) },
-  { name: 'qa-19241-bulk03', payloadFactory: () => qa19241BulkMgmtClusterPayload(3) },
-  { name: 'qa-19241-bulk04', payloadFactory: () => qa19241BulkMgmtClusterPayload(4) },
+  { name: 'cluster-pin-fixtures-badge-custom', payloadFactory: clusterPinBadgeCustomMgmtClusterPayload },
+  { name: 'cluster-pin-fixtures-badge-auto', payloadFactory: clusterPinBadgeAutoMgmtClusterPayload },
+  { name: 'cluster-pin-fixtures-standard', payloadFactory: clusterPinStandardMgmtClusterPayload },
+  { name: 'cluster-pin-fixtures-bulk01', payloadFactory: () => clusterPinBulkMgmtClusterPayload(1) },
+  { name: 'cluster-pin-fixtures-bulk02', payloadFactory: () => clusterPinBulkMgmtClusterPayload(2) },
+  { name: 'cluster-pin-fixtures-bulk03', payloadFactory: () => clusterPinBulkMgmtClusterPayload(3) },
+  { name: 'cluster-pin-fixtures-bulk04', payloadFactory: () => clusterPinBulkMgmtClusterPayload(4) },
 ] as const; // bulk04 exists for parity with the manual fixture; no test reads it
 
-const PROV_CLUSTER_NAME = 'qa-19241-prov';
+const PROV_CLUSTER_NAME = 'cluster-pin-fixtures-prov';
 const PROV_NS = 'fleet-default';
 const PROV_BADGE_ANNOTATIONS = {
   'ui.rancher/badge-color': '#b62020',
@@ -51,7 +51,7 @@ async function rancherToken(): Promise<string> {
   const password = process.env.CATTLE_BOOTSTRAP_PASSWORD || process.env.TEST_PASSWORD || '';
 
   if (!apiUrl || !password) {
-    throw new Error('API and TEST_PASSWORD are required to manage the qa-19241 fixtures');
+    throw new Error('API and TEST_PASSWORD are required to manage the cluster pin fixtures');
   }
 
   const loginResp = await fetch(`${apiUrl}/v3-public/localProviders/local?action=login`, {
@@ -81,7 +81,7 @@ async function managementClusterRequest(
   const apiUrl = process.env.API;
 
   if (!apiUrl) {
-    throw new Error('API is required to manage the qa-19241 fixtures');
+    throw new Error('API is required to manage the cluster pin fixtures');
   }
 
   const url = `${apiUrl}/apis/management.cattle.io/v3/clusters${name ? `/${name}` : ''}`;
@@ -137,39 +137,56 @@ async function annotateManagementTwin(mgmtId: string): Promise<void> {
   }
 }
 
-async function ensure19241Fixtures(rancherApi: RancherApi): Promise<void> {
+async function ensureFixtureResource(
+  rancherApi: RancherApi,
+  prefix: string,
+  resourceType: string,
+  id: string,
+  create: () => Promise<unknown>,
+  waitRetries = 15,
+  waitDelayMs = POLL_INTERVAL,
+): Promise<void> {
+  const existing = await rancherApi.getRancherResource(prefix, resourceType, id, 0);
+
+  if (existing.status === 404) {
+    await create();
+
+    return;
+  }
+
+  // Reuse: the object exists without a deletionTimestamp, a previous run's
+  // healthy fixture.
+  if (!existing.body?.metadata?.deletionTimestamp) {
+    return;
+  }
+
+  // A previous run's cleanup can still be removing the finalizer; wait it out
+  // so the recreate does not clash with a terminating leftover (409).
+  const gone = await rancherApi.waitForResourceGone(prefix, resourceType, id, waitRetries, waitDelayMs);
+
+  if (gone) {
+    await create();
+  } else {
+    console.warn(`[cluster-pin-actions fixtures] ${id} is still terminating after the wait; skipping recreation.`);
+  }
+}
+
+async function ensureClusterPinFixtures(rancherApi: RancherApi): Promise<void> {
   for (const { name, payloadFactory } of FIXTURE_MGMT_CLUSTERS) {
-    const existing = await rancherApi.getRancherResource('v1', 'management.cattle.io.clusters', name, 0);
-    const terminating = existing.status === 200 && Boolean(existing.body?.metadata?.deletionTimestamp);
-
-    if (existing.status !== 404 && !terminating) {
-      continue;
-    }
-
-    if (terminating) {
-      const gone = await rancherApi.waitForRancherResource(
-        'v1',
-        'management.cattle.io.clusters',
-        name,
-        (resp: any) => resp.status === 404,
-        20,
-        POLL_INTERVAL,
-      );
-
-      if (!gone) {
-        throw new Error(`[cluster-pin-actions fixtures] ${name} is still terminating; cannot recreate it`);
-      }
-    }
-
-    await createManagementCluster(payloadFactory());
+    await ensureFixtureResource(rancherApi, 'v1', 'management.cattle.io.clusters', name, () =>
+      createManagementCluster(payloadFactory()),
+    );
   }
 
   const provId = `${PROV_NS}/${PROV_CLUSTER_NAME}`;
-  const provExisting = await rancherApi.getRancherResource('v1', 'provisioning.cattle.io.clusters', provId, 0);
 
-  if (provExisting.status === 404) {
-    await rancherApi.createRancherResource('v1', 'provisioning.cattle.io.clusters', qa19241ProvClusterPayload(PROV_NS));
-  }
+  await ensureFixtureResource(rancherApi, 'v1', 'provisioning.cattle.io.clusters', provId, async () => {
+    await rancherApi.createRancherResource(
+      'v1',
+      'provisioning.cattle.io.clusters',
+      clusterPinProvClusterPayload(PROV_NS),
+    );
+  });
 
   const provReady = await rancherApi.waitForRancherResource(
     'v1',
@@ -182,7 +199,7 @@ async function ensure19241Fixtures(rancherApi: RancherApi): Promise<void> {
 
   if (!provReady) {
     console.warn(
-      '[cluster-pin-actions fixtures] qa-19241-prov never linked a management cluster in the wait window; detail-page test 6 may be affected.',
+      '[cluster-pin-actions fixtures] the provisioned fixture never linked a management cluster in the wait window; detail-page test 6 may be affected.',
     );
 
     return;
@@ -230,7 +247,7 @@ async function expectPinnedClusters(rancherApi: RancherApi, clusterIds: string[]
     .toBe(true);
 }
 
-async function delete19241Fixtures(rancherApi: RancherApi): Promise<void> {
+async function deleteClusterPinFixtures(rancherApi: RancherApi): Promise<void> {
   try {
     // Bounded to fit the 60s afterAll hook budget: the default 20 x 15s wait
     // outlives the hook when a controller delete lags.
@@ -253,27 +270,24 @@ async function delete19241Fixtures(rancherApi: RancherApi): Promise<void> {
     }
   }
 
-  // Management clusters keep a mgmt-cluster-rbac-remove finalizer for a few
-  // seconds. Wait (bounded) so the next run does not see terminating fixtures.
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const states = await Promise.all(
-      FIXTURE_MGMT_CLUSTERS.map(({ name }) =>
-        rancherApi.getRancherResource('v1', 'management.cattle.io.clusters', name, 0),
-      ),
-    );
+  // Management clusters hold a mgmt-cluster-rbac-remove finalizer briefly, so
+  // poll until each is gone and warn if any are still terminating.
+  const gone = await Promise.all(
+    FIXTURE_MGMT_CLUSTERS.map(({ name }) =>
+      rancherApi.waitForResourceGone('v1', 'management.cattle.io.clusters', name, 15, POLL_INTERVAL),
+    ),
+  );
+  const stillPending = FIXTURE_MGMT_CLUSTERS.filter((_, index) => !gone[index]).map(({ name }) => name);
 
-    if (states.every((state) => state.status === 404)) {
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  if (stillPending.length > 0) {
+    console.warn(`[cluster-pin-actions cleanup] fixtures still terminating after the wait: ${stillPending.join(', ')}`);
   }
 }
 
-test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@manager', '@adminUser'] }, () => {
+test.describe('Cluster Badges and Pin Actions', { tag: ['@manager', '@adminUser'] }, () => {
   // Ensure every test starts and finishes in a clean, state-independent baseline
   test.beforeEach(async ({ rancherApi, login }) => {
-    await ensure19241Fixtures(rancherApi);
+    await ensureClusterPinFixtures(rancherApi);
     await rancherApi.setUserPreference({ 'pinned-clusters': '[]', theme: '"ui-auto"' });
     await login();
   });
@@ -283,7 +297,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
   });
 
   test.afterAll(async ({ rancherApi }) => {
-    await delete19241Fixtures(rancherApi);
+    await deleteClusterPinFixtures(rancherApi);
   });
 
   test('1. Badge column on Cluster Management renders after Name with custom color and uppercase icon text (Scenarios 1, 10)', async ({
@@ -427,7 +441,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
     await burgerMenu.close();
   });
 
-  test('4. Row 3-dots action menu offers Pin on unpinned cluster and Unpin on pinned cluster (#19537 / Scenario 5, 6, 10)', async ({
+  test('4. Row 3-dots action menu offers Pin on unpinned cluster and Unpin on pinned cluster (Scenario 5, 6, 10)', async ({
     page,
   }) => {
     const clusterList = new ClusterManagerListPagePo(page, 'local');
@@ -488,7 +502,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
     await burgerMenu.close();
   });
 
-  test('5. Bulk action bar supports batch Pin, mixed selection, and batch Unpin (#19537 / Scenario 7, 8, 9)', async ({
+  test('5. Bulk action bar supports batch Pin, mixed selection, and batch Unpin (Scenario 7, 8, 9)', async ({
     page,
     rancherApi,
   }) => {
@@ -526,7 +540,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
     // Expect-poll for async preference write to land
     await expect(row1.pinBtn()).toHaveClass(/is-pinned/);
     await expect(row2.pinBtn()).toHaveClass(/is-pinned/);
-    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01', 'qa-19241-bulk02'], true);
+    await expectPinnedClusters(rancherApi, ['cluster-pin-fixtures-bulk01', 'cluster-pin-fixtures-bulk02'], true);
 
     // Batch pins must also land on the top nav pinned shelf
     await burgerMenu.open();
@@ -551,7 +565,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
     await mixedPin.click();
     await expect(row3.pinBtn()).toHaveClass(/is-pinned/);
     await expect(row1.pinBtn()).toHaveClass(/is-pinned/);
-    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01', 'qa-19241-bulk03'], true);
+    await expectPinnedClusters(rancherApi, ['cluster-pin-fixtures-bulk01', 'cluster-pin-fixtures-bulk03'], true);
 
     // 3. Bulk Unpin on pinned clusters (Scenario 8)
     if (await row3.checkbox().isChecked()) {
@@ -575,7 +589,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
 
     await expect(row1.pinBtn()).not.toHaveClass(/is-pinned/);
     await expect(row2.pinBtn()).not.toHaveClass(/is-pinned/);
-    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01', 'qa-19241-bulk02'], false);
+    await expectPinnedClusters(rancherApi, ['cluster-pin-fixtures-bulk01', 'cluster-pin-fixtures-bulk02'], false);
 
     // Batch unpins must also leave the top nav pinned shelf
     await burgerMenu.open();
@@ -611,14 +625,14 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@mana
     await mixedUnpinRows.click();
     await expect(row1.pinBtn()).not.toHaveClass(/is-pinned/);
     await expect(row2.pinBtn()).not.toHaveClass(/is-pinned/);
-    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01'], false);
+    await expectPinnedClusters(rancherApi, ['cluster-pin-fixtures-bulk01'], false);
   });
 
   test('6. Cluster detail title pin control and Alt+P keyboard shortcut toggle (Scenarios 11, 12)', async ({
     page,
   }) => {
     // Navigate to cluster detail page for provisioned cluster
-    const clusterDetail = new ClusterManagerDetailRke2CustomPagePo(page, 'local', 'qa-19241-prov');
+    const clusterDetail = new ClusterManagerDetailRke2CustomPagePo(page, 'local', 'cluster-pin-fixtures-prov');
     const burgerMenu = new BurgerMenuPo(page);
 
     await clusterDetail.goTo();

@@ -176,6 +176,15 @@ Tests with empty bodies, marked `// eslint-disable-next-line playwright/expect-e
 
 ## Engineering & infrastructure
 
+### High priority code quality
+
+- [ ] **Stronger types for API payload builders (P1)**: blueprint payload factories return loose
+  `object` (e.g. `cluster-pin-fixture-payloads.ts`, `cloud-credential-create-payload.ts`) and
+  `RancherApi.createRancherResource` / `setRancherResource` accept `body: any`, so payload mistakes
+  surface as runtime 422s instead of tsc errors. Introduce narrow Steve-resource interfaces for the
+  cluster / cloud-credential / registry shapes these builders emit, then reuse them as fixture specs
+  expand.
+
 ### CI / CD
 
 - [ ] Qase IDs: to be mapped manually by QA
