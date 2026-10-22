@@ -39,6 +39,14 @@ export default class ListRowPo {
     return this.rowLocator.locator('.cluster-badge-icon');
   }
 
+  badgeText(): Locator {
+    return this.badge().locator('.cluster-badge-logo-text');
+  }
+
+  badgeDecoration(): Locator {
+    return this.badge().locator('.custom-color-decoration');
+  }
+
   pinBtn(): Locator {
     return this.rowLocator.locator('[data-testid="cluster-row-pin"], .cluster-row-pin');
   }

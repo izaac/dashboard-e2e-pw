@@ -1,83 +1,288 @@
 import { test, expect } from '@/support/fixtures';
-import path from 'path';
-import fs from 'fs';
-import type { Page } from '@playwright/test';
+import type { RancherApi } from '@/support/fixtures/rancher-api';
 import ClusterManagerListPagePo from '@/e2e/po/pages/cluster-manager/cluster-manager-list.po';
 import HomePagePo from '@/e2e/po/pages/home.po';
 import ActionMenuPo from '@/e2e/po/components/action-menu.po';
+import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
+import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
+import ClusterManagerDetailRke2CustomPagePo from '@/e2e/po/detail/provisioning.cattle.io.cluster/cluster-detail-rke2-custom.po';
+import {
+  qa19241AutoBadgeMgmtClusterPayload,
+  qa19241BulkMgmtClusterPayload,
+  qa19241CustomBadgeMgmtClusterPayload,
+  qa19241ProvClusterPayload,
+  qa19241StandardMgmtClusterPayload,
+} from '@/e2e/blueprints/manager/cluster-pin-fixture-payloads';
 
-const evidenceDir = process.env.EVIDENCE_DIR_19241 || path.resolve(__dirname, 'evidence-19241');
+const FIXTURE_MGMT_CLUSTERS = [
+  { name: 'qa-19241-custom-badge', payloadFactory: qa19241CustomBadgeMgmtClusterPayload },
+  { name: 'qa-19241-auto-badge', payloadFactory: qa19241AutoBadgeMgmtClusterPayload },
+  { name: 'qa-19241-standard', payloadFactory: qa19241StandardMgmtClusterPayload },
+  { name: 'qa-19241-bulk01', payloadFactory: () => qa19241BulkMgmtClusterPayload(1) },
+  { name: 'qa-19241-bulk02', payloadFactory: () => qa19241BulkMgmtClusterPayload(2) },
+  { name: 'qa-19241-bulk03', payloadFactory: () => qa19241BulkMgmtClusterPayload(3) },
+  { name: 'qa-19241-bulk04', payloadFactory: () => qa19241BulkMgmtClusterPayload(4) },
+] as const; // bulk04 exists for parity with the manual fixture; no test reads it
 
-if (!fs.existsSync(evidenceDir)) {
-  fs.mkdirSync(evidenceDir, { recursive: true });
-}
+const PROV_CLUSTER_NAME = 'qa-19241-prov';
+const PROV_NS = 'fleet-default';
+const PROV_BADGE_ANNOTATIONS = {
+  'ui.rancher/badge-color': '#b62020',
+  'ui.rancher/badge-text': 'Production Cluster',
+  'ui.rancher/badge-icon-text': 'PRD',
+};
+
+let cachedApiToken: string | undefined;
 
 /**
- * Early suite helper: dismisses the Rancher Prime Welcome / What's New dialog
- * and asserts that no modal overlay intercepts pointer events before interacting.
+ * Steve (v1) rejects every mutation on management.cattle.io.clusters with
+ * "Method POST/PUT/PATCH/DELETE not supported" (403), so fixtures are written
+ * through the Kubernetes API of the local cluster instead. Reads still go
+ * through the RancherApi helper. Mirrors RancherApi.forceCleanStuckCRDs.
  */
-async function dismissModals(page: Page): Promise<void> {
-  const overlay = page.locator('.rc-modal-overlay');
+async function rancherToken(): Promise<string> {
+  if (cachedApiToken) {
+    return cachedApiToken;
+  }
+
+  const apiUrl = process.env.API;
+  const username = process.env.TEST_USERNAME || 'admin';
+  const password = process.env.CATTLE_BOOTSTRAP_PASSWORD || process.env.TEST_PASSWORD || '';
+
+  if (!apiUrl || !password) {
+    throw new Error('API and TEST_PASSWORD are required to manage the qa-19241 fixtures');
+  }
+
+  const loginResp = await fetch(`${apiUrl}/v3-public/localProviders/local?action=login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ username, password, responseType: 'json' }),
+  });
+  const loginBody = await loginResp.json().catch(() => ({}));
+
+  if (!loginResp.ok || !loginBody?.token) {
+    throw new Error(`login failed: status=${loginResp.status} body=${JSON.stringify(loginBody).substring(0, 200)}`);
+  }
+
+  const token: string = loginBody.token;
+
+  cachedApiToken = token;
+
+  return token;
+}
+
+async function managementClusterRequest(
+  method: 'POST' | 'PATCH' | 'DELETE',
+  name: string | undefined,
+  body?: object,
+  contentType = 'application/json',
+): Promise<Response> {
+  const apiUrl = process.env.API;
+
+  if (!apiUrl) {
+    throw new Error('API is required to manage the qa-19241 fixtures');
+  }
+
+  const url = `${apiUrl}/apis/management.cattle.io/v3/clusters${name ? `/${name}` : ''}`;
+  const token = await rancherToken();
+
+  return fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': contentType,
+      Accept: 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+async function createManagementCluster(payload: object): Promise<void> {
+  const name = (payload as { metadata?: { name?: string } }).metadata?.name;
+  const resp = await managementClusterRequest('POST', undefined, {
+    apiVersion: 'management.cattle.io/v3',
+    kind: 'Cluster',
+    ...payload,
+  });
+
+  if (!resp.ok) {
+    throw new Error(`create ${name} failed: status=${resp.status} body=${(await resp.text()).substring(0, 200)}`);
+  }
+}
+
+async function deleteManagementCluster(name: string): Promise<void> {
+  const resp = await managementClusterRequest('DELETE', name);
+
+  if (![200, 202, 404].includes(resp.status)) {
+    throw new Error(`delete ${name} failed: status=${resp.status} body=${(await resp.text()).substring(0, 200)}`);
+  }
+}
+
+async function annotateManagementTwin(mgmtId: string): Promise<void> {
+  const resp = await managementClusterRequest(
+    'PATCH',
+    mgmtId,
+    {
+      metadata: { annotations: PROV_BADGE_ANNOTATIONS },
+      spec: { internal: false, displayName: 'Provisioned Cluster PRD' },
+    },
+    'application/merge-patch+json',
+  );
+
+  if (!resp.ok) {
+    throw new Error(
+      `merge patch ${mgmtId} failed: status=${resp.status} body=${(await resp.text()).substring(0, 200)}`,
+    );
+  }
+}
+
+async function ensure19241Fixtures(rancherApi: RancherApi): Promise<void> {
+  for (const { name, payloadFactory } of FIXTURE_MGMT_CLUSTERS) {
+    const existing = await rancherApi.getRancherResource('v1', 'management.cattle.io.clusters', name, 0);
+    const terminating = existing.status === 200 && Boolean(existing.body?.metadata?.deletionTimestamp);
+
+    if (existing.status !== 404 && !terminating) {
+      continue;
+    }
+
+    if (terminating) {
+      const gone = await rancherApi.waitForRancherResource(
+        'v1',
+        'management.cattle.io.clusters',
+        name,
+        (resp: any) => resp.status === 404,
+        20,
+        1000,
+      );
+
+      if (!gone) {
+        throw new Error(`[cluster-pin-actions fixtures] ${name} is still terminating; cannot recreate it`);
+      }
+    }
+
+    await createManagementCluster(payloadFactory());
+  }
+
+  const provId = `${PROV_NS}/${PROV_CLUSTER_NAME}`;
+  const provExisting = await rancherApi.getRancherResource('v1', 'provisioning.cattle.io.clusters', provId, 0);
+
+  if (provExisting.status === 404) {
+    await rancherApi.createRancherResource('v1', 'provisioning.cattle.io.clusters', qa19241ProvClusterPayload(PROV_NS));
+  }
+
+  const provReady = await rancherApi.waitForRancherResource(
+    'v1',
+    'provisioning.cattle.io.clusters',
+    provId,
+    (resp: any) => Boolean(resp.body?.status?.clusterName),
+    30,
+    2000,
+  );
+
+  if (!provReady) {
+    console.warn(
+      '[cluster-pin-actions fixtures] qa-19241-prov never linked a management cluster in the wait window; detail-page test 6 may be affected.',
+    );
+
+    return;
+  }
+
+  // Mirror the manual fixture: badge and display name on the controller-created management twin
+  const prov = await rancherApi.getRancherResource('v1', 'provisioning.cattle.io.clusters', provId);
+  const mgmtId = prov.body?.status?.clusterName;
+
+  if (!mgmtId) {
+    return;
+  }
 
   try {
-    if (await overlay.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const closeBtn = page.locator('#modals').getByRole('button', { name: /Close/i });
+    await annotateManagementTwin(mgmtId);
+  } catch (err) {
+    console.warn(
+      `[cluster-pin-actions fixtures] could not annotate management twin ${mgmtId}: ${(err as Error)?.message ?? err}`,
+    );
+  }
+}
 
-      if ((await closeBtn.count()) > 0) {
-        await closeBtn.first().click();
-      } else {
-        await page.keyboard.press('Escape');
-      }
-      await overlay.waitFor({ state: 'detached', timeout: 5000 });
+async function expectPinnedClusters(rancherApi: RancherApi, clusterIds: string[], pinned: boolean): Promise<void> {
+  // Pin writes land on the user preference asynchronously. Waiting for the
+  // preference (not just the optimistic row class) keeps the table from
+  // re-rendering under an open selection menu and detaching its items.
+  await expect
+    .poll(
+      async () => {
+        const resp = await rancherApi.getRancherResource('v1', 'userpreferences');
+        const records = Array.isArray(resp.body?.data) ? resp.body.data : [];
+        const stored = records[0]?.data?.['pinned-clusters'];
+        let ids: string[] = [];
+
+        try {
+          ids = Array.isArray(stored) ? stored : JSON.parse(stored ?? '[]');
+        } catch {
+          ids = [];
+        }
+
+        return clusterIds.every((id) => ids.includes(id) === pinned);
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
+}
+
+async function delete19241Fixtures(rancherApi: RancherApi): Promise<void> {
+  try {
+    // Bounded to fit the 60s afterAll hook budget: the default 20 x 15s wait
+    // outlives the hook when a controller delete lags.
+    await rancherApi.deleteClusterAndWait(PROV_CLUSTER_NAME, PROV_NS, 5, 2500);
+  } catch (err) {
+    console.warn(`[cluster-pin-actions cleanup] deleteClusterAndWait failed: ${(err as Error)?.message ?? err}`);
+    await rancherApi.deleteRancherResource(
+      'v1',
+      'provisioning.cattle.io.clusters/fleet-default',
+      PROV_CLUSTER_NAME,
+      false,
+    );
+  }
+
+  for (const { name } of FIXTURE_MGMT_CLUSTERS) {
+    try {
+      await deleteManagementCluster(name);
+    } catch (err) {
+      console.warn(`[cluster-pin-actions cleanup] could not delete ${name}: ${(err as Error)?.message ?? err}`);
     }
-  } catch {
-    // Modal did not appear or was already dismissed
   }
-}
 
-/**
- * Smooth burger menu opener without debounce animation stalls.
- */
-async function openBurgerMenu(page: Page): Promise<void> {
-  const sideMenu = page.locator('[data-testid="side-menu"]');
-  const cls = (await sideMenu.getAttribute('class')) || '';
+  // Management clusters keep a mgmt-cluster-rbac-remove finalizer for a few
+  // seconds. Wait (bounded) so the next run does not see terminating fixtures.
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const states = await Promise.all(
+      FIXTURE_MGMT_CLUSTERS.map(({ name }) =>
+        rancherApi.getRancherResource('v1', 'management.cattle.io.clusters', name, 0),
+      ),
+    );
 
-  if (!cls.includes('menu-open')) {
-    await page.getByTestId('top-level-menu').click({ force: true });
-    await sideMenu.waitFor({ state: 'visible' });
-    await page.waitForTimeout(400);
-  }
-}
-
-/**
- * Smooth burger menu closer via native glass backdrop click or hamburger toggle.
- */
-async function closeBurgerMenu(page: Page): Promise<void> {
-  const glass = page.locator('.side-menu-glass');
-
-  if (await glass.isVisible().catch(() => false)) {
-    await glass.click({ force: true });
-    await glass.waitFor({ state: 'detached', timeout: 3000 }).catch(() => {});
-  } else {
-    const sideMenu = page.locator('[data-testid="side-menu"]');
-    const cls = (await sideMenu.getAttribute('class')) || '';
-
-    if (cls.includes('menu-open')) {
-      await page.getByTestId('top-level-menu').click({ force: true });
-      await page.waitForTimeout(400);
+    if (states.every((state) => state.status === 404)) {
+      return;
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
 
-test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@adminUser'] }, () => {
+test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@manager', '@adminUser'] }, () => {
   // Ensure every test starts and finishes in a clean, state-independent baseline
   test.beforeEach(async ({ rancherApi, login }) => {
+    await ensure19241Fixtures(rancherApi);
     await rancherApi.setUserPreference({ 'pinned-clusters': '[]', theme: '"ui-auto"' });
     await login();
   });
 
   test.afterEach(async ({ rancherApi }) => {
     await rancherApi.setUserPreference({ 'pinned-clusters': '[]', theme: '"ui-auto"' });
+  });
+
+  test.afterAll(async ({ rancherApi }) => {
+    await delete19241Fixtures(rancherApi);
   });
 
   test('1. Badge column on Cluster Management renders after Name with custom color and uppercase icon text (Scenarios 1, 10)', async ({
@@ -87,22 +292,26 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
 
     await clusterList.goTo();
     await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     // Verify Badge header exists and sits physically to the right of Name
-    const thead = clusterList.sortableTable().self().locator('thead tr');
-    const nameHeader = thead.locator('th').filter({ hasText: 'Name' });
-    const badgeHeader = thead.locator('th').filter({ hasText: 'Badge' });
+    const cells = clusterList.sortableTable().headerContentCells();
+    const nameHeader = cells.filter({ hasText: /^\s*Name\s*$/ });
+    const badgeHeader = cells.filter({ hasText: /^\s*Badge\s*$/ });
 
     await expect(nameHeader).toBeVisible();
     await expect(badgeHeader).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const nameBox = await nameHeader.first().boundingBox();
+          const badgeBox = await badgeHeader.first().boundingBox();
 
-    const nameBox = await nameHeader.boundingBox();
-    const badgeBox = await badgeHeader.boundingBox();
-
-    expect(nameBox).not.toBeNull();
-    expect(badgeBox).not.toBeNull();
-    expect(badgeBox!.x).toBeGreaterThan(nameBox!.x);
+          return !!nameBox && !!badgeBox && badgeBox.x > nameBox.x;
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(true);
 
     // Verify custom badge cluster: PRD icon text and #b62020 color
     const customRow = clusterList.sortableTable().rowWithName('Production Cluster Alpha');
@@ -112,71 +321,69 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     const badgeChip = customRow.badge();
 
     await expect(badgeChip).toBeVisible();
-    await expect(badgeChip.locator('.cluster-badge-logo-text')).toHaveText('PRD');
-
-    const colorDecoration = badgeChip.locator('.custom-color-decoration');
-
-    await expect(colorDecoration).toHaveAttribute('style', /background:\s*(#b62020|rgb\(182,\s*32,\s*32\))/i);
+    await expect(customRow.badgeText()).toHaveText('PRD');
+    await expect(customRow.badgeDecoration()).toHaveAttribute(
+      'style',
+      /background:\s*(#b62020|rgb\(182,\s*32,\s*32\))/i,
+    );
 
     // Verify auto-abbreviated badge cluster: AWE initials and #673ab7 color
     const autoRow = clusterList.sortableTable().rowWithName('Analytics Workload Engine');
 
     await expect(autoRow.self()).toBeVisible();
-    await expect(autoRow.badge().locator('.cluster-badge-logo-text')).toHaveText(/AWE/i);
+    await expect(autoRow.badgeText()).toHaveText(/AWE/i);
 
     // Verify management-only cluster with default initials (Scenario 10)
     const stdRow = clusterList.sortableTable().rowWithName('Standard QA Cluster');
 
     await expect(stdRow.self()).toBeVisible();
     await expect(stdRow.badge()).toBeVisible();
-
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-01-manager-badge-column.png'), fullPage: true });
   });
 
   test('2. Badge column on Home page clusters list renders matching badge chips (Scenario 2)', async ({ page }) => {
     const homePage = new HomePagePo(page);
 
     await homePage.goTo();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     await expect(homePage.list()).toBeVisible();
 
     // Verify Badge column header is present in the table
-    const thead = homePage.list().locator('thead tr');
-    const nameHeader = thead.locator('th').filter({ hasText: 'Name' });
-    const badgeHeader = thead.locator('th').filter({ hasText: 'Badge' });
+    const cells = homePage.sortableTable().headerContentCells();
+    const nameHeader = cells.filter({ hasText: /^\s*Name\s*$/ });
+    const badgeHeader = cells.filter({ hasText: /^\s*Badge\s*$/ });
 
     await expect(nameHeader).toBeVisible();
     await expect(badgeHeader).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const nameBox = await nameHeader.first().boundingBox();
+          const badgeBox = await badgeHeader.first().boundingBox();
 
-    const nameBox = await nameHeader.boundingBox();
-    const badgeBox = await badgeHeader.boundingBox();
-
-    expect(nameBox).not.toBeNull();
-    expect(badgeBox).not.toBeNull();
-    expect(badgeBox!.x).toBeGreaterThan(nameBox!.x);
+          return !!nameBox && !!badgeBox && badgeBox.x > nameBox.x;
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(true);
 
     // Verify custom badge row on Home page
     const customRow = homePage.clusterRow('Production Cluster Alpha');
 
     await expect(customRow).toBeVisible();
-
-    const badgeChip = customRow.locator('.cluster-badge-icon');
-
-    await expect(badgeChip).toBeVisible();
-    await expect(badgeChip.locator('.cluster-badge-logo-text')).toHaveText('PRD');
-
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-02-home-badge-column.png'), fullPage: true });
+    await expect(homePage.clusterRowBadge('Production Cluster Alpha')).toBeVisible();
+    await expect(homePage.clusterRowBadgeText('Production Cluster Alpha')).toHaveText('PRD');
   });
 
   test('3. Inline hover pin and unpin toggle updates row state and top nav pinned shelf (Scenarios 3, 4)', async ({
     page,
   }) => {
     const clusterList = new ClusterManagerListPagePo(page, 'local');
+    const burgerMenu = new BurgerMenuPo(page);
 
     await clusterList.goTo();
     await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     const row = clusterList.sortableTable().rowWithName('Production Cluster Alpha');
 
@@ -199,11 +406,10 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(pinBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Verify membership in top nav pinned shelf
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Production Cluster Alpha' })).toBeVisible();
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Production Cluster Alpha')).toBeVisible();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-03-inline-hover-pin-pinned.png') });
-    await closeBurgerMenu(page);
+    await burgerMenu.close();
 
     // Click inline pin again to unpin (Scenario 4)
     await pinBtn.click();
@@ -214,21 +420,21 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(pinBtn).toHaveAttribute('aria-pressed', 'false');
 
     // Verify removal from top nav pinned shelf
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Production Cluster Alpha' })).toHaveCount(0);
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Production Cluster Alpha')).toHaveCount(0);
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-04-inline-pin-unpinned.png') });
-    await closeBurgerMenu(page);
+    await burgerMenu.close();
   });
 
   test('4. Row 3-dots action menu offers Pin on unpinned cluster and Unpin on pinned cluster (#19537 / Scenario 5, 6, 10)', async ({
     page,
   }) => {
     const clusterList = new ClusterManagerListPagePo(page, 'local');
+    const burgerMenu = new BurgerMenuPo(page);
 
     await clusterList.goTo();
     await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     const row = clusterList.sortableTable().rowWithName('Standard QA Cluster');
 
@@ -245,21 +451,19 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
 
     await expect(pinOption).toBeVisible();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-05-row-action-pin.png') });
-
     // Click Pin and verify row outcome
     await pinOption.click();
     await actionMenu
       .self()
       .waitFor({ state: 'detached', timeout: 5000 })
-      .catch(() => {});
+      .catch(() => false);
 
     await expect(row.pinBtn()).toHaveClass(/is-pinned/);
 
     // Verify top nav shelf has pinned cluster
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Standard QA Cluster' })).toBeVisible();
-    await closeBurgerMenu(page);
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Standard QA Cluster')).toBeVisible();
+    await burgerMenu.close();
 
     // Reopen action menu to verify Unpin option
     await row.actionBtn().click();
@@ -269,30 +473,30 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
 
     await expect(unpinOption).toBeVisible();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-06-row-action-unpin.png') });
-
     // Click Unpin and verify restored outcome
     await unpinOption.click();
     await actionMenu
       .self()
       .waitFor({ state: 'detached', timeout: 5000 })
-      .catch(() => {});
+      .catch(() => false);
 
     await expect(row.pinBtn()).not.toHaveClass(/is-pinned/);
 
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Standard QA Cluster' })).toHaveCount(0);
-    await closeBurgerMenu(page);
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Standard QA Cluster')).toHaveCount(0);
+    await burgerMenu.close();
   });
 
   test('5. Bulk action bar supports batch Pin, mixed selection, and batch Unpin (#19537 / Scenario 7, 8, 9)', async ({
     page,
+    rancherApi,
   }) => {
     const clusterList = new ClusterManagerListPagePo(page, 'local');
+    const burgerMenu = new BurgerMenuPo(page);
 
     await clusterList.goTo();
     await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     const row1 = clusterList.sortableTable().rowWithName('Batch Cluster 1');
     const row2 = clusterList.sortableTable().rowWithName('Batch Cluster 2');
@@ -309,8 +513,6 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(row1.checkbox()).toBeChecked();
     await expect(row2.checkbox()).toBeChecked();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-07-bulk-pin-selected.png') });
-
     await clusterList.sortableTable().openSelectionActions();
 
     const bulkPinBtn = clusterList.sortableTable().selectionAction('pinCluster');
@@ -318,20 +520,18 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(bulkPinBtn).toBeVisible();
     await expect(bulkPinBtn).toBeEnabled();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-07-bulk-pin.png') });
-
     await bulkPinBtn.click();
 
     // Expect-poll for async preference write to land
     await expect(row1.pinBtn()).toHaveClass(/is-pinned/);
     await expect(row2.pinBtn()).toHaveClass(/is-pinned/);
+    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01', 'qa-19241-bulk02'], true);
 
     // Batch pins must also land on the top nav pinned shelf
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Batch Cluster 1' })).toBeVisible();
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Batch Cluster 2' })).toBeVisible();
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-07-bulk-pin-shelf.png') });
-    await closeBurgerMenu(page);
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Batch Cluster 1')).toBeVisible();
+    await expect(burgerMenu.pinnedCluster('Batch Cluster 2')).toBeVisible();
+    await burgerMenu.close();
 
     // 2. Mixed selection: Batch Cluster 1 (pinned) and Batch Cluster 3 (unpinned) (Scenario 9)
     await row2.checkbox().click(); // deselect Batch Cluster 2
@@ -342,11 +542,6 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     const mixedPin = clusterList.sortableTable().selectionAction('pinCluster');
     const mixedUnpin = clusterList.sortableTable().selectionAction('unpinCluster');
 
-    // Capture immediately after opening: the mixed selection leaves both
-    // actions present (available > 0) but not necessarily enabled
-    // (available >= total), and the menu should be open in the shot.
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-09-bulk-mixed-selection.png') });
-
     await expect(mixedPin).toBeVisible();
     await expect(mixedUnpin).toBeVisible();
 
@@ -355,6 +550,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await mixedPin.click();
     await expect(row3.pinBtn()).toHaveClass(/is-pinned/);
     await expect(row1.pinBtn()).toHaveClass(/is-pinned/);
+    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01', 'qa-19241-bulk03'], true);
 
     // 3. Bulk Unpin on pinned clusters (Scenario 8)
     if (await row3.checkbox().isChecked()) {
@@ -367,8 +563,6 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(row1.checkbox()).toBeChecked();
     await expect(row2.checkbox()).toBeChecked();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-08-bulk-unpin-selected.png') });
-
     await clusterList.sortableTable().openSelectionActions();
 
     const bulkUnpinBtn = clusterList.sortableTable().selectionAction('unpinCluster');
@@ -376,19 +570,17 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(bulkUnpinBtn).toBeVisible();
     await expect(bulkUnpinBtn).toBeEnabled();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-08-bulk-unpin.png') });
-
     await bulkUnpinBtn.click();
 
     await expect(row1.pinBtn()).not.toHaveClass(/is-pinned/);
     await expect(row2.pinBtn()).not.toHaveClass(/is-pinned/);
+    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01', 'qa-19241-bulk02'], false);
 
     // Batch unpins must also leave the top nav pinned shelf
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Batch Cluster 1' })).toHaveCount(0);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'Batch Cluster 2' })).toHaveCount(0);
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-08-bulk-unpin-shelf.png') });
-    await closeBurgerMenu(page);
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Batch Cluster 1')).toHaveCount(0);
+    await expect(burgerMenu.pinnedCluster('Batch Cluster 2')).toHaveCount(0);
+    await burgerMenu.close();
 
     // 4. Bulk Unpin on a mixed selection only targets the pinned rows (Scenario 9)
     // Normalize the checkbox state left over from the previous bulk action.
@@ -413,26 +605,28 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
 
     await expect(mixedUnpinRows).toBeVisible();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-09-bulk-mixed-unpin.png') });
-
     // Unpin must target the pinned row only: Batch Cluster 1 releases,
     // Batch Cluster 2 was never pinned and stays unpinned.
     await mixedUnpinRows.click();
     await expect(row1.pinBtn()).not.toHaveClass(/is-pinned/);
     await expect(row2.pinBtn()).not.toHaveClass(/is-pinned/);
+    await expectPinnedClusters(rancherApi, ['qa-19241-bulk01'], false);
   });
 
   test('6. Cluster detail title pin control and Alt+P keyboard shortcut toggle (Scenarios 11, 12)', async ({
     page,
   }) => {
     // Navigate to cluster detail page for provisioned cluster
-    await page.goto('/dashboard/c/local/manager/provisioning.cattle.io.cluster/fleet-default/qa-19241-prov');
-    await dismissModals(page);
+    const clusterDetail = new ClusterManagerDetailRke2CustomPagePo(page, 'local', 'qa-19241-prov');
+    const burgerMenu = new BurgerMenuPo(page);
+
+    await clusterDetail.goTo();
+    await clusterDetail.waitForPage();
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     // Scope to the detail title bar: a .cluster-pin also exists in the global header.
-    const titleBar = page.locator('.title-bar');
-    const badgeState = titleBar.locator('.badge-state');
-    const pinControl = titleBar.locator('.cluster-pin');
+    const badgeState = clusterDetail.titleBarBadgeChip();
+    const pinControl = clusterDetail.titleBarPinControl();
 
     await expect(pinControl).toBeVisible();
 
@@ -457,22 +651,19 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     await expect(pinControl).toHaveAttribute('aria-pressed', 'true');
 
     // Verify top nav shelf reflects pinned cluster
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'qa-19241-prov' })).toBeVisible();
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Provisioned Cluster PRD')).toBeVisible();
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-11-detail-title-pin.png') });
-    await titleBar.screenshot({ path: path.join(evidenceDir, 'scenario-11-detail-title-pin-titlebar.png') });
-    await closeBurgerMenu(page);
+    await burgerMenu.close();
 
     // Press Alt+P (Windows/Linux) to toggle pin state via keyboard shortcut
     await page.keyboard.press('Alt+p');
     await expect(pinControl).toHaveAttribute('aria-pressed', 'false');
 
-    await openBurgerMenu(page);
-    await expect(page.locator('.clustersPinned').filter({ hasText: 'qa-19241-prov' })).toHaveCount(0);
+    await burgerMenu.open();
+    await expect(burgerMenu.pinnedCluster('Provisioned Cluster PRD')).toHaveCount(0);
 
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-12-keyboard-shortcut-alt-p.png') });
-    await closeBurgerMenu(page);
+    await burgerMenu.close();
   });
 
   test('7. Dark theme maintains high-contrast badge rendering (Scenario 14)', async ({ page, rancherApi }) => {
@@ -483,10 +674,10 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
 
     await clusterList.goTo();
     await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     // Verify dark theme is applied to document body
-    await expect(page.locator('body')).toHaveClass(/theme-dark/);
+    await expect(clusterList.body()).toHaveClass(/theme-dark/);
 
     const customRow = clusterList.sortableTable().rowWithName('Production Cluster Alpha');
 
@@ -495,9 +686,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     const badgeChip = customRow.badge();
 
     await expect(badgeChip).toBeVisible();
-    await expect(badgeChip.locator('.cluster-badge-logo-text')).toHaveText('PRD');
-
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-14-badge-dark-theme.png') });
+    await expect(customRow.badgeText()).toHaveText('PRD');
 
     // Restore to auto theme
     await rancherApi.setUserPreference({ theme: '"ui-auto"' });
@@ -511,10 +700,10 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
 
     await clusterList.goTo();
     await clusterList.sortableTable().checkLoadingIndicatorNotVisible();
-    await dismissModals(page);
+    await new WelcomeDialogPo(page).dismissIfVisible();
 
     // Verify light theme is applied to document body
-    await expect(page.locator('body')).toHaveClass(/theme-light/);
+    await expect(clusterList.body()).toHaveClass(/theme-light/);
 
     const customRow = clusterList.sortableTable().rowWithName('Production Cluster Alpha');
 
@@ -523,9 +712,7 @@ test.describe('Cluster Badges and Pin Actions (#19241 / #19537)', { tag: ['@admi
     const badgeChip = customRow.badge();
 
     await expect(badgeChip).toBeVisible();
-    await expect(badgeChip.locator('.cluster-badge-logo-text')).toHaveText('PRD');
-
-    await page.screenshot({ path: path.join(evidenceDir, 'scenario-14-badge-light-theme.png') });
+    await expect(customRow.badgeText()).toHaveText('PRD');
 
     // Restore to auto theme
     await rancherApi.setUserPreference({ theme: '"ui-auto"' });

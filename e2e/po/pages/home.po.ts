@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import BannersPo from '@/e2e/po/components/banners.po';
 import BurgerMenuPo from '@/e2e/po/side-bars/burger-side-menu.po';
 import NotificationsCenterPo from '@/e2e/po/components/notification-center.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 
 export default class HomePagePo extends PagePo {
   static url = '/home';
@@ -36,6 +37,10 @@ export default class HomePagePo extends PagePo {
     return this.page.locator('[data-testid="sortable-table-list-container"]');
   }
 
+  sortableTable(): SortableTablePo {
+    return new SortableTablePo(this.page, '[data-testid="sortable-table-list-container"]');
+  }
+
   filterInput(): Locator {
     return this.list().locator('[data-testid="search-box-filter-row"] input');
   }
@@ -55,6 +60,16 @@ export default class HomePagePo extends PagePo {
   /** Get a cluster row by name */
   clusterRow(name: string): Locator {
     return this.list().locator('tr').filter({ hasText: name });
+  }
+
+  /** Get the badge chip inside a cluster row by name */
+  clusterRowBadge(clusterName: string): Locator {
+    return this.clusterRow(clusterName).locator('.cluster-badge-icon');
+  }
+
+  /** Get the badge text inside a cluster row by name */
+  clusterRowBadgeText(clusterName: string): Locator {
+    return this.clusterRowBadge(clusterName).locator('.cluster-badge-logo-text');
   }
 
   noResultsMessage(): Locator {

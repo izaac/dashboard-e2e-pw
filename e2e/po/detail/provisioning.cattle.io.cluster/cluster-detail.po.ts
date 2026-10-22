@@ -29,6 +29,18 @@ export default abstract class ClusterManagerDetailPagePo extends PagePo {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
   }
 
+  titleBar(): Locator {
+    return this.page.locator('.title-bar');
+  }
+
+  titleBarBadgeChip(): Locator {
+    return this.titleBar().locator('.badge-state');
+  }
+
+  titleBarPinControl(): Locator {
+    return this.titleBar().locator('.cluster-pin');
+  }
+
   async openShowConfiguration(): Promise<void> {
     await this.self().getByTestId('show-configuration-cta').click();
   }

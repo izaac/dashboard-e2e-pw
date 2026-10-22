@@ -18,7 +18,9 @@ export default class BurgerMenuPo extends ComponentPo {
   async toggle(): Promise<void> {
     // eslint-disable-next-line playwright/no-force-option -- hamburger icon can be briefly covered by SPA route-transition overlay
     await this.page.getByTestId('top-level-menu').click({ force: true });
-    await waitForAnimationSettle(this.sideMenu(), 'burger-side-menu toggle');
+    // Wait on the backdrop transition only: the menu subtree contains indefinite
+    // spinners for unreachable clusters, which never settle.
+    await waitForAnimationSettle(this.page.locator('.side-menu-glass'), 'burger-side-menu toggle');
   }
 
   /** Whether the slide-out menu is currently open */
@@ -37,9 +39,21 @@ export default class BurgerMenuPo extends ComponentPo {
 
   /** Close the slide-out menu if it is currently open */
   async close(): Promise<void> {
-    if (await this.isOpen()) {
-      await this.toggle();
+    if (!(await this.isOpen())) {
+      return;
     }
+
+    const glass = this.page.locator('.side-menu-glass');
+
+    if (await glass.isVisible().catch(() => false)) {
+      // eslint-disable-next-line playwright/no-force-option -- glass backdrop is intentionally clicked through the slide-out overlay
+      await glass.click({ force: true });
+      await glass.waitFor({ state: 'detached', timeout: 3000 }).catch(() => false);
+
+      return;
+    }
+
+    await this.toggle();
   }
 
   /** Navigate to a top-level side menu entry by label (non-cluster) */
@@ -196,6 +210,11 @@ export default class BurgerMenuPo extends ComponentPo {
   /** Get the pinned cluster list */
   clusterPinnedList(): Locator {
     return this.self().locator('.body .clustersPinned .cluster.selector.option');
+  }
+
+  /** Get a pinned cluster entry by name */
+  pinnedCluster(name: string): Locator {
+    return this.clusterPinnedList().filter({ hasText: name });
   }
 
   /** Unpin the first pinned cluster */
