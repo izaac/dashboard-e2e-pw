@@ -137,7 +137,9 @@ test.describe('Helm release secret edit protects release data', { tag: ['@generi
     }
 
     await rancherApi.deleteRancherResource('v1', 'namespaces', name, false);
-    expect(await rancherApi.waitForResourceGone('v1', 'namespaces', name, 60, 2000), `namespace ${name} gone`).toBe(true);
+    expect(await rancherApi.waitForResourceGone('v1', 'namespaces', name, 60, 2000), `namespace ${name} gone`).toBe(
+      true,
+    );
   }
 
   /** Create a namespace carrying the suite label */
@@ -499,7 +501,8 @@ test.describe('Helm release secret edit protects release data', { tag: ['@generi
 
         await expect
           .poll(
-            async () => (await readRawSecret(rancherApi, APP_NAMESPACE, helmSecretName(APP_CHART.releaseName, 2), 0)).status,
+            async () =>
+              (await readRawSecret(rancherApi, APP_NAMESPACE, helmSecretName(APP_CHART.releaseName, 2), 0)).status,
             { message: 'revision 2 helm secret exists' },
           )
           .toBe(200);

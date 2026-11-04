@@ -88,7 +88,10 @@ test.describe('Compliance scan detail header layout (#16735)', { tag: ['@adminUs
     await login();
   });
 
-  test('SUSE Application Collection repository can be added from zero and becomes active', async ({ page, rancherApi }) => {
+  test('SUSE Application Collection repository can be added from zero and becomes active', async ({
+    page,
+    rancherApi,
+  }) => {
     test.skip(!process.env.APPCO_USER || !process.env.APPCO_KEY, 'Requires SUSE Application Collection credentials');
     test.setTimeout(PROVISIONING);
 
@@ -187,9 +190,7 @@ test.describe('Compliance scan detail header layout (#16735)', { tag: ['@adminUs
           const state = resp.body?.metadata?.state;
 
           return (
-            resp.status === 200 &&
-            state?.transitioning === false &&
-            (state?.name === 'pass' || state?.name === 'fail')
+            resp.status === 200 && state?.transitioning === false && (state?.name === 'pass' || state?.name === 'fail')
           );
         },
         SCAN_POLL_RETRIES,
@@ -205,10 +206,7 @@ test.describe('Compliance scan detail header layout (#16735)', { tag: ['@adminUs
         .self()
         .screenshot({ path: path.join(EVIDENCE_DIR, 'scan-completed-row.png') });
 
-      const detailPage = new PagePo(
-        page,
-        `/c/local/compliance/compliance.cattle.io.clusterscan/${createdScanName}`,
-      );
+      const detailPage = new PagePo(page, `/c/local/compliance/compliance.cattle.io.clusterscan/${createdScanName}`);
       const detail = new ResourceDetailPo(page);
       const metadata = new ResourceDetailMetadataPo(page);
 

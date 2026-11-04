@@ -25,15 +25,15 @@ test.describe('Workload Search Firefox Action Menu & Width (#19631)', { tag: ['@
     for (const name of DEPLOYMENTS) {
       await rancherApi.createRancherResource('v1', 'apps.deployments', {
         apiVersion: 'apps/v1',
-        kind:       'Deployment',
-        metadata:   { name, namespace: testNamespace },
-        spec:       {
+        kind: 'Deployment',
+        metadata: { name, namespace: testNamespace },
+        spec: {
           replicas: 1,
           selector: { matchLabels: { app: name } },
           template: {
             metadata: { labels: { app: name } },
-            spec:     {
-              containers:                    [{ name: 'pause', image: 'registry.k8s.io/pause:3.10' }],
+            spec: {
+              containers: [{ name: 'pause', image: 'registry.k8s.io/pause:3.10' }],
               terminationGracePeriodSeconds: 0,
             },
           },
@@ -126,7 +126,9 @@ test.describe('Workload Search Firefox Action Menu & Width (#19631)', { tag: ['@
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-03-firefox-search-results-after-escape.png') });
   });
 
-  test('clicking the three dots button a second time closes the action menu without collapsing results', async ({ page }) => {
+  test('clicking the three dots button a second time closes the action menu without collapsing results', async ({
+    page,
+  }) => {
     const search = await searchWorkloads(page);
 
     await search.kebab(0).click();

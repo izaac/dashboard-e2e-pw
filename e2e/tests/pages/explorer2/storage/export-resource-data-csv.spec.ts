@@ -51,7 +51,9 @@ function parseCsvRecords(text: string): string[][] {
       row.push(field);
       field = '';
     } else if (ch === '\n' || (ch === '\r' && text[i + 1] === '\n')) {
-      if (ch === '\r') { i++; }
+      if (ch === '\r') {
+        i++;
+      }
       row.push(field);
       records.push(row);
       row = [];

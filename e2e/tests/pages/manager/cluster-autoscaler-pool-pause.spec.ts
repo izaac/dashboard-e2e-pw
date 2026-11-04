@@ -8,7 +8,9 @@ import { installFakeClusterRoutes } from '@/e2e/blueprints/nav/fake-cluster';
 import { generateProvClusterObj, MACHINE_POOL_ID } from '@/e2e/blueprints/nav/fake-cluster-objects';
 import { generateFakeMachineConfigReply } from '@/e2e/blueprints/nav/edit-cluster';
 
-const EVIDENCE_DIR = process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-15656-cluster-autoscaler-follow-on-work-evidence';
+const EVIDENCE_DIR =
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-15656-cluster-autoscaler-follow-on-work-evidence';
 
 const NAMESPACE = 'fleet-default';
 const PROV_CLUSTER_ID = 'mock-autoscaler-cluster';
@@ -22,10 +24,10 @@ const PAUSED_MIN_ANNOTATION = 'ui.rancher/autoscaler-paused-min-size';
 const PAUSED_MAX_ANNOTATION = 'ui.rancher/autoscaler-paused-max-size';
 
 /** Name of the Rancher-generated machine config that backs a pool (also the MachineDeployment infrastructureRef) */
-const machineConfigName = (poolName: string) => `nc-${ PROV_CLUSTER_ID }-${ poolName }-${ MACHINE_POOL_ID }`;
+const machineConfigName = (poolName: string) => `nc-${PROV_CLUSTER_ID}-${poolName}-${MACHINE_POOL_ID}`;
 
 /** Name of the CAPI MachineDeployment that Rancher creates for a pool */
-const machineDeploymentName = (poolName: string) => `${ PROV_CLUSTER_ID }-${ poolName }`;
+const machineDeploymentName = (poolName: string) => `${PROV_CLUSTER_ID}-${poolName}`;
 
 /**
  * provisioning.cattle.io.cluster with two worker pools:
@@ -38,25 +40,25 @@ function mockAutoscalerProvCluster() {
 
   const basePool = {
     dynamicSchemaSpec,
-    drainBeforeDelete:    true,
+    drainBeforeDelete: true,
     unhealthyNodeTimeout: '0s',
-    workerRole:           true,
+    workerRole: true,
   };
 
   cluster.spec.rkeConfig.machinePools = [
     {
       ...basePool,
-      machineConfigRef:   { kind: 'DigitaloceanConfig', name: machineConfigName(AUTOSCALING_POOL) },
-      name:               AUTOSCALING_POOL,
-      quantity:           2,
+      machineConfigRef: { kind: 'DigitaloceanConfig', name: machineConfigName(AUTOSCALING_POOL) },
+      name: AUTOSCALING_POOL,
+      quantity: 2,
       autoscalingMinSize: 1,
       autoscalingMaxSize: 4,
     },
     {
       ...basePool,
-      machineConfigRef:             { kind: 'DigitaloceanConfig', name: machineConfigName(PAUSED_POOL) },
-      name:                         PAUSED_POOL,
-      quantity:                     3,
+      machineConfigRef: { kind: 'DigitaloceanConfig', name: machineConfigName(PAUSED_POOL) },
+      name: PAUSED_POOL,
+      quantity: 3,
       machineDeploymentAnnotations: {
         [PAUSED_MIN_ANNOTATION]: '2',
         [PAUSED_MAX_ANNOTATION]: '5',
@@ -70,55 +72,58 @@ function mockAutoscalerProvCluster() {
 /** The pools' CAPI MachineDeployments: the detail page groups machines by these and scales through them */
 function mockMachineDeployment(poolName: string, replicas: number) {
   const name = machineDeploymentName(poolName);
-  const selfLink = `https://localhost:8005/v1/cluster.x-k8s.io.machinedeployments/${ NAMESPACE }/${ name }`;
+  const selfLink = `https://localhost:8005/v1/cluster.x-k8s.io.machinedeployments/${NAMESPACE}/${name}`;
 
   return {
-    id:         `${ NAMESPACE }/${ name }`,
-    type:       'cluster.x-k8s.io.machinedeployment',
-    links:      {
+    id: `${NAMESPACE}/${name}`,
+    type: 'cluster.x-k8s.io.machinedeployment',
+    links: {
       remove: selfLink,
-      self:   selfLink,
+      self: selfLink,
       update: selfLink,
-      view:   `https://localhost:8005/apis/cluster.x-k8s.io/v1beta1/namespaces/${ NAMESPACE }/machinedeployments/${ name }`,
+      view: `https://localhost:8005/apis/cluster.x-k8s.io/v1beta1/namespaces/${NAMESPACE}/machinedeployments/${name}`,
     },
     apiVersion: 'cluster.x-k8s.io/v1beta1',
-    kind:       'MachineDeployment',
-    metadata:   {
+    kind: 'MachineDeployment',
+    metadata: {
       creationTimestamp: '2026-10-01T10:00:00Z',
-      fields:            [name, PROV_CLUSTER_ID, 'Running', `${ replicas }`],
-      generation:        1,
-      labels:            {
-        'cluster.x-k8s.io/cluster-name':           PROV_CLUSTER_ID,
-        'rke.cattle.io/rke-machine-pool-name':     poolName,
+      fields: [name, PROV_CLUSTER_ID, 'Running', `${replicas}`],
+      generation: 1,
+      labels: {
+        'cluster.x-k8s.io/cluster-name': PROV_CLUSTER_ID,
+        'rke.cattle.io/rke-machine-pool-name': poolName,
       },
       name,
-      namespace:       NAMESPACE,
-      state:           {
-        error: false, message: 'Resource is Ready', name: 'active', transitioning: false
+      namespace: NAMESPACE,
+      state: {
+        error: false,
+        message: 'Resource is Ready',
+        name: 'active',
+        transitioning: false,
       },
-      uid: `00000000-0000-4000-8000-${ poolName === AUTOSCALING_POOL ? '000000000001' : '000000000002' }`,
+      uid: `00000000-0000-4000-8000-${poolName === AUTOSCALING_POOL ? '000000000001' : '000000000002'}`,
     },
     spec: {
       clusterName: PROV_CLUSTER_ID,
       replicas,
-      selector:    { matchLabels: { 'cluster.x-k8s.io/deployment-name': name } },
-      template:    {
+      selector: { matchLabels: { 'cluster.x-k8s.io/deployment-name': name } },
+      template: {
         metadata: {
           labels: {
-            'cluster.x-k8s.io/cluster-name':       PROV_CLUSTER_ID,
-            'cluster.x-k8s.io/deployment-name':    name,
+            'cluster.x-k8s.io/cluster-name': PROV_CLUSTER_ID,
+            'cluster.x-k8s.io/deployment-name': name,
             'rke.cattle.io/rke-machine-pool-name': poolName,
-            'rke.cattle.io/worker-role':           'true',
-          }
+            'rke.cattle.io/worker-role': 'true',
+          },
         },
         spec: {
-          bootstrap:         { dataSecretName: '' },
-          clusterName:       PROV_CLUSTER_ID,
+          bootstrap: { dataSecretName: '' },
+          clusterName: PROV_CLUSTER_ID,
           infrastructureRef: {
             apiVersion: 'rke-machine.cattle.io/v1',
-            kind:       'DigitaloceanMachineTemplate',
-            name:       machineConfigName(poolName),
-            namespace:  NAMESPACE,
+            kind: 'DigitaloceanMachineTemplate',
+            name: machineConfigName(poolName),
+            namespace: NAMESPACE,
           },
           version: 'v1.27.10+rke2r1',
         },
@@ -126,65 +131,76 @@ function mockMachineDeployment(poolName: string, replicas: number) {
     },
     status: {
       availableReplicas: replicas,
-      conditions:        [{
-        lastUpdateTime: '2026-10-01T10:05:00Z', status: 'True', type: 'Available'
-      }],
-      phase:             'Running',
-      readyReplicas:     replicas,
+      conditions: [
+        {
+          lastUpdateTime: '2026-10-01T10:05:00Z',
+          status: 'True',
+          type: 'Available',
+        },
+      ],
+      phase: 'Running',
+      readyReplicas: replicas,
       replicas,
-      upToDateReplicas:  replicas,
+      upToDateReplicas: replicas,
     },
   };
 }
 
 function mockMachine(poolName: string, index: number) {
   const deploymentName = machineDeploymentName(poolName);
-  const name = `${ deploymentName }-abcde-m${ index }`;
-  const selfLink = `https://localhost:8005/v1/cluster.x-k8s.io.machines/${ NAMESPACE }/${ name }`;
+  const name = `${deploymentName}-abcde-m${index}`;
+  const selfLink = `https://localhost:8005/v1/cluster.x-k8s.io.machines/${NAMESPACE}/${name}`;
 
   return {
-    id:         `${ NAMESPACE }/${ name }`,
-    type:       'cluster.x-k8s.io.machine',
-    links:      {
+    id: `${NAMESPACE}/${name}`,
+    type: 'cluster.x-k8s.io.machine',
+    links: {
       remove: selfLink,
-      self:   selfLink,
+      self: selfLink,
       update: selfLink,
-      view:   `https://localhost:8005/apis/cluster.x-k8s.io/v1beta1/namespaces/${ NAMESPACE }/machines/${ name }`,
+      view: `https://localhost:8005/apis/cluster.x-k8s.io/v1beta1/namespaces/${NAMESPACE}/machines/${name}`,
     },
     apiVersion: 'cluster.x-k8s.io/v1beta1',
-    kind:       'Machine',
-    metadata:   {
+    kind: 'Machine',
+    metadata: {
       creationTimestamp: '2026-10-01T10:01:00Z',
-      fields:            [name, PROV_CLUSTER_ID, 'Running'],
-      generation:        1,
-      labels:            {
-        'cattle.io/os':                        'linux',
-        'cluster.x-k8s.io/cluster-name':       PROV_CLUSTER_ID,
-        'cluster.x-k8s.io/deployment-name':    deploymentName,
+      fields: [name, PROV_CLUSTER_ID, 'Running'],
+      generation: 1,
+      labels: {
+        'cattle.io/os': 'linux',
+        'cluster.x-k8s.io/cluster-name': PROV_CLUSTER_ID,
+        'cluster.x-k8s.io/deployment-name': deploymentName,
         'rke.cattle.io/rke-machine-pool-name': poolName,
-        'rke.cattle.io/worker-role':           'true',
+        'rke.cattle.io/worker-role': 'true',
       },
       name,
-      namespace:       NAMESPACE,
-      state:           {
-        error: false, message: 'Resource is Ready', name: 'running', transitioning: false
+      namespace: NAMESPACE,
+      state: {
+        error: false,
+        message: 'Resource is Ready',
+        name: 'running',
+        transitioning: false,
       },
-      uid: `00000000-0000-4000-8000-${ poolName === AUTOSCALING_POOL ? '1' : '2' }0000000000${ index }`,
+      uid: `00000000-0000-4000-8000-${poolName === AUTOSCALING_POOL ? '1' : '2'}0000000000${index}`,
     },
     spec: {
-      clusterName:       PROV_CLUSTER_ID,
+      clusterName: PROV_CLUSTER_ID,
       infrastructureRef: {
-        apiGroup:  'rke-machine.cattle.io',
-        kind:      'DigitaloceanMachine',
-        name:      machineConfigName(poolName),
+        apiGroup: 'rke-machine.cattle.io',
+        kind: 'DigitaloceanMachine',
+        name: machineConfigName(poolName),
         namespace: NAMESPACE,
       },
     },
     status: {
-      addresses:  [{ address: `10.0.${ index }.${ poolName === AUTOSCALING_POOL ? 10 : 20 }`, type: 'InternalIP' }],
-      conditions: [{
-        lastUpdateTime: '2026-10-01T10:05:00Z', status: 'True', type: 'Ready'
-      }],
+      addresses: [{ address: `10.0.${index}.${poolName === AUTOSCALING_POOL ? 10 : 20}`, type: 'InternalIP' }],
+      conditions: [
+        {
+          lastUpdateTime: '2026-10-01T10:05:00Z',
+          status: 'True',
+          type: 'Ready',
+        },
+      ],
       phase: 'Running',
     },
   };
@@ -234,26 +250,29 @@ async function installAutoscalerMocks(page: Page) {
 
   // Prov/mgmt cluster list+detail, node driver, cloud credential and DO lookups for the edit page
   await installFakeClusterRoutes(page, {
-    fakeProvClusterId:           PROV_CLUSTER_ID,
-    fakeMgmtClusterId:           MGMT_CLUSTER_ID,
-    addEditClusterCapabilities:  true,
+    fakeProvClusterId: PROV_CLUSTER_ID,
+    fakeMgmtClusterId: MGMT_CLUSTER_ID,
+    addEditClusterCapabilities: true,
   });
 
   // Routes registered later win: replace the shared single-pool prov cluster with the two autoscaler pools
-  await page.route(/\/v1\/provisioning\.cattle\.io\.clusters(\?|$)/, async(route) => {
+  await page.route(/\/v1\/provisioning\.cattle\.io\.clusters(\?|$)/, async (route) => {
     await injectIntoCollection(route, [provCluster]);
   });
 
-  await page.route(new RegExp(`/v1/provisioning\\.cattle\\.io\\.clusters/${ NAMESPACE }/${ PROV_CLUSTER_ID }(\\?|$)`), async(route) => {
-    if (route.request().method() !== 'GET') {
-      return route.fallback();
-    }
+  await page.route(
+    new RegExp(`/v1/provisioning\\.cattle\\.io\\.clusters/${NAMESPACE}/${PROV_CLUSTER_ID}(\\?|$)`),
+    async (route) => {
+      if (route.request().method() !== 'GET') {
+        return route.fallback();
+      }
 
-    await route.fulfill({ status: 200, json: provCluster });
-  });
+      await route.fulfill({ status: 200, json: provCluster });
+    },
+  );
 
   // The cluster autoscaler UI is behind the `cluster-autoscaling` feature flag
-  await page.route(/\/v1\/management\.cattle\.io\.features(\?|$)/, async(route) => {
+  await page.route(/\/v1\/management\.cattle\.io\.features(\?|$)/, async (route) => {
     const response = await route.fetch();
     const body = await response.json();
     const feature = body.data?.find((f: any) => f.id === FEATURE_ID);
@@ -263,12 +282,15 @@ async function installAutoscalerMocks(page: Page) {
       feature.status = { ...feature.status, lockedValue: true };
     } else {
       body.data.push({
-        id:       FEATURE_ID,
-        type:     'management.cattle.io.feature',
+        id: FEATURE_ID,
+        type: 'management.cattle.io.feature',
         metadata: { name: FEATURE_ID },
-        spec:     { value: true },
-        status:   {
-          default: false, dynamic: true, lockedValue: true, description: 'Cluster autoscaler'
+        spec: { value: true },
+        status: {
+          default: false,
+          dynamic: true,
+          lockedValue: true,
+          description: 'Cluster autoscaler',
         },
       });
     }
@@ -276,14 +298,14 @@ async function installAutoscalerMocks(page: Page) {
     await route.fulfill({ response, json: body });
   });
 
-  await page.route(/\/v1\/cluster\.x-k8s\.io\.machinedeployments(\?|$)/, async(route) => {
+  await page.route(/\/v1\/cluster\.x-k8s\.io\.machinedeployments(\?|$)/, async (route) => {
     await injectIntoCollection(route, [
       mockMachineDeployment(AUTOSCALING_POOL, 2),
       mockMachineDeployment(PAUSED_POOL, 3),
     ]);
   });
 
-  await page.route(/\/v1\/cluster\.x-k8s\.io\.machines(\?|$)/, async(route) => {
+  await page.route(/\/v1\/cluster\.x-k8s\.io\.machines(\?|$)/, async (route) => {
     await injectIntoCollection(route, [
       mockMachine(AUTOSCALING_POOL, 0),
       mockMachine(AUTOSCALING_POOL, 1),
@@ -294,11 +316,18 @@ async function installAutoscalerMocks(page: Page) {
   });
 
   // Machine configs the edit page resolves through each pool's machineConfigRef
-  await page.route(new RegExp(`/v1/rke-machine-config\\.cattle\\.io\\.digitaloceanconfigs/${ NAMESPACE }/nc-${ PROV_CLUSTER_ID }-pool-(worker|paused)-${ MACHINE_POOL_ID }(\\?|$)`), async(route) => {
-    const poolName = route.request().url().includes(machineConfigName(AUTOSCALING_POOL)) ? AUTOSCALING_POOL : PAUSED_POOL;
+  await page.route(
+    new RegExp(
+      `/v1/rke-machine-config\\.cattle\\.io\\.digitaloceanconfigs/${NAMESPACE}/nc-${PROV_CLUSTER_ID}-pool-(worker|paused)-${MACHINE_POOL_ID}(\\?|$)`,
+    ),
+    async (route) => {
+      const poolName = route.request().url().includes(machineConfigName(AUTOSCALING_POOL))
+        ? AUTOSCALING_POOL
+        : PAUSED_POOL;
 
-    await route.fulfill({ status: 200, json: mockMachineConfig(poolName) });
-  });
+      await route.fulfill({ status: 200, json: mockMachineConfig(poolName) });
+    },
+  );
 }
 
 async function dismissWelcomeModal(page: Page): Promise<void> {
@@ -320,16 +349,18 @@ test.describe('Cluster Autoscaler - per machine pool pause (#15656)', { tag: ['@
     fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
   });
 
-  test.beforeEach(async({ page, login }) => {
+  test.beforeEach(async ({ page, login }) => {
     await installAutoscalerMocks(page);
     await login();
   });
 
-  test.afterEach(async({ page }) => {
+  test.afterEach(async ({ page }) => {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
 
-  test('Scenario 1 and 2: cluster detail shows the pause/resume toggle and the scale rocker state per pool', async({ page }) => {
+  test('Scenario 1 and 2: cluster detail shows the pause/resume toggle and the scale rocker state per pool', async ({
+    page,
+  }) => {
     const detail = new ClusterManagerDetailRke2AmazonEc2PagePo(page, 'local', PROV_CLUSTER_ID);
 
     await detail.goTo();
@@ -356,7 +387,10 @@ test.describe('Cluster Autoscaler - per machine pool pause (#15656)', { tag: ['@
     await expect(scaleUp(AUTOSCALING_POOL)).toBeDisabled();
 
     await groupRow(AUTOSCALING_POOL).scrollIntoViewIfNeeded();
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-01-pool-autoscaler-pause-toggle.png'), fullPage: false });
+    await page.screenshot({
+      path: path.join(EVIDENCE_DIR, 'scenario-01-pool-autoscaler-pause-toggle.png'),
+      fullPage: false,
+    });
 
     // Paused pool: play icon, rocker usable again for manual scaling
     // eslint-disable-next-line playwright/no-raw-locators -- the toggle state is only exposed through the icon class on its <i>
@@ -368,10 +402,15 @@ test.describe('Cluster Autoscaler - per machine pool pause (#15656)', { tag: ['@
     await expect(scaleUp(PAUSED_POOL)).toBeEnabled();
 
     await groupRow(PAUSED_POOL).scrollIntoViewIfNeeded();
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-02-paused-pool-scale-rocker-enabled.png'), fullPage: false });
+    await page.screenshot({
+      path: path.join(EVIDENCE_DIR, 'scenario-02-paused-pool-scale-rocker-enabled.png'),
+      fullPage: false,
+    });
   });
 
-  test('Scenario 4: cluster edit shows the paused banner and read-only stashed bounds on the paused pool', async({ page }) => {
+  test('Scenario 4: cluster edit shows the paused banner and read-only stashed bounds on the paused pool', async ({
+    page,
+  }) => {
     const edit = new ClusterManagerEditGenericPagePo(page, 'local', PROV_CLUSTER_ID);
 
     await edit.goTo('mode=edit');
@@ -403,7 +442,10 @@ test.describe('Cluster Autoscaler - per machine pool pause (#15656)', { tag: ['@
     await expect(pausedMax).toBeDisabled();
 
     await pausedMax.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-04-edit-cluster-paused-pool-banner.png'), fullPage: false });
+    await page.screenshot({
+      path: path.join(EVIDENCE_DIR, 'scenario-04-edit-cluster-paused-pool-banner.png'),
+      fullPage: false,
+    });
 
     // The autoscaling pool must not show the paused banner
     await page.getByRole('tab', { name: AUTOSCALING_POOL }).click();

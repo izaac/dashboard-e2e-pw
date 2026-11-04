@@ -7,12 +7,13 @@ import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 import { LONG, STANDARD } from '@/support/timeouts';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-19590-extension-error-message-html-escape-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-19590-extension-error-message-html-escape-evidence';
 
 // i18n key whose en-us text contains an apostrophe: "...so we won't load the external version"
 const ERROR_KEY = 'plugins.error.developerPkg';
-const ERROR_TEXT = 'This Extension has been loaded internally, so we won\'t load the external version';
-const TOOLTIP_TEXT = 'we won\'t load the external version';
+const ERROR_TEXT = "This Extension has been loaded internally, so we won't load the external version";
+const TOOLTIP_TEXT = "we won't load the external version";
 const ESCAPED_APOSTROPHE = '&#39;';
 
 const PLUGIN_NAME = 'qa-test-plugin';
@@ -23,39 +24,45 @@ const PLUGIN_NAME = 'qa-test-plugin';
  * added straight into the uiplugins store; it then renders as a card on the Installed tab.
  */
 async function injectPlugin(page: Page, name: string, error: string): Promise<void> {
-  await page.evaluate(({ name, error }) => {
-    const store = (window as any).$globalApp?.$store;
+  await page.evaluate(
+    ({ name, error }) => {
+      const store = (window as any).$globalApp?.$store;
 
-    if (!store) {
-      return;
-    }
-
-    store.commit('uiplugins/addPlugin', {
-      name,
-      id:       name,
-      builtin:  false,
-      metadata: {
-        name,
-        version:     '1.0.0',
-        description: 'QA validation extension'
+      if (!store) {
+        return;
       }
-    });
-    store.commit('uiplugins/setError', { name, error });
-  }, { name, error });
+
+      store.commit('uiplugins/addPlugin', {
+        name,
+        id: name,
+        builtin: false,
+        metadata: {
+          name,
+          version: '1.0.0',
+          description: 'QA validation extension',
+        },
+      });
+      store.commit('uiplugins/setError', { name, error });
+    },
+    { name, error },
+  );
 }
 
 /** Remove the synthetic extension and clear its error */
 async function removePlugin(page: Page, name: string): Promise<void> {
-  await page.evaluate(({ name }) => {
-    const store = (window as any).$globalApp?.$store;
+  await page.evaluate(
+    ({ name }) => {
+      const store = (window as any).$globalApp?.$store;
 
-    if (!store) {
-      return;
-    }
+      if (!store) {
+        return;
+      }
 
-    store.commit('uiplugins/removePlugin', name);
-    store.commit('uiplugins/setError', { name, error: false });
-  }, { name });
+      store.commit('uiplugins/removePlugin', name);
+      store.commit('uiplugins/setError', { name, error: false });
+    },
+    { name },
+  );
 }
 
 test.describe('Extensions Error Message Escaping (#19590)', { tag: ['@generic', '@adminUser'] }, () => {
@@ -115,15 +122,21 @@ test.describe('Extensions Error Message Escaping (#19590)', { tag: ['@generic', 
 
       const rect = el.getBoundingClientRect();
 
-      return rect.right <= window.innerWidth && rect.left < window.innerWidth && !el.classList.contains('slide-enter-active');
+      return (
+        rect.right <= window.innerWidth && rect.left < window.innerWidth && !el.classList.contains('slide-enter-active')
+      );
     });
 
     await banner.scrollIntoViewIfNeeded();
-    await details.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-01-extension-detail-banner-clean-punctuation.png') });
+    await details.screenshot({
+      path: path.join(EVIDENCE_DIR, 'scenario-01-extension-detail-banner-clean-punctuation.png'),
+    });
   });
 
   test('extension card status tooltip shows clean punctuation without raw HTML entities', async ({ page }) => {
-    const statusIcon = pluginCard().getByTestId(/^item-card-header-status-/).first();
+    const statusIcon = pluginCard()
+      .getByTestId(/^item-card-header-status-/)
+      .first();
 
     await expect(statusIcon).toBeVisible({ timeout: STANDARD });
     await statusIcon.hover();
@@ -135,6 +148,8 @@ test.describe('Extensions Error Message Escaping (#19590)', { tag: ['@generic', 
     await expect(tooltip).not.toContainText(ESCAPED_APOSTROPHE);
     await expect(tooltip).not.toContainText('won&#39;t');
 
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-02-extension-card-tooltip-clean-punctuation.png') });
+    await page.screenshot({
+      path: path.join(EVIDENCE_DIR, 'scenario-02-extension-card-tooltip-clean-punctuation.png'),
+    });
   });
 });

@@ -5,11 +5,13 @@ import type { Locator, Page, Route } from '@playwright/test';
 import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 import { ConfigMapsPagePo } from '@/e2e/po/pages/explorer/configmaps.po';
 import ClusterScanPagePo from '@/e2e/po/pages/compliance/clusterscan.po';
+import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import PagePo from '@/e2e/po/pages/page.po';
 import { LONG } from '@/support/timeouts';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-19147-sortable-table-new-ux-design-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-19147-sortable-table-new-ux-design-evidence';
 
 const VIEWPORT = { width: 1440, height: 900 };
 
@@ -19,7 +21,7 @@ const VIEWPORT = { width: 1440, height: 900 };
 // ---------------------------------------------------------------------------
 const CM_NAMESPACE = 'default';
 const CM_PREFIX = 'qa19147-sort-';
-const CM_CREATION_ORDER = ['c', 'a', 'b'].map((s) => `${ CM_PREFIX }${ s }`);
+const CM_CREATION_ORDER = ['c', 'a', 'b'].map((s) => `${CM_PREFIX}${s}`);
 const CM_NAME_ORDER = [...CM_CREATION_ORDER].sort();
 const TIMESTAMP_GAP_MS = 1_100;
 
@@ -31,41 +33,55 @@ const COMPLIANCE_GROUP = 'compliance.cattle.io';
 const SCAN_NAME = 'scan-qa19147';
 const REPORT_NAME = 'scan-report-qa19147';
 const PROFILE_NAME = 'qa19147-profile';
-const SCAN_TYPE = `${ COMPLIANCE_GROUP }.clusterscan`;
-const REPORT_TYPE = `${ COMPLIANCE_GROUP }.clusterscanreport`;
+const SCAN_TYPE = `${COMPLIANCE_GROUP}.clusterscan`;
+const REPORT_TYPE = `${COMPLIANCE_GROUP}.clusterscanreport`;
 const COMPLIANCE_SCHEMAS = [
   { id: SCAN_TYPE, kind: 'ClusterScan', resource: 'clusterscans' },
   { id: REPORT_TYPE, kind: 'ClusterScanReport', resource: 'clusterscanreports' },
-  { id: `${ COMPLIANCE_GROUP }.clusterscanprofile`, kind: 'ClusterScanProfile', resource: 'clusterscanprofiles' },
-  { id: `${ COMPLIANCE_GROUP }.clusterscanbenchmark`, kind: 'ClusterScanBenchmark', resource: 'clusterscanbenchmarks' },
+  { id: `${COMPLIANCE_GROUP}.clusterscanprofile`, kind: 'ClusterScanProfile', resource: 'clusterscanprofiles' },
+  { id: `${COMPLIANCE_GROUP}.clusterscanbenchmark`, kind: 'ClusterScanBenchmark', resource: 'clusterscanbenchmarks' },
 ];
 // Steve addresses a type by its schema id (`/v1/compliance.cattle.io.clusterscan`), the UI list call is singular;
 // the plural resource name is accepted too
 const COMPLIANCE_URL_REGEX = new RegExp(
-  `/v1/${ COMPLIANCE_GROUP.replace(/\./g, '\\.') }\\.(clusterscanreports?|clusterscanprofiles?|clusterscanbenchmarks?|clusterscans?)(/[^?#]*)?(\\?.*)?$`,
+  `/v1/${COMPLIANCE_GROUP.replace(/\./g, '\\.')}\\.(clusterscanreports?|clusterscanprofiles?|clusterscanbenchmarks?|clusterscans?)(/[^?#]*)?(\\?.*)?$`,
 );
 
 const MOCK_NODES = { master: ['qa-node-1'], worker: ['qa-node-2', 'qa-node-3'] };
 const MOCK_REPORT_JSON = JSON.stringify({
-  total:         3,
-  pass:          1,
-  fail:          2,
-  warn:          0,
-  skip:          0,
+  total: 3,
+  pass: 1,
+  fail: 2,
+  warn: 0,
+  skip: 0,
   notApplicable: 0,
-  nodes:         MOCK_NODES,
-  results:       [
+  nodes: MOCK_NODES,
+  results: [
     {
-      id:     '1',
+      id: '1',
       checks: [
         {
-          id: '1.1.1', description: 'Ensure the API server pod specification file permissions are set', state: 'fail', node_type: ['master', 'worker'], nodes: ['qa-node-1', 'qa-node-2'], remediation: 'Run chmod 600 on the file',
+          id: '1.1.1',
+          description: 'Ensure the API server pod specification file permissions are set',
+          state: 'fail',
+          node_type: ['master', 'worker'],
+          nodes: ['qa-node-1', 'qa-node-2'],
+          remediation: 'Run chmod 600 on the file',
         },
         {
-          id: '1.1.2', description: 'Ensure the API server pod specification file ownership is set', state: 'fail', node_type: ['master'], nodes: ['qa-node-1'], remediation: 'Run chown root:root on the file',
+          id: '1.1.2',
+          description: 'Ensure the API server pod specification file ownership is set',
+          state: 'fail',
+          node_type: ['master'],
+          nodes: ['qa-node-1'],
+          remediation: 'Run chown root:root on the file',
         },
         {
-          id: '1.1.3', description: 'Ensure the kubelet service file permissions are set', state: 'pass', node_type: ['worker'], nodes: [],
+          id: '1.1.3',
+          description: 'Ensure the kubelet service file permissions are set',
+          state: 'pass',
+          node_type: ['worker'],
+          nodes: [],
         },
       ],
     },
@@ -74,43 +90,54 @@ const MOCK_REPORT_JSON = JSON.stringify({
 
 function steveCollection(url: string, resourceType: string, data: unknown[]) {
   return {
-    type:         'collection',
-    links:        { self: url },
-    createTypes:  {},
-    actions:      {},
+    type: 'collection',
+    links: { self: url },
+    createTypes: {},
+    actions: {},
     resourceType,
-    revision:     '1',
+    revision: '1',
     data,
   };
 }
 
 function mockScan(origin: string) {
-  const self = `${ origin }/v1/${ SCAN_TYPE }/${ SCAN_NAME }`;
+  const self = `${origin}/v1/${SCAN_TYPE}/${SCAN_NAME}`;
 
   return {
-    id:         SCAN_NAME,
-    type:       SCAN_TYPE,
-    apiVersion: `${ COMPLIANCE_GROUP }/v1`,
-    kind:       'ClusterScan',
-    links:      { self, view: self },
-    metadata:   {
-      name:              SCAN_NAME,
+    id: SCAN_NAME,
+    type: SCAN_TYPE,
+    apiVersion: `${COMPLIANCE_GROUP}/v1`,
+    kind: 'ClusterScan',
+    links: { self, view: self },
+    metadata: {
+      name: SCAN_NAME,
       creationTimestamp: '2026-01-01T10:00:00Z',
-      state:             {
-        name: 'active', transitioning: false, error: false
+      state: {
+        name: 'active',
+        transitioning: false,
+        error: false,
       },
       relationships: [
         {
-          rel: 'owner', fromType: SCAN_TYPE, fromId: SCAN_NAME, toType: REPORT_TYPE, toId: REPORT_NAME
+          rel: 'owner',
+          fromType: SCAN_TYPE,
+          fromId: SCAN_NAME,
+          toType: REPORT_TYPE,
+          toId: REPORT_NAME,
         },
       ],
     },
-    spec:   { scanProfileName: PROFILE_NAME },
+    spec: { scanProfileName: PROFILE_NAME },
     status: {
       lastRunScanProfileName: PROFILE_NAME,
-      lastRunTimestamp:       '2026-01-01T10:05:00Z',
-      summary:                {
-        total: 3, pass: 1, fail: 2, warn: 0, skip: 0, notApplicable: 0
+      lastRunTimestamp: '2026-01-01T10:05:00Z',
+      summary: {
+        total: 3,
+        pass: 1,
+        fail: 2,
+        warn: 0,
+        skip: 0,
+        notApplicable: 0,
       },
       display: { state: 'active', message: '' },
     },
@@ -118,34 +145,34 @@ function mockScan(origin: string) {
 }
 
 function mockReport(origin: string) {
-  const self = `${ origin }/v1/${ REPORT_TYPE }/${ REPORT_NAME }`;
+  const self = `${origin}/v1/${REPORT_TYPE}/${REPORT_NAME}`;
 
   return {
-    id:       REPORT_NAME,
-    type:     REPORT_TYPE,
-    kind:     'ClusterScanReport',
-    links:    { self, view: self },
+    id: REPORT_NAME,
+    type: REPORT_TYPE,
+    kind: 'ClusterScanReport',
+    links: { self, view: self },
     metadata: { name: REPORT_NAME, creationTimestamp: '2026-01-01T10:05:00Z' },
-    spec:     { reportJSON: MOCK_REPORT_JSON },
+    spec: { reportJSON: MOCK_REPORT_JSON },
   };
 }
 
 function buildSchema(origin: string, def: { id: string; kind: string; resource: string }) {
   return {
-    id:                def.id,
-    type:              'schema',
-    links:             { collection: `${ origin }/v1/${ def.id }`, self: `${ origin }/v1/schemas/${ def.id }` },
+    id: def.id,
+    type: 'schema',
+    links: { collection: `${origin}/v1/${def.id}`, self: `${origin}/v1/schemas/${def.id}` },
     collectionMethods: ['GET'],
-    resourceMethods:   ['GET'],
-    pluralName:        def.resource,
-    resourceFields:    {},
-    attributes:        {
-      group:      COMPLIANCE_GROUP,
-      kind:       def.kind,
+    resourceMethods: ['GET'],
+    pluralName: def.resource,
+    resourceFields: {},
+    attributes: {
+      group: COMPLIANCE_GROUP,
+      kind: def.kind,
       namespaced: false,
-      resource:   def.resource,
-      verbs:      ['get', 'list', 'watch'],
-      version:    'v1',
+      resource: def.resource,
+      verbs: ['get', 'list', 'watch'],
+      version: 'v1',
     },
   };
 }
@@ -163,9 +190,9 @@ async function fulfillCompliance(route: Route): Promise<void> {
   const [, resource, idPart] = url.pathname.match(COMPLIANCE_URL_REGEX) ?? [];
   const id = idPart ? decodeURIComponent(idPart.replace(/^\//, '')) : undefined;
   const singular = resource?.replace(/s$/, '');
-  const type = `${ COMPLIANCE_GROUP }.${ singular }`;
+  const type = `${COMPLIANCE_GROUP}.${singular}`;
   const items: Record<string, any[]> = {
-    clusterscan:       [mockScan(url.origin)],
+    clusterscan: [mockScan(url.origin)],
     clusterscanreport: [mockReport(url.origin)],
   };
   const all = items[singular] ?? [];
@@ -173,17 +200,19 @@ async function fulfillCompliance(route: Route): Promise<void> {
   if (id) {
     const found = all.find((item) => item.id === id);
 
-    await route.fulfill(found ? { json: found } : { status: 404, json: { type: 'error', code: 'NotFound', status: 404 } });
+    await route.fulfill(
+      found ? { json: found } : { status: 404, json: { type: 'error', code: 'NotFound', status: 404 } },
+    );
 
     return;
   }
 
-  await route.fulfill({ json: steveCollection(`${ url.origin }${ url.pathname }`, type, all) });
+  await route.fulfill({ json: steveCollection(`${url.origin}${url.pathname}`, type, all) });
 }
 
 /** Answers the compliance resources and adds the compliance schemas to the schema list when the cluster lacks them */
 async function mockComplianceSurface(page: Page): Promise<void> {
-  await page.route(/\/v1\/schemas(\?.*)?$/, async(route) => {
+  await page.route(/\/v1\/schemas(\?.*)?$/, async (route) => {
     const response = await route.fetch();
     const body = await response.json();
     const origin = new URL(route.request().url()).origin;
@@ -203,7 +232,9 @@ async function mockComplianceSurface(page: Page): Promise<void> {
     delete headers['content-encoding'];
 
     await route.fulfill({
-      status: response.status(), headers, json: body
+      status: response.status(),
+      headers,
+      json: body,
     });
   });
 
@@ -264,14 +295,12 @@ async function legacyToggleLabels(page: Page): Promise<string[]> {
 /** Labels of every column the Vue SortableTable reports as hidden (`hide: true`) */
 async function hiddenColumnLabels(page: Page): Promise<string[]> {
   return page.evaluate(() => {
-     
     let inst: any = (document.querySelector('.sortable-table') as any)?.__vueParentComponent;
 
     while (inst) {
       const cols = inst.proxy?.columns || inst.props?.headers;
 
       if (Array.isArray(cols)) {
-         
         return cols.filter((c: any) => c.hide === true).map((c: any) => c.label || c.name);
       }
 
@@ -326,7 +355,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
     fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
   });
 
-  test.beforeEach(async({ page, login }) => {
+  test.beforeEach(async ({ page, login }) => {
     await page.setViewportSize(VIEWPORT);
     await login();
   });
@@ -334,10 +363,10 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
   test.describe('ConfigMaps list', () => {
     let originalTableViews: string | undefined;
 
-    test.beforeAll(async({ rancherApi }) => {
+    test.beforeAll(async ({ rancherApi }) => {
       // Leftovers of an interrupted run, then the three ConfigMaps this spec sorts
       for (const name of CM_CREATION_ORDER) {
-        await rancherApi.deleteRancherResource('v1', 'configmaps', `${ CM_NAMESPACE }/${ name }`, false);
+        await rancherApi.deleteRancherResource('v1', 'configmaps', `${CM_NAMESPACE}/${name}`, false);
       }
 
       for (const [i, name] of CM_CREATION_ORDER.entries()) {
@@ -349,13 +378,13 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       }
     });
 
-    test.afterAll(async({ rancherApi }) => {
+    test.afterAll(async ({ rancherApi }) => {
       for (const name of CM_CREATION_ORDER) {
-        await rancherApi.deleteRancherResource('v1', 'configmaps', `${ CM_NAMESPACE }/${ name }`, false);
+        await rancherApi.deleteRancherResource('v1', 'configmaps', `${CM_NAMESPACE}/${name}`, false);
       }
     });
 
-    test.beforeEach(async({ rancherApi }) => {
+    test.beforeEach(async ({ rancherApi }) => {
       // Column visibility and order live in the user's saved table views: start from none, and restore afterwards
       const prefs = await rancherApi.getRancherResource('v1', 'userpreferences');
 
@@ -363,11 +392,11 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       await rancherApi.setUserPreference({ 'table-views': JSON.stringify({}) });
     });
 
-    test.afterEach(async({ rancherApi }) => {
+    test.afterEach(async ({ rancherApi }) => {
       await rancherApi.setUserPreference({ 'table-views': originalTableViews ?? JSON.stringify({}) });
     });
 
-    test('Column toggle menu is alphabetical', async({ page }) => {
+    test('Column toggle menu is alphabetical', async ({ page }) => {
       await openConfigMapsList(page);
 
       const toggle = legacyToggleButton(page);
@@ -396,7 +425,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       expect(labels).toEqual(alphabetical);
     });
 
-    test('Hidden column is excluded from the column toggle menu', async({ page }) => {
+    test('Hidden column is excluded from the column toggle menu', async ({ page }) => {
       await openConfigMapsList(page);
 
       const toggle = legacyToggleButton(page);
@@ -428,7 +457,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-05-hidden-column-excluded-toggle.png') });
     });
 
-    test('Age sort orders the seeded ConfigMaps by creationTimestamp, not by name', async({ page }) => {
+    test('Age sort orders the seeded ConfigMaps by creationTimestamp, not by name', async ({ page }) => {
       const table = await openConfigMapsList(page);
 
       const nameIndex = await headerIndex(table, 'Name');
@@ -460,9 +489,9 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       // Which direction the first click lands on is the table's choice, so accept either creation order
       const oldestFirst = CM_CREATION_ORDER;
       const newestFirst = [...CM_CREATION_ORDER].reverse();
-      const readOrder = async() => (await columnTexts(table, nameIndex)).join(',');
+      const readOrder = async () => (await columnTexts(table, nameIndex)).join(',');
 
-      await expect.poll(readOrder).toMatch(new RegExp(`^(${ oldestFirst.join(',') }|${ newestFirst.join(',') })$`));
+      await expect.poll(readOrder).toMatch(new RegExp(`^(${oldestFirst.join(',')}|${newestFirst.join(',')})$`));
 
       const firstOrder = await readOrder();
       const firstOldest = firstOrder === oldestFirst.join(',');
@@ -477,7 +506,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
   test.describe('Compliance scan report sub-table (mocked)', () => {
     let reportTable: Locator;
 
-    test.beforeEach(async({ page }) => {
+    test.beforeEach(async ({ page }) => {
       await mockComplianceSurface(page);
 
       const list = new ClusterScanPagePo(page);
@@ -487,7 +516,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       await new WelcomeDialogPo(page).dismissIfVisible();
       await expect(list.row(SCAN_NAME).self()).toBeVisible({ timeout: LONG });
 
-      const detail = new PagePo(page, `/c/local/compliance/compliance.cattle.io.clusterscan/${ SCAN_NAME }`);
+      const detail = new PagePo(page, `/c/local/compliance/compliance.cattle.io.clusterscan/${SCAN_NAME}`);
 
       await detail.goTo();
       await detail.waitForPage();
@@ -510,11 +539,11 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       await expect(page.locator('.sub-row .sub-table').first()).toBeVisible();
     });
 
-    test.afterEach(async({ page }) => {
+    test.afterEach(async ({ page }) => {
       await page.unrouteAll({ behavior: 'ignoreErrors' });
     });
 
-    test('Sub-table has no borders and a semibold header', async({ page }) => {
+    test('Sub-table has no borders and a semibold header', async ({ page }) => {
       // eslint-disable-next-line playwright/no-raw-locators -- the nested table has no test id
       const nested = page.locator('.sub-row .sub-table table.sortable-table').first();
       // eslint-disable-next-line playwright/no-raw-locators -- the nested table has no test id
@@ -522,7 +551,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
 
       await expect(nested).toBeVisible();
       for (const side of ['top', 'right', 'bottom', 'left']) {
-        await expect(nested).toHaveCSS(`border-${ side }-width`, '0px');
+        await expect(nested).toHaveCSS(`border-${side}-width`, '0px');
       }
 
       await expect(nestedHeader).toBeVisible();
@@ -531,7 +560,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
       await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-01-subtable-no-borders-semibold-header.png') });
     });
 
-    test('Selecting the parent row highlights it but stops at the sub-table row', async({ page }) => {
+    test('Selecting the parent row highlights it but stops at the sub-table row', async ({ page }) => {
       const checkbox = reportTable.getByTestId('sortable-table-0-checkbox');
 
       test.skip(
@@ -541,8 +570,7 @@ test.describe('Sortable Table New UX Design (#19147)', { tag: ['@generic', '@adm
 
       // eslint-disable-next-line playwright/no-raw-locators -- row state is a class set by the selection logic
       const parentRow = reportTable.locator('tbody tr.main-row').first();
-      // eslint-disable-next-line playwright/no-raw-locators -- row state is a class set by the selection logic
-      const subTableRow = reportTable.locator('tbody tr.sub-row').filter({ has: page.locator('.sub-table') }).first();
+      const subTableRow = new SortableTablePo(page, '.dashboard-root .sortable-table >> nth=0').subTableRows().first();
 
       await checkbox.click();
 

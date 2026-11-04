@@ -5,7 +5,8 @@ import { ProjectsNamespacesListPagePo } from '@/e2e/po/pages/explorer/projects-n
 import PromptRemove from '@/e2e/po/prompts/promptRemove.po';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-14451-delete-dialog-single-click-select-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-14451-delete-dialog-single-click-select-evidence';
 
 /** Open the Delete confirmation dialog for the given namespace from the Projects/Namespaces list */
 async function openDeleteDialog(page: Page, namespace: string): Promise<PromptRemove> {
@@ -48,7 +49,9 @@ test.describe('Delete Confirmation Dialog Single-Click Select (#14451)', { tag: 
     await login();
   });
 
-  test('single click on the hyphenated name selects it fully and pasting enables the Delete button', async ({ page }) => {
+  test('single click on the hyphenated name selects it fully and pasting enables the Delete button', async ({
+    page,
+  }) => {
     const promptRemove = await openDeleteDialog(page, testNamespace);
     const confirmButton = promptRemove.confirmButton();
     const nameEl = promptRemove.confirmName();

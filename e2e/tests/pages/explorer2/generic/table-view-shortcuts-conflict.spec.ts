@@ -7,7 +7,8 @@ import { HeaderPo } from '@/e2e/po/components/header.po';
 import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-19551-table-view-shortcuts-browser-conflict-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-19551-table-view-shortcuts-browser-conflict-evidence';
 
 type RecordedKeyDown = { key: string; defaultPrevented: boolean } | null;
 
@@ -19,14 +20,18 @@ type RecordedKeyDown = { key: string; defaultPrevented: boolean } | null;
 async function recordKeyDowns(page: Page): Promise<void> {
   await page.evaluate(() => {
     (window as any).__lastKeyDown = null;
-    document.addEventListener('keydown', (e) => {
-      if (['s', 'S', 'd', 'D'].includes(e.key) && (e.ctrlKey || e.metaKey)) {
-        (window as any).__lastKeyDown = {
-          key:              e.key,
-          defaultPrevented: e.defaultPrevented
-        };
-      }
-    }, true);
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (['s', 'S', 'd', 'D'].includes(e.key) && (e.ctrlKey || e.metaKey)) {
+          (window as any).__lastKeyDown = {
+            key: e.key,
+            defaultPrevented: e.defaultPrevented,
+          };
+        }
+      },
+      true,
+    );
   });
 }
 

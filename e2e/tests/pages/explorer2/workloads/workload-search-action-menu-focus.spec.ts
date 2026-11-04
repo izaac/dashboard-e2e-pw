@@ -25,15 +25,15 @@ test.describe('Workload Search Action Menu and Focus (#19634)', { tag: ['@explor
     for (const name of DEPLOYMENTS) {
       await rancherApi.createRancherResource('v1', 'apps.deployments', {
         apiVersion: 'apps/v1',
-        kind:       'Deployment',
-        metadata:   { name, namespace: testNamespace },
-        spec:       {
+        kind: 'Deployment',
+        metadata: { name, namespace: testNamespace },
+        spec: {
           replicas: 1,
           selector: { matchLabels: { app: name } },
           template: {
             metadata: { labels: { app: name } },
-            spec:     {
-              containers:                    [{ name: 'pause', image: 'registry.k8s.io/pause:3.10' }],
+            spec: {
+              containers: [{ name: 'pause', image: 'registry.k8s.io/pause:3.10' }],
               terminationGracePeriodSeconds: 0,
             },
           },
@@ -130,7 +130,7 @@ test.describe('Workload Search Action Menu and Focus (#19634)', { tag: ['@explor
 
     // The character lands in the search input and the namespace filter is not opened by a shortcut
     await expect(input).toBeFocused();
-    await expect(input).toHaveValue(`${ SEARCH_TERM }n`);
+    await expect(input).toHaveValue(`${SEARCH_TERM}n`);
     await expect(new NamespaceFilterPo(page).getOptions()).toHaveCount(0);
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-05-typing-in-result-focuses-search.png') });

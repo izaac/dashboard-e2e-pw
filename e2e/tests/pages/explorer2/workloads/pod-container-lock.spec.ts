@@ -7,7 +7,8 @@ import RadioGroupInputPo from '@/e2e/po/components/radio-group-input.po';
 import { EXTRA_LONG, LONG } from '@/support/timeouts';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-12212-pod-container-name-edit-lock-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-12212-pod-container-name-edit-lock-evidence';
 
 const PAUSE_IMAGE = 'registry.k8s.io/pause:3.10';
 const STANDALONE_POD = 'qa-standalone-pod';
@@ -36,7 +37,10 @@ async function dismissModalIfPresent(page: Page): Promise<void> {
   await page.keyboard.press('Escape');
 
   if (await modal.isVisible()) {
-    await modal.getByRole('button', { name: /close|cancel|dismiss/i }).first().click();
+    await modal
+      .getByRole('button', { name: /close|cancel|dismiss/i })
+      .first()
+      .click();
   }
 
   await expect(modal).toBeHidden();
@@ -53,7 +57,10 @@ function containerNameInput(page: Page, index: number): Locator {
 
 /** The panel also holds the PostStart/PreStop radiogroups, so target the Init Containers one by accessible name */
 class InitRadioGroupPo extends RadioGroupInputPo {
-  constructor(page: Page, private readonly panel: Locator) {
+  constructor(
+    page: Page,
+    private readonly panel: Locator,
+  ) {
     super(page, '[role="radiogroup"]', panel);
   }
 

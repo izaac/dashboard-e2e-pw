@@ -6,7 +6,8 @@ import { CertManagerOverviewPagePo, CertificateDetailPagePo } from '@/e2e/po/pag
 import { LONG } from '@/support/timeouts';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-18749-cert-manager-extension-support-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-18749-cert-manager-extension-support-evidence';
 
 const CM_CRD = 'certificates.cert-manager.io';
 const CERT_API = 'cert-manager.io.certificates';
@@ -19,12 +20,7 @@ test.describe('Cert Manager Built-in Extension (#18749)', { tag: ['@explorer2', 
   let expiringCertName = '';
 
   test.beforeAll(async ({ rancherApi }) => {
-    const crd = await rancherApi.getRancherResource(
-      'v1',
-      'apiextensions.k8s.io.customresourcedefinitions',
-      CM_CRD,
-      0,
-    );
+    const crd = await rancherApi.getRancherResource('v1', 'apiextensions.k8s.io.customresourcedefinitions', CM_CRD, 0);
 
     test.skip(crd.status !== 200, 'cert-manager CRDs are not installed on the local cluster');
 

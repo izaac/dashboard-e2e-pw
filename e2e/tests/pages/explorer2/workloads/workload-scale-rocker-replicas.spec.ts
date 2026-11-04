@@ -145,7 +145,7 @@ test.describe('Workload Pods Card Scale Rocker (#17913)', { tag: ['@explorer2', 
     const released = new Promise<void>((resolve) => {
       releaseRequest = resolve;
     });
-    const scaleHandler = async(route: Route) => {
+    const scaleHandler = async (route: Route) => {
       if (['PUT', 'PATCH'].includes(route.request().method())) {
         await released;
       }
@@ -193,7 +193,7 @@ test.describe('Workload Pods Card Scale Rocker (#17913)', { tag: ['@explorer2', 
     const released = new Promise<void>((resolve) => {
       releaseRequest = resolve;
     });
-    const failHandler = async(route: Route) => {
+    const failHandler = async (route: Route) => {
       if (['PUT', 'PATCH'].includes(route.request().method())) {
         await released;
         await route.fulfill({

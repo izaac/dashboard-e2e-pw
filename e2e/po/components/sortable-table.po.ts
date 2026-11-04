@@ -165,6 +165,11 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('tbody tr.sub-row');
   }
 
+  /** Sub-rows that host a nested sub-table, i.e. expanded detail rows */
+  subTableRows(): Locator {
+    return this.subRows().filter({ has: this.page.locator('.sub-table') });
+  }
+
   rowElementLink(rowIndex: number, columnIndex: number): Locator {
     return this.getTableCell(rowIndex, columnIndex).locator('a');
   }

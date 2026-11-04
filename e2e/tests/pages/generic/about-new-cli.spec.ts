@@ -26,7 +26,9 @@ test.describe('About Page New CLI Section (#19704)', { tag: ['@generic', '@admin
 
     await expect(newHeading).toBeVisible();
     await expect(aboutPage.newBadge()).toBeVisible();
-    await expect(page.getByText('The intelligent CLI built for AI, AI agents and autonomous Kubernetes.')).toBeVisible();
+    await expect(
+      page.getByText('The intelligent CLI built for AI, AI agents and autonomous Kubernetes.'),
+    ).toBeVisible();
 
     await aboutPage.newBadge().scrollIntoViewIfNeeded();
     await page.screenshot({

@@ -6,7 +6,8 @@ import { ConfigMapsPagePo } from '@/e2e/po/pages/explorer/configmaps.po';
 import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-15222-rearrange-and-hide-table-columns-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-15222-rearrange-and-hide-table-columns-evidence';
 
 /** The visible column labels of the table, in order: the checkbox and actions headers have no text */
 async function headerLabels(table: Locator): Promise<string[]> {

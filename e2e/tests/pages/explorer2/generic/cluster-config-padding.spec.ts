@@ -1,18 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import type { Page } from '@playwright/test';
 import { test, expect } from '@/support/fixtures';
 import ClusterResourceDetailPagePo from '@/e2e/po/pages/cluster-manager/cluster-resource-detail.po';
 
 const EVIDENCE_DIR =
-  process.env.QA_EVIDENCE_DIR || '/home/izaac/Documents/ui-qa-plans/plans/qa-17827-cluster-config-form-padding-evidence';
+  process.env.QA_EVIDENCE_DIR ||
+  '/home/izaac/Documents/ui-qa-plans/plans/qa-17827-cluster-config-form-padding-evidence';
 
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
-
-async function waitForContentSettled(page: Page) {
-  await expect(page.locator('.loading, .data-loading, div:text-is("Loading...")')).toHaveCount(0, { timeout: 30000 });
-  await page.waitForLoadState('networkidle').catch(() => {});
-}
 
 test.describe('Cluster Configuration Form Padding (#17827)', { tag: ['@generic', '@adminUser'] }, () => {
   test.beforeEach(async ({ login }) => {
@@ -32,7 +27,7 @@ test.describe('Cluster Configuration Form Padding (#17827)', { tag: ['@generic',
     await expect(outlet).toHaveCSS('padding-left', '24px');
     await expect(outlet).toHaveCSS('padding-top', '24px');
 
-    await waitForContentSettled(page);
+    await clusterPage.waitForContentSettled();
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-01-standard-user-cluster-config-padding.png') });
   });
 
@@ -49,7 +44,7 @@ test.describe('Cluster Configuration Form Padding (#17827)', { tag: ['@generic',
     await expect(outlet).toHaveCSS('padding-left', '24px');
     await expect(outlet).toHaveCSS('padding-top', '24px');
 
-    await waitForContentSettled(page);
+    await clusterPage.waitForContentSettled();
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-02-admin-cluster-edit-padding.png') });
   });
 
