@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
@@ -29,6 +29,15 @@ export default class ChartRepositoriesPagePo extends PagePo {
 
   async create(): Promise<void> {
     await this.page.getByTestId('masthead-create').click();
+  }
+
+  /**
+   * The list masthead renders the create control as an anchor, not a button.
+   * Kept as a separate locator because the create form's footer submit button
+   * shares the "Add Repository" label.
+   */
+  addRepositoryLink(): Locator {
+    return this.page.getByRole('link', { name: 'Add Repository' });
   }
 
   createEditRepositories(repoName?: string): ChartRepositoriesCreateEditPo {

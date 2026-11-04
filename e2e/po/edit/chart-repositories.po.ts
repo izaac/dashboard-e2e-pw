@@ -104,6 +104,27 @@ export default class ChartRepositoriesCreateEditPo extends PagePo {
     await this.repoRcItemCard('helm-url').click();
   }
 
+  suseAppCollectionCard(): Locator {
+    return this.repoRcItemCard('suse-application-collection');
+  }
+
+  async selectSuseAppCollectionCard(): Promise<void> {
+    await this.suseAppCollectionCard().click();
+  }
+
+  /** SUSE App Collection pins the OCI host, so this is the only editable name field. */
+  suseAppCollectionNameInput(): Locator {
+    return this.page.getByTestId('NameNsDescriptionNameInput');
+  }
+
+  basicUsernameInput(): Locator {
+    return this.page.getByTestId('auth-secret-basic-username');
+  }
+
+  basicPasswordInput(): Locator {
+    return this.page.getByTestId('auth-secret-basic-password');
+  }
+
   lablesAnnotationsKeyValue(): KeyValuePo {
     return new KeyValuePo(this.page, ':scope', this.self());
   }

@@ -12,6 +12,11 @@ export default class AboutPagePo extends PagePo {
     return this.page.getByTestId('about__diagnostics_button');
   }
 
+  /** Get the "New" status badge within the about section */
+  newBadge(): Locator {
+    return this.page.locator('.about').getByText('New', { exact: true });
+  }
+
   /** Get links within the about section by exact text match */
   links(value: string): Locator {
     return this.page.locator('.about a').getByText(value, { exact: true });

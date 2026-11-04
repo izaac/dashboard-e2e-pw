@@ -7,7 +7,7 @@ import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 
 export default class ResourceDetailPo extends ComponentPo {
-  constructor(page: Page, selector: string, parent?: Locator) {
+  constructor(page: Page, selector = '.dashboard-root', parent?: Locator) {
     super(page, selector, parent);
   }
 
@@ -36,6 +36,15 @@ export default class ResourceDetailPo extends ComponentPo {
 
   title(): Locator {
     return this.self().locator('.title-bar h1.title, .primaryheader h1');
+  }
+
+  titleBar(): Locator {
+    return this.self().locator('.title-bar');
+  }
+
+  /** State badge rendered next to the detail title (e.g. Pass/Fail on a ClusterScan). */
+  stateBadge(): Locator {
+    return this.titleBar().locator('.badge-state').first();
   }
 
   masthead(): Locator {

@@ -24,6 +24,20 @@ export default class PromptRemove extends ComponentPo {
     return this.self().locator('.btn.role-secondary').filter({ hasText: 'Cancel' });
   }
 
+  confirmButton(): Locator {
+    return this.self().getByTestId('prompt-remove-confirm-button');
+  }
+
+  /** The bold resource name the user must type to confirm deletion */
+  confirmName(): Locator {
+    return this.self().locator('.confirm-text b');
+  }
+
+  /** Any copy affordance (button or box) rendered inside the dialog */
+  copyControls(): Locator {
+    return this.self().locator('.copy-btn, [data-testid*="copy"]');
+  }
+
   warning(): Locator {
     return this.self().locator('.card-body .text-warning');
   }

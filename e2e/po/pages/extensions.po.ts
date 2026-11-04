@@ -96,6 +96,16 @@ export default class ExtensionsPagePo extends PagePo {
     });
   }
 
+  /** All extension cards rendered in the active tab */
+  extensionCards(): Locator {
+    return this.page.locator('#extensions-main-page .plugin-cards .item-card');
+  }
+
+  /** Banner content of the error banner in the extension details panel */
+  extensionDetailsErrorBanner(): Locator {
+    return this.extensionDetails().locator('.banner.error').getByTestId('banner-content');
+  }
+
   /** Title element on the extension card; useful for asserting the card is rendered. */
   extensionCardTitle(extensionTitle: string): Locator {
     return this.page.getByTestId('item-card-header-title').filter({ hasText: extensionTitle }).first();

@@ -330,6 +330,29 @@ export class RancherApi {
     return { status: resp.status(), body: await resp.json().catch(() => ({})) };
   }
 
+  /**
+   * PUT a full resource representation. Separate from {@link setRancherResource}
+   * for callers that express an update intent (fetch-modify-put on steve objects),
+   * so the read-then-write flow stays obvious at the call site.
+   */
+  async updateRancherResource(
+    prefix: string,
+    resourceType: string,
+    resourceId: string,
+    body: any,
+    failOnStatusCode = true,
+  ) {
+    const resp = await this.fetchWithReauth(() =>
+      this.request.put(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { ...this.opts({ data: body }) }),
+    );
+
+    if (failOnStatusCode) {
+      expect(resp.status()).toBe(200);
+    }
+
+    return { status: resp.status(), body: await resp.json().catch(() => ({})) };
+  }
+
   async deleteRancherResource(prefix: string, resourceType: string, resourceId: string, failOnStatusCode = true) {
     const resp = await this.fetchWithReauth(() =>
       this.request.delete(`${this.apiUrl}/${prefix}/${resourceType}/${resourceId}`, { ...this.opts() }),
