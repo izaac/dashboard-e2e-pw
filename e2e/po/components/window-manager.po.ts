@@ -41,12 +41,14 @@ export default class WindowManagerPo extends ComponentPo {
   /**
    * For every tablist, the aria-owns ids and the subset that resolve to an existing role="tab" element.
    */
-  async tabListOwnership(): Promise<Array<{ owned: string[]; missing: string[]; }>> {
-    return this.tabLists().evaluateAll((lists) => lists.map((list) => {
-      const owned = (list.getAttribute('aria-owns') || '').split(/\s+/).filter(Boolean);
-      const missing = owned.filter((id) => document.getElementById(id)?.getAttribute('role') !== 'tab');
+  async tabListOwnership(): Promise<Array<{ owned: string[]; missing: string[] }>> {
+    return this.tabLists().evaluateAll((lists) =>
+      lists.map((list) => {
+        const owned = (list.getAttribute('aria-owns') || '').split(/\s+/).filter(Boolean);
+        const missing = owned.filter((id) => document.getElementById(id)?.getAttribute('role') !== 'tab');
 
-      return { owned, missing };
-    }));
+        return { owned, missing };
+      }),
+    );
   }
 }
