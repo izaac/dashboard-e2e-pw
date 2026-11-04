@@ -46,6 +46,51 @@ export class SecretEditPagePo extends PagePo {
     return new KeyValuePo(this.page, '[data-testid="labels-keyvalue"]', this.tabs().panel('labels'));
   }
 
+  /** Description input of the Name/Namespace/Description block */
+  descriptionInput(): Locator {
+    return this.createEditView().nameNsDescription().description().input();
+  }
+
+  /** Locators of every key input in the labels editor */
+  labelKeyInputs(): Locator {
+    return this.labelsEditor().self().locator('[data-testid^="input-kv-item-key-"]');
+  }
+
+  /** Every label row currently in the labels editor as key -> value */
+  async labelEntries(): Promise<Record<string, string>> {
+    const editor = this.labelsEditor().self();
+    const count = await this.labelKeyInputs().count();
+    const entries: Record<string, string> = {};
+
+    for (let i = 0; i < count; i++) {
+      const key = await editor.getByTestId(`input-kv-item-key-${i}`).inputValue();
+
+      entries[key] = await editor.getByTestId(`kv-item-value-${i}`).locator('input, textarea').first().inputValue();
+    }
+
+    return entries;
+  }
+
+  /** Remove the label row whose key matches, then let the editor debounce settle */
+  async removeLabel(key: string): Promise<void> {
+    await this.labelsTab().click();
+
+    const inputs = this.labelKeyInputs();
+    const count = await inputs.count();
+
+    for (let i = 0; i < count; i++) {
+      if ((await inputs.nth(i).inputValue()) === key) {
+        await this.labelsEditor().self().getByTestId(`remove-column-${i}`).getByRole('button').click();
+        // eslint-disable-next-line playwright/no-wait-for-timeout -- no DOM signal exists for the debounce flush
+        await this.page.waitForTimeout(750);
+
+        return;
+      }
+    }
+
+    throw new Error(`Label '${key}' not found in the labels editor`);
+  }
+
   /** Add one label row after the existing ones and fill it in */
   async addLabel(key: string, value: string): Promise<void> {
     await this.labelsTab().click();

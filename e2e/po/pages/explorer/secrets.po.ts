@@ -27,6 +27,22 @@ export class SecretsListPagePo extends PagePo {
   list(): BaseResourceList {
     return new BaseResourceList(this.page, '[data-testid="sortable-table-list-container"]');
   }
+
+  /** List filter box: the new-UX query box, falling back to the legacy search row */
+  filterInput(): Locator {
+    return this.page
+      .getByTestId('table-views-query')
+      .or(this.page.getByTestId('search-box-filter-row').getByRole('textbox'))
+      .first();
+  }
+
+  async filterByName(text: string): Promise<void> {
+    const input = this.filterInput();
+
+    await input.focus();
+    await input.clear();
+    await input.fill(text);
+  }
 }
 
 export class SecretsCreateEditPo extends PagePo {
