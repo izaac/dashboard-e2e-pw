@@ -920,15 +920,16 @@ export class RancherApi {
     return result.body?.spec?.value ?? result.body?.status?.default;
   }
 
-  async createProject(name: string, clusterId = 'local') {
+  async createProject(name: string, clusterId = 'local', labels?: Record<string, string>) {
     return this.createRancherResource('v3', 'projects', {
       type: 'project',
       name,
       clusterId,
+      ...(labels ? { labels } : {}),
     });
   }
 
-  async createNamespaceInProject(nsName: string, projectId: string) {
+  async createNamespaceInProject(nsName: string, projectId: string, labels?: Record<string, string>) {
     return this.createRancherResource('v1', 'namespaces', {
       type: 'namespace',
       metadata: {
@@ -937,8 +938,22 @@ export class RancherApi {
           'field.cattle.io/containerDefaultResourceLimit': '{}',
         },
         name: nsName,
+        ...(labels ? { labels } : {}),
       },
     });
+  }
+
+  /** Principal id (e.g. `local://user-abc12`) of a local user, as used by role bindings */
+  async getUserPrincipalId(username: string): Promise<string> {
+    const { body } = await this.getRancherResource('v1', 'management.cattle.io.users');
+    const user = body.data?.find((u: { username?: string }) => u.username === username);
+    const principalId = user?.principalIds?.[0];
+
+    if (!principalId) {
+      throw new Error(`No principal id found for user '${username}'`);
+    }
+
+    return principalId;
   }
 
   /**
