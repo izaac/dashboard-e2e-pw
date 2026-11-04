@@ -132,7 +132,7 @@ export default [
       'playwright/no-force-option': 'warn',
       // Specs should not contain raw `page.locator(...)` or chained
       // `.locator(...)` selectors — POs own those. Setup/auth files override.
-      'playwright/no-raw-locators': 'warn',
+      'playwright/no-raw-locators': 'error',
 
       // --- Rules that MUST stay on ---
       'playwright/no-conditional-expect': 'warn',
