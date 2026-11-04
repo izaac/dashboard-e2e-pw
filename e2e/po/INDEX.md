@@ -53,7 +53,7 @@
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
 | SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, selectionActionsTrigger, openSelectionActions, if, selectionAction, bulkBar (+61) |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, panel, allTabs, tabNames (+2) |
-| TableViewsPo | table-views.po.ts | ComponentPo | — | super, tabsContainer, tabs, tab, allTab, activeTab, unsavedDot, searchInput (+12) |
+| TableViewsPo | table-views.po.ts | ComponentPo | — | super, tabsContainer, tabs, tab, allTab, activeTab, unsavedDot, searchInput (+13) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | TooltipPo | tooltip.po.ts | ComponentPo | `:scope` | super, show, content |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |

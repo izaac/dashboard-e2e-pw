@@ -49,6 +49,10 @@ export default class TableViewsPo extends ComponentPo {
     return this.page.locator(`[data-testid="table-views-tab-menu-${id}"]`);
   }
 
+  newTabButton(): Locator {
+    return this.page.locator('[data-testid="table-views-new-tab"]');
+  }
+
   menuSaveAsNew(): Locator {
     return this.page.locator('[data-testid="table-views-save-as-new"]');
   }
@@ -82,7 +86,7 @@ export default class TableViewsPo extends ComponentPo {
   }
 
   publishCancelButton(): Locator {
-    return this.publishModal().locator('button:has-text("Cancel"), [data-testid="rc-modal-cancel"]');
+    return this.publishModal().getByRole('button', { name: 'Cancel' });
   }
 
   modalBackdrop(): Locator {

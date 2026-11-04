@@ -1,6 +1,7 @@
-import { errors, type APIResponse, type Page, type Route } from '@playwright/test';
+import { errors, type Locator, type Page } from '@playwright/test';
 import { test, expect } from '@/support/fixtures';
 import { WorkloadsPodsListPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
+import type TableViewsPo from '@/e2e/po/components/table-views.po';
 import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 import { SMALL_CONTAINER } from '@/e2e/tests/pages/explorer2/workloads/workload.utils';
 
@@ -19,6 +20,44 @@ async function dismissWelcomeDialog(page: Page): Promise<void> {
   }
 
   await welcome.dismissIfVisible();
+}
+
+/** Saves whatever the built-in tab currently holds as a new named view, which then becomes the active tab */
+async function saveAllTabAsNewView(page: Page, views: TableViewsPo, viewName: string): Promise<Locator> {
+  await views.allTab().focus();
+  await page.keyboard.press('ArrowDown');
+  await views.menuSaveAsNew().click();
+  await expect(views.renameInput()).toBeVisible();
+  await views.renameInput().fill(viewName);
+  await views.renameInput().press('Enter');
+  await expect(views.renameInput()).toBeHidden();
+
+  const viewTab = views.tabs().filter({ hasNotText: 'All' }).last();
+
+  await expect(viewTab).toHaveAttribute('aria-selected', 'true');
+
+  return viewTab;
+}
+
+/** The view's id is generated, so read it from the tab itself */
+async function viewIdOf(viewTab: Locator): Promise<string> {
+  const tabTestId = await viewTab.getAttribute('data-testid');
+  const viewId = (tabTestId || '').replace('table-views-tab-', '');
+
+  expect(viewId).not.toBe('');
+  expect(viewId).not.toBe('all');
+
+  return viewId;
+}
+
+/** Opens the publish confirmation for a view tab through its keyboard-reachable menu */
+async function openPublishModal(page: Page, views: TableViewsPo, viewTab: Locator): Promise<void> {
+  const viewId = await viewIdOf(viewTab);
+
+  await viewTab.focus();
+  await page.keyboard.press('ArrowDown');
+  await views.menuPublish(viewId).click();
+  await expect(views.publishModal()).toBeVisible();
 }
 
 test.describe('Table Views Lifecycle and State Management', { tag: ['@generic', '@adminUser'] }, () => {
@@ -44,51 +83,6 @@ test.describe('Table Views Lifecycle and State Management', { tag: ['@generic', 
   test.beforeEach(async ({ login, page, rancherApi }) => {
     // Every test starts from a table with no saved views
     await rancherApi.setUserPreference({ 'table-views': '{}' });
-
-    // Test clusters do not advertise POST on table configurations, which hides Publish: advertise it
-    const advertiseWrite = (schema: { collectionMethods?: string[]; resourceMethods?: string[] }) => {
-      schema.collectionMethods = ['GET', 'POST', 'PUT', 'DELETE'];
-      schema.resourceMethods = ['GET', 'PUT', 'DELETE'];
-    };
-    const fulfillJson = async (route: Route, response: APIResponse, body: unknown) => {
-      const headers = { ...response.headers() };
-
-      delete headers['content-length'];
-      delete headers['content-encoding'];
-      await route.fulfill({ status: response.status(), headers, json: body });
-    };
-
-    await page.route(/\/v1\/schemas(\?.*)?$/, async (route) => {
-      const response = await route.fetch();
-      const body = await response.json();
-      let schema = (body.data ?? []).find((s: { id: string }) => s.id === 'ui.cattle.io.tableconfiguration');
-
-      if (!schema) {
-        schema = {
-          id: 'ui.cattle.io.tableconfiguration',
-          type: 'schema',
-          links: {
-            collection: `${new URL(route.request().url()).origin}/v1/ui.cattle.io.tableconfigurations`,
-          },
-          collectionMethods: ['GET', 'POST', 'PUT', 'DELETE'],
-          resourceMethods: ['GET', 'PUT', 'DELETE'],
-        };
-        body.data.push(schema);
-      } else {
-        advertiseWrite(schema);
-      }
-
-      await fulfillJson(route, response, body);
-    });
-
-    await page.route(/\/v1\/schemas\/ui\.cattle\.io\.tableconfiguration(\?.*)?$/, async (route) => {
-      const response = await route.fetch();
-      const body = await response.json();
-
-      advertiseWrite(body);
-
-      await fulfillJson(route, response, body);
-    });
 
     await login();
 
@@ -129,19 +123,47 @@ test.describe('Table Views Lifecycle and State Management', { tag: ['@generic', 
     await expect(views.searchInput()).toHaveText(filterQuery);
   });
 
-  test('initial load retains built-in tab as active with dirty indicator when filter is typed', async ({ page }) => {
-    const views = new WorkloadsPodsListPagePo(page).tableViews();
+  test('initial load keeps built-in tab in front when typed query matches an existing saved view', async ({ page }) => {
+    const podsList = new WorkloadsPodsListPagePo(page);
+    const views = podsList.tableViews();
+    const savedViewName = 'Nginx View';
 
-    // No tab has been picked: the table's own tab is the one in force and nothing is unsaved
+    // Save a custom view that carries the very filter that is typed later on
+    await views.searchInput().focus();
+    await views.searchInput().fill(filterQuery);
+    await saveAllTabAsNewView(page, views, savedViewName);
+
+    // Come back to the list afresh: no tab has been picked yet
+    await podsList.goTo();
+    await dismissWelcomeDialog(page);
+    await expect(views.allTab()).toBeVisible();
+    await podsList.sortableTable().checkLoadingIndicatorNotVisible();
+
     await expect(views.allTab()).toHaveAttribute('aria-selected', 'true');
     await expect(views.unsavedDot()).toHaveCount(0);
 
+    // Locate the saved custom tab
+    const savedTab = views.tabs().filter({ hasNotText: 'All' }).first();
+
+    await expect(savedTab).toBeVisible();
+    await expect(savedTab).toHaveAttribute('aria-selected', 'false');
+
+    // Typing a query equal to the saved view's filter must not hand the selection over to that view
     await views.searchInput().focus();
     await views.searchInput().fill(filterQuery);
 
-    // The dot sits on the built-in tab, and the tab stays the active one
     await expect(views.allTab().filter({ has: views.unsavedDot() })).toBeVisible();
     await expect(views.allTab()).toHaveAttribute('aria-selected', 'true');
+    await expect(savedTab).toHaveAttribute('aria-selected', 'false');
+
+    // Visiting the saved view and returning keeps the unsaved query on the built-in tab
+    await savedTab.click();
+    await expect(savedTab).toHaveAttribute('aria-selected', 'true');
+
+    await views.allTab().click();
+    await expect(views.allTab()).toHaveAttribute('aria-selected', 'true');
+    await expect(views.searchInput()).toHaveText(filterQuery);
+    await expect(views.allTab().filter({ has: views.unsavedDot() })).toBeVisible();
   });
 
   test('save changes to new view creates clean new view and clears source view dirty state', async ({ page }) => {
@@ -172,6 +194,7 @@ test.describe('Table Views Lifecycle and State Management', { tag: ['@generic', 
     await views.allTab().click();
     await expect(views.allTab()).toHaveAttribute('aria-selected', 'true');
     await expect(views.unsavedDot()).toHaveCount(0);
+    await expect(views.searchInput()).toHaveText('');
   });
 
   test('dismissing rename input retains default copied view name and keeps source tab clean', async ({ page }) => {
@@ -198,11 +221,11 @@ test.describe('Table Views Lifecycle and State Management', { tag: ['@generic', 
     await expect(views.allTab().filter({ has: views.unsavedDot() })).toHaveCount(0);
   });
 
-  test('publish confirmation modal displays filter-sharing warning and dismisses cleanly', async ({ page }) => {
+  test('publish confirmation modal shows filter-sharing warning only for views with a filter', async ({ page }) => {
     const views = new WorkloadsPodsListPagePo(page).tableViews();
-    const viewName = `e2e-publish-${Date.now()}`;
+    const filteredName = `e2e-publish-filtered-${Date.now()}`;
 
-    // Ensure the table configuration schema has POST in collectionMethods so Publish is offered
+    // Test clusters do not advertise POST on table configurations, which hides Publish: advertise it
     await page.evaluate(() => {
       const store = (window as any).$globalApp?.$store;
 
@@ -231,31 +254,30 @@ test.describe('Table Views Lifecycle and State Management', { tag: ['@generic', 
       return !!schema.collectionMethods?.includes('POST');
     });
 
-    // Save a view that carries a filter
+    // A clean view added via the New Tab button carries no filter: no warning
+    await views.newTabButton().click();
+
+    const unfilteredTab = views.tabs().filter({ hasNotText: 'All' }).first();
+
+    await expect(unfilteredTab).toBeVisible();
+    await expect(unfilteredTab).toHaveAttribute('aria-selected', 'true');
+
+    await openPublishModal(page, views, unfilteredTab);
+    await expect(views.publishModal()).toBeVisible();
+    await expect(views.publishWarning()).toHaveCount(0);
+
+    await views.publishCancelButton().click();
+    await expect(views.publishModal()).toBeHidden();
+
+    // A view that carries a filter warns that the filter is shared with everyone
+    await views.allTab().click();
     await views.searchInput().focus();
     await views.searchInput().fill(filterQuery);
-    await views.tabMenuButton('all').click();
-    await views.menuSaveAsNew().click();
-    await expect(views.renameInput()).toBeVisible();
-    await views.renameInput().fill(viewName);
-    await views.renameInput().press('Enter');
-    await expect(views.renameInput()).toBeHidden();
+    await expect(views.allTab().filter({ has: views.unsavedDot() })).toBeVisible();
 
-    const newTab = views.tabs().filter({ hasText: viewName });
+    const filteredTab = await saveAllTabAsNewView(page, views, filteredName);
 
-    await expect(newTab).toHaveAttribute('aria-selected', 'true');
-
-    // The view's id is generated, so read it from the tab itself
-    const tabTestId = await newTab.getAttribute('data-testid');
-    const viewId = (tabTestId || '').replace('table-views-tab-', '');
-
-    expect(viewId).not.toBe('');
-    expect(viewId).not.toBe('all');
-
-    await newTab.focus();
-    await page.keyboard.press('ArrowDown');
-    await views.menuPublish(viewId).click();
-
+    await openPublishModal(page, views, filteredTab);
     await expect(views.publishModal()).toBeVisible();
     await expect(views.publishWarning()).toBeVisible();
 
