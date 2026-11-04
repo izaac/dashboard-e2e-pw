@@ -219,7 +219,7 @@ test.describe('Helm Release Secret Edit Protects Data (#12397)', { tag: ['@gener
     await editPage.tabs().tab('data').click();
     await expect(editPage.dataEditorAddButton().first()).toBeVisible();
 
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-05-opaque-secret-unaffected.png') });
+    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'scenario-06-opaque-secret-unaffected.png') });
 
     const request = await saveAndCaptureRequest(page, editPage, OPAQUE_SECRET);
 
