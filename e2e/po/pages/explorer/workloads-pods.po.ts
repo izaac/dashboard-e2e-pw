@@ -4,6 +4,7 @@ import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
+import TableViewsPo from '@/e2e/po/components/table-views.po';
 
 export class WorkloadsPodsListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -28,6 +29,10 @@ export class WorkloadsPodsListPagePo extends PagePo {
 
   createEditView(): CreateEditViewPo {
     return new CreateEditViewPo(this.page, '.dashboard-root');
+  }
+
+  tableViews(): TableViewsPo {
+    return new TableViewsPo(this.page);
   }
 
   /** Page-level search box — works even in grouped views where the filter is outside .sortable-table */
