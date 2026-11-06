@@ -47,6 +47,15 @@ export default class AboutPagePo extends PagePo {
     return this.page.getByText(version);
   }
 
+  /** Get the value cell of the Rancher row in the about versions table */
+  rancherVersionValue(): Locator {
+    return this.page
+      .locator('.about table tbody tr, .about table tr')
+      .filter({ has: this.page.locator('a[href*="github.com/rancher/rancher"]') })
+      .locator('td')
+      .nth(1);
+  }
+
   /** Get the Rancher Prime info panel */
   rancherPrimeInfo(): Locator {
     return this.page.getByTestId('rancher-prime-about-panel');

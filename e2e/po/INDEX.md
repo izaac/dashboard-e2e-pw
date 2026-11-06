@@ -58,7 +58,7 @@
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | TooltipPo | tooltip.po.ts | ComponentPo | `:scope` | super, show, content |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
-| VersionNumberPo | version-number.po.ts | ComponentPo | — | — |
+| VersionNumberPo | version-number.po.ts | ComponentPo | — | link |
 | WindowManagerPo | window-manager.po.ts | ComponentPo | `#horizontal-window-manager` | super, tabLists, tabs, nonTabButtonsInTabLists, interactiveInsideTabs, closeButtons, closeButtonsInsideTabs, tabListOwnership |
 | WorkloadSearchPo | workload-search.po.ts | ComponentPo | `[data-testid=` | super, input, dropdown, options, kebab, actionMenus, search |
 
@@ -207,7 +207,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| AboutPagePo | about.po.ts | PagePo | — | super, diagnosticsBtn, newBadge, links, linksContaining, getLinkDestination, return, versionLink (+5) |
+| AboutPagePo | about.po.ts | PagePo | — | super, diagnosticsBtn, newBadge, links, linksContaining, getLinkDestination, return, versionLink (+6) |
 | CreateKeyPagePo | account-api-keys-create_key.po.ts | PagePo | — | super, title, description, expiryOptions, createButton, cancelButton, doneButton, apiAccessKey (+3) |
 | AccountPagePo | account-api-keys.po.ts | PagePo | — | super, waitForRequests, titleLocator, createApiKeyButton, changePasswordButton, create, changePassword, changePasswordModal (+8) |
 | ChartInstalledAppsListPagePo | chart-installed-apps.po.ts | PagePo | `/c/${clusterId}/${product}/catalog.cattle.io.app` | super, filter, appsList, closeTerminalAndExpectDeployed, for |
