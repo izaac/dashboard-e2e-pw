@@ -22,12 +22,26 @@ test.describe('Fleet managed resource banner', { tag: ['@generic', '@adminUser']
   let testNamespace: string;
   let gitRepoName: string;
 
+  /**
+   * Dismiss the Rancher Prime welcome dialog that mounts on first load.
+   */
+  async function dismissDialogs(page: Page): Promise<void> {
+    const welcome = new WelcomeDialogPo(page);
+
+    await welcome
+      .self()
+      .waitFor({ state: 'visible', timeout: 4000 })
+      .catch(() => {});
+    await welcome.dismissIfVisible();
+  }
+
   async function openDetail(page: Page, name: string) {
     const detail = new ConfigMapDetailPagePo(page, CLUSTER, testNamespace, name);
 
     await detail.goTo();
     await detail.waitForPage();
-    await new WelcomeDialogPo(page).dismissIfVisible();
+    await detail.resourceName().waitFor({ state: 'visible' });
+    await dismissDialogs(page);
 
     return detail;
   }
