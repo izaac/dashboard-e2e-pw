@@ -266,4 +266,14 @@ export default class BurgerMenuPo extends ComponentPo {
   headerBrandLogoImage(): Locator {
     return this.page.getByTestId('header__brand-img');
   }
+
+  /** Get the version container in the footer of the side menu */
+  version(): Locator {
+    return this.self().locator('.footer .version');
+  }
+
+  /** Get the version link element */
+  versionLink(): Locator {
+    return this.version().locator('a');
+  }
 }
