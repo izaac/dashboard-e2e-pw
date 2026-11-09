@@ -61,7 +61,7 @@
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
 | VersionNumberPo | version-number.po.ts | ComponentPo | — | link |
 | WindowManagerPo | window-manager.po.ts | ComponentPo | `#horizontal-window-manager` | super, tabLists, tabs, nonTabButtonsInTabLists, interactiveInsideTabs, closeButtons, closeButtonsInsideTabs, tabListOwnership |
-| WorkloadSearchPo | workload-search.po.ts | ComponentPo | `[data-testid=` | super, input, dropdown, options, kebab, actionMenus, search |
+| WorkloadSearchPo | workload-search.po.ts | ComponentPo | `[data-testid=` | super, input, dropdown, options, groupLabels, moreLinks, noOptions, errorLabels (+3) |
 
 ## components/fleet/
 

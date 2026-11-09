@@ -21,6 +21,26 @@ export default class WorkloadSearchPo extends ComponentPo {
     return this.dropdown().locator('.workload-search-option');
   }
 
+  /** Group header rows (one per resource type with results) */
+  groupLabels(): Locator {
+    return this.dropdown().locator('.group-label');
+  }
+
+  /** Links in the dropdown: the "+ X more" rows and the per-result namespace links */
+  moreLinks(): Locator {
+    return this.dropdown().locator('.more-link');
+  }
+
+  /** Placeholder shown in place of results (min characters, no match, searching, start typing) */
+  noOptions(): Locator {
+    return this.page.locator('.vs__no-options');
+  }
+
+  /** Per-type "failed to fetch" rows */
+  errorLabels(): Locator {
+    return this.dropdown().locator('.error-label');
+  }
+
   kebab(index: number): Locator {
     return this.options().nth(index).locator('.actions button');
   }
