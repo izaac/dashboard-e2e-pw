@@ -63,7 +63,14 @@ test.describe('Workload Overview Search (#18232)', { tag: ['@explorer2', '@admin
     await login();
     await rancherApi.updateNamespaceFilter('local', 'none', JSON.stringify({ local: [`ns://${testNamespace}`] }));
     await page.goto('./c/local/explorer/workload-dashboard');
-    await new WelcomeDialogPo(page).dismissIfVisible();
+
+    const welcome = new WelcomeDialogPo(page);
+
+    await welcome
+      .self()
+      .waitFor({ state: 'visible', timeout: 3000 })
+      .catch(() => {});
+    await welcome.dismissIfVisible();
   });
 
   test.afterEach(async ({ rancherApi }) => {
