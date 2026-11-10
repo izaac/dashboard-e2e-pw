@@ -9,17 +9,26 @@ export default class WelcomeDialogPo extends ComponentPo {
     super(page, '.rc-modal-overlay');
   }
 
-  /** Dismiss the dialog if it is currently mounted */
-  async dismissIfVisible(): Promise<void> {
+  /** Dismiss the dialog if it is currently mounted or mounting */
+  async dismissIfVisible(timeout = 3000): Promise<void> {
+    if (timeout > 0) {
+      await this.self()
+        .waitFor({ state: 'visible', timeout })
+        .catch(() => {});
+    }
+
     if (
       !(await this.self()
-        .isVisible({ timeout: 3000 })
+        .isVisible()
         .catch(() => false))
     ) {
       return;
     }
 
-    const closeBtn = this.page.locator('#modals').getByRole('button', { name: /Close/i });
+    const closeBtn = this.page
+      .locator('#modals')
+      .getByTestId('release-welcome-close')
+      .or(this.page.locator('#modals').getByRole('button', { name: /Close/i }));
 
     if ((await closeBtn.count()) > 0) {
       await closeBtn.first().click();
