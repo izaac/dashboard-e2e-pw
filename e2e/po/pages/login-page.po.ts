@@ -62,6 +62,11 @@ export class LoginPagePo extends PagePo {
     return this.page.getByTestId('login__messages');
   }
 
+  /** Welcome heading on the login card (e.g. "Welcome to Rancher Community") */
+  welcomeHeading(): Locator {
+    return this.page.locator('h1.login-welcome');
+  }
+
   loginBackgroundImage(): Locator {
     return this.page.getByTestId('login-landscape__img');
   }

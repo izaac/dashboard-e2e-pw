@@ -49,6 +49,11 @@ export class FeatureFlagsPagePo extends RootClusterPage {
     return new MgmtFeatureFlagListPo(this.page, this.self());
   }
 
+  /** Table column header whose visible text contains the given label */
+  columnHeader(label: string): Locator {
+    return this.list().resourceTable().sortableTable().headerContentCells().filter({ hasText: label });
+  }
+
   cardActionButton(label: string): Locator {
     const card = new CardPo(this.page);
 
