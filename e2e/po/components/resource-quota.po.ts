@@ -23,4 +23,9 @@ export default class ResourceQuotaPo extends ComponentPo {
   quotaInputs(): Locator {
     return this.self().locator('input:not([disabled])');
   }
+
+  /** Form save button. */
+  saveButton(): Locator {
+    return this.page.getByRole('button', { name: 'Save', exact: true });
+  }
 }
