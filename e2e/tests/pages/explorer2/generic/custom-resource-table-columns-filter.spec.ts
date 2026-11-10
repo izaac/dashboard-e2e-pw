@@ -10,10 +10,19 @@ const SCHEMA_ID = 'qa.cattle.io.testwidget';
 const INSTANCES_TYPE = 'qa.cattle.io.testwidgets';
 const NAMESPACE = 'default';
 
-const WIDGETS = [
-  { name: 'widget-gold', tier: 'Gold', owner: 'Alice', replicas: 10 },
-  { name: 'widget-silver', tier: 'Silver', owner: 'Bob', replicas: 5 },
-  { name: 'widget-bronze', tier: 'Bronze', owner: 'Charlie', replicas: 2 },
+interface Widget {
+  name: string;
+  tier: string;
+  replicas: number;
+  owner?: string;
+  releasePlan?: string;
+}
+
+// widget-bronze omits the optional owner and releasePlan fields on purpose
+const WIDGETS: Widget[] = [
+  { name: 'widget-gold', tier: 'Gold', owner: 'Alice', replicas: 10, releasePlan: '2027-Q1' },
+  { name: 'widget-silver', tier: 'Silver', owner: 'Bob', replicas: 5, releasePlan: '2026-Q4' },
+  { name: 'widget-bronze', tier: 'Bronze', replicas: 2 },
 ];
 
 const crdBody = {
@@ -44,6 +53,7 @@ const crdBody = {
                   tier: { type: 'string' },
                   owner: { type: 'string' },
                   replicas: { type: 'integer' },
+                  releasePlan: { type: 'string' },
                 },
               },
             },
@@ -65,21 +75,27 @@ const crdBody = {
             type: 'integer',
             jsonPath: '.spec.replicas',
           },
+          {
+            name: 'Release Plan',
+            type: 'string',
+            jsonPath: '.spec.releasePlan',
+          },
         ],
       },
     ],
   },
 };
 
-function widgetBody(widget: (typeof WIDGETS)[number]) {
+function widgetBody(widget: Widget) {
   return {
     apiVersion: 'qa.cattle.io/v1',
     kind: 'TestWidget',
     metadata: { name: widget.name, namespace: NAMESPACE },
     spec: {
       tier: widget.tier,
-      owner: widget.owner,
       replicas: widget.replicas,
+      ...(widget.owner !== undefined && { owner: widget.owner }),
+      ...(widget.releasePlan !== undefined && { releasePlan: widget.releasePlan }),
     },
   };
 }
@@ -187,15 +203,20 @@ test.describe('Custom resource table columns and field filtering', { tag: ['@gen
   });
 
   test('should render CRD additionalPrinterColumns automatically as table headers with resource values', async () => {
-    await expect.poll(() => lowerCaseHeaders(table)).toEqual(expect.arrayContaining(['tier', 'owner', 'replicas']));
+    await expect
+      .poll(() => lowerCaseHeaders(table))
+      .toEqual(expect.arrayContaining(['tier', 'owner', 'replicas', 'release plan']));
 
     for (const widget of WIDGETS) {
       const row = table.rowElementWithName(widget.name);
 
       await expect(row).toBeVisible();
       await expect(row).toContainText(widget.tier);
-      await expect(row).toContainText(widget.owner);
       await expect(row).toContainText(`${widget.replicas}`);
+
+      // Optional fields fall back to an empty match, so a widget without them still just has to render its row
+      await expect(row).toContainText(widget.owner ?? '');
+      await expect(row).toContainText(widget.releasePlan ?? '');
     }
   });
 
@@ -252,12 +273,12 @@ test.describe('Custom resource table columns and field filtering', { tag: ['@gen
     await expect(table.rowElementWithName('widget-bronze')).toHaveCount(0);
 
     // Free text also reaches a column that is not the name
-    await views.searchInput().fill('Charlie');
-    await expect(views.searchInput()).toHaveText('Charlie');
+    await views.searchInput().fill('Bob');
+    await expect(views.searchInput()).toHaveText('Bob');
 
-    await expect(table.rowElementWithName('widget-bronze')).toBeVisible();
-    await expect(table.rowElementWithName('widget-silver')).toHaveCount(0);
+    await expect(table.rowElementWithName('widget-silver')).toBeVisible();
     await expect(table.rowElementWithName('widget-gold')).toHaveCount(0);
+    await expect(table.rowElementWithName('widget-bronze')).toHaveCount(0);
   });
 
   test('should filter custom resources by structured field:value syntax', async () => {
@@ -274,5 +295,40 @@ test.describe('Custom resource table columns and field filtering', { tag: ['@gen
     await expect(table.rowElementWithName('widget-bronze')).toBeVisible();
     await expect(table.rowElementWithName('widget-gold')).toHaveCount(0);
     await expect(table.rowElementWithName('widget-silver')).toHaveCount(0);
+  });
+
+  test('should filter custom resources using negation operator on printer fields', async () => {
+    await views.searchInput().fill('not tier:Bronze');
+    await expect(views.searchInput()).toHaveText('not tier:Bronze');
+
+    await expect(table.rowElementWithName('widget-gold')).toBeVisible();
+    await expect(table.rowElementWithName('widget-silver')).toBeVisible();
+    await expect(table.rowElementWithName('widget-bronze')).toHaveCount(0);
+  });
+
+  test('should combine multiple custom resource field filters with logical AND', async () => {
+    await views.searchInput().fill('tier:Gold owner:Alice');
+    await expect(views.searchInput()).toHaveText('tier:Gold owner:Alice');
+
+    await expect(table.rowElementWithName('widget-gold')).toBeVisible();
+    await expect(table.rowElementWithName('widget-silver')).toHaveCount(0);
+    await expect(table.rowElementWithName('widget-bronze')).toHaveCount(0);
+
+    // Both conditions must hold: Gold with a different owner matches nothing
+    await views.searchInput().fill('tier:Gold owner:Bob');
+    await expect(views.searchInput()).toHaveText('tier:Gold owner:Bob');
+
+    await expect(table.rowElementWithName('widget-gold')).toHaveCount(0);
+    await expect(table.rowElementWithName('widget-silver')).toHaveCount(0);
+    await expect(table.rowElementWithName('widget-bronze')).toHaveCount(0);
+  });
+
+  test('should normalize multi-word printer column names to hyphens in query filtering', async () => {
+    await views.searchInput().fill('release-plan:2027-Q1');
+    await expect(views.searchInput()).toHaveText('release-plan:2027-Q1');
+
+    await expect(table.rowElementWithName('widget-gold')).toBeVisible();
+    await expect(table.rowElementWithName('widget-silver')).toHaveCount(0);
+    await expect(table.rowElementWithName('widget-bronze')).toHaveCount(0);
   });
 });
