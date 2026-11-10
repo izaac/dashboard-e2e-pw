@@ -20,7 +20,7 @@ function podTemplate(name: string) {
   };
 }
 
-test.describe('Workload Overview Search (#18232)', { tag: ['@explorer2', '@adminUser'] }, () => {
+test.describe('Workload Overview Search', { tag: ['@explorer2', '@adminUser'] }, () => {
   let testNamespace = '';
 
   test.beforeAll(async ({ rancherApi }) => {
