@@ -89,6 +89,30 @@ export default class TableViewsPo extends ComponentPo {
     return this.publishModal().getByRole('button', { name: 'Cancel' });
   }
 
+  viewMenuButton(): Locator {
+    return this.page.locator('[data-testid="table-views-view-menu"]');
+  }
+
+  viewColumnsItem(): Locator {
+    return this.page.locator('[data-testid="table-views-view-columns"]');
+  }
+
+  columnItem(key: string): Locator {
+    return this.page.locator(`[data-testid="table-views-col-${key}"]`);
+  }
+
+  columnHandle(key: string): Locator {
+    return this.page.locator(`[data-testid="table-views-col-handle-${key}"]`);
+  }
+
+  selectAllColumnsButton(): Locator {
+    return this.page.locator('[data-testid="table-views-columns-select-all"]');
+  }
+
+  resetColumnsButton(): Locator {
+    return this.page.locator('[data-testid="table-views-columns-reset"]');
+  }
+
   modalBackdrop(): Locator {
     return this.page.locator('.rc-modal-backdrop, .v-modal');
   }
