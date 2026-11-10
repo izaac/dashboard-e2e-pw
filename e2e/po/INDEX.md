@@ -220,7 +220,7 @@
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
 | InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+51) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, sortableTable, filterInput (+25) |
-| LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+6) |
+| LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+7) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+18) |
 | PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+23) |
@@ -342,7 +342,7 @@
 |-------|------|---------|----------|---------|
 | BannerCheckboxPo | banners.po.ts | — | — | self, set, ensureChecked, if, checkboxCustom, checkVisible, isDisabled, hasAppropriateWidth (+34) |
 | BrandingPagePo | branding.po.ts | RootClusterPage | — | super, privateLabel, supportLinksLabel, customLogoCheckbox, customBannerCheckbox, customLoginBackgroundCheckbox, customFaviconCheckbox, primaryColorCheckbox (+11) |
-| FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, cardActionButton, cardActionBody, clickCardActionButtonAndWait (+6) |
+| FeatureFlagsPagePo | feature-flags.po.ts | RootClusterPage | — | super, goTo, goToAndWait, navTo, list, columnHeader, cardActionButton, cardActionBody (+7) |
 | HomeLinksPagePo | home-links.po.ts | RootClusterPage | — | super, addLinkButton, displayTextInput, urlInput, saveButton, defaultLinkCheckboxes, supportLinks, removeItemButton (+11) |
 | PerformancePagePo | performance.po.ts | RootClusterPage | — | super, saveButton, inactivityCheckbox, inactivityInput, garbageCollectionResourceCount, namespaceFilteringCheckbox, websocketWebWorkerCheckbox, serverSidePaginationCheckbox (+11) |
 | SettingsPagePo | settings.po.ts | RootClusterPage | — | super, settingBanner, advancedSettingRow, actionButtonByLabel, editSettingsButton, editSettingsByLabel, editSettings, modifiedLabel (+14) |
