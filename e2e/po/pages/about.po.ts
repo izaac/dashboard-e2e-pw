@@ -12,6 +12,10 @@ export default class AboutPagePo extends PagePo {
     return this.page.getByTestId('about__diagnostics_button');
   }
 
+  viewLicensesBtn(): Locator {
+    return this.page.getByTestId('about__licenses_button');
+  }
+
   /** Get the "New" status badge within the about section */
   newBadge(): Locator {
     return this.page.locator('.about').getByText('New', { exact: true });

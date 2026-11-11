@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 
@@ -10,6 +10,10 @@ export default class DiagnosticsPagePo extends PagePo {
 
   constructor(page: Page) {
     super(page, DiagnosticsPagePo.url);
+  }
+
+  title(): Locator {
+    return this.page.locator('h1');
   }
 
   diagnosticsPackageBtn(): AsyncButtonPo {
