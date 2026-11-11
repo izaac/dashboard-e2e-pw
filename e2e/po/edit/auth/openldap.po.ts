@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
+import { VERY_LONG } from '@/support/timeouts';
 
 export default class OpenLdapPo extends PagePo {
   constructor(page: Page, path = '/c/local/auth/config/create/openldap?mode=edit') {
@@ -15,10 +16,10 @@ export default class OpenLdapPo extends PagePo {
    * so settle after the first render before interacting with the inputs.
    */
   async waitForForm(): Promise<void> {
-    await expect(this.page.getByTestId('auth-config-name')).toBeVisible({ timeout: 60_000 });
-    await expect(this.hostnameInput()).toBeVisible({ timeout: 60_000 });
-    await expect(this.page).toHaveURL(/\/auth\/config\/(create\/)?openldap\?mode=edit/, { timeout: 60_000 });
-    await expect(this.hostnameInput()).toBeVisible({ timeout: 60_000 });
+    await expect(this.page.getByTestId('auth-config-name')).toBeVisible({ timeout: VERY_LONG });
+    await expect(this.hostnameInput()).toBeVisible({ timeout: VERY_LONG });
+    await expect(this.page).toHaveURL(/\/auth\/config\/(create\/)?openldap\?mode=edit/, { timeout: VERY_LONG });
+    await expect(this.hostnameInput()).toBeVisible({ timeout: VERY_LONG });
   }
 
   nameInput(): Locator {

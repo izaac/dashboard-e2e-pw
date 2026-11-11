@@ -1,5 +1,6 @@
 import { test, expect } from '@/support/fixtures';
 import SamlPo from '@/e2e/po/edit/auth/saml.po';
+import { EXTENDED } from '@/support/timeouts';
 
 interface AuthConfigPayload {
   displayNameField?: string;
@@ -37,6 +38,11 @@ const TEST_METADATA_XML = `<?xml version="1.0" encoding="UTF-8" standalone="no"?
   </md:IDPSSODescriptor>
 </md:EntityDescriptor>`;
 
+const DEFAULT_LDAP_PORT = 389;
+const DEFAULT_LDAP_PORT_STRING = '389';
+const HTTP_STATUS_OK = 200;
+const EXPECTED_ZERO_COUNT = 0;
+
 test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@adminUser', '@usersAndAuths'] }, () => {
   test.describe.configure({ mode: 'parallel' });
 
@@ -44,7 +50,9 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
     await login();
   });
 
-  test('should hide User and Group Search section on ADFS in Community mode', async ({ page }) => {
+  test('should hide User and Group Search section on ADFS in Community mode', async ({ page, isPrime }) => {
+    test.skip(isPrime, 'Validates Community edition gating only');
+
     const adfsPo = new SamlPo(page, 'adfs');
 
     await adfsPo.goTo();
@@ -58,7 +66,69 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
     await expect(page.getByText('The SAML Protocol does not support search')).toBeHidden();
   });
 
-  test('should submit ADFS configuration without openLdapConfig in Community mode', async ({ page }) => {
+  test(
+    'should display User and Group Search section on ADFS in Prime mode and serialize openLdapConfig',
+    { tag: ['@prime'] },
+    async ({ page, isPrime }) => {
+      test.skip(!isPrime, 'Requires Rancher Prime edition');
+
+      const adfsPo = new SamlPo(page, 'adfs');
+
+      let interceptedPayload: AuthConfigPayload | null = null;
+
+      await page.route('**/v3/adfsConfigs/adfs*', async (route) => {
+        const req = route.request();
+
+        if (req.method() === 'PUT') {
+          interceptedPayload = req.postDataJSON() as AuthConfigPayload;
+          await route.fulfill({ status: HTTP_STATUS_OK, json: req.postDataJSON() });
+
+          return;
+        }
+        await route.continue();
+      });
+
+      await adfsPo.goTo();
+      await adfsPo.waitForForm();
+
+      await expect(adfsPo.ldapSearchHeading()).toBeVisible();
+      await expect(adfsPo.ldapSearchCheckbox()).toBeVisible();
+
+      await adfsPo.displayNameInput().fill('ADFS Prime Display');
+      await adfsPo.userNameInput().fill('name');
+      await adfsPo.uidInput().fill('uid');
+      await adfsPo.groupsInput().fill('groups');
+      await adfsPo.rancherApiHostInput().fill('https://rancher.example.com');
+      await adfsPo.privateKeyTextarea().fill(TEST_SP_KEY);
+      await adfsPo.certificateTextarea().fill(TEST_SP_CERT);
+      await adfsPo.metadataTextarea().fill(TEST_METADATA_XML);
+
+      // Toggle LDAP search and fill details
+      await adfsPo.ldapSearchCheckbox().click();
+      await expect(adfsPo.ldapHostnameInput()).toBeVisible();
+
+      await adfsPo.ldapHostnameInput().fill('openldap.example.org');
+      await adfsPo.ldapPortInput().fill(DEFAULT_LDAP_PORT_STRING);
+      await adfsPo.ldapServiceAccountDnInput().fill('cn=admin,dc=example,dc=org');
+      await adfsPo.ldapServiceAccountPasswordInput().fill('secretpassword');
+      await adfsPo.ldapUserSearchBaseInput().fill('ou=people,dc=example,dc=org');
+
+      await adfsPo.enableButton().click();
+
+      await expect.poll(() => interceptedPayload, { timeout: EXTENDED }).not.toBeNull();
+      const payload = interceptedPayload as unknown as AuthConfigPayload;
+
+      expect(payload.openLdapConfig).toBeDefined();
+      expect(payload.openLdapConfig?.servers).toEqual(['openldap.example.org']);
+      expect(Number(payload.openLdapConfig?.port)).toBe(DEFAULT_LDAP_PORT);
+      expect(payload.openLdapConfig?.serviceAccountDistinguishedName).toBe('cn=admin,dc=example,dc=org');
+      expect(payload.openLdapConfig?.userSearchBase).toBe('ou=people,dc=example,dc=org');
+    },
+  );
+
+  test('should submit ADFS configuration without openLdapConfig in Community mode', async ({ page, isPrime }) => {
+    test.skip(isPrime, 'Validates Community edition submission only');
+
     const adfsPo = new SamlPo(page, 'adfs');
 
     let interceptedPayload: AuthConfigPayload | null = null;
@@ -68,7 +138,7 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
 
       if (req.method() === 'PUT') {
         interceptedPayload = req.postDataJSON() as AuthConfigPayload;
-        await route.fulfill({ status: 200, json: req.postDataJSON() });
+        await route.fulfill({ status: HTTP_STATUS_OK, json: req.postDataJSON() });
 
         return;
       }
@@ -89,7 +159,7 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
 
     await adfsPo.enableButton().click();
 
-    await expect.poll(() => interceptedPayload, { timeout: 15_000 }).not.toBeNull();
+    await expect.poll(() => interceptedPayload, { timeout: EXTENDED }).not.toBeNull();
     const payload = interceptedPayload as unknown as AuthConfigPayload;
 
     expect(payload.openLdapConfig).toBeUndefined();
@@ -114,7 +184,7 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
     await expect(shibPo.ldapUserSearchBaseInput()).toBeVisible();
 
     // Verify direct/nested group radio option is suppressed for SAML providers
-    await expect(shibPo.groupMembershipRadio()).toHaveCount(0);
+    await expect(shibPo.groupMembershipRadio()).toHaveCount(EXPECTED_ZERO_COUNT);
 
     // Toggle off
     await shibPo.ldapSearchCheckbox().click();
@@ -203,7 +273,7 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
 
     await shibPo.enableButton().click();
 
-    await expect.poll(() => interceptedPayload, { timeout: 15_000 }).not.toBeNull();
+    await expect.poll(() => interceptedPayload, { timeout: EXTENDED }).not.toBeNull();
     const payload = interceptedPayload as unknown as AuthConfigPayload;
 
     expect(payload.openLdapConfig).toBeDefined();

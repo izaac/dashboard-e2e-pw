@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
+import { VERY_LONG } from '@/support/timeouts';
 
 export default class SamlPo extends PagePo {
   readonly provider: string;
@@ -12,8 +13,8 @@ export default class SamlPo extends PagePo {
   }
 
   async waitForForm(): Promise<void> {
-    await expect(this.displayNameInput()).toBeVisible({ timeout: 60_000 });
-    await expect(this.rancherApiHostInput()).toBeVisible({ timeout: 60_000 });
+    await expect(this.displayNameInput()).toBeVisible({ timeout: VERY_LONG });
+    await expect(this.rancherApiHostInput()).toBeVisible({ timeout: VERY_LONG });
   }
 
   displayNameInput(): Locator {
