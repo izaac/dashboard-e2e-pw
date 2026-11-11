@@ -89,6 +89,69 @@ test.describe('Open Source Licenses Page and Slide-In', { tag: ['@generic', '@ad
     await expect(licensesPage.slideIn()).not.toHaveClass(/slide-in-open/);
   });
 
+  test('should display original SPDX expression for dual-licensed package in slide-in', async ({ page }) => {
+    const licensesPage = new LicensesPagePo(page);
+
+    await licensesPage.goTo();
+    await licensesPage.waitForPage();
+    await licensesPage.sortableTable().filter('jszip');
+    await expect(licensesPage.packageLink('jszip').first()).toBeVisible();
+
+    await licensesPage.packageLink('jszip').first().click();
+
+    await expect(licensesPage.slideIn()).toHaveClass(/slide-in-open/);
+    await expect(licensesPage.slideIn()).toContainText('Original expression: (MIT OR GPL-3.0-or-later)');
+
+    await licensesPage.slideInCloseButton().click();
+    await expect(licensesPage.slideIn()).not.toHaveClass(/slide-in-open/);
+  });
+
+  test('should filter licenses table by license type identifier', async ({ page }) => {
+    const licensesPage = new LicensesPagePo(page);
+    const table = licensesPage.sortableTable();
+
+    await licensesPage.goTo();
+    await licensesPage.waitForPage();
+
+    await table.filter('Apache-2.0');
+
+    await expect(table.rowElements().first()).toBeVisible();
+    expect(await table.rowElements().count()).toBeGreaterThan(0);
+    await expect(table.rowElements().first()).toContainText('Apache-2.0');
+
+    await table.resetFilter();
+    await expect(licensesPage.packageLinks().first()).toBeVisible();
+  });
+
+  test('should dismiss slide-in drawer when pressing Escape key', async ({ page }) => {
+    const licensesPage = new LicensesPagePo(page);
+
+    await licensesPage.goTo();
+    await licensesPage.waitForPage();
+    await expect(licensesPage.packageLinks().first()).toBeVisible();
+
+    await licensesPage.packageLinks().first().click();
+    await expect(licensesPage.slideIn()).toHaveClass(/slide-in-open/);
+
+    await page.keyboard.press('Escape');
+    await expect(licensesPage.slideIn()).not.toHaveClass(/slide-in-open/);
+  });
+
+  test('should sort table rows by license column', async ({ page }) => {
+    const licensesPage = new LicensesPagePo(page);
+    const table = licensesPage.sortableTable();
+
+    await licensesPage.goTo();
+    await licensesPage.waitForPage();
+    await expect(table.rowElements().first()).toBeVisible();
+
+    await table.sort(1).click();
+    await expect(table.getTableCell(0, 1)).toContainText('Apache-2.0');
+
+    await table.sort(1).click();
+    await expect(table.getTableCell(0, 1)).toContainText('MIT');
+  });
+
   test('should navigate back to About page via breadcrumb link', async ({ page }) => {
     const aboutPage = new AboutPagePo(page);
     const licensesPage = new LicensesPagePo(page);
