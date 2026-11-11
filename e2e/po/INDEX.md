@@ -257,7 +257,7 @@
 | APIServicesPagePo | api-services.po.ts | PagePo | — | super, resourcesList, sortableTable, title |
 | CertManagerOverviewPagePo | cert-manager.po.ts | PagePo | — | super, certificatesSection, statusCard, issuanceStatusCard, stateBadge, createPath |
 | ClusterDashboardPagePo | cluster-dashboard.po.ts | PagePo | — | super, urlPath, customBadge, customizeAppearanceButton, certificates, expiredBanner, expiringBanner, clickCertificatesTab (+20) |
-| ClusterProjectMembersPo | cluster-project-members.po.ts | PagePo | — | super, triggerAddClusterOrProjectMemberAction, triggerAddProjectMemberAction, selectClusterOrProjectMember, selectProjectCustomPermission, checkTheseProjectCustomPermissions, for, submitProjectCreateButton (+8) |
+| ClusterProjectMembersPo | cluster-project-members.po.ts | PagePo | — | super, triggerAddClusterOrProjectMemberAction, triggerAddProjectMemberAction, selectClusterOrProjectMember, selectProjectCustomPermission, checkTheseProjectCustomPermissions, for, submitProjectCreateButton (+14) |
 | ClusterRoleBindingsPagePo | cluster-role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterRolesPagePo | cluster-roles.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterToolsPagePo | cluster-tools.po.ts | PagePo | — | super, featureChartCards, getCardByName, deleteChart, goToInstall, editChart, getChartVersion |

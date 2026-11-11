@@ -85,6 +85,43 @@ export default class ClusterProjectMembersPo extends PagePo {
     return new SortableTablePo(this.page, '#project-membership [data-testid="sortable-table-list-container"]');
   }
 
+  projectMembershipTab(): Locator {
+    return this.page.getByTestId('btn-project-membership');
+  }
+
+  /** Tab panel that holds the Project Membership table (stable test id, the section id is generated). */
+  projectMembershipPanel(): Locator {
+    return this.page.getByTestId('tab-panel-project-membership');
+  }
+
+  /** Unresolved principal row name, e.g. "github_team 8087745" (the principal id with "://" replaced by a space). */
+  unresolvedPrincipal(name: string): Locator {
+    return this.projectMembershipPanel().locator('.name.unresolved').filter({ hasText: name }).first();
+  }
+
+  /** Question mark avatar rendered for a principal whose details could not be resolved. */
+  principalQuestionMark(name: string): Locator {
+    return this.projectMembershipPanel()
+      .locator('.principal')
+      .filter({ hasText: name })
+      .first()
+      .locator('.icon-question-mark');
+  }
+
+  /** Info icon button beside an unresolved principal name that shows why the id is displayed. */
+  principalInfoIcon(name: string): Locator {
+    return this.projectMembershipPanel()
+      .locator('.name.unresolved')
+      .filter({ hasText: name })
+      .first()
+      .locator('button.rc-icon-tooltip');
+  }
+
+  /** Floating tooltip shown on hover/focus. */
+  tooltip(): Locator {
+    return this.page.locator('[role="tooltip"]').first();
+  }
+
   modalOverlay(): Locator {
     return this.page.locator('.modal-overlay');
   }
