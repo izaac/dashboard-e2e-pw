@@ -238,4 +238,39 @@ test.describe('SAML Authentication Provider LDAP Search Gating', { tag: ['@admin
     await expect(pingPo.ldapSearchHeading()).toBeHidden();
     await expect(pingPo.ldapSearchCheckbox()).toBeHidden();
   });
+
+  // Requires an in-cluster Mock SAML IdP deployment (mock-saml.mock-saml.svc.cluster.local:4000).
+  // Verified locally on v2.16-head; skipped in standard CI runs that lack local SAML identity provider infrastructure.
+  test.skip('should configure SAML provider against local containerized mock SAML IdP and OpenLDAP', async ({
+    page,
+    request,
+  }) => {
+    const response = await request.get('http://mock-saml.mock-saml.svc.cluster.local:4000/api/saml/metadata');
+    const liveMetadataXml = await response.text();
+
+    const shibPo = new SamlPo(page, 'shibboleth');
+
+    await shibPo.goTo();
+    await shibPo.waitForForm();
+
+    await shibPo.displayNameInput().fill('Shibboleth Local Mock');
+    await shibPo.userNameInput().fill('name');
+    await shibPo.uidInput().fill('uid');
+    await shibPo.groupsInput().fill('groups');
+    await shibPo.rancherApiHostInput().fill('https://rancher.example.com');
+    await shibPo.privateKeyTextarea().fill(TEST_SP_KEY);
+    await shibPo.certificateTextarea().fill(TEST_SP_CERT);
+    await shibPo.metadataTextarea().fill(liveMetadataXml);
+
+    await shibPo.ldapSearchCheckbox().click();
+    await expect(shibPo.ldapHostnameInput()).toBeVisible();
+
+    await shibPo.ldapHostnameInput().fill('openldap.openldap.svc.cluster.local');
+    await shibPo.ldapPortInput().fill('389');
+    await shibPo.ldapServiceAccountDnInput().fill('cn=admin,dc=example,dc=org');
+    await shibPo.ldapServiceAccountPasswordInput().fill('adminpassword');
+    await shibPo.ldapUserSearchBaseInput().fill('ou=people,dc=example,dc=org');
+
+    await expect(shibPo.enableButton().self()).toBeEnabled();
+  });
 });
