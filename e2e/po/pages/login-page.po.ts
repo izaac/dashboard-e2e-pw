@@ -74,4 +74,20 @@ export class LoginPagePo extends PagePo {
   localSelector(): Locator {
     return this.page.getByTestId('locale-selector');
   }
+
+  cliLoginContainer(): Locator {
+    return this.page.locator('.cli-login');
+  }
+
+  cliLoginError(): Locator {
+    return this.page.locator('.cli-error');
+  }
+
+  cliLoginCode(): Locator {
+    return this.page.locator('.cli-login-code');
+  }
+
+  providerSubmitButton(): Locator {
+    return this.page.getByTestId('login-provider-submit');
+  }
 }

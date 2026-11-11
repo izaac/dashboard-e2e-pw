@@ -169,11 +169,15 @@ setup('authenticate as admin', async ({ page }) => {
 
     await page.goto('./auth/login', { waitUntil: 'domcontentloaded' });
 
-    // Wait for login form to render
+    // Wait for login form or external provider prompt to render
     const submitButton = page.getByTestId('login-submit');
+    const useLocal = page.getByTestId('login-useLocal');
 
     try {
-      await submitButton.waitFor({ state: 'visible', timeout: AUTH_FORM_TIMEOUT });
+      await page
+        .locator('[data-testid="login-submit"], [data-testid="login-useLocal"]')
+        .first()
+        .waitFor({ state: 'visible', timeout: AUTH_FORM_TIMEOUT });
     } catch {
       // Form didn't appear — Rancher might still be starting
       if (attempt === AUTH_MAX_ATTEMPTS - 1) {
@@ -181,8 +185,6 @@ setup('authenticate as admin', async ({ page }) => {
       }
       continue;
     }
-
-    const useLocal = page.getByTestId('login-useLocal');
 
     if (await useLocal.isVisible({ timeout: DEBOUNCE }).catch(() => false)) {
       await useLocal.click();

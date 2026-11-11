@@ -223,7 +223,7 @@
 | InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+51) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, sortableTable, filterInput (+25) |
 | LicensesPagePo | licenses.po.ts | PagePo | — | super, sortableTable, packageLinks, noResultsText, packageLink, searchInput, slideIn, slideInContent (+3) |
-| LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+7) |
+| LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, useLocal, switchToLocal (+11) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+18) |
 | PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+23) |
