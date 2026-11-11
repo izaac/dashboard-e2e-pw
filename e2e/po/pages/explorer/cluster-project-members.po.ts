@@ -89,19 +89,42 @@ export default class ClusterProjectMembersPo extends PagePo {
     return this.page.getByTestId('btn-project-membership');
   }
 
+  clusterMembershipTab(): Locator {
+    return this.page.getByTestId('btn-cluster-membership');
+  }
+
+  clusterMembershipPanel(): Locator {
+    return this.page.getByTestId('tab-panel-cluster-membership');
+  }
+
   /** Tab panel that holds the Project Membership table (stable test id, the section id is generated). */
   projectMembershipPanel(): Locator {
     return this.page.getByTestId('tab-panel-project-membership');
   }
 
   /** Unresolved principal row name, e.g. "github_team 8087745" (the principal id with "://" replaced by a space). */
-  unresolvedPrincipal(name: string): Locator {
-    return this.projectMembershipPanel().locator('.name.unresolved').filter({ hasText: name }).first();
+  unresolvedPrincipal(name: string, scope?: Locator): Locator {
+    return (scope ?? this.projectMembershipPanel()).locator('.name.unresolved').filter({ hasText: name }).first();
+  }
+
+  /** Resolved principal container matching the given text. */
+  resolvedPrincipal(name: string, scope?: Locator): Locator {
+    return (scope ?? this.projectMembershipPanel()).locator('.principal').filter({ hasText: name }).first();
+  }
+
+  /** Name element inside a principal container. */
+  principalName(principal: Locator): Locator {
+    return principal.locator('.name');
+  }
+
+  /** Question mark icon inside a principal container. */
+  principalQuestionMarkIn(principal: Locator): Locator {
+    return principal.locator('.icon-question-mark');
   }
 
   /** Question mark avatar rendered for a principal whose details could not be resolved. */
-  principalQuestionMark(name: string): Locator {
-    return this.projectMembershipPanel()
+  principalQuestionMark(name: string, scope?: Locator): Locator {
+    return (scope ?? this.projectMembershipPanel())
       .locator('.principal')
       .filter({ hasText: name })
       .first()
@@ -109,8 +132,8 @@ export default class ClusterProjectMembersPo extends PagePo {
   }
 
   /** Info icon button beside an unresolved principal name that shows why the id is displayed. */
-  principalInfoIcon(name: string): Locator {
-    return this.projectMembershipPanel()
+  principalInfoIcon(name: string, scope?: Locator): Locator {
+    return (scope ?? this.projectMembershipPanel())
       .locator('.name.unresolved')
       .filter({ hasText: name })
       .first()

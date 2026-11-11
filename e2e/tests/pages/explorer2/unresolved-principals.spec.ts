@@ -4,6 +4,7 @@ import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 
 test.describe('Unresolved Principal ID Display', { tag: ['@explorer2', '@adminUser'] }, () => {
   let projectId = '';
+  let crtbId = '';
 
   test.beforeAll(async ({ rancherApi }) => {
     const projectResp = await rancherApi.createRancherResource('v3', 'projects', {
@@ -24,11 +25,55 @@ test.describe('Unresolved Principal ID Display', { tag: ['@explorer2', '@adminUs
       roleTemplateId: 'project-member',
       groupPrincipalId: 'okta_group://auditors',
     });
+
+    // Rancher rejects a binding for a user principal whose User object does not exist yet
+    // (users.management.cattle.io "ghost123" not found), so seed a bare User first.
+    await rancherApi.createRancherResource(
+      'v1',
+      'management.cattle.io.users',
+      { metadata: { name: 'ghost123' }, username: 'ghost123', displayName: 'ghost123' },
+      false,
+    );
+
+    await rancherApi.createRancherResource('v3', 'projectroletemplatebindings', {
+      projectId,
+      roleTemplateId: 'project-member',
+      userPrincipalId: 'github_user://ghost123',
+    });
+
+    await rancherApi.createRancherResource('v3', 'projectroletemplatebindings', {
+      projectId,
+      roleTemplateId: 'project-member',
+      groupPrincipalId: 'openldap_group://cn=engineering,ou=groups,dc=example,dc=org',
+    });
+
+    const crtbResp = await rancherApi.createRancherResource('v3', 'clusterroletemplatebindings', {
+      clusterId: 'local',
+      roleTemplateId: 'cluster-member',
+      groupPrincipalId: 'github_team://8087745',
+    });
+
+    crtbId = crtbResp.body.id;
   });
 
   test.afterAll(async ({ rancherApi }) => {
+    if (crtbId) {
+      await rancherApi.deleteRancherResource('v3', 'clusterroletemplatebindings', crtbId, false);
+    }
+
     if (projectId) {
       await rancherApi.deleteRancherResource('v3', 'projects', projectId, false);
+    }
+
+    await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', 'ghost123', false);
+
+    // The binding controller materialises its own user record for the principal; remove it too.
+    const users = await rancherApi.getRancherResource('v1', 'management.cattle.io.users', '', 200);
+
+    for (const user of users.body?.data || []) {
+      if ((user.principalIds || []).includes('github_user://ghost123')) {
+        await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', user.id, false);
+      }
     }
   });
 
@@ -76,5 +121,52 @@ test.describe('Unresolved Principal ID Display', { tag: ['@explorer2', '@adminUs
     await page.keyboard.press('Escape');
 
     await expect(membersPage.tooltip()).toBeHidden();
+  });
+
+  test('should resolve the display of a user principal from the management user list', async ({ page }) => {
+    const membersPage = new ClusterProjectMembersPo(page, 'local', 'project-membership');
+
+    await membersPage.goTo();
+    await membersPage.projectMembershipTab().click();
+
+    // Rancher materialises a management user for every user principal binding, so a user
+    // principal is never displayed as unresolved: it resolves through the user list fallback.
+    const userRow = membersPage.resolvedPrincipal('ghost123');
+
+    await expect(membersPage.principalName(userRow)).toHaveText('ghost123');
+    await expect(membersPage.principalName(userRow)).not.toHaveClass(/unresolved/);
+    await expect(membersPage.principalQuestionMarkIn(userRow)).toHaveCount(0);
+    await expect(membersPage.unresolvedPrincipal('github_user ghost123')).toHaveCount(0);
+  });
+
+  test('should format complex LDAP DN into readable text without crashing', async ({ page }) => {
+    const membersPage = new ClusterProjectMembersPo(page, 'local', 'project-membership');
+
+    await membersPage.goTo();
+    await membersPage.projectMembershipTab().click();
+
+    await expect(
+      membersPage.unresolvedPrincipal('openldap_group cn=engineering,ou=groups,dc=example,dc=org'),
+    ).toBeVisible();
+    await expect(
+      membersPage.principalQuestionMark('openldap_group cn=engineering,ou=groups,dc=example,dc=org'),
+    ).toBeVisible();
+  });
+
+  test('should display question mark avatar and info tooltip on Cluster Membership tab', async ({ page }) => {
+    const membersPage = new ClusterProjectMembersPo(page, 'local', 'cluster-membership');
+
+    await membersPage.goTo();
+    await membersPage.clusterMembershipTab().click();
+
+    const panel = membersPage.clusterMembershipPanel();
+
+    await expect(membersPage.unresolvedPrincipal('github_team 8087745', panel)).toBeVisible();
+    await expect(membersPage.principalQuestionMark('github_team 8087745', panel)).toBeVisible();
+
+    await membersPage.principalInfoIcon('github_team 8087745', panel).hover();
+
+    await expect(membersPage.tooltip()).toBeVisible();
+    await expect(membersPage.tooltip()).toContainText(/principal ID is shown instead|could not look up/i);
   });
 });
