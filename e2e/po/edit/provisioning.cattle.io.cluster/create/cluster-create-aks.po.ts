@@ -53,12 +53,26 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
     return this.page.locator('[data-testid="cruaks-form"] input[placeholder*="aks-dns"]');
   }
 
+  cloudCredentialDropdown(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '.labeled-select:has(label:has-text("Cloud Credential"))');
+  }
+
   regionSelect(): LabeledSelectPo {
-    return new LabeledSelectPo(this.page, '[data-testid="cruaks-resourcelocation"]');
+    return new LabeledSelectPo(
+      this.page,
+      '[data-testid="cruaks-resourcelocation"], .labeled-select:has(label:has-text("Region"))',
+    );
   }
 
   kubernetesVersionSelect(): LabeledSelectPo {
-    return new LabeledSelectPo(this.page, '[data-testid="cruaks-kubernetesversion"]');
+    return new LabeledSelectPo(
+      this.page,
+      '[data-testid="cruaks-kubernetesversion"], .labeled-select:has(label:has-text("Kubernetes Version"))',
+    );
+  }
+
+  vmSizeSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '.labeled-select:has(label:has-text("VM Size"))');
   }
 
   create(): Locator {
