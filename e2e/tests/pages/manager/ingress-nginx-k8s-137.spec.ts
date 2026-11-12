@@ -28,6 +28,8 @@ const FAKE_MGMT_CLUSTER_ID = 'ingress-nginx-fake-mgmt';
 const NGINX_AVAILABLE_MINOR = '1.36';
 const NGINX_UNAVAILABLE_MINOR = '1.37';
 
+const INGRESS_MIGRATION_DOCS_URL = 'https://docs.rke2.io/reference/ingress_migration';
+
 /** Open the RKE2 custom cluster create form on the Basics tab */
 async function openCreateForm(page: Page): Promise<ClusterManagerCreateRke2CustomPagePo> {
   const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
@@ -204,6 +206,7 @@ test.describe('Ingress NGINX on Kubernetes 1.37 or later', { tag: ['@manager', '
     await selectRke2Minor(editPage.basicsTab(), NGINX_UNAVAILABLE_MINOR);
 
     await expect(ingress.nginxUpgradeBlockedBanner()).toBeVisible();
+    await expect(ingress.nginxUpgradeBlockedBannerLink()).toHaveAttribute('href', INGRESS_MIGRATION_DOCS_URL);
     await expect(ingress.nginxUpgradeWarningBanner()).toHaveCount(0);
     await expect(ingress.nginxCard()).toHaveClass(/disabled/);
     await expect(save).toBeDisabled();

@@ -177,7 +177,7 @@
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
 | BasicsRke2 | basics-tab-rke2.po.ts | ComponentPo | `.dashboard-root` | super, kubernetesVersions, networks, networkNoneSelectedForCni, traefikHttpInput, traefikHttpsInput, nginxHttpInput, nginxHttpsInput |
-| IngressRke2Po | ingress-rke2.po.ts | ComponentPo | `.dashboard-root` | super, enableCheckbox, nginxCard, traefikCard, dualCard, cardContent, clickCard, transitioningBanner (+3) |
+| IngressRke2Po | ingress-rke2.po.ts | ComponentPo | `.dashboard-root` | super, enableCheckbox, nginxCard, traefikCard, dualCard, cardContent, clickCard, transitioningBanner (+4) |
 | MachinePoolRke2 | machine-pools-tab-rke2.po.ts | ComponentPo | `.dashboard-root` | super, poolName, poolQuantity, networks, enableDualStack, enableIpv6 |
 | NetworkRke2 | networking-tab-rke2.po.ts | ComponentPo | `.dashboard-root` | super, clusterCIDR, serviceCIDR, stackPreference, flannelMasq, truncateHostnameCheckbox |
 

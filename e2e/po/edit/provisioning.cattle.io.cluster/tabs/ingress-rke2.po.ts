@@ -57,6 +57,11 @@ export default class IngressRke2Po extends ComponentPo {
     return this.self().locator('.banner.error').filter({ hasText: 'cannot use standalone Ingress-NGINX' });
   }
 
+  /** Migration documentation link inside the Ingress-NGINX upgrade error banner */
+  nginxUpgradeBlockedBannerLink(): Locator {
+    return this.nginxUpgradeBlockedBanner().getByRole('link');
+  }
+
   /** Warning banner shown when an upgrade to Kubernetes 1.37 or later makes standalone Ingress-NGINX unrecoverable */
   nginxUpgradeWarningBanner(): Locator {
     return this.self().locator('.banner.warning').filter({ hasText: 'cannot switch back to standalone Ingress-NGINX' });
