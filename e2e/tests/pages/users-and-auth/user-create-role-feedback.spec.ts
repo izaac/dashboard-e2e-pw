@@ -204,4 +204,55 @@ test.describe('User Creation Role Assignment Failure Feedback', { tag: ['@adminU
     // Cleanup: remove created user via API
     await deleteUserByUsername(rancherApi, targetUsername);
   });
+
+  test('should allow in-place permission correction and successful recreation without duplicate name conflict after escalation rollback', async ({
+    page,
+    login,
+    rancherApi,
+  }) => {
+    const targetUsername = `${runPrefix}-esc-retry`;
+
+    await login({ username: managerUsername, password: MANAGER_PASSWORD });
+
+    const usersPo = new UsersPo(page);
+    const userCreate = usersPo.createEdit();
+
+    await userCreate.goTo();
+    await userCreate.waitForPage();
+    await dismissWelcomeModal(page);
+
+    await userCreate.username().set(targetUsername);
+    await userCreate.newPass().set(TEST_USER_PASSWORD);
+    await userCreate.confirmNewPass().set(TEST_USER_PASSWORD);
+    await userCreate.selectCheckbox(ADMIN_ROLE_LABEL).set();
+
+    // First attempt: trigger escalation failure
+    const grbEscalationResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('v3/globalrolebindings') && resp.request().method() === 'POST' && resp.status() === 403,
+      SHORT_TIMEOUT_OPT,
+    );
+
+    await userCreate.resourceDetail().cruResource().saveOrCreate().click();
+    await grbEscalationResponse;
+
+    await expect(userCreate.errorBanner()).toBeVisible();
+    await expect(userCreate.errorBanner()).toContainText(ESCALATION_ERROR_TEXT);
+
+    // Dismiss the error banner
+    await userCreate.errorBannerCloseButton().click();
+    await expect(userCreate.errorBanner()).not.toBeAttached();
+
+    // In-place correction: uncheck Administrator to leave authorized roles
+    await userCreate.selectCheckbox(ADMIN_ROLE_LABEL).uncheck();
+
+    // Second attempt: save should succeed without 409 conflict because initial account was cleanly deleted
+    await userCreate.saveAndWaitForRequests('POST', '/v3/globalrolebindings');
+
+    await usersPo.waitForPage();
+    await expect(usersPo.list().elementWithName(targetUsername)).toBeVisible();
+
+    // Cleanup: remove created user via API
+    await deleteUserByUsername(rancherApi, targetUsername);
+  });
 });
