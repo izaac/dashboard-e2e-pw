@@ -143,8 +143,10 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
 
     expect((await createHarvesterChartPromise).status()).toBe(201);
 
+    let finalInstallStatus = (await installActionPromise).status();
+
     // #13093 retry — reload + click install again on 500.
-    if ((await installActionPromise).status() === 500) {
+    if (finalInstallStatus === 500) {
       const retryInstallPromise = page.waitForResponse(
         (resp) =>
           resp.url().includes(CLUSTER_REPOS_BASE_URL) &&
@@ -156,8 +158,10 @@ test.describe('Harvester', { tag: ['@virtualizationMgmt', '@adminUser'] }, () =>
       await page.reload({ waitUntil: 'domcontentloaded' });
       await harvesterPo.waitForPage();
       await harvesterPo.updateOrInstallButton().click();
-      expect((await retryInstallPromise).status()).toBe(201);
+      finalInstallStatus = (await retryInstallPromise).status();
     }
+
+    expect(finalInstallStatus).toBe(201);
 
     await rancherApi.waitForResourceState(
       'v1',
