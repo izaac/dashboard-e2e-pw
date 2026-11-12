@@ -5,6 +5,7 @@ import { installFakeClusterRoutes } from '@/e2e/blueprints/nav/fake-cluster';
 import { generateProvClusterObj } from '@/e2e/blueprints/nav/fake-cluster-objects';
 import ClusterManagerCreateRke2CustomPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-custom.po';
 import ClusterManagerEditGenericPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/edit/cluster-edit-generic.po';
+import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 import type BasicsRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po';
 import IngressRke2Po from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/ingress-rke2.po';
 
@@ -35,6 +36,7 @@ async function openCreateForm(page: Page): Promise<ClusterManagerCreateRke2Custo
   const createPage = new ClusterManagerCreateRke2CustomPagePo(page);
 
   await createPage.goToCustomClusterCreation('_');
+  await new WelcomeDialogPo(page).dismissIfVisible();
   await expect(createPage.basicsTab().kubernetesVersions().self()).toBeVisible();
 
   return createPage;
