@@ -6,6 +6,7 @@ import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
 
 const REGION_WITH_AZ = 'East US';
 const REGION_WITHOUT_AZ = 'UK West';
+const REGION_WITHOUT_AZ_KEY = 'ukwest';
 const RKE2_REGION_WITHOUT_AZ = 'ukwest';
 const RKE2_AZ_WARNING_TEXT =
   'Availability zones are not supported in the selected region. Please select a different region or use an availability set instead.';
@@ -194,6 +195,67 @@ test.describe(
 
       await expect(aksPage.nodePoolTabItem(PRIMARY_NODE_POOL)).not.toHaveClass(/error/);
       await expect(aksPage.nodePoolTabItem(SECONDARY_NODE_POOL)).not.toHaveClass(/error/);
+    });
+
+    test('should submit empty availability zones array in aksConfig payload when creating cluster in unsupported region', async ({
+      page,
+      login,
+    }) => {
+      await login();
+
+      const aksPage = new ClusterManagerCreateAKSPagePo(page);
+
+      await aksPage.goTo();
+      await aksPage.waitForPage();
+
+      // Step 1: Select Cloud Credential
+      await aksPage.cloudCredentialDropdown().searchInput().click();
+      await aksPage.cloudCredentialDropdown().clickOptionWithLabel(credName);
+
+      // Step 2: Switch Region to UK West (does not support AZs)
+      const ukwestVersionsPromise = page.waitForResponse(
+        (resp) => resp.url().includes('meta/aksVersions') && resp.url().includes('ukwest') && resp.status() === 200,
+        SHORT_TIMEOUT_OPT,
+      );
+
+      await aksPage.regionSelect().searchInput().click();
+      await aksPage.regionSelect().clickOptionWithLabel(REGION_WITHOUT_AZ);
+      await ukwestVersionsPromise;
+
+      // Step 3: Fill the mandatory fields so the form becomes submittable
+      await aksPage.getClusterName().set('aks-az-payload-test');
+      await aksPage.clusterResourceGroup().fill('rancher-qa-ukwest');
+      await aksPage.dnsPrefixInput().fill('aks-az-payload-test');
+
+      // Step 4: Intercept the cluster create request so the payload can be inspected
+      let createRequestBody: any = null;
+
+      await page.route('**/v3/clusters', async (route) => {
+        if (route.request().method() === 'POST') {
+          createRequestBody = route.request().postDataJSON();
+          await route.fulfill({
+            status: 201,
+            contentType: 'application/json',
+            body: JSON.stringify({ id: 'mock-cluster-id', type: 'cluster', ...createRequestBody }),
+          });
+
+          return;
+        }
+
+        await route.continue();
+      });
+
+      await expect(aksPage.formSaveButton()).toBeEnabled();
+      await aksPage.formSaveButton().click();
+
+      // Step 5: The untouched pool must serialize an empty availability zones array
+      await expect.poll(() => createRequestBody, { message: 'cluster create request body captured' }).not.toBeNull();
+
+      expect(createRequestBody).not.toBeNull();
+      expect(createRequestBody.aksConfig.resourceLocation).toBe(REGION_WITHOUT_AZ_KEY);
+      expect(createRequestBody.aksConfig.nodePools).toHaveLength(1);
+      expect(createRequestBody.aksConfig.nodePools[0].name).toBe(PRIMARY_NODE_POOL);
+      expect(createRequestBody.aksConfig.nodePools[0].availabilityZones).toEqual([]);
     });
 
     test('should display AZ warning banner and disable input without setting value to 3 in Azure RKE2 for unsupported region', async ({
