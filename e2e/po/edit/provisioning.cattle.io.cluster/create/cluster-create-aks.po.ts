@@ -75,6 +75,14 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
     return new LabeledSelectPo(this.page, '.labeled-select:has(label:has-text("VM Size"))');
   }
 
+  availabilityZonesSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '.labeled-select:has(label:has-text("Availability Zones"))');
+  }
+
+  availabilityZoneWarningBanner(): Locator {
+    return this.page.locator('.banner').filter({ hasText: 'No availability zones are available' });
+  }
+
   create(): Locator {
     return this.resourceDetail().cruResource().saveOrCreate().self();
   }

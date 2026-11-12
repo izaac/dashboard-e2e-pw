@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test';
 import ClusterManagerCreatePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create.po';
 import BasicsRke2 from '@/e2e/po/edit/provisioning.cattle.io.cluster/tabs/basics-tab-rke2.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
+import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 
 export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerCreatePagePo {
   constructor(page: Page, clusterId = '_') {
@@ -76,5 +77,21 @@ export default class ClusterManagerCreateRke2AzurePagePo extends ClusterManagerC
 
   createButton(): Locator {
     return this.page.getByRole('button', { name: /create/i });
+  }
+
+  availabilityZoneRadio(): Locator {
+    return this.page.locator('label').filter({ hasText: 'Availability Zone' }).first();
+  }
+
+  availabilityZoneSelect(): Locator {
+    return this.page.locator('.labeled-select:has(label:has-text("Availability Zone"))');
+  }
+
+  availabilityZoneSelectComponent(): LabeledSelectPo {
+    return new LabeledSelectPo(this.page, '.labeled-select:has(label:has-text("Availability Zone"))');
+  }
+
+  availabilityZoneWarningBanner(): Locator {
+    return this.page.locator('.banner').filter({ hasText: 'Availability zones are not supported' });
   }
 }
