@@ -83,6 +83,38 @@ export default class ClusterManagerCreateAKSPagePo extends ClusterManagerCreateP
     return this.page.locator('.banner').filter({ hasText: 'No availability zones are available' });
   }
 
+  // --- Node pool side tabs ---
+
+  addNodePoolButton(): Locator {
+    return this.page.getByTestId('tab-list-add');
+  }
+
+  async addNodePool(): Promise<void> {
+    await this.addNodePoolButton().click();
+  }
+
+  nodePoolTab(label: string): Locator {
+    return this.page.locator('.tabs.vertical ul.tab-list li.tab a[role="tab"]').filter({ hasText: label });
+  }
+
+  nodePoolTabItem(label: string): Locator {
+    return this.page.locator('.tabs.vertical ul.tab-list li.tab').filter({ hasText: label });
+  }
+
+  /** The currently visible node pool tab panel (inactive panels render as `display: none`) */
+  activePanel(): Locator {
+    return this.page.locator('.tab-container > section.tab-panel:not([style*="display: none"])');
+  }
+
+  /** Availability Zones select of the node pool in the active tab panel */
+  activePoolAvailabilityZonesSelect(): LabeledSelectPo {
+    return new LabeledSelectPo(
+      this.page,
+      '.labeled-select:has(label:has-text("Availability Zones"))',
+      this.activePanel(),
+    );
+  }
+
   create(): Locator {
     return this.resourceDetail().cruResource().saveOrCreate().self();
   }

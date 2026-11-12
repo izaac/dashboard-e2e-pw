@@ -1,4 +1,5 @@
 import { test, expect } from '@/support/fixtures';
+import type LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import ClusterManagerCreateAKSPagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-aks.po';
 import ClusterManagerCreateRke2AzurePagePo from '@/e2e/po/edit/provisioning.cattle.io.cluster/create/cluster-create-rke2-azure.po';
 import { SHORT_TIMEOUT_OPT } from '@/support/timeouts';
@@ -12,6 +13,24 @@ const AKS_AZ_WARNING_TEXT =
   'No availability zones are available for the selected region. For the most resiliency it is recommended to select a High Availablity region.';
 const AZURE_CLOUD_ENVIRONMENT = 'AzurePublicCloud';
 const EXPECTED_EMPTY_AZ_COUNT = 0;
+const PRIMARY_NODE_POOL = 'agentpool';
+const SECONDARY_NODE_POOL = 'pool1';
+const ZONE_1 = 'zone 1';
+const ZONE_2 = 'zone 2';
+const ZONE_3 = 'zone 3';
+const DEFAULT_AVAILABILITY_ZONES = [ZONE_1, ZONE_2, ZONE_3];
+const TOUCHED_AVAILABILITY_ZONES = [ZONE_1];
+
+/** Asserts the selected zone labels of an availability zone select, in order */
+async function expectZones(select: LabeledSelectPo, zones: string[]): Promise<void> {
+  const selectedOptions = select.selectedOption();
+
+  await expect(selectedOptions).toHaveCount(zones.length);
+
+  for (const [index, zone] of zones.entries()) {
+    await expect(selectedOptions.nth(index)).toHaveText(zone);
+  }
+}
 
 test.describe(
   'Azure Availability Zone Handling in Unsupported Regions',
@@ -103,6 +122,78 @@ test.describe(
       await expect(aksPage.availabilityZoneWarningBanner()).toBeHidden();
       await expect(aksPage.availabilityZonesSelect().selectedOption()).toHaveCount(3);
       await expect(aksPage.availabilityZonesSelect().selectedOption().nth(0)).toHaveText('zone 1');
+    });
+
+    test('should handle multi-node pool mixed touched and untouched availability zones across region switches', async ({
+      page,
+      login,
+    }) => {
+      await login();
+
+      const aksPage = new ClusterManagerCreateAKSPagePo(page);
+
+      await aksPage.goTo();
+      await aksPage.waitForPage();
+
+      // Step 1: Select Cloud Credential
+      await aksPage.cloudCredentialDropdown().searchInput().click();
+      await aksPage.cloudCredentialDropdown().clickOptionWithLabel(credName);
+
+      // The primary pool starts with the three default zones
+      await expectZones(aksPage.activePoolAvailabilityZonesSelect(), DEFAULT_AVAILABILITY_ZONES);
+
+      // Step 2: Add a second node pool, which also starts with the three default zones
+      await aksPage.addNodePool();
+      await aksPage.nodePoolTab(SECONDARY_NODE_POOL).click();
+      await expectZones(aksPage.activePoolAvailabilityZonesSelect(), DEFAULT_AVAILABILITY_ZONES);
+
+      // Step 3: Deselect zone 3 then zone 2 so only zone 1 remains on the second pool
+      await aksPage.activePoolAvailabilityZonesSelect().deselectButton(ZONE_3).click();
+      await aksPage.activePoolAvailabilityZonesSelect().deselectButton(ZONE_2).click();
+      await expectZones(aksPage.activePoolAvailabilityZonesSelect(), TOUCHED_AVAILABILITY_ZONES);
+
+      // Step 4: Switch Region to UK West, which does not support availability zones
+      const ukwestVersionsPromise = page.waitForResponse(
+        (resp) => resp.url().includes('meta/aksVersions') && resp.url().includes('ukwest') && resp.status() === 200,
+        SHORT_TIMEOUT_OPT,
+      );
+
+      await aksPage.regionSelect().searchInput().click();
+      await page.getByRole('option', { name: REGION_WITHOUT_AZ }).click();
+      await ukwestVersionsPromise;
+
+      // The touched pool keeps its zones and is flagged, the untouched pool is not
+      await expect(aksPage.availabilityZoneWarningBanner()).toBeVisible();
+      await expect(aksPage.nodePoolTabItem(SECONDARY_NODE_POOL)).toHaveClass(/error/);
+      await expectZones(aksPage.activePoolAvailabilityZonesSelect(), TOUCHED_AVAILABILITY_ZONES);
+
+      await aksPage.nodePoolTab(PRIMARY_NODE_POOL).click();
+
+      await expect(aksPage.nodePoolTabItem(PRIMARY_NODE_POOL)).not.toHaveClass(/error/);
+      await expect(aksPage.activePoolAvailabilityZonesSelect().selectedOption()).toHaveCount(EXPECTED_EMPTY_AZ_COUNT);
+      await expect(aksPage.activePoolAvailabilityZonesSelect().self()).toHaveClass(/disabled/);
+      await expect(aksPage.formSaveButton()).toBeDisabled();
+
+      // Step 5: Switch Region back to East US, which supports availability zones
+      const eastusVersionsPromise = page.waitForResponse(
+        (resp) => resp.url().includes('meta/aksVersions') && resp.url().includes('eastus') && resp.status() === 200,
+        SHORT_TIMEOUT_OPT,
+      );
+
+      await aksPage.regionSelect().searchInput().click();
+      await page.getByRole('option', { name: REGION_WITH_AZ, exact: true }).click();
+      await eastusVersionsPromise;
+
+      await expect(aksPage.availabilityZoneWarningBanner()).toBeHidden();
+
+      // The untouched pool regains the defaults, the touched pool keeps its single zone
+      await expectZones(aksPage.activePoolAvailabilityZonesSelect(), DEFAULT_AVAILABILITY_ZONES);
+
+      await aksPage.nodePoolTab(SECONDARY_NODE_POOL).click();
+      await expectZones(aksPage.activePoolAvailabilityZonesSelect(), TOUCHED_AVAILABILITY_ZONES);
+
+      await expect(aksPage.nodePoolTabItem(PRIMARY_NODE_POOL)).not.toHaveClass(/error/);
+      await expect(aksPage.nodePoolTabItem(SECONDARY_NODE_POOL)).not.toHaveClass(/error/);
     });
 
     test('should display AZ warning banner and disable input without setting value to 3 in Azure RKE2 for unsupported region', async ({
