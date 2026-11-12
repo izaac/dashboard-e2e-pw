@@ -143,5 +143,66 @@ test.describe(
 
       expect(optionsCount).toBeGreaterThanOrEqual(EXPECTED_MIN_OPTIONS_COUNT);
     });
+
+    test('should prevent duplicate options and maintain stable option counts on round-trip credential switching', async ({
+      page,
+      login,
+    }) => {
+      await login();
+
+      const aksPage = new ClusterManagerCreateAKSPagePo(page);
+
+      await aksPage.goTo();
+      await aksPage.waitForPage();
+
+      // Initial: Select Credential A and region West US 2
+      await aksPage.cloudCredentialDropdown().searchInput().click();
+      await aksPage.cloudCredentialDropdown().clickOptionWithLabel(credNameA);
+
+      const initVersionsPromise = page.waitForResponse(
+        (resp) => resp.url().includes('meta/aksVersions') && resp.status() === 200,
+        SHORT_TIMEOUT_OPT,
+      );
+
+      await aksPage.regionSelect().searchInput().click();
+      await aksPage.regionSelect().clickOptionWithLabel(REGION_LABEL_WEST);
+      await initVersionsPromise;
+
+      // Capture initial option count for Credential A
+      await aksPage.kubernetesVersionSelect().searchInput().click();
+      await expect(aksPage.kubernetesVersionSelect().getOptions().first()).toBeVisible();
+      const initialOptionsCount = await aksPage.kubernetesVersionSelect().getOptions().count();
+
+      await page.keyboard.press('Escape');
+
+      // Switch to Credential B
+      const switchBPromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('meta/aksVersions') && resp.url().includes(REGION_PARAM_WEST) && resp.status() === 200,
+        SHORT_TIMEOUT_OPT,
+      );
+
+      await aksPage.cloudCredentialDropdown().searchInput().click();
+      await aksPage.cloudCredentialDropdown().clickOptionWithLabel(credNameB);
+      await switchBPromise;
+
+      // Switch back to Credential A (round-trip)
+      const switchBackAPromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('meta/aksVersions') && resp.url().includes(REGION_PARAM_WEST) && resp.status() === 200,
+        SHORT_TIMEOUT_OPT,
+      );
+
+      await aksPage.cloudCredentialDropdown().searchInput().click();
+      await aksPage.cloudCredentialDropdown().clickOptionWithLabel(credNameA);
+      await switchBackAPromise;
+
+      // Verify options are NOT duplicated: count after round-trip must equal initial count
+      await aksPage.kubernetesVersionSelect().searchInput().click();
+      await expect(aksPage.kubernetesVersionSelect().getOptions().first()).toBeVisible();
+      const roundTripOptionsCount = await aksPage.kubernetesVersionSelect().getOptions().count();
+
+      expect(roundTripOptionsCount).toBe(initialOptionsCount);
+    });
   },
 );
