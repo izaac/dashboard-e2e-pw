@@ -131,6 +131,10 @@ export default class MgmtUserEditPo extends PagePo {
     return this.page.locator('#cru-errors');
   }
 
+  errorBanners(): Locator {
+    return this.errorBanner().locator('.banner');
+  }
+
   errorBannerCloseButton(): Locator {
     return this.errorBanner().getByTestId('banner-close');
   }

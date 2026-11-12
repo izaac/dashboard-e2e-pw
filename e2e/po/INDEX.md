@@ -135,7 +135,7 @@
 | GlobalRoleEditPo | management.cattle.io.globalrole.po.ts | RoleEditPo | — | super, yamlEditor |
 | OidcClientCreateEditPo | management.cattle.io.oidcclient.po.ts | PagePo | — | super, nameNsDescription, callbackUrls, refreshTokenExpiration, tokenExpiration, saveCreateForm |
 | RoleTemplateEditPo | management.cattle.io.roletemplate.po.ts | RoleEditPo | — | super |
-| GlobalRoleBindingsPo | management.cattle.io.user.po.ts | ComponentPo | `.global-permissions` | super, roleCheckbox, globalOptionsLocator, globalOptions, for, name, username, description (+10) |
+| GlobalRoleBindingsPo | management.cattle.io.user.po.ts | ComponentPo | `.global-permissions` | super, roleCheckbox, globalOptionsLocator, globalOptions, for, name, username, description (+11) |
 | PodSecurityAdmissionsCreateEditPo | pod-security-admissions.po.ts | PagePo | — | super, nameNsDescription, resourceDetail, psaControlLevel, psaControlVersion, setExemptionsCheckbox, setExemptionsInput, editAsYaml (+1) |
 | ResourceDetailPo | resource-detail.po.ts | ComponentPo | — | super, cruResource, createEditView, resourceYaml, tabs, tabbedList, title, titleBar (+3) |
 | RoleEditPo | role.po.ts | PagePo | — | super, name, description, selectCheckbox, saveCreateForm, saveEditYamlForm, saveAndWaitForRequests, selectVerbs (+3) |
