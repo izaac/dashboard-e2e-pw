@@ -3,6 +3,8 @@ import PagePo from '@/e2e/po/pages/page.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
 import SortableTablePo from '@/e2e/po/components/sortable-table.po';
+import ResourceTablePo from '@/e2e/po/components/resource-table.po';
+import TabbedPo from '@/e2e/po/components/tabbed.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import WorkloadPodStoragePo from '@/e2e/po/components/workloads/pod-storage.po';
 import ContainerMountPathPo from '@/e2e/po/components/workloads/container-mount-paths.po';
@@ -233,5 +235,25 @@ export class WorkloadDetailsPageBasePo extends PagePo {
 
   title(): Locator {
     return this.self().locator('h1');
+  }
+
+  private tabs(): TabbedPo {
+    return new TabbedPo(this.page);
+  }
+
+  async clickStorageTab(): Promise<void> {
+    await this.tabs().tab('storage').click();
+  }
+
+  storageTabPanel(): Locator {
+    return this.tabs().panel('storage');
+  }
+
+  storageList(): ResourceTablePo {
+    return this.tabs().tabbedList('storage');
+  }
+
+  storageEmptyCaption(): Locator {
+    return this.storageTabPanel().locator('p.caption');
   }
 }

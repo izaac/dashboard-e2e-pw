@@ -57,7 +57,7 @@
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
 | SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, selectionActionsTrigger, openSelectionActions, if, selectionAction, bulkBar (+61) |
 | StateBadgePo | state-badge.po.ts | ComponentPo | — | super, badges, firstBadge |
-| TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, panel, allTabs, tabNames (+2) |
+| TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, panel, tabbedList, allTabs (+3) |
 | TableViewsPo | table-views.po.ts | ComponentPo | — | super, tabsContainer, tabs, tab, allTab, activeTab, unsavedDot, searchInput (+19) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | TooltipPo | tooltip.po.ts | ComponentPo | `:scope` | super, show, content |
@@ -273,8 +273,8 @@
 | LeasesPagePo | leases.po.ts | PagePo | — | super, list, clickCreateYaml, listElementWithName, saveYamlButton |
 | NetworkPolicyListPagePo | network-policy.po.ts | PagePo | — | super, list, baseResourceList, promptRemove, resourceDetail, nameInput, descriptionInput, formSave (+11) |
 | NodesPagePo | nodes.po.ts | PagePo | — | super, list |
-| PersistentVolumeClaimsPagePo | persistent-volume-claims.po.ts | PagePo | — | super, list |
-| PersistentVolumesPagePo | persistent-volumes.po.ts | PagePo | — | super, list |
+| PersistentVolumeClaimsPagePo | persistent-volume-claims.po.ts | PagePo | — | super, list, clickPodsTab, podsTabPanel, podsList, podsEmptyCaption |
+| PersistentVolumesPagePo | persistent-volumes.po.ts | PagePo | — | super, list, goToDetailsPage, mastheadDetail, clickClaimsTab, claimsTabPanel, claimsList, claimsEmptyCaption |
 | ProjectSecretsListPagePo | project-secrets.po.ts | PagePo | — | super, title, createButton, list, cruResource, selectSecretSubtype, projectSelect, nameNsDescription (+3) |
 | ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, masthead, createEditView, createNamespaceButton, projectSelect, resourceDetail, tabResourceQuotas (+11) |
 | RoleBindingsPagePo | role-bindings.po.ts | PagePo | — | super, list, clickCreate |
@@ -288,7 +288,7 @@
 | WorkloadsDaemonsetsListPagePo | workloads-daemonsets.po.ts | PagePo | — | super, baseResourceList, redeployDialog, resourceDetail, containerImageInput, clickTab, ScalingUpgradePolicyRadioBtn, scalingUpgradePolicyRadioBtn (+2) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | PagePo | — | super, baseResourceList, resourceDetail, selectNamespaceOption, selectNamespace, namespaceInput, namespace, containerImage (+1) |
 | WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, tableViews, searchBox, filterBySearchBox (+2) |
-| WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |
+| WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, redeployDialog |
 
 ## pages/explorer/charts/
 
@@ -315,8 +315,8 @@
 | WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog, addVolumeButton, dropdownMenu, openEmptyShowConfigurationLabelsLink (+6) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
-| WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, redeployDialog |
-| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, masthead, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI (+27) |
+| WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, redeployDialog |
+| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, masthead, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI (+31) |
 
 ## pages/extensions/
 

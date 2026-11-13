@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
+import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 
 export default class TabbedPo extends ComponentPo {
   constructor(page: Page, selector = '.dashboard-root', parent?: Locator) {
@@ -29,6 +30,11 @@ export default class TabbedPo extends ComponentPo {
   /** Panel Locator for a tab — resolves to `data-testid="tab-panel-${name}"`. */
   panel(name: string): Locator {
     return this.page.getByTestId(`tab-panel-${name}`);
+  }
+
+  /** Resource table hosted by a tab panel (`tab-panel-${name}` > `sortable-table-list-container`). */
+  tabbedList(name: string): ResourceTablePo {
+    return new ResourceTablePo(this.page, '[data-testid="sortable-table-list-container"]', this.panel(name));
   }
 
   allTabs(componentTestId = 'tabbed'): Locator {
