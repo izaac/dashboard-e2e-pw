@@ -54,6 +54,14 @@ export default class WelcomeDialogPo extends ComponentPo {
     return this.page.getByTestId('release-welcome-registration');
   }
 
+  registrationPageLink(): Locator {
+    return this.page.getByTestId('release-welcome-registration-page');
+  }
+
+  registrationOpenButton(): Locator {
+    return this.page.getByTestId('release-welcome-registration-open');
+  }
+
   closeButton(): Locator {
     return this.page.getByTestId('release-welcome-close');
   }

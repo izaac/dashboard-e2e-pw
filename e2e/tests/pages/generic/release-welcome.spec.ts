@@ -10,6 +10,8 @@ interface VersionInfo {
   major: number;
   minor: number;
   minorLabel: string;
+  /** Prime shows the full running version (e.g. `2.16.0`) in the badge, Community shows `minorLabel` */
+  fullVersion: string;
   expectedPref: string;
 }
 
@@ -29,8 +31,15 @@ async function getVersionInfo(rancherApi: RancherApi): Promise<VersionInfo> {
 
   const major = Number(match[1]);
   const minor = Number(match[2]);
+  const patch = Number(match[3] ?? 0);
 
-  return { major, minor, minorLabel: `${major}.${minor}`, expectedPref: rawPrefix };
+  return {
+    major,
+    minor,
+    minorLabel: `${major}.${minor}`,
+    fullVersion: `${major}.${minor}.${patch}`,
+    expectedPref: rawPrefix,
+  };
 }
 
 /** Reads and rewrites the logged in (temporary) user's own `read-whatsnew` preference via the browser session */
@@ -84,48 +93,59 @@ async function pressEscapeAndWaitForPrefSave(page: Page, welcomeDialog: WelcomeD
   await expect(welcomeDialog.dialogRoot()).toHaveCount(0);
 }
 
-test.describe('Release Welcome Modal', { tag: ['@generic', '@adminUser'] }, () => {
-  /** Creates an isolated Standard User (never touches the shared admin userpreferences) and removes it afterwards */
-  async function withStandardUser(
-    rancherApi: RancherApi,
-    login: (options?: { username?: string; password?: string }) => Promise<void>,
-    body: () => Promise<void>,
-  ): Promise<void> {
-    const userResp = await rancherApi.createUser({
-      username: `e2e-welcome-${Date.now()}`,
-      password: USER_PASSWORD,
-      globalRole: { role: 'user' },
-    });
+type LoginFn = (options?: { username?: string; password?: string }) => Promise<void>;
 
-    try {
-      await login({ username: userResp.body.username, password: USER_PASSWORD });
-      await body();
-    } finally {
-      await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
-    }
+/** Creates an isolated temporary user (never touches the shared admin userpreferences), logs in as it, and removes it afterwards */
+async function withTempUser(
+  rancherApi: RancherApi,
+  login: LoginFn,
+  role: 'user' | 'admin',
+  body: () => Promise<void>,
+): Promise<void> {
+  const userResp = await rancherApi.createUser({
+    username: `e2e-welcome-${Date.now()}`,
+    password: USER_PASSWORD,
+    globalRole: { role },
+  });
+
+  try {
+    await login({ username: userResp.body.username, password: USER_PASSWORD });
+    await body();
+  } finally {
+    await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userResp.body.id, false);
   }
+}
 
+test.describe('Release Welcome Modal', { tag: ['@generic', '@adminUser'] }, () => {
   test('New user sees welcome modal on first login, persists read-whatsnew on close, and stays hidden on reload', async ({
     page,
     login,
     rancherApi,
     isPrime,
   }) => {
-    const { minorLabel, expectedPref } = await getVersionInfo(rancherApi);
+    const { minorLabel, fullVersion, expectedPref } = await getVersionInfo(rancherApi);
 
-    await withStandardUser(rancherApi, login, async () => {
+    await withTempUser(rancherApi, login, 'user', async () => {
       const welcomeDialog = new WelcomeDialogPo(page);
 
       await welcomeDialog.waitForSettled();
 
       await expect(welcomeDialog.title()).toBeVisible();
       await expect(welcomeDialog.subtitle()).toBeVisible();
-      await expect(welcomeDialog.whatsNewVersion()).toContainText(minorLabel);
       await expect.poll(() => welcomeDialog.featureItems().count()).toBeGreaterThanOrEqual(1);
       await expect(welcomeDialog.closeButton()).toBeFocused();
       await expect(welcomeDialog.registrationCard()).toHaveCount(0);
 
-      if (!isPrime) {
+      if (isPrime) {
+        // eslint-disable-next-line playwright/no-conditional-expect -- Prime shows the full version and no promo card
+        await expect(welcomeDialog.whatsNewVersion()).toContainText(fullVersion);
+        // eslint-disable-next-line playwright/no-conditional-expect -- Prime has no promo card
+        await expect(welcomeDialog.primePromoCard()).toHaveCount(0);
+        // eslint-disable-next-line playwright/no-conditional-expect -- Prime subtitle omits the community lead
+        await expect(welcomeDialog.subtitle()).not.toContainText("Here's what's new in this release.");
+      } else {
+        // eslint-disable-next-line playwright/no-conditional-expect -- Community shows the minor version badge
+        await expect(welcomeDialog.whatsNewVersion()).toContainText(minorLabel);
         // eslint-disable-next-line playwright/no-conditional-expect -- Prime promo card is edition-specific
         await expect(welcomeDialog.primePromoCard()).toBeVisible();
       }
@@ -145,7 +165,7 @@ test.describe('Release Welcome Modal', { tag: ['@generic', '@adminUser'] }, () =
   }) => {
     const { expectedPref } = await getVersionInfo(rancherApi);
 
-    await withStandardUser(rancherApi, login, async () => {
+    await withTempUser(rancherApi, login, 'user', async () => {
       const welcomeDialog = new WelcomeDialogPo(page);
 
       await welcomeDialog.waitForSettled();
@@ -170,7 +190,7 @@ test.describe('Release Welcome Modal', { tag: ['@generic', '@adminUser'] }, () =
 
     test.skip(minor === 0, 'No earlier minor version to simulate an upgrade from');
 
-    await withStandardUser(rancherApi, login, async () => {
+    await withTempUser(rancherApi, login, 'user', async () => {
       const welcomeDialog = new WelcomeDialogPo(page);
       const userMenu = new UserMenuPo(page);
 
@@ -199,7 +219,7 @@ test.describe('Release Welcome Modal', { tag: ['@generic', '@adminUser'] }, () =
   }) => {
     const { expectedPref } = await getVersionInfo(rancherApi);
 
-    await withStandardUser(rancherApi, login, async () => {
+    await withTempUser(rancherApi, login, 'user', async () => {
       const welcomeDialog = new WelcomeDialogPo(page);
       const userMenu = new UserMenuPo(page);
 
@@ -214,6 +234,36 @@ test.describe('Release Welcome Modal', { tag: ['@generic', '@adminUser'] }, () =
 
       await welcomeDialog.closeButton().click();
       await expect(welcomeDialog.dialogRoot()).toHaveCount(0);
+    });
+  });
+
+  test('Prime admin sees registration card, full version badge, and registration page link', async ({
+    page,
+    login,
+    rancherApi,
+    isPrime,
+  }) => {
+    test.skip(!isPrime, 'Prime-only scenario');
+
+    const { fullVersion, expectedPref } = await getVersionInfo(rancherApi);
+
+    await withTempUser(rancherApi, login, 'admin', async () => {
+      const welcomeDialog = new WelcomeDialogPo(page);
+
+      await welcomeDialog.waitForSettled();
+
+      await expect(welcomeDialog.whatsNewVersion()).toContainText(fullVersion);
+      await expect(welcomeDialog.primePromoCard()).toHaveCount(0);
+      await expect(welcomeDialog.registrationCard()).toBeVisible();
+      await expect(welcomeDialog.registrationOpenButton()).toBeVisible();
+      await expect(welcomeDialog.registrationOpenButton()).toHaveAttribute('href', /^https:\/\//);
+      await expect(welcomeDialog.registrationOpenButton()).toHaveAttribute('target', '_blank');
+      await expect(welcomeDialog.registrationPageLink()).toBeVisible();
+
+      await runAndWaitForPrefSave(page, expectedPref, () => welcomeDialog.registrationPageLink().click());
+
+      await expect(welcomeDialog.dialogRoot()).toHaveCount(0);
+      await expect(page).toHaveURL(/\/c\/local\/settings\/registration/);
     });
   });
 });
