@@ -139,7 +139,7 @@
 | PodSecurityAdmissionsCreateEditPo | pod-security-admissions.po.ts | PagePo | — | super, nameNsDescription, resourceDetail, psaControlLevel, psaControlVersion, setExemptionsCheckbox, setExemptionsInput, editAsYaml (+1) |
 | ResourceDetailPo | resource-detail.po.ts | ComponentPo | — | super, cruResource, createEditView, resourceYaml, tabs, tabbedList, title, titleBar (+3) |
 | RoleEditPo | role.po.ts | PagePo | — | super, name, description, selectCheckbox, saveCreateForm, saveEditYamlForm, saveAndWaitForRequests, selectVerbs (+3) |
-| SecretEditPagePo | secret-edit.po.ts | PagePo | `/c/${clusterId}/explorer/secret/${namespace}/${name}` | super, goToEdit, createEditView, tabs, helmReleaseBanner, dataPanel, dataEditorAddButton, labelsTab (+8) |
+| SecretEditPagePo | secret-edit.po.ts | PagePo | `/c/${clusterId}/explorer/secret/${namespace}/${name}` | super, goToEdit, createEditView, tlsCertInput, tlsKeyInput, saveOrCreate, tabs, helmReleaseBanner (+11) |
 
 ## edit/provisioning.cattle.io.cluster/
 
@@ -279,7 +279,7 @@
 | ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, masthead, createEditView, createNamespaceButton, projectSelect, resourceDetail, tabResourceQuotas (+11) |
 | RoleBindingsPagePo | role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | RolesPagePo | roles.po.ts | PagePo | — | super, list, clickCreate |
-| SecretsListPagePo | secrets.po.ts | PagePo | — | super, title, createButton, createButtonTitle, list, filterInput, filterByName, resourceDetail |
+| SecretsListPagePo | secrets.po.ts | PagePo | — | super, title, createButton, createButtonTitle, list, filterInput, filterByName, resourceDetail (+15) |
 | ServiceAccountsPagePo | service-accounts.po.ts | PagePo | — | super, list, clickCreate |
 | ServicesPagePo | services.po.ts | PagePo | — | super, list, clickCreate, mastheadTitle, nameNsDescription, nameInput, descriptionInput, formSave (+7) |
 | StorageClassesPagePo | storage-classes.po.ts | PagePo | — | super, urlPath, list, listElementWithName, clickCreate, createStorageClassesForm |

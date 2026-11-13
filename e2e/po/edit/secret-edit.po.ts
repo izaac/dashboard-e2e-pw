@@ -3,6 +3,8 @@ import PagePo from '@/e2e/po/pages/page.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import KeyValuePo from '@/e2e/po/components/key-value.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
+import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 
 /**
  * Edit page for an existing secret: `/c/<cluster>/explorer/secret/<namespace>/<name>?mode=edit`
@@ -18,6 +20,18 @@ export class SecretEditPagePo extends PagePo {
 
   createEditView(): CreateEditViewPo {
     return new CreateEditViewPo(this.page, ':scope', this.self());
+  }
+
+  tlsCertInput(): LabeledInputPo {
+    return new LabeledInputPo(this.page, 'textarea[name="tls.crt"]', this.self());
+  }
+
+  tlsKeyInput(): LabeledInputPo {
+    return new LabeledInputPo(this.page, 'textarea[name="tls.key"]', this.self());
+  }
+
+  saveOrCreate(): AsyncButtonPo {
+    return this.createEditView().formSave();
   }
 
   tabs(): TabbedPo {
