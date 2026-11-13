@@ -375,7 +375,7 @@
 | GenericDialog | genericDialog.po.ts | ComponentPo | — | super, labeledSelect, clickActionButton |
 | GenericPrompt | genericPrompt.po.ts | ComponentPo | — | super, getTitle, getBody, labeledSelect, checkbox, clickActionButton |
 | PromptRemove | promptRemove.po.ts | ComponentPo | `[data-testid=` | super, confirmField, confirm, remove, cancelButton, confirmButton, confirmName, copyControls (+2) |
-| WelcomeDialogPo | welcome-dialog.po.ts | ComponentPo | `.rc-modal-overlay` | super, dismissIfVisible, if |
+| WelcomeDialogPo | welcome-dialog.po.ts | ComponentPo | `.rc-modal-overlay` | super, dialogRoot, title, subtitle, cardsContainer, whatsNewCard, whatsNewVersion, releaseNotesLink (+8) |
 
 ## side-bars/
 

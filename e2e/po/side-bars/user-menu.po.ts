@@ -1,6 +1,8 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
+export type UserMenuLabel = "What's New" | 'Preferences' | 'Account & API Keys' | 'Log Out';
+
 export default class UserMenuPo extends ComponentPo {
   constructor(page: Page) {
     super(page, '[data-testid="nav_header_showUserMenu"]');
@@ -38,14 +40,14 @@ export default class UserMenuPo extends ComponentPo {
     return this.userMenuContainer().locator('[dropdown-menu-item]');
   }
 
-  async getMenuItem(label: 'Preferences' | 'Account & API Keys' | 'Log Out'): Promise<Locator> {
+  async getMenuItem(label: UserMenuLabel): Promise<Locator> {
     await this.ensureOpen();
     const items = this.userMenuContainer().locator('[dropdown-menu-item]');
 
     return items.filter({ hasText: label });
   }
 
-  async clickMenuItem(label: 'Preferences' | 'Account & API Keys' | 'Log Out'): Promise<void> {
+  async clickMenuItem(label: UserMenuLabel): Promise<void> {
     const item = await this.getMenuItem(label);
 
     await item.click();
