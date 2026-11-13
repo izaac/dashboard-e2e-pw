@@ -5,6 +5,7 @@ import TabbedPo from '@/e2e/po/components/tabbed.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
 import LabeledSelectPo from '@/e2e/po/components/labeled-select.po';
+import CodeMirrorPo from '@/e2e/po/components/code-mirror.po';
 import NameNsDescriptionPo from '@/e2e/po/components/name-ns-description.po';
 
 export class InstallChartPage extends PagePo {
@@ -23,6 +24,16 @@ export class InstallChartPage extends PagePo {
     const btn = new AsyncButtonPo(this.page, '.controls-steps .btn.role-primary, .controls-steps .btn.variant-primary');
 
     await btn.click(true);
+  }
+
+  /** Wizard footer Next button (accepts both legacy and rc-button primary classes) */
+  nextButton(): Locator {
+    return this.page.locator('.controls-steps .btn.role-primary, .controls-steps .btn.variant-primary');
+  }
+
+  /** Wizard footer install (finish) button, only present on the last step */
+  installButton(): Locator {
+    return this.page.locator('.controls-steps [data-testid="action-button-async-button"]');
   }
 
   async installChart(): Promise<void> {
@@ -90,5 +101,69 @@ export class InstallChartPage extends PagePo {
   /** The wizard footer controls container */
   wizardFooter(): Locator {
     return this.page.locator('#wizard-footer-controls');
+  }
+
+  /** Chart values "defaults" CodeMirror editor (CM6-aware) */
+  defaultsEditor(): CodeMirrorPo {
+    return new CodeMirrorPo(this.page, '[data-testid="chart-values-defaults-code-mirror"]');
+  }
+
+  /** Chart values "overrides" CodeMirror editor (CM6-aware) */
+  overridesEditor(): CodeMirrorPo {
+    return new CodeMirrorPo(this.page, '[data-testid="chart-values-overrides-code-mirror"]');
+  }
+
+  defaultsEditorContent(): Locator {
+    return this.page.locator('[data-testid="chart-values-defaults-code-mirror"] .cm-content');
+  }
+
+  overridesPane(): Locator {
+    return this.page.locator('[data-testid="chart-values-overrides-pane"]');
+  }
+
+  defaultsPane(): Locator {
+    return this.page.locator('[data-testid="chart-values-defaults-pane"]');
+  }
+
+  /** Click "Compare Changes" in the YAML view toggle group */
+  async compareChanges(): Promise<void> {
+    await this.self().getByTestId('btn-group-options-view').getByText('Compare Changes').click();
+  }
+
+  diffView(): Locator {
+    return this.page.locator('#diffElement');
+  }
+
+  /** Added lines (`.d2h-ins .d2h-code-line-ctn`, the code cell, not the line-number cell) in the Compare Changes diff */
+  diffAddedLines(): Locator {
+    return this.diffView().locator('.d2h-ins .d2h-code-line-ctn');
+  }
+
+  /** Removed lines (`.d2h-del .d2h-code-line-ctn`, the code cell, not the line-number cell) in the Compare Changes diff */
+  diffRemovedLines(): Locator {
+    return this.diffView().locator('.d2h-del .d2h-code-line-ctn');
+  }
+
+  /** Unchanged context lines (`.d2h-cntx .d2h-code-line-ctn`, the code cell) in the Compare Changes diff */
+  diffContextLines(): Locator {
+    return this.diffView().locator('.d2h-cntx .d2h-code-line-ctn');
+  }
+
+  /** Choose "Create a New Namespace" in the namespace dropdown and type the new name */
+  async createNamespaceOption(name: string): Promise<void> {
+    const nsSelect = this.nameNsDescription().namespace();
+
+    await nsSelect.dropdown().click();
+    await nsSelect.clickOptionWithLabel('Create a New Namespace');
+    await nsSelect.self().locator('.create-input input').fill(name);
+  }
+
+  errorBanner(): Locator {
+    return this.page.locator('[role=alert].footer-error');
+  }
+
+  /** Banner shown when values from a previous version are applied on top of a new one */
+  upgradeBanner(): Locator {
+    return this.page.locator('.description').filter({ hasText: 'Your values from' });
   }
 }

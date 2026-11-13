@@ -19,7 +19,7 @@
 | CardPo | card.po.ts | ComponentPo | — | super, getTitle, getBody, getError, getActionButton, actionButtonWithText |
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
 | CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, inputElement (+1) |
-| CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, value, clear, byLabel, bySelector |
+| CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, if, value, clear, content, focus, blur (+2) |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
 | CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard |
@@ -296,7 +296,7 @@
 |-------|------|---------|----------|---------|
 | ChartPage | chart.po.ts | PagePo | — | super, navTo, waitForChartPage, chartHeader, waitForChartHeader, goToInstall, deprecationAndExperimentalWarning, selectVersion (+8) |
 | ChartsPage | charts.po.ts | PagePo | — | super, chartsSearchFilterInput, getChartByName, clickChart, chartCards, headerTitle, emptyState, emptyStateTitle (+8) |
-| InstallChartPage | install-charts.po.ts | PagePo | `/c/${clusterId}/apps/charts/install` | super, waitForChartPage, nextPage, installChart, editYaml, editOptions, selectTab, chartName (+8) |
+| InstallChartPage | install-charts.po.ts | PagePo | `/c/${clusterId}/apps/charts/install` | super, waitForChartPage, nextPage, nextButton, installButton, installChart, editYaml, editOptions (+23) |
 
 ## pages/explorer/charts/tabs/
 
