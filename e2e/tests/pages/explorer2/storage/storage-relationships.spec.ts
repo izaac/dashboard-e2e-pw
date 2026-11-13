@@ -1,12 +1,16 @@
 import { test, expect } from '@/support/fixtures';
 import type { Page } from '@playwright/test';
 import type { RancherApi } from '@/support/fixtures/rancher-api';
+import type { TestEnvMetadata } from '@/globals';
 import { PersistentVolumesPagePo, PersistentVolumeDetailPagePo } from '@/e2e/po/pages/explorer/persistent-volumes.po';
 import { PersistentVolumeClaimDetailPagePo } from '@/e2e/po/pages/explorer/persistent-volume-claims.po';
 import {
   WorkloadsDeploymentsListPagePo,
   WorkloadsDeploymentsDetailsPagePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads-deployments.po';
+import { WorkloadsPodsDetailPagePo } from '@/e2e/po/pages/explorer/workloads-pods.po';
+import { WorkloadsCronJobsDetailsPagePo } from '@/e2e/po/pages/explorer/workloads/workloads-cronjobs.po';
+import WelcomeDialogPo from '@/e2e/po/prompts/welcome-dialog.po';
 import {
   WorkloadsStatefulSetsListPagePo,
   WorkloadsStatefulSetsDetailsPagePo,
@@ -25,6 +29,13 @@ const localCluster = 'local';
 const BOUND_STORAGE_CLASS = 'e2e-manual';
 const UNBOUND_STORAGE_CLASS = 'e2e-unbound';
 const PENDING_STORAGE_CLASS = 'e2e-pending';
+
+type ProjectMemberFixtures = {
+  rancherApi: RancherApi;
+  login: (options?: { username?: string; password?: string }) => Promise<void>;
+  page: Page;
+  envMeta: TestEnvMetadata;
+};
 
 const container = (mountPath?: string, volumeName?: string) => ({
   name: 'container-0',
@@ -78,14 +89,37 @@ const deployment = (namespace: string, name: string, claimName?: string) => ({
   },
 });
 
-const pod = (namespace: string, name: string, claimName: string) => ({
+const pod = (namespace: string, name: string, claimName?: string) => ({
   apiVersion: 'v1',
   kind: 'Pod',
   metadata: { name, namespace },
   spec: {
     terminationGracePeriodSeconds: 0,
-    containers: [container('/data', 'data')],
-    volumes: [{ name: 'data', persistentVolumeClaim: { claimName } }],
+    containers: [claimName ? container('/data', 'data') : container()],
+    volumes: claimName ? [{ name: 'data', persistentVolumeClaim: { claimName } }] : [],
+  },
+});
+
+// Suspended so it never schedules a Job; the claim is mounted from the Job's pod template
+const cronJob = (namespace: string, name: string, claimName: string) => ({
+  apiVersion: 'batch/v1',
+  kind: 'CronJob',
+  metadata: { name, namespace },
+  spec: {
+    schedule: '0 0 1 1 *',
+    suspend: true,
+    jobTemplate: {
+      spec: {
+        template: {
+          spec: {
+            restartPolicy: 'OnFailure',
+            terminationGracePeriodSeconds: 0,
+            containers: [container('/data', 'data')],
+            volumes: [{ name: 'data', persistentVolumeClaim: { claimName } }],
+          },
+        },
+      },
+    },
   },
 });
 
@@ -307,6 +341,17 @@ test.describe('Storage relationships', { tag: ['@explorer2', '@adminUser'] }, ()
     return statefulSetDetailPage;
   };
 
+  const navToPodStorage = async (page: Page, podName: string) => {
+    const podDetailPage = new WorkloadsPodsDetailPagePo(page, namespace, podName, localCluster);
+
+    await podDetailPage.goTo();
+    await podDetailPage.waitForPage();
+    await expect(podDetailPage.mastheadTitle()).toContainText(podName);
+    await podDetailPage.clickStorageTab();
+
+    return podDetailPage;
+  };
+
   test.describe('PersistentVolume detail', () => {
     test('shows the volume details in the masthead', async ({ page, login }) => {
       await login();
@@ -342,7 +387,90 @@ test.describe('Storage relationships', { tag: ['@explorer2', '@adminUser'] }, ()
     });
   });
 
+  // Runs before the PersistentVolumeClaim detail tests: its pods are gone again by the time they count mounts
+  test.describe('Standalone Pods', () => {
+    let podWithStorageName: string;
+    let podWithoutStorageName: string;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      test.setTimeout(EXTRA_LONG);
+
+      podWithStorageName = rancherApi.createE2EResourceName('pod-with-pvc');
+      podWithoutStorageName = rancherApi.createE2EResourceName('pod-no-pvc');
+
+      await rancherApi.createRancherResource('v1', 'pods', pod(namespace, podWithStorageName, claimName));
+      await rancherApi.createRancherResource('v1', 'pods', pod(namespace, podWithoutStorageName));
+
+      for (const name of [podWithStorageName, podWithoutStorageName]) {
+        await rancherApi.expectResourceState('v1', 'pods', `${namespace}/${name}`, (resp) => resp.status === 200, 30);
+      }
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      test.setTimeout(EXTRA_LONG);
+
+      for (const name of [podWithStorageName, podWithoutStorageName]) {
+        if (name) {
+          await rancherApi.deleteRancherResource('v1', 'pods', `${namespace}/${name}`, false);
+        }
+      }
+
+      // The PersistentVolumeClaim tests that follow count mounting pods, so wait until these are really gone
+      for (const name of [podWithStorageName, podWithoutStorageName]) {
+        if (name) {
+          await rancherApi.expectResourceGone('v1', 'pods', `${namespace}/${name}`, 60, 1000);
+        }
+      }
+    });
+
+    test('lists the claim mounted by a pod in its Storage tab', async ({ page, login }) => {
+      await login();
+      const podDetailPage = await navToPodStorage(page, podWithStorageName);
+      const storageTable = podDetailPage.storageList().sortableTable();
+
+      await expect(storageTable.rowElements()).toHaveCount(1);
+      await expect(storageTable.rowElementWithName(claimName)).toBeVisible();
+    });
+
+    test('shows the empty state in the Storage tab of a pod that mounts no claims', async ({ page, login }) => {
+      await login();
+      const podDetailPage = await navToPodStorage(page, podWithoutStorageName);
+
+      await expect(podDetailPage.storageEmptyMessage()).toHaveText(
+        'Could not find any PersistentVolumeClaims mounted by this workload.',
+      );
+    });
+
+    test('lists every pod that mounts the claim, still only from its own namespace', async ({ page, login }) => {
+      await login();
+      const claimDetailPage = await navToClaimDetail(page);
+      const podsTable = claimDetailPage.podsList().sortableTable();
+
+      await expect(podsTable.rowElements()).toHaveCount(2);
+      await expect(podsTable.rowElementWithName(deploymentPodName)).toBeVisible();
+      await expect(podsTable.rowElementWithName(podWithStorageName)).toBeVisible();
+      await expect(claimDetailPage.podsTabPanel()).not.toContainText(otherNamespacePodName);
+      await expect(claimDetailPage.podsTabPanel()).not.toContainText(podWithoutStorageName);
+    });
+  });
+
   test.describe('PersistentVolumeClaim detail', () => {
+    test('links to the bound volume from the masthead', async ({ page, login }) => {
+      await login();
+      const volumeDetailPage = await navToVolumeDetail(page, boundVolumeName);
+      const claimDetailPage = new PersistentVolumeClaimDetailPagePo(page, namespace, claimName, localCluster);
+
+      await volumeDetailPage.clickClaimsTab();
+      await volumeDetailPage.claimsList().goToDetailsPage(claimName);
+      await claimDetailPage.waitForPage();
+      await expect(claimDetailPage.mastheadTitle()).toContainText(claimName);
+      await expect(claimDetailPage.mastheadVolumeLink(boundVolumeName)).toBeVisible();
+
+      await claimDetailPage.mastheadVolumeLink(boundVolumeName).click();
+      await volumeDetailPage.waitForPageWithExactUrl();
+      await expect(volumeDetailPage.mastheadTitle()).toContainText(boundVolumeName);
+    });
+
     test('lists the pods that mount the claim, only from its own namespace', async ({ page, login }) => {
       await login();
       const claimDetailPage = await navToClaimDetail(page);
@@ -390,6 +518,29 @@ test.describe('Storage relationships', { tag: ['@explorer2', '@adminUser'] }, ()
       );
     });
 
+    test('lists the claim mounted by a CronJob', async ({ page, login, rancherApi }) => {
+      const cronJobName = rancherApi.createE2EResourceName('pvc-cronjob');
+
+      try {
+        await rancherApi.createRancherResource('v1', 'batch.cronjobs', cronJob(namespace, cronJobName, claimName));
+
+        await login();
+        const cronJobDetailPage = new WorkloadsCronJobsDetailsPagePo(page, cronJobName, localCluster, namespace);
+
+        await cronJobDetailPage.goTo();
+        await cronJobDetailPage.waitForPage();
+        await expect(cronJobDetailPage.mastheadTitle()).toContainText(cronJobName);
+        await cronJobDetailPage.clickStorageTab();
+
+        const storageTable = cronJobDetailPage.storageList().sortableTable();
+
+        await expect(storageTable.rowElements()).toHaveCount(1);
+        await expect(storageTable.rowElementWithName(claimName)).toBeVisible();
+      } finally {
+        await rancherApi.deleteRancherResource('v1', 'batch.cronjobs', `${namespace}/${cronJobName}`, false);
+      }
+    });
+
     test('lists the claims created from StatefulSet volumeClaimTemplates', async ({ page, login }) => {
       await login();
       const statefulSetDetailPage = await navToStatefulSetDetail(page);
@@ -419,6 +570,151 @@ test.describe('Storage relationships', { tag: ['@explorer2', '@adminUser'] }, ()
       for (const name of statefulSetClaimNames) {
         await expect(storageTable.rowElementWithName(name)).toBeVisible();
       }
+    });
+  });
+
+  // The Storage and Pods tabs are only offered when the user may list PersistentVolumeClaims or Pods respectively
+  test.describe('Tab visibility with limited permissions', () => {
+    let projectNamespace: string;
+    let projectClaimName: string;
+    let projectDeploymentName: string;
+
+    test.beforeAll(async ({ rancherApi }) => {
+      test.setTimeout(EXTRA_LONG);
+
+      projectNamespace = rancherApi.createE2EResourceName('storage-rbac');
+      projectClaimName = rancherApi.createE2EResourceName('rbac-claim');
+      projectDeploymentName = rancherApi.createE2EResourceName('rbac-deploy');
+
+      // Project roles only apply to namespaces that belong to the project
+      const defaultProject = await rancherApi.getProjectByName(localCluster, 'Default');
+
+      await rancherApi.createNamespaceInProject(projectNamespace, defaultProject.id);
+      await rancherApi.createRancherResource(
+        'v1',
+        'persistentvolumeclaims',
+        persistentVolumeClaim(projectNamespace, projectClaimName, PENDING_STORAGE_CLASS),
+      );
+      await rancherApi.createRancherResource(
+        'v1',
+        'apps.deployments',
+        deployment(projectNamespace, projectDeploymentName, projectClaimName),
+      );
+      await rancherApi.expectResourceState(
+        'v1',
+        'apps.deployments',
+        `${projectNamespace}/${projectDeploymentName}`,
+        (resp) => resp.status === 200,
+        30,
+      );
+    });
+
+    test.afterAll(async ({ rancherApi }) => {
+      test.setTimeout(EXTRA_LONG);
+
+      if (projectNamespace) {
+        await rancherApi.deleteNamespace([projectNamespace]);
+      }
+    });
+
+    /** Run `check` signed in as a throwaway Default project member holding only `roles`, then sign back in as admin */
+    const asProjectMember = async (
+      { rancherApi, login, page, envMeta }: ProjectMemberFixtures,
+      roles: string[],
+      check: () => Promise<void>,
+    ) => {
+      const username = rancherApi.createE2EResourceName(roles[0]);
+      let userId = '';
+
+      try {
+        const userResp = await rancherApi.createUser(
+          {
+            username,
+            globalRole: { role: 'user' },
+            projectRole: { clusterId: localCluster, projectName: 'Default', role: roles[0] },
+            password: envMeta.password,
+          },
+          { createNameOptions: { onlyContext: true } },
+        );
+
+        userId = userResp.body.id;
+
+        if (roles.length > 1) {
+          const userData = await rancherApi.getRancherResource('v1', 'management.cattle.io.users', userId);
+          const userPrincipalId = userData.body.principalIds[0];
+
+          for (const role of roles.slice(1)) {
+            await rancherApi.setProjectRoleBinding(localCluster, userPrincipalId, 'Default', role);
+          }
+        }
+
+        await login({ username, password: envMeta.password });
+        await new WelcomeDialogPo(page).dismissIfVisible();
+        await check();
+      } finally {
+        if (userId) {
+          await rancherApi.deleteRancherResource('v1', 'management.cattle.io.users', userId, false);
+        }
+
+        // Explicit credentials force a fresh sign-in; a bare login() could keep the deleted user's session
+        await login({ username: envMeta.username, password: envMeta.password });
+      }
+    };
+
+    test('hides the Storage tab of a workload from a user who cannot list claims', async ({
+      page,
+      login,
+      rancherApi,
+      envMeta,
+    }) => {
+      const fixtures = { page, login, rancherApi, envMeta };
+      const deploymentDetailPage = new WorkloadsDeploymentsDetailsPagePo(
+        page,
+        projectDeploymentName,
+        localCluster,
+        projectNamespace,
+      );
+
+      // `workload/index.vue` dispatches `cluster/findAll({ type: INGRESS })` unconditionally, so `workloads-view`
+      // alone fails `fetch()` with "Unknown schema for type: networking.k8s.io.ingress"; `ingress-view` fixes that
+      // without granting `persistentvolumeclaims`, which is the permission under test
+      await asProjectMember(fixtures, ['workloads-view', 'ingress-view'], async () => {
+        // The project role takes a moment to reach the namespace, so retry the page load until it is readable
+        await expect(async () => {
+          await deploymentDetailPage.goTo();
+          await expect(deploymentDetailPage.mastheadTitle()).toContainText(projectDeploymentName, { timeout: LONG });
+        }).toPass({ timeout: EXTRA_LONG });
+
+        await expect(deploymentDetailPage.podsTab()).toBeVisible();
+        await expect(deploymentDetailPage.relatedTab()).toBeVisible();
+        await expect(deploymentDetailPage.storageTab()).toHaveCount(0);
+      });
+    });
+
+    test('hides the Pods tab of a claim from a user who cannot list pods', async ({
+      page,
+      login,
+      rancherApi,
+      envMeta,
+    }) => {
+      const fixtures = { page, login, rancherApi, envMeta };
+      const claimDetailPage = new PersistentVolumeClaimDetailPagePo(
+        page,
+        projectNamespace,
+        projectClaimName,
+        localCluster,
+      );
+
+      await asProjectMember(fixtures, ['persistentvolumeclaims-view'], async () => {
+        await expect(async () => {
+          await claimDetailPage.goTo();
+          await expect(claimDetailPage.mastheadTitle()).toContainText(projectClaimName, { timeout: LONG });
+        }).toPass({ timeout: EXTRA_LONG });
+
+        // Prove the tabs rendered (the Related tab is always present) so the absent Pods tab is not an empty page
+        await expect(claimDetailPage.relatedTab()).toBeVisible();
+        await expect(claimDetailPage.podsTab()).toHaveCount(0);
+      });
     });
   });
 });

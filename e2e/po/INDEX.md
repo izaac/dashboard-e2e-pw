@@ -273,7 +273,7 @@
 | LeasesPagePo | leases.po.ts | PagePo | — | super, list, clickCreateYaml, listElementWithName, saveYamlButton |
 | NetworkPolicyListPagePo | network-policy.po.ts | PagePo | — | super, list, baseResourceList, promptRemove, resourceDetail, nameInput, descriptionInput, formSave (+11) |
 | NodesPagePo | nodes.po.ts | PagePo | — | super, list |
-| PersistentVolumeClaimsPagePo | persistent-volume-claims.po.ts | PagePo | — | super, list, clickPodsTab, podsTabPanel, podsList, podsEmptyCaption |
+| PersistentVolumeClaimsPagePo | persistent-volume-claims.po.ts | PagePo | — | super, list, mastheadVolumeLink, relatedTab, podsTab, clickPodsTab, podsTabPanel, podsList (+1) |
 | PersistentVolumesPagePo | persistent-volumes.po.ts | PagePo | — | super, list, goToDetailsPage, mastheadDetail, clickClaimsTab, claimsTabPanel, claimsList, claimsEmptyCaption |
 | ProjectSecretsListPagePo | project-secrets.po.ts | PagePo | — | super, title, createButton, list, cruResource, selectSecretSubtype, projectSelect, nameNsDescription (+3) |
 | ProjectsNamespacesListPagePo | projects-namespaces.po.ts | PagePo | — | super, list, masthead, createEditView, createNamespaceButton, projectSelect, resourceDetail, tabResourceQuotas (+11) |
@@ -287,7 +287,7 @@
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | PagePo | — | super, baseResourceList, runNow |
 | WorkloadsDaemonsetsListPagePo | workloads-daemonsets.po.ts | PagePo | — | super, baseResourceList, redeployDialog, resourceDetail, containerImageInput, clickTab, ScalingUpgradePolicyRadioBtn, scalingUpgradePolicyRadioBtn (+2) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | PagePo | — | super, baseResourceList, resourceDetail, selectNamespaceOption, selectNamespace, namespaceInput, namespace, containerImage (+1) |
-| WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, tableViews, searchBox, filterBySearchBox (+2) |
+| WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, tableViews, searchBox, filterBySearchBox (+6) |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, redeployDialog |
 
 ## pages/explorer/charts/
@@ -316,7 +316,7 @@
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |
 | WorkloadsReplicaSetsListPagePo | workloads-replicasets.po.ts | WorkloadsListPageBasePo | — | super |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, redeployDialog |
-| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, masthead, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI (+31) |
+| WorkloadsListPageBasePo | workloads.po.ts | PagePo | `${urlStr}${params}` | super, sortableTable, sortableTablePo, masthead, listElementWithName, goToEditYamlPage, goToEditConfigPage, deleteItemWithUI (+34) |
 
 ## pages/extensions/
 

@@ -5,6 +5,8 @@ import SortableTablePo from '@/e2e/po/components/sortable-table.po';
 import CreateEditViewPo from '@/e2e/po/components/create-edit-view.po';
 import ResourceListMastheadPo from '@/e2e/po/components/resource-list-masthead.po';
 import TableViewsPo from '@/e2e/po/components/table-views.po';
+import TabbedPo from '@/e2e/po/components/tabbed.po';
+import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 
 export class WorkloadsPodsListPagePo extends PagePo {
   private static createPath(clusterId: string) {
@@ -69,5 +71,26 @@ export class WorkloadsPodsDetailPagePo extends PagePo {
 
   async goToClone(): Promise<void> {
     await this.goTo('mode=clone');
+  }
+
+  private tabs(): TabbedPo {
+    return new TabbedPo(this.page);
+  }
+
+  async clickStorageTab(): Promise<void> {
+    await this.tabs().tab('storage').click();
+  }
+
+  storageTabPanel(): Locator {
+    return this.tabs().panel('storage');
+  }
+
+  storageList(): ResourceTablePo {
+    return this.tabs().tabbedList('storage');
+  }
+
+  /** The Pod Storage tab renders its empty message as a bare `<p>`, without the `caption` class workloads use */
+  storageEmptyMessage(): Locator {
+    return this.storageTabPanel().locator('p');
   }
 }

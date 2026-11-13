@@ -31,6 +31,21 @@ export class PersistentVolumeClaimDetailPagePo extends PagePo {
     return new TabbedPo(this.page);
   }
 
+  /** Link to the bound PersistentVolume in the detail masthead's identifying information */
+  mastheadVolumeLink(volumeName: string): Locator {
+    return this.self().locator('.identifying-information').getByRole('link', { name: volumeName, exact: true });
+  }
+
+  /** The Related tab, which `ResourceTabs` always renders in view mode, whatever the user can list */
+  relatedTab(): Locator {
+    return this.tabs().tab('related');
+  }
+
+  /** The Pods tab, which only renders when the user can list Pods */
+  podsTab(): Locator {
+    return this.tabs().tab('mounted-pods');
+  }
+
   async clickPodsTab(): Promise<void> {
     await this.tabs().tab('mounted-pods').click();
   }

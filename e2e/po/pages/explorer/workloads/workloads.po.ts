@@ -241,8 +241,21 @@ export class WorkloadDetailsPageBasePo extends PagePo {
     return new TabbedPo(this.page);
   }
 
+  podsTab(): Locator {
+    return this.tabs().tab('pods');
+  }
+
+  relatedTab(): Locator {
+    return this.tabs().tab('related');
+  }
+
+  /** The Storage tab, which only renders when the user can list PersistentVolumeClaims */
+  storageTab(): Locator {
+    return this.tabs().tab('storage');
+  }
+
   async clickStorageTab(): Promise<void> {
-    await this.tabs().tab('storage').click();
+    await this.storageTab().click();
   }
 
   storageTabPanel(): Locator {
