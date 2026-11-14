@@ -729,6 +729,89 @@ test.describe('Cluster Manager', { tag: ['@manager', '@adminUser'] }, () => {
     });
   });
 
+  test.describe('Edit cluster form Table of Contents with nested sections', () => {
+    // https://github.com/rancher/dashboard/issues/19099
+    test('lists nested sections in the table of contents whether their parent section is collapsed or expanded', async ({
+      page,
+      login,
+    }) => {
+      await login();
+
+      const clusterList = new ClusterManagerListPagePo(page);
+      const editPage = new ClusterManagerEditImportedPagePo(page, '_', 'fleet-local', 'local');
+
+      // Cluster Management > local row > Edit Config
+      await clusterList.goTo();
+      await clusterList.waitForPage();
+      await expect(clusterList.list().self()).toBeVisible(MEDIUM_TIMEOUT_OPT);
+      await clusterList.editCluster('local');
+      await editPage.waitForPage('mode=edit');
+
+      // Scenario 1: with nothing expanded, Labels and Annotations are nested under Labels & Annotations
+      await expect(editPage.sectionHeader('Advanced')).toBeVisible(MEDIUM_TIMEOUT_OPT);
+      await expect(editPage.sectionToggle('Labels & Annotations')).toHaveAttribute('aria-expanded', 'false');
+      await expect(editPage.sectionToggle('Advanced')).toHaveAttribute('aria-expanded', 'false');
+      await expect(editPage.sectionToggle('K8s version management')).toHaveAttribute('aria-expanded', 'true');
+      await expect(editPage.sectionToggle('Member Roles')).toHaveAttribute('aria-expanded', 'true');
+      await expect(editPage.tocChildEntries(2)).toHaveText(['Labels', 'Annotations']);
+
+      // Scenario 2: Registries and Agent Environment Variables are nested under Advanced, in the full expected order
+      await expect(editPage.tocChildEntries(3)).toHaveText(['Registries', 'Agent Environment Variables']);
+
+      const expectedToc = [
+        'K8s version management',
+        'Member Roles',
+        'Labels & Annotations',
+        'Labels',
+        'Annotations',
+        'Advanced',
+        'Registries',
+        'Agent Environment Variables',
+      ];
+
+      await expect(editPage.tocEntries()).toHaveText(expectedToc);
+
+      const initialToc = await editPage.tocEntries().allInnerTexts();
+
+      expect(initialToc).toEqual(expectedToc);
+
+      // Scenario 3: expanding Advanced reveals its content and leaves the table of contents unchanged
+      await expect(editPage.sectionContent('Advanced')).toBeHidden();
+      await editPage.sectionHeader('Advanced').click();
+      await expect(editPage.sectionToggle('Advanced')).toHaveAttribute('aria-expanded', 'true');
+      await expect(editPage.sectionContent('Advanced')).toBeVisible();
+      await expect(editPage.registriesAccordion()).toBeVisible();
+
+      expect(await editPage.tocEntries().allInnerTexts()).toEqual(initialToc);
+      await expect(editPage.loadingIndicator()).toHaveCount(0);
+
+      // Scenario 3 (optional step): expanding Labels & Annotations as well still leaves the table of contents unchanged
+      await expect(editPage.sectionContent('Labels & Annotations')).toBeHidden();
+      await editPage.sectionHeader('Labels & Annotations').click();
+      await expect(editPage.sectionToggle('Labels & Annotations')).toHaveAttribute('aria-expanded', 'true');
+      await expect(editPage.sectionContent('Labels & Annotations')).toBeVisible();
+
+      expect(await editPage.tocEntries().allInnerTexts()).toEqual(initialToc);
+      await expect(editPage.loadingIndicator()).toHaveCount(0);
+
+      // Scenario 4: collapsing both sections hides their content and returns the table of contents to the starting state
+      await editPage.sectionHeader('Advanced').click();
+      await editPage.sectionHeader('Labels & Annotations').click();
+      await expect(editPage.sectionToggle('Advanced')).toHaveAttribute('aria-expanded', 'false');
+      await expect(editPage.sectionToggle('Labels & Annotations')).toHaveAttribute('aria-expanded', 'false');
+      await expect(editPage.sectionContent('Advanced')).toBeHidden();
+      await expect(editPage.sectionContent('Labels & Annotations')).toBeHidden();
+
+      // The sections that start expanded stay expanded throughout the flow
+      await expect(editPage.sectionToggle('K8s version management')).toHaveAttribute('aria-expanded', 'true');
+      await expect(editPage.sectionToggle('Member Roles')).toHaveAttribute('aria-expanded', 'true');
+
+      expect(await editPage.tocEntries().allInnerTexts()).toEqual(initialToc);
+      await expect(editPage.loadingIndicator()).toHaveCount(0);
+      await expect(editPage.errorBanner()).toHaveCount(0);
+    });
+  });
+
   test('can navigate to Cluster Management Page', async ({ page, login }) => {
     await login();
 

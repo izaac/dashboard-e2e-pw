@@ -42,6 +42,44 @@ export default class ClusterManagerEditImportedPagePo extends PagePo {
     return this.self().locator('.accordion-container').filter({ hasText: label });
   }
 
+  /** Every Table of Contents button (parents and nested children) in DOM order. */
+  tocEntries(): Locator {
+    return this.self().locator('.toc-container li > button');
+  }
+
+  /** Nested Table of Contents buttons listed under the parent entry at `parentIndex`. */
+  tocChildEntries(parentIndex: number): Locator {
+    return this.self().getByTestId(`toc-list-item-${parentIndex}`).getByTestId('toc-list').locator('li > button');
+  }
+
+  /** Header bar of the collapsible section titled `label` (string match, not exact). */
+  sectionHeader(label: string): Locator {
+    return this.self().locator('.section-header').filter({ hasText: label });
+  }
+
+  /** Expand/collapse chevron button inside the section header (carries `aria-expanded`). */
+  sectionToggle(label: string): Locator {
+    return this.sectionHeader(label).getByRole('button');
+  }
+
+  /** Content panel that immediately follows the section header (hidden via `display: none` when collapsed). */
+  sectionContent(label: string): Locator {
+    return this.sectionHeader(label).locator('xpath=following-sibling::div[contains(@class, "section-content")]');
+  }
+
+  advancedAccordion(): Locator {
+    return this.self().getByTestId('advanced-accordion');
+  }
+
+  /** Page-level `Loading` component, rendered only while the edit form is still fetching its data. */
+  loadingIndicator(): Locator {
+    return this.page.locator('.loading-indicator');
+  }
+
+  errorBanner(): Locator {
+    return this.self().locator('.banner.error');
+  }
+
   networkingAccordion(): Locator {
     // PW historically used `network-accordion` for the Edit-imported page; upstream
     // Edit PO does not define this method (callers use `accordion(5, 'Networking')`).
