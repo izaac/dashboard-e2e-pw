@@ -145,6 +145,77 @@ export default class ClusterProjectMembersPo extends PagePo {
     return this.page.locator('[role="tooltip"]').first();
   }
 
+  /** Table rows (one per binding) inside a membership panel. */
+  membershipRows(panel: Locator): Locator {
+    return panel.locator('[data-testid^="sortable-table-"][data-testid$="-row"]');
+  }
+
+  /** Row whose principal cell contains the given text. */
+  membershipRowWithText(panel: Locator, text: string | RegExp): Locator {
+    return this.membershipRows(panel).filter({ hasText: text });
+  }
+
+  /** Principal container (avatar, name, description) inside a membership row. */
+  principalInRow(row: Locator): Locator {
+    return row.locator('.principal');
+  }
+
+  /** All principal name elements (resolved or not) in a panel. */
+  principalNames(panel: Locator): Locator {
+    return panel.locator('.principal .name');
+  }
+
+  /** Principal name elements that fell back to showing the raw principal id. */
+  unresolvedPrincipalNames(panel: Locator): Locator {
+    return panel.locator('div.name.unresolved');
+  }
+
+  /** Avatar images of resolved principals in a panel. */
+  principalAvatarImages(panel: Locator): Locator {
+    return panel.locator('div.principal > div.avatar > img');
+  }
+
+  /** Description line ("Local") of a principal container. */
+  principalDescription(principal: Locator): Locator {
+    return principal.locator('div.description');
+  }
+
+  /**
+   * Make every lookup of a single principal by id (GET /v3/principals/<id>) fail, leaving the
+   * principal search calls (/v3/principals?action=search) untouched.
+   * `forbid` answers 403, `abort` kills the request like DevTools "Block request URL".
+   */
+  async failPrincipalLookups(mode: 'forbid' | 'abort'): Promise<{ hits: () => number }> {
+    let hits = 0;
+
+    await this.page.route('**/v3/principals/**', async (route) => {
+      const request = route.request();
+
+      if (request.method() !== 'GET') {
+        return route.fallback();
+      }
+
+      hits++;
+
+      if (mode === 'abort') {
+        return route.abort('failed');
+      }
+
+      return route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          type: 'error',
+          status: 403,
+          code: 'Forbidden',
+          message: 'forbidden by e2e route',
+        }),
+      });
+    });
+
+    return { hits: () => hits };
+  }
+
   modalOverlay(): Locator {
     return this.page.locator('.modal-overlay');
   }

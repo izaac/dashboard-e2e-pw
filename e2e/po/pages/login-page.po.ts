@@ -36,6 +36,11 @@ export class LoginPagePo extends PagePo {
     await this.submitButton().click();
   }
 
+  /** Revoke the current session by visiting the logout route (the login form is the landing page afterwards). */
+  async logout(): Promise<void> {
+    await this.page.goto('./auth/logout', { waitUntil: 'domcontentloaded' });
+  }
+
   useLocal(): Locator {
     return this.page.locator('[data-testid="login-useLocal"]');
   }
