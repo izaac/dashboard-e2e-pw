@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
@@ -165,5 +166,57 @@ export class InstallChartPage extends PagePo {
   /** Banner shown when values from a previous version are applied on top of a new one */
   upgradeBanner(): Locator {
     return this.page.locator('.description').filter({ hasText: 'Your values from' });
+  }
+
+  /** Page heading of the edit/upgrade wizard for an installed app (`<app>: Edit`) */
+  editHeading(appName: string): Locator {
+    return this.page.getByRole('heading', { level: 1, name: `${appName}: Edit`, exact: true });
+  }
+
+  /** Labeled select in the page main area whose label text is exactly `label` (these controls carry no data-testid) */
+  private mainLabeledSelect(label: string): Locator {
+    return this.page
+      .locator('main .labeled-select')
+      .filter({ has: this.page.locator('label', { hasText: new RegExp(`^\\s*${label}\\s*\\*?\\s*$`) }) });
+  }
+
+  /** "Chart" dropdown shown when the installed app's chart can no longer be found in any repository */
+  missingChartSelector(): Locator {
+    return this.mainLabeledSelect('Chart');
+  }
+
+  /** "Version" dropdown of the edit wizard */
+  editVersionSelector(): Locator {
+    return this.mainLabeledSelect('Version');
+  }
+
+  /** Selectable options of the open vue-select menu (group headers render as disabled options) */
+  enabledDropdownOptions(): Locator {
+    return this.page.locator('li[role=option].vs__dropdown-option:not(.vs__dropdown-option--disabled)');
+  }
+
+  /**
+   * Open a labeled select (Chart/Version) and pick an option: the first one whose text contains `preferred`
+   * when given and present, otherwise the first selectable option.
+   */
+  async selectAnyOption(select: Locator, preferred?: string): Promise<void> {
+    await select.getByRole('combobox').first().click();
+    await expect(this.enabledDropdownOptions().first()).toBeVisible();
+
+    const preferredOption = preferred ? this.enabledDropdownOptions().filter({ hasText: preferred }) : undefined;
+    const option =
+      preferredOption && (await preferredOption.count()) > 0 ? preferredOption : this.enabledDropdownOptions();
+
+    await option.first().click();
+  }
+
+  /** Warning shown when Rancher manages deployment and upgrade of the app */
+  managedAppWarning(): Locator {
+    return this.page.locator('main .banner.warning');
+  }
+
+  /** Wizard footer Cancel button */
+  cancelButton(): Locator {
+    return this.wizardFooter().getByRole('button', { name: 'Cancel', exact: true });
   }
 }

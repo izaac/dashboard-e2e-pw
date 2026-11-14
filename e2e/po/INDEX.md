@@ -297,7 +297,7 @@
 |-------|------|---------|----------|---------|
 | ChartPage | chart.po.ts | PagePo | — | super, navTo, waitForChartPage, chartHeader, waitForChartHeader, goToInstall, deprecationAndExperimentalWarning, selectVersion (+8) |
 | ChartsPage | charts.po.ts | PagePo | — | super, chartsSearchFilterInput, getChartByName, clickChart, chartCards, headerTitle, emptyState, emptyStateTitle (+8) |
-| InstallChartPage | install-charts.po.ts | PagePo | `/c/${clusterId}/apps/charts/install` | super, waitForChartPage, nextPage, nextButton, installButton, installChart, editYaml, editOptions (+23) |
+| InstallChartPage | install-charts.po.ts | PagePo | `/c/${clusterId}/apps/charts/install` | super, waitForChartPage, nextPage, nextButton, installButton, installChart, editYaml, editOptions (+30) |
 
 ## pages/explorer/charts/tabs/
 
