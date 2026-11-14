@@ -574,6 +574,7 @@ so the downstream node can reach Rancher.
 | --------------------------- | ------------------- |
 | `AWS_ACCESS_KEY_ID`         | AWS provisioning    |
 | `AWS_SECRET_ACCESS_KEY`     | AWS provisioning    |
+| `AWS_REGION`                | AWS region for the CAPA form spec (optional, default `us-west-1`) |
 | `AZURE_AKS_SUBSCRIPTION_ID` | Azure provisioning  |
 | `AZURE_CLIENT_ID`           | Azure provisioning  |
 | `AZURE_CLIENT_SECRET`       | Azure provisioning  |
