@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator, Response } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 
 export class NamespaceFilterPo extends ComponentPo {
@@ -93,14 +93,15 @@ export class NamespaceFilterPo extends ComponentPo {
     return this.namespaceDropdown().locator('.icon-chevron-up');
   }
 
-  /** Click an option by label and await the user-preferences PUT (orchestration). */
-  async clickOptionByLabelAndWaitForRequest(label: string): Promise<void> {
+  /** Click an option by label, await the user-preferences PUT and return its response (orchestration). */
+  async clickOptionByLabelAndWaitForRequest(label: string): Promise<Response> {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.url().includes('v1/userpreferences/') && resp.request().method() === 'PUT',
     );
 
     await this.optionByLabel(label).click();
-    await responsePromise;
+
+    return responsePromise;
   }
 
   namespaceDropdown(): Locator {

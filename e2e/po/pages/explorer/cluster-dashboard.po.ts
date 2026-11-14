@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import TabbedPo from '@/e2e/po/components/tabbed.po';
 import ResourceTablePo from '@/e2e/po/components/resource-table.po';
 import { HeaderPo } from '@/e2e/po/components/header.po';
+import ClusterResourceStatusPo from '@/e2e/po/components/cluster-resource-status.po';
 
 /**
  * Page object for the Cluster Dashboard / Explorer landing page.
@@ -130,6 +131,16 @@ export default class ClusterDashboardPagePo extends PagePo {
 
   nodesBox(text: string): Locator {
     return this.page.locator('.count-box, .simple-box').filter({ hasText: new RegExp(`\\b${text}\\b`) });
+  }
+
+  /** The old "Total Resources" card, replaced by the resource status cards */
+  totalResourcesCard(): Locator {
+    return this.self().getByText('Total Resources');
+  }
+
+  /** Nodes, Deployments and "Other, Unhealthy Workloads" status cards */
+  resourceStatus(): ClusterResourceStatusPo {
+    return new ClusterResourceStatusPo(this.page);
   }
 
   async goToAndWait(): Promise<void> {

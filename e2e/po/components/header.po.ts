@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator, Response } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
 import { ImportYamlPo } from '@/e2e/po/components/import-yaml.po';
 import KubectlPo from '@/e2e/po/components/kubectl.po';
@@ -13,13 +13,18 @@ export class HeaderPo extends ComponentPo {
     return new NamespaceFilterPo(this.page);
   }
 
-  async selectNamespaceFilterOption(singleOption: string): Promise<void> {
+  /** Select one namespace filter option and return the response of the user-preferences PUT that persists it */
+  async selectNamespaceFilterOption(singleOption: string): Promise<Response> {
     const filter = this.projectNamespaceFilter();
 
     await filter.toggle();
-    await filter.optionByLabel(singleOption).click();
+
+    const response = await filter.clickOptionByLabelAndWaitForRequest(singleOption);
+
     await filter.optionCheckmark(singleOption).waitFor({ state: 'attached' });
     await filter.toggle();
+
+    return response;
   }
 
   async selectWorkspace(name: string): Promise<void> {
