@@ -38,6 +38,11 @@ export class HeaderPo extends ComponentPo {
     return this.self().locator('[data-testid="header-action-import-yaml"]');
   }
 
+  /** Clicks an inert corner of the header, which moves focus off whatever field had it */
+  async clickInertCorner(): Promise<void> {
+    await this.self().click({ position: { x: 2, y: 2 } });
+  }
+
   importYaml(): ImportYamlPo {
     return new ImportYamlPo(this.page);
   }

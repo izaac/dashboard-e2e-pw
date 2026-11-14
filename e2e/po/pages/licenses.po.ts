@@ -27,7 +27,12 @@ export default class LicensesPagePo extends PagePo {
   }
 
   searchInput(): Locator {
-    return this.page.locator('input[type="search"], .search-box input').first();
+    return this.page.getByRole('searchbox', { name: 'Filter table results' });
+  }
+
+  /** Clear (X) button of the legacy search box, found by its accessible label */
+  legacyClearButton(): Locator {
+    return this.page.getByRole('button', { name: 'Clear Filter for table results' });
   }
 
   slideIn(): Locator {

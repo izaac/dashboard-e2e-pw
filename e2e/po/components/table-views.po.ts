@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test';
 import ComponentPo from '@/e2e/po/components/component.po';
+import { HeaderPo } from '@/e2e/po/components/header.po';
 
 /**
  * Page object for the Table Views feature (saved views tabs, search query,
@@ -38,11 +39,22 @@ export default class TableViewsPo extends ComponentPo {
   }
 
   searchInput(): Locator {
-    return this.page.locator('[data-testid="table-views-query"]');
+    return this.page.getByTestId('table-views-query');
+  }
+
+  /** The query box is a contenteditable div, not an input: click it, then type key by key */
+  async typeQuery(text: string): Promise<void> {
+    await this.searchInput().click();
+    await this.searchInput().pressSequentially(text);
+  }
+
+  /** Moves focus out of the query box by clicking an inert corner of the top header */
+  async blurQuery(): Promise<void> {
+    await new HeaderPo(this.page).clickInertCorner();
   }
 
   searchClearButton(): Locator {
-    return this.page.locator('[data-testid="table-views-query-clear"]');
+    return this.page.getByTestId('table-views-query-clear');
   }
 
   tabMenuButton(id = 'all'): Locator {

@@ -5,6 +5,7 @@ import {
   WorkloadDetailsPageBasePo,
 } from '@/e2e/po/pages/explorer/workloads/workloads.po';
 import RedeployDialogPo from '@/e2e/po/components/workloads/redeploy-dialog.po';
+import TableViewsPo from '@/e2e/po/components/table-views.po';
 import { LONG } from '@/support/timeouts';
 
 type WorkloadType = 'apps.deployment';
@@ -34,6 +35,10 @@ export class WorkloadsDeploymentsListPagePo extends WorkloadsListPageBasePo {
 
   redeployDialog(): RedeployDialogPo {
     return new RedeployDialogPo(this.page);
+  }
+
+  tableViews(): TableViewsPo {
+    return new TableViewsPo(this.page);
   }
 }
 
