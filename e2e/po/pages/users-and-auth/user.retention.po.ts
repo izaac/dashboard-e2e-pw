@@ -3,6 +3,7 @@ import PagePo from '@/e2e/po/pages/page.po';
 import CheckboxInputPo from '@/e2e/po/components/checkbox-input.po';
 import AsyncButtonPo from '@/e2e/po/components/async-button.po';
 import LabeledInputPo from '@/e2e/po/components/labeled-input.po';
+import CronScheduleHintPo from '@/e2e/po/components/cron-schedule-hint.po';
 import ToggleSwitchPo from '@/e2e/po/components/toggle-switch.po';
 
 export default class UserRetentionPo extends PagePo {
@@ -40,6 +41,10 @@ export default class UserRetentionPo extends PagePo {
 
   userRetentionCron(): LabeledInputPo {
     return new LabeledInputPo(this.page, '[data-testid="userRetentionCron"]');
+  }
+
+  userRetentionCronSchedule(): CronScheduleHintPo {
+    return CronScheduleHintPo.forUserRetention(this.page);
   }
 
   userRetentionDryRun(): ToggleSwitchPo {
