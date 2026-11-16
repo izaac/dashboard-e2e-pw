@@ -51,7 +51,7 @@
 | RegistryConfigsPo | registry-configs.po.ts | ComponentPo | — | registryAuthHost, addRegistryAuthHost, registryAuthSelectOrCreate |
 | ResourceCardPo | resource-card.po.ts | ComponentPo | — | super, stateDots, firstStateDot |
 | ResourceListMastheadPo | resource-list-masthead.po.ts | ComponentPo | — | super, actions, title, createButton, createYaml, create |
-| ResourcePopoverPo | resource-popover.po.ts | ComponentPo | `.resource-popover` | super, target, focusButton, card, readyIndicator, row, usage, usageItem (+2) |
+| ResourcePopoverPo | resource-popover.po.ts | ComponentPo | — | super, target, display, focusButton, card, markedCard, cardPopper, cardTitle (+25) |
 | ResourceQuotaPo | resource-quota.po.ts | ComponentPo | — | super, invalidAnnotationBanner, bannerContent, quotaInputs, saveButton |
 | ResourceTablePo | resource-table.po.ts | ComponentPo | — | super, sortableTable, downloadYamlButton, snapshotNowButton, resourceTableDetails, goToDetailsPage |
 | ResourceYamlPo | resource-yaml.po.ts | ComponentPo | `.resource-yaml` | super, body, footer, codeMirror, cancel, saveOrCreate |
