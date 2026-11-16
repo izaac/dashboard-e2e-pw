@@ -70,6 +70,48 @@ export default class CodeMirrorPo extends ComponentPo {
     return this.self().locator('.cm-content').first();
   }
 
+  /** CM6 scroll container (`.cm-scroller`), falls back to the editor root */
+  scroller(): Locator {
+    return this.self().locator('.cm-scroller, .cm-editor').first();
+  }
+
+  /**
+   * Click in the blank area BELOW the document text, inside the scroller.
+   *
+   * With a short document the `.cm-content` element only covers the written lines, so a real user
+   * click in the empty space under it lands on the scroller. That click used to be swallowed (no
+   * caret, typing went nowhere) - see rancher/dashboard#19800.
+   *
+   * Throws when the content already reaches the bottom of the scroller, because there is no blank
+   * area to click and the call would silently degrade into a normal in-content click, hiding a
+   * regression of rancher/dashboard#19800 behind a green test. Use a shorter document or a
+   * smaller `offsetPx` in that case.
+   */
+  async clickBelowContent(offsetPx = 24): Promise<void> {
+    const contentBox = await this.content().boundingBox();
+    const scrollerBox = await this.scroller().boundingBox();
+
+    if (!contentBox || !scrollerBox) {
+      throw new Error('CodeMirror content or scroller is not visible');
+    }
+
+    // Stay horizontally inside the text columns, vertically below the content but inside the scroller
+    const x = contentBox.x + Math.min(contentBox.width / 2, 100);
+    const contentBottom = contentBox.y + contentBox.height;
+    const scrollerBottom = scrollerBox.y + scrollerBox.height;
+    const y = Math.min(contentBottom + offsetPx, scrollerBottom - 2);
+
+    if (y <= contentBottom + 1) {
+      throw new Error(
+        `clickBelowContent found no blank area below the document (rancher/dashboard#19800): ` +
+          `contentBox=${JSON.stringify(contentBox)} scrollerBox=${JSON.stringify(scrollerBox)} ` +
+          `offsetPx=${offsetPx}`,
+      );
+    }
+
+    await this.page.mouse.click(x, y);
+  }
+
   /** Click into the CM6 content area so the editor receives focus */
   async focus(): Promise<void> {
     await this.content().click();
