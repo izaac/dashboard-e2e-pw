@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test';
 import PagePo from '@/e2e/po/pages/page.po';
 import BaseResourceList from '@/e2e/po/lists/base-resource-list.po';
+import TableViewsPo from '@/e2e/po/components/table-views.po';
 import FleetManagedPo from '@/e2e/po/components/fleet-managed.po';
 
 export class ConfigMapsPagePo extends PagePo {
@@ -14,6 +15,10 @@ export class ConfigMapsPagePo extends PagePo {
 
   list(): BaseResourceList {
     return new BaseResourceList(this.page, '.dashboard-root');
+  }
+
+  tableViews(): TableViewsPo {
+    return new TableViewsPo(this.page);
   }
 }
 

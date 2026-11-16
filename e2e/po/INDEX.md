@@ -63,7 +63,7 @@
 | StatusBreakdownCardPo | status-breakdown-card.po.ts | ComponentPo | `[data-testid=` | super, emptyMessage, rows, row, countLink, clickCount |
 | StatusSummaryCardPo | status-summary-card.po.ts | ComponentPo | `[data-testid=` | super, title, stateRows, stateRow, stateBadge, stateLink, focusStateLink, clickTitle |
 | TabbedPo | tabbed.po.ts | ComponentPo | — | super, tabByIndex, tabBySelector, tab, tabByTestId, panel, tabbedList, allTabs (+3) |
-| TableViewsPo | table-views.po.ts | ComponentPo | — | super, tabsContainer, tabs, tab, allTab, activeTab, unsavedDot, searchInput (+21) |
+| TableViewsPo | table-views.po.ts | ComponentPo | — | super, tabsContainer, tabs, tab, allTab, activeTab, unsavedDot, searchInput (+53) |
 | ToggleSwitchPo | toggle-switch.po.ts | ComponentPo | — | super, toggle, value, return, set, if, get |
 | TooltipPo | tooltip.po.ts | ComponentPo | `:scope` | super, show, content |
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
@@ -274,7 +274,7 @@
 | ClusterRoleBindingsPagePo | cluster-role-bindings.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterRolesPagePo | cluster-roles.po.ts | PagePo | — | super, list, clickCreate |
 | ClusterToolsPagePo | cluster-tools.po.ts | PagePo | — | super, featureChartCards, getCardByName, deleteChart, goToInstall, editChart, getChartVersion |
-| ConfigMapsPagePo | configmaps.po.ts | PagePo | — | super, list, resourceName, badgeState, fleetManaged |
+| ConfigMapsPagePo | configmaps.po.ts | PagePo | — | super, list, tableViews, resourceName, badgeState, fleetManaged |
 | ContentsPagePo | contents.po.ts | PagePo | — | super, list, clickCreate |
 | CustomResourceDefinitionsPagePo | custom-resource-definitions.po.ts | PagePo | — | super, create, crdCreateEditPo, list, sortableTable, yamlEditor, saveYamlButton |
 | EventsPageListPo | events.po.ts | PagePo | — | super, list, baseResourceList, resourceDetail |

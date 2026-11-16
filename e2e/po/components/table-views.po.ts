@@ -128,4 +128,155 @@ export default class TableViewsPo extends ComponentPo {
   modalBackdrop(): Locator {
     return this.page.locator('.rc-modal-backdrop, .v-modal');
   }
+
+  /** The open dropdown panel (tab menu or View menu), which is teleported out of the controls root */
+  menu(): Locator {
+    return this.page.locator('[dropdown-menu-collection]');
+  }
+
+  /** The "You have unsaved changes..." notice at the top of a dirty tab's menu */
+  tabMenuNotice(): Locator {
+    return this.menu().locator('.menu-notice');
+  }
+
+  menuDuplicate(id = 'all'): Locator {
+    return this.page.locator(`[data-testid="table-views-duplicate-${id}"]`);
+  }
+
+  /** Not offered on the All tab, which has nothing saved to go back to */
+  menuResetToDefault(id: string): Locator {
+    return this.page.locator(`[data-testid="table-views-reset-${id}"]`);
+  }
+
+  menuExportAll(id = 'all'): Locator {
+    return this.page.locator(`[data-testid="table-views-export-${id}"]`);
+  }
+
+  menuSetDefault(id = 'all'): Locator {
+    return this.page.locator(`[data-testid="table-views-set-default-${id}"]`);
+  }
+
+  menuShareView(id = 'all'): Locator {
+    return this.page.locator(`[data-testid="table-views-share-${id}"]`);
+  }
+
+  menuImportView(id = 'all'): Locator {
+    return this.page.locator(`[data-testid="table-views-import-${id}"]`);
+  }
+
+  menuDelete(id: string): Locator {
+    return this.page.locator(`[data-testid="table-views-delete-${id}"]`);
+  }
+
+  /** The Undo link on the "View Deleted" toast */
+  undoDeleteButton(): Locator {
+    return this.page.locator('.growl-list').getByRole('button', { name: 'Undo' });
+  }
+
+  shareModal(): Locator {
+    return this.page.locator('[data-testid="table-views-share-modal"]');
+  }
+
+  shareWarning(): Locator {
+    return this.page.locator('[data-testid="table-views-share-warning"]');
+  }
+
+  shareText(): Locator {
+    return this.page.locator('[data-testid="table-views-share-text"]');
+  }
+
+  shareCloseButton(): Locator {
+    return this.page.locator('[data-testid="table-views-share-close"]');
+  }
+
+  importModal(): Locator {
+    return this.page.locator('[data-testid="table-views-import-modal"]');
+  }
+
+  importInput(): Locator {
+    return this.page.locator('[data-testid="table-views-import-text"]').locator('textarea, input');
+  }
+
+  importProblem(): Locator {
+    return this.page.locator('[data-testid="table-views-import-problem"]');
+  }
+
+  importConfirmButton(): Locator {
+    return this.page.locator('[data-testid="table-views-import-confirm"]');
+  }
+
+  /** The View menu's Group By entry, which opens the grouping submenu */
+  viewGroupItem(): Locator {
+    return this.page.locator('[data-testid="table-views-view-group"]');
+  }
+
+  groupOption(id: string): Locator {
+    return this.page.locator(`[data-testid="table-views-group-${id}"]`);
+  }
+
+  /** The "Reset to Default" of the View menu itself, which resets the whole view */
+  viewResetButton(): Locator {
+    return this.page.locator('[data-testid="table-views-reset"]');
+  }
+
+  /** The screen reader status line under the toolbar, which also carries the "Grouping reset to ..." wording */
+  announcement(): Locator {
+    return this.page.locator('[data-testid="table-views-announcement"]');
+  }
+
+  /** The filter problem line shown under the query box */
+  queryProblem(): Locator {
+    return this.page.locator('[data-testid="table-views-query-problem"]');
+  }
+
+  suggestions(): Locator {
+    return this.page.locator('[data-testid="table-views-suggestions"]');
+  }
+
+  suggestionsLoading(): Locator {
+    return this.page.locator('[data-testid="table-views-suggestions-loading"]');
+  }
+
+  suggestionOptions(): Locator {
+    return this.suggestions().getByRole('option');
+  }
+
+  exportModal(): Locator {
+    return this.page.locator('[data-testid="table-views-export-modal"]');
+  }
+
+  exportFormat(format: string): Locator {
+    return this.exportModal().getByRole('radio', { name: format });
+  }
+
+  exportDownloadButton(): Locator {
+    return this.page.locator('[data-testid="table-views-export-download"]');
+  }
+
+  /** The "N Selected" button that opens the actions of the ticked rows */
+  selectionActionsButton(): Locator {
+    return this.page.getByRole('button', { name: /\d+ Selected/ });
+  }
+
+  selectionExportAction(): Locator {
+    return this.page.getByRole('menuitem', { name: 'Export As...' });
+  }
+
+  /**
+   * Holds back every request for the values of a filter field (the `summary` requests) until the
+   * returned function is called, so the "Loading values..." state can be looked at for as long as needed.
+   */
+  async holdSuggestionRequests(): Promise<() => void> {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    await this.page.route(/[?&]summary=/, async (route) => {
+      await gate;
+      await route.fallback();
+    });
+
+    return release;
+  }
 }
