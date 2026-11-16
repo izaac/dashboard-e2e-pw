@@ -31,6 +31,13 @@ export default class WorkloadSearchPo extends ComponentPo {
     return this.dropdown().locator('.more-link');
   }
 
+  /** The trailing "+ N more <type>" row of a result group */
+  showMoreLink(type: string): Locator {
+    return this.dropdown()
+      .locator('a.more-link')
+      .filter({ hasText: new RegExp(`^\\+ \\d+ more ${type}$`) });
+  }
+
   /** Placeholder shown in place of results (min characters, no match, searching, start typing) */
   noOptions(): Locator {
     return this.page.locator('.vs__no-options');

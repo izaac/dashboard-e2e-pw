@@ -69,7 +69,7 @@
 | UnitInputPo | unit-input.po.ts | ComponentPo | — | super, setValue, clear |
 | VersionNumberPo | version-number.po.ts | ComponentPo | — | link |
 | WindowManagerPo | window-manager.po.ts | ComponentPo | `#horizontal-window-manager` | super, tabLists, tabs, nonTabButtonsInTabLists, interactiveInsideTabs, closeButtons, closeButtonsInsideTabs, tabListOwnership |
-| WorkloadSearchPo | workload-search.po.ts | ComponentPo | `[data-testid=` | super, input, dropdown, options, groupLabels, moreLinks, noOptions, errorLabels (+3) |
+| WorkloadSearchPo | workload-search.po.ts | ComponentPo | `[data-testid=` | super, input, dropdown, options, groupLabels, moreLinks, showMoreLink, noOptions (+4) |
 
 ## components/fleet/
 
@@ -298,7 +298,7 @@
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | PagePo | — | super, baseResourceList, runNow |
 | WorkloadsDaemonsetsListPagePo | workloads-daemonsets.po.ts | PagePo | — | super, baseResourceList, redeployDialog, resourceDetail, containerImageInput, clickTab, ScalingUpgradePolicyRadioBtn, scalingUpgradePolicyRadioBtn (+2) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | PagePo | — | super, baseResourceList, resourceDetail, selectNamespaceOption, selectNamespace, namespaceInput, namespace, containerImage (+1) |
-| WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, tableViews, searchBox, filterBySearchBox (+6) |
+| WorkloadsPodsListPagePo | workloads-pods.po.ts | PagePo | — | super, baseResourceList, masthead, sortableTable, createEditView, tableViews, searchBox, filterBySearchBox (+12) |
 | WorkloadsStatefulSetsListPagePo | workloads-statefulsets.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, redeployDialog |
 
 ## pages/explorer/charts/
@@ -321,7 +321,7 @@
 
 | Class | File | Extends | Selector | Methods |
 |-------|------|---------|----------|---------|
-| WorkloadDashboardPagePo | workload-dashboard.po.ts | PagePo | `/c/${clusterId}/explorer/workload-dashboard` | super, masthead, title, subtitle, byStateSection, stateCards, byTypeSection, byTypeCards (+3) |
+| WorkloadDashboardPagePo | workload-dashboard.po.ts | PagePo | `/c/${clusterId}/explorer/workload-dashboard` | super, masthead, title, subtitle, byStateSection, stateCards, byTypeSection, byTypeCards (+5) |
 | WorkloadsCronJobsListPagePo | workloads-cronjobs.po.ts | WorkloadsListPageBasePo | `/c/${clusterId}/explorer/batch.cronjob/${namespaceId}/${cronJobId}` | super, schedule, goToEdit |
 | WorkloadsDeploymentsListPagePo | workloads-deployments.po.ts | WorkloadsListPageBasePo | — | super, goToDetailsPage, createWithKubectl, deleteWithKubectl, redeployDialog, tableViews, addVolumeButton, dropdownMenu (+7) |
 | WorkloadsJobsListPagePo | workloads-jobs.po.ts | WorkloadsListPageBasePo | — | super, masthead |

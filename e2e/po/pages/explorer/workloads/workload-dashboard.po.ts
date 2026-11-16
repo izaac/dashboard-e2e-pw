@@ -44,6 +44,16 @@ export default class WorkloadDashboardPagePo extends PagePo {
     return this.page.getByTestId('resource-detail-status-card');
   }
 
+  /** The By Type card of a resource type, found by the type's plural title (e.g. 'Pods') */
+  byTypeCard(title: string): Locator {
+    return this.byTypeSection().getByRole('group', { name: new RegExp(`^${title}: \\d+ total`) });
+  }
+
+  /** The link of one state inside a By Type card, which opens the list filtered to that state */
+  byTypeStateLink(title: string, state: string): Locator {
+    return this.byTypeCard(title).getByRole('link', { name: state, exact: true });
+  }
+
   emptyState(): Locator {
     return this.page.getByTestId('workload-dashboard-empty');
   }

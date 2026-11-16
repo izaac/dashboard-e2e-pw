@@ -54,6 +54,49 @@ export class WorkloadsPodsListPagePo extends PagePo {
   flatListButton(): Locator {
     return this.page.getByRole('button', { name: 'Flat List' });
   }
+
+  /** The bar a stateFilter link leaves above the list while the configurable tables feature flag is off */
+  stateFilterBar(): Locator {
+    return this.page.locator('.state-filter-bar').filter({ hasText: 'State filter applied' });
+  }
+
+  /** The bar a nameFilter link leaves above the list while the configurable tables feature flag is off */
+  nameFilterBar(): Locator {
+    return this.page.locator('.state-filter-bar').filter({ hasText: 'Name filter applied' });
+  }
+
+  async clearStateFilter(): Promise<void> {
+    await this.stateFilterBar().getByRole('button', { name: 'Clear filter' }).click();
+  }
+
+  async clearNameFilter(): Promise<void> {
+    await this.nameFilterBar().getByRole('button', { name: 'Clear filter' }).click();
+  }
+
+  /**
+   * Resolves with the `filter` parameters of the next pods list request (a page of the list, not a summary or a
+   * search) that filters on the given field. Start it before the action that causes the request.
+   *
+   * Pass `expected` to wait for the request carrying every one of those filters, joined with a space: the page can
+   * issue more than one list request while a filter settles (a single state first, the whole set after), and only
+   * the last one has the full set.
+   */
+  async waitForListRequestFilters(field: string, expected: string[] = []): Promise<string[]> {
+    const request = await this.page.waitForRequest((req) => {
+      const url = new URL(req.url());
+
+      if (!url.pathname.endsWith('/v1/pods') || !url.searchParams.has('pagesize')) {
+        return false;
+      }
+
+      const filters = url.searchParams.getAll('filter');
+      const joined = filters.join(' ');
+
+      return filters.some((filter) => filter.startsWith(field)) && expected.every((filter) => joined.includes(filter));
+    });
+
+    return new URL(request.url()).searchParams.getAll('filter');
+  }
 }
 
 export class WorkloadsPodsDetailPagePo extends PagePo {

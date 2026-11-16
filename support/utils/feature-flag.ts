@@ -73,3 +73,37 @@ export async function recoverFromRancherRestart(
   await page.reload();
   await login();
 }
+
+/**
+ * Raw tri-state of a feature flag's `spec.value`: true, false, or null when no override is set
+ * (the flag then follows its default).
+ */
+export async function getFeatureFlagValue(rancherApi: RancherApi, flagName: string): Promise<boolean | null> {
+  const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
+
+  return resp.body.spec?.value ?? null;
+}
+
+/**
+ * Sets a feature flag's `spec.value`; pass null to go back to "no override" without removing the key.
+ * Dangerous flags are followed by the restart cycle wait, see {@link DANGEROUS_FLAGS}.
+ */
+export async function setFeatureFlagValue(
+  rancherApi: RancherApi,
+  flagName: string,
+  value: boolean | null,
+): Promise<void> {
+  const resp = await rancherApi.getRancherResource('v1', 'management.cattle.io.features', flagName);
+  const body = resp.body;
+
+  if ((body.spec?.value ?? null) === value) {
+    return;
+  }
+
+  body.spec = { ...body.spec, value };
+  await rancherApi.setRancherResource('v1', 'management.cattle.io.features', flagName, body);
+
+  if (isDangerousFlag(flagName)) {
+    await waitForRancherRestartCycle(rancherApi);
+  }
+}
