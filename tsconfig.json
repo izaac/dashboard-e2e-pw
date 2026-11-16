@@ -28,6 +28,9 @@
   ],
   "exclude": [
     "node_modules",
-    "dashboard-src"
+    "dashboard-src",
+    "component-tests",
+    "playwright",
+    "playwright-ct.config.ts"
   ]
 }

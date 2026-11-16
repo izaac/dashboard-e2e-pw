@@ -6,6 +6,7 @@ test-results/
 playwright-report/
 blob-report/
 blob-reports/
+playwright/.cache/
 .auth/
 *.storageState.json
 browser-logs/

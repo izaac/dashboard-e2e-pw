@@ -1,0 +1,8 @@
+// Pull in the dashboard app's real global SCSS variables, mixins and colours,
+// then backfill the names that only exist in the full app entrypoint.
+@import "base/functions";
+@import "base/mixins";
+@import "base/variables";
+@import "base/color";
+
+$icon-size: 16px;

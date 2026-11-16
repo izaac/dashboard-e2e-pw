@@ -20,7 +20,7 @@
 | CertificatesPo | certificates.po.ts | ComponentPo | `[data-testid=` | super, expiredBanner, expiringBanner, list |
 | CheckboxInputPo | checkbox-input.po.ts | ComponentPo | — | super, set, checkboxCustom, uncheck, if, getCheckboxLabel, isDisabled, inputElement (+1) |
 | ClusterResourceStatusPo | cluster-resource-status.po.ts | ComponentPo | `[data-testid=` | super, nodesCard, deploymentsCard, unhealthyWorkloadsCard, pressTab, pressEnter |
-| CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, if, value, clear, content, focus, blur (+2) |
+| CodeMirrorPo | code-mirror.po.ts | ComponentPo | — | super, set, if, value, clear, content, scroller, clickBelowContent (+4) |
 | ColorInputPo | color-input.po.ts | ComponentPo | — | value, return, previewColor, set |
 | ComponentPo | component.po.ts | — | — | self, if, testId, isDisabled |
 | CopyToClipboardTextPo | copy-to-clipboard-text.po.ts | ComponentPo | — | super, value, copyToClipboard |
