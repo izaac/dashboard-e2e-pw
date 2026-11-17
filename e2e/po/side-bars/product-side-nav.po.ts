@@ -27,6 +27,21 @@ export default class ProductNavPo extends ComponentPo {
     return this.self().locator('.accordion.has-children:not(.expanded)');
   }
 
+  /** Top-level group that is open because a type inside it is the current route */
+  selectedGroup(): Locator {
+    return this.self().locator('.accordion.has-children.depth-0.expanded.group-highlight').first();
+  }
+
+  /** Top-level groups that are closed; nested ones sit inside the open group and share its background */
+  collapsedGroups(): Locator {
+    return this.self().locator('.accordion.has-children.depth-0:not(.expanded)');
+  }
+
+  /** Link of the type the route is on — the element painted with the active tokens */
+  selectedTypeLink(): Locator {
+    return this.self().locator('li.child.router-link-exact-active a').first();
+  }
+
   /** Get all navigation accordion items */
   accordionItems(): Locator {
     return this.self().locator('.accordion');
