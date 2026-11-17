@@ -58,7 +58,7 @@
 | SelectIconGridPo | select-icon-grid.po.ts | ComponentPo | — | super, select, getGridEntry |
 | SelectOrCreateAuthPo | select-or-create-auth.po.ts | ComponentPo | — | authSelect, loading, setBasicAuthSecret, setSSHSecret, setGitHubAppSecret, createBasicAuth, createSSHAuth, createRKEAuth (+2) |
 | ShellPo | shell.po.ts | ComponentPo | `#horizontal-window-manager` | super, openTerminal, closeTerminal, terminalStatus |
-| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, selectionActionsTrigger, openSelectionActions, if, selectionAction, bulkBar (+61) |
+| SortableTablePo | sortable-table.po.ts | ComponentPo | — | super, detailsPageLinkWithName, bulkActionButton, selectionActionsTrigger, openSelectionActions, if, selectionAction, bulkBar (+62) |
 | StateBadgePo | state-badge.po.ts | ComponentPo | — | super, badges, firstBadge |
 | StatusBreakdownCardPo | status-breakdown-card.po.ts | ComponentPo | `[data-testid=` | super, emptyMessage, rows, row, countLink, clickCount |
 | StatusSummaryCardPo | status-summary-card.po.ts | ComponentPo | `[data-testid=` | super, title, stateRows, stateRow, stateBadge, stateLink, focusStateLink, clickTitle |

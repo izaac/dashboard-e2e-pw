@@ -297,6 +297,14 @@ export default class SortableTablePo extends ComponentPo {
     return this.self().locator('.group-tab').filter({ hasText: name });
   }
 
+  /**
+   * Elements a group header would carry if its value had been rendered as HTML.
+   * Empty for a header that shows the value as typed (rancher/dashboard#19854).
+   */
+  groupTabMarkupElements(name: string): Locator {
+    return this.groupTab(name).locator('b, i, img');
+  }
+
   tableHeaderRow(): Locator {
     return this.self().locator('thead tr');
   }
