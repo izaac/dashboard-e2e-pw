@@ -194,6 +194,32 @@ export default class ExtensionsPagePo extends PagePo {
     return this.extensionDetails().locator('.version-link');
   }
 
+  /**
+   * Version anchors in the slide-in panel's Versions list, excluding the "Show all" link.
+   * Ordered newest first, the same order the panel renders them.
+   */
+  extensionDetailsVersionList(): Locator {
+    return this.extensionDetails().locator('a.version-link:not(.show-all-versions)');
+  }
+
+  /** The version anchor the panel marks active — for an installed extension, the installed one. */
+  extensionDetailsVersionActive(): Locator {
+    return this.extensionDetails().locator('a.version-link.version-active');
+  }
+
+  /** Upgrade status icon on a card header; present only when the repo offers a newer version. */
+  extensionCardUpgradeStatusIcon(extensionTitle: string): Locator {
+    return this.extensionCard(extensionTitle).locator('[data-testid^="item-card-header-status-"].icon-upgrade-alt');
+  }
+
+  /**
+   * Tooltip body for the card status icon currently under the pointer. Uses `.last()` so stale
+   * poppers from earlier hovers cannot trigger a strict-mode violation.
+   */
+  extensionCardUpgradeStatusTooltip(): Locator {
+    return this.page.locator('.v-popper__popper .v-popper__inner').last();
+  }
+
   async extensionDetailsCloseClick(): Promise<void> {
     // The close button can be outside the viewport or behind the fixed header,
     // so use Escape key which the panel natively handles

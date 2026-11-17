@@ -233,7 +233,7 @@
 | ChartRepositoriesPagePo | chart-repositories.po.ts | PagePo | — | super, list, sortableTable, create, addRepositoryLink, createEditRepositories, waitForGoTo |
 | ClusterPagePo | cluster-page.po.ts | PagePo | — | super |
 | DiagnosticsPagePo | diagnostics.po.ts | PagePo | — | super, title, diagnosticsPackageBtn, downloadDiagnosticsModalActionBtn |
-| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+51) |
+| InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+55) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, sortableTable, filterInput (+25) |
 | LicensesPagePo | licenses.po.ts | PagePo | — | super, sortableTable, packageLinks, noResultsText, packageLink, searchInput, legacyClearButton, slideIn (+4) |
 | LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, logout, useLocal (+12) |
