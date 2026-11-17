@@ -9,7 +9,8 @@ export default class PasswordPo extends ComponentPo {
     await input.fill(value);
   }
 
-  private input(): Locator {
+  /** The `<input>` the component wraps, for assertions on `type` and value. */
+  input(): Locator {
     return this.self().locator('input');
   }
 

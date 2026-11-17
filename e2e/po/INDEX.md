@@ -44,7 +44,7 @@
 | NamespaceFilterPo | namespace-filter.po.ts | ComponentPo | `[data-testid=` | super, toggle, if, getOptions, optionByLabel, searchByName, clearSearchButton, clearSelectionButton (+13) |
 | NotificationsCenterPo | notification-center.po.ts | ComponentPo | `[data-testid=` | super, dropdownButton, toggle, statusIndicator, unreadIndicator, expandedState, collapsedState, getNotificationByName (+4) |
 | NotificationPo | notification.po.ts | ComponentPo | — | super, toggleRead, readIcon, title, primaryActionButton, secondaryActionButton |
-| PasswordPo | password.po.ts | ComponentPo | — | set, showBtn, showBtnComputedColor |
+| PasswordPo | password.po.ts | ComponentPo | — | set, input, showBtn, showBtnComputedColor |
 | ProductNavPo | product-nav.po.ts | ComponentPo | `.side-nav` | super, groups, navToSideMenuGroupByLabel, sideMenuEntryByLabel, navToSideMenuEntryByLabel, for, if |
 | RadioGroupInputPo | radio-group-input.po.ts | ComponentPo | — | super, set, radioSpan, radioSpanByLabel, getAllOptions, getOptionByIndex |
 | RcSectionPo | rc-section.po.ts | ComponentPo | `.rc-section:has(> .section-header .title:text-is(${JSON.stringify(title)}))` | super, header, toggleButton, invalidFieldsIcon, content, toggle, hoverInvalidFieldsIcon |
@@ -236,7 +236,7 @@
 | InstallExtensionDialog | extensions.po.ts | — | `/c/local/uiplugins` | self, checkVisible, versionLabelSelect, selectVersionLabel, installButton, cancelButton, selectVersionClick, if (+55) |
 | HomePagePo | home.po.ts | PagePo | — | super, goTo, navTo, title, whatsNewBannerLink, list, sortableTable, filterInput (+25) |
 | LicensesPagePo | licenses.po.ts | PagePo | — | super, sortableTable, packageLinks, noResultsText, packageLink, searchInput, legacyClearButton, slideIn (+4) |
-| LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, logout, useLocal (+12) |
+| LoginPagePo | login-page.po.ts | PagePo | — | super, goTo, username, password, canSubmit, submit, logout, useLocal (+27) |
 | NotFoundPagePo | not-found-page.po.ts | PagePo | — | super, errorTitle, errorMessage |
 | PagePo | page.po.ts | ComponentPo | — | super, goTo, waitForPage, waitForPageWithExactUrl, waitForUrlPathWithoutContext, isCurrentPage, if, mastheadTitle (+18) |
 | PreferencesPagePo | preferences.po.ts | PagePo | — | super, title, themeOptions, themeButtons, languageDropdownMenu, dateFormateDropdownMenu, timeFormateDropdownMenu, perPageDropdownMenu (+23) |

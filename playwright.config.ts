@@ -61,9 +61,20 @@ const authSlug = (() => {
 const adminAuthFile = `.auth/admin-${authSlug}.json`;
 
 /**
- * Test directories - mirrors Cypress specPattern
+ * Test directories - mirrors Cypress specPattern. 'auth' holds the login-page specs that must run
+ * signed out, which have no Cypress counterpart directory.
  */
-const testDirs = ['priority', 'components', 'setup', 'pages', 'navigation', 'global-ui', 'features', 'extensions'];
+const testDirs = [
+  'priority',
+  'components',
+  'setup',
+  'pages',
+  'navigation',
+  'global-ui',
+  'features',
+  'extensions',
+  'auth',
+];
 
 const getTestMatch = (): string[] => {
   const only = process.env.TEST_ONLY?.split(',')
