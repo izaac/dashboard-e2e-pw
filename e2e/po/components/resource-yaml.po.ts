@@ -24,6 +24,15 @@ export default class ResourceYamlPo extends ComponentPo {
     return this.self().locator('button.role-secondary');
   }
 
+  /**
+   * Cancel button by accessible name. Use this instead of {@link cancel} when the
+   * footer may host other `role-secondary` buttons (e.g. the YAML editor's
+   * "Show Diff" toggle), which make the class selector non-unique.
+   */
+  cancelButton(): Locator {
+    return this.self().getByRole('button', { name: 'Cancel' });
+  }
+
   saveOrCreate(): AsyncButtonPo {
     return new AsyncButtonPo(this.page, '[data-testid="action-button-async-button"]', this.self());
   }

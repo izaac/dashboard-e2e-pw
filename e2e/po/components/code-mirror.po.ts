@@ -70,9 +70,19 @@ export default class CodeMirrorPo extends ComponentPo {
     return this.self().locator('.cm-content').first();
   }
 
-  /** CM6 scroll container (`.cm-scroller`), falls back to the editor root */
+  /**
+   * CM6 scroll container (`.cm-scroller`): the element that actually owns the
+   * horizontal/vertical scroll and meaningful `scrollWidth`/`clientWidth` values.
+   *
+   * `.or(...).last()` prefers the scroller whenever it exists and falls back to
+   * the component root ONLY when it does not — CM5 wrappers (`.CodeMirror`) have
+   * no `.cm-scroller`. Do not express this as `locator('.cm-scroller, .cm-editor')
+   * .first()`: the editor root is an ANCESTOR of the scroller, so document order
+   * resolves to the root, which is `overflow: hidden` — scroll-width checks would
+   * be vacuous and below-content geometry would read from the wrong box.
+   */
   scroller(): Locator {
-    return this.self().locator('.cm-scroller, .cm-editor').first();
+    return this.self().or(this.self().locator('.cm-scroller')).last();
   }
 
   /**
@@ -115,6 +125,95 @@ export default class CodeMirrorPo extends ComponentPo {
   /** Click into the CM6 content area so the editor receives focus */
   async focus(): Promise<void> {
     await this.content().click();
+  }
+
+  /** CM6 line-number gutter (`.cm-lineNumbers`); absent on read-only consumers */
+  lineNumbers(): Locator {
+    return this.self().locator('.cm-lineNumbers');
+  }
+
+  /** CM6 fold gutter (`.cm-foldGutter`) */
+  foldGutter(): Locator {
+    return this.self().locator('.cm-foldGutter');
+  }
+
+  /**
+   * Fold markers inside the fold gutter, in document order. The dashboard renders
+   * them with the `.rc-cm-fold-marker` class; clicking one folds/unfolds the node
+   * that starts on that line.
+   *
+   * `:visible` skips the zero-height measurement/placeholder gutter copies that
+   * CodeMirror keeps hidden in the DOM.
+   *
+   * Note: the YAML fold service offers ranges for multi-line block pairs, so the
+   * first marker folds the WHOLE document only when the root has a single key on
+   * line 1 owning all other lines.
+   */
+  foldMarkers(): Locator {
+    return this.self().locator('.cm-foldGutter .rc-cm-fold-marker:visible');
+  }
+
+  /**
+   * Number of rendered document lines. Folded regions collapse into their start
+   * line, so a fully folded document counts as 1.
+   */
+  async lineCount(): Promise<number> {
+    return this.content().locator('> .cm-line').count();
+  }
+
+  /**
+   * Visual rows a single document line occupies once soft-wrapped. Line wrapping
+   * (`.cm-lineWrapping`) keeps one `.cm-line` element, so this counts the distinct
+   * client-rect rows of that element's content instead of DOM nodes.
+   */
+  async visualRowCount(lineIndex = 0): Promise<number> {
+    return this.content().evaluate((el: any, index: number) => {
+      const line = el.querySelectorAll(':scope > .cm-line')[index];
+
+      if (!line) {
+        return 0;
+      }
+
+      const range = document.createRange();
+
+      range.selectNodeContents(line);
+
+      const tops = new Set(
+        Array.from(range.getClientRects())
+          .filter((rect) => rect.height > 0)
+          .map((rect) => Math.round(rect.top)),
+      );
+
+      return tops.size;
+    }, lineIndex);
+  }
+
+  /** True when the scroller shows horizontal overflow (content wider than the viewport) */
+  async hasHorizontalOverflow(): Promise<boolean> {
+    return this.scroller().evaluate((el) => el.scrollWidth > el.clientWidth);
+  }
+
+  /**
+   * True when the content area declares itself non-editable: `contenteditable=false`
+   * and `aria-readonly=true`, the read-only CodeMirror consumer contract.
+   */
+  async isReadOnly(): Promise<boolean> {
+    return this.content().evaluate(
+      (el) => el.getAttribute('contenteditable') === 'false' && el.getAttribute('aria-readonly') === 'true',
+    );
+  }
+
+  /**
+   * True when this editor owns the current focus: the CM6 `cm-focused` class on the
+   * editor root, or the document's active element inside it. Guards typing tests:
+   * when focus went elsewhere the keystrokes land nowhere, and a value-unchanged
+   * assertion would falsely pass the read-only rejection it is supposed to prove.
+   */
+  async isFocused(): Promise<boolean> {
+    return this.self().evaluate(
+      (el) =>
+        el.classList.contains('cm-focused') || (document.activeElement !== null && el.contains(document.activeElement)),
+    );
   }
 
   /**
