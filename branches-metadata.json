@@ -8,7 +8,7 @@
           "name": "rancher",
           "tag": "head"
         },
-        "chart-release": "2.15",
+        "chart-release": "2.17",
         "muster": {
           "version": "head"
         },
@@ -34,6 +34,25 @@
         "dashboard": {
           "repo": "rancher/dashboard",
           "ref": "release-2.15"
+        }
+      }
+    },
+    "release-2.16": {
+      "e2e": {
+        "rancher-image": {
+          "registry": "stgregistry.suse.com",
+          "namespace": "rancher",
+          "name": "rancher",
+          "tag": "v2.16.0-alpha"
+        },
+        "chart-release": "2.16",
+        "muster": {
+          "repo": "rancher-alpha",
+          "version": "2.16"
+        },
+        "dashboard": {
+          "repo": "rancher/dashboard",
+          "ref": "release-2.16"
         }
       }
     }
